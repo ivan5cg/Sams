@@ -18,7 +18,6 @@ Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
 - Si alguien no va al baño a tiempo, habrá un charco que limpiar; si no duerme, se desplomará.
 - Tócate a ti mismo (al personaje activo) para ver lo que puede hacer por su cuenta: la siesta del gato,
   la danza de guerra del hurón, el chillido de la cobaya…
-- Todos envejecen un día por cada día de juego.
 - La partida se guarda sola. Desde el menú ☰ puedes exportarla o importarla como archivo.
 
 ## El barrio
@@ -49,6 +48,21 @@ Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus n
 - Los niños y adolescentes van al **colegio** por la mañana; su ánimo se nota en las notas.
 - **Dinero**: comer de la nevera cuesta (§6, o §2 picar algo) y cada lunes llegan las **facturas**
   (§60 + §20 por persona + §10 por mascota).
+
+## Ciclo de vida y generaciones
+
+- Todos envejecen: bebé → niño/a → adolescente → joven adulto → adulto → anciano/a (las mascotas, a su ritmo).
+  En el menú ☰ puedes elegir envejecimiento **normal**, **rápido** o **desactivado**.
+- Una pareja de la familia puede **intentar tener un bebé** (hace falta una cuna libre; hay dos en cada casa).
+  Nace a los 3 días. Vive en la cuna: hay que darle el biberón, cambiarle el pañal y mecerlo.
+  Si llora, alguien de la familia va a ver qué le pasa. Si se le desatiende mucho tiempo, se lo llevan los servicios sociales.
+- Los niños salen de la cuna y van al colegio; al hacerse adultos lo dejan y pueden trabajar;
+  los ancianos se jubilan y cobran una pensión.
+- Al final de su vida, los personajes mueren. Queda una lápida en el jardín para recordarles, y su familia
+  y amigos pasan un mal rato. También se puede morir de hambre (o escaparse de casa, si eres una mascota).
+- **Herencias**: cuando muere el último de una familia, su dinero pasa a su pariente o pareja más cercano.
+- Los vecinos también tienen hijos y adoptan mascotas; cuando una casa se queda vacía, llega una familia nueva.
+- **La partida no termina nunca**: si tu familia se queda sin nadie, eliges con qué familia del barrio continuar.
 
 ## Mascotas
 
@@ -106,5 +120,5 @@ acciones en `src/data/actions.ts`: la IA lo usará automáticamente.
 2. ✅ Gatos, cobayas, hurones y capibaras, con sus objetos (rascador, jaula, estanque…) y la protectora.
 3. ✅ Barrio con 10 unidades domésticas (las otras 9 controladas por la IA con simulación resumida), visitas y parque.
 4. ✅ Relaciones, trabajo y economía.
-5. Ciclo de vida completo: etapas, parejas, nacimientos, muertes y herencias.
+5. ✅ Ciclo de vida completo: etapas, parejas, nacimientos, muertes y herencias.
 6. Modo construcción, tienda de muebles y pulido.

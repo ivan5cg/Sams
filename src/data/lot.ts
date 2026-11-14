@@ -88,6 +88,8 @@ export const HOUSE_OBJECTS: ObjectPlacement[] = [
   { def: 'bowl', x: 13, y: 5 },
   { def: 'pond', x: 12, y: 9 },
   { def: 'strawbed', x: 12, y: 1 },
+  { def: 'crib', x: 6, y: 1 },
+  { def: 'crib', x: 9, y: 3 },
 ];
 
 /** Nombre antiguo (fases 1 y 2), usado por la migración de partidas. */

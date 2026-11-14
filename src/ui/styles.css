@@ -380,6 +380,7 @@ button {
 #sheet[hidden],
 #map[hidden],
 #profile[hidden],
+#gone[hidden],
 #menu[hidden] {
   display: none;
 }
@@ -807,4 +808,44 @@ button {
   margin: 10px 0;
   font-size: 13px;
   color: var(--muted);
+}
+
+/* --- Envejecimiento y familia extinguida ------------------------------------ */
+
+.aging {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 2px;
+}
+
+.seg {
+  display: flex;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.menu-card .seg button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+  background: none;
+  border-radius: 8px;
+}
+
+.menu-card .seg button.on {
+  background: var(--accent);
+  color: #0d2b10;
+}
+
+#gone {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
 }

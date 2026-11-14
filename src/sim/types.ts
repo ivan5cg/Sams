@@ -58,6 +58,8 @@ export interface Agent {
   travel?: { from: string; to: string; arrive: number; reason?: 'work' | 'school'; mood?: number };
   /** Trabajo o colegio. */
   job?: Job;
+  /** Minutos seguidos con el hambre a cero. */
+  starving?: number;
   /** Está de visita (o en el parque) hasta este minuto; después vuelve a casa. Solo vecinos. */
   visitUntil?: number;
   /** Simulado de forma resumida (vecinos en parcelas donde no está el jugador). */
@@ -95,6 +97,8 @@ export interface PlacedObject {
   stock?: number;
   /** Suciedad acumulada (arenero, jaula). */
   dirt?: number;
+  /** Texto propio (el nombre en una lápida). */
+  label?: string;
 }
 
 export interface Household {
@@ -104,6 +108,8 @@ export interface Household {
   memberIds: string[];
   /** Su casa. */
   lotId: string;
+  /** Bebé en camino. */
+  expecting?: { parents: string[]; due: number };
 }
 
 export interface Lot {
@@ -129,5 +135,9 @@ export interface WorldState {
   agents: Agent[];
   /** Relaciones, por pareja de ids ordenados "a|b". */
   rels: Record<string, Rel>;
+  /** Velocidad de envejecimiento (opción del menú). */
+  aging?: 'off' | 'normal' | 'fast';
+  /** La familia del jugador se ha quedado sin personas: hay que elegir con quién seguir. */
+  familyGone?: boolean;
   objects: PlacedObject[];
 }

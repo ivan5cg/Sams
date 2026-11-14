@@ -77,6 +77,11 @@ export const REL_EFFECTS: Record<string, [number, number]> = {
   ask_partner: [3, 5],
   propose: [5, 5],
   move_in: [3, 3],
+  try_baby: [3, 6],
+  feed_baby: [3, 0],
+  change_diaper: [2, 0],
+  rock_baby: [4, 0],
+  play_baby: [4, 0],
   pet_animal: [4, 0],
   play_pet: [5, 0],
   walk_dog: [6, 0],
@@ -90,7 +95,7 @@ export const REL_EFFECTS: Record<string, [number, number]> = {
 };
 
 /** Acciones de romance. */
-export const ROMANTIC = new Set(['flirt', 'kiss', 'ask_partner', 'propose', 'move_in']);
+export const ROMANTIC = new Set(['flirt', 'kiss', 'ask_partner', 'propose', 'move_in', 'try_baby']);
 
 /**
  * Probabilidad de que `t` acepte la interacción de `a`.
@@ -119,6 +124,8 @@ export function acceptChance(state: WorldState, a: Agent, t: Agent, actionId: st
       return rel.r >= 75 ? 0.88 : 0.15;
     case 'move_in':
       return rel.r >= 60 ? 0.9 : 0.3;
+    case 'try_baby':
+      return rel.r >= 50 ? 0.92 : 0.4;
     default:
       return 1;
   }
@@ -132,4 +139,5 @@ export const REJECT_TEXT: Record<string, string> = {
   ask_partner: 'no quiere salir con',
   propose: 'ha dicho que NO a la pedida de mano de',
   move_in: 'no quiere irse a vivir con',
+  try_baby: 'aún no se siente preparado/a para tener un bebé con',
 };

@@ -77,6 +77,13 @@ export function randomIndoorTile(): { x: number; y: number } {
   return { x, y };
 }
 
+/** Nombre y color de ropa para un recién nacido. */
+export function newbornLooks(state: WorldState): { name: string; color: number } {
+  const used = new Set(state.agents.map((a) => a.name));
+  const free = FIRST_NAMES.filter((n) => !used.has(n));
+  return { name: free.length ? pick(free) : `${pick(FIRST_NAMES)} ${state.nextId}`, color: pick(CLOTHES) };
+}
+
 /** Añade al estado el parque y las 9 familias vecinas con sus casas. */
 export function generateNeighborhood(state: WorldState) {
   state.lots.push({ id: PARK_LOT, name: 'Parque del barrio', kind: 'park', layout: 'park' });

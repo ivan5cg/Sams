@@ -90,8 +90,10 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
       }
       let score = benefit(a.needs, def.effects, def.duration, urgentOnly) * relFactor;
       // Las personas también cuidan de las mascotas de casa (pasear, bañar...).
-      if (!urgentOnly && a.kind === 'person' && t.kind === 'pet' && t.householdId === a.householdId && def.partnerEffects) {
-        score += 0.6 * benefit(t.needs, def.partnerEffects, def.duration);
+      const dependant = t.kind === 'pet' || world.stageOf(t) === 'baby';
+      if (!urgentOnly && a.kind === 'person' && dependant && t.householdId === a.householdId && def.partnerEffects) {
+        // A los bebés se les cuida aún con más ganas que a las mascotas.
+        score += (t.kind === 'pet' ? 0.6 : 1.2) * benefit(t.needs, def.partnerEffects, def.duration);
       }
       if (score <= 0) continue;
       options.push({ choice: { actionId: def.id, targetAgentId: t.id }, score: score * distFactor(t.pos.x, t.pos.y) * jitter() });

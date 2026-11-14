@@ -1,4 +1,4 @@
-import { START_OBJECTS } from '../data/lot';
+import { HOUSE_OBJECTS, START_OBJECTS } from '../data/lot';
 import { OBJECTS } from '../data/objects';
 import { SAVE_VERSION } from '../sim/world';
 import { PLAYER_LOT, generateNeighborhood, setupFamilyLife } from '../sim/neighborhood';
@@ -54,6 +54,19 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
         if (people.length >= 2) setRel(s, people[0].id, people[1].id, { f: 70, r: 75, status: 'partner' });
       }
       setupFamilyLife(s, members, { jobs: !player });
+    }
+  },
+  // v4 → v5: ciclo de vida. Cada casa recibe sus cunas.
+  4: (s) => {
+    s.aging = s.aging ?? 'normal';
+    for (const lot of s.lots) {
+      if (lot.kind !== 'home') continue;
+      const here = s.objects.filter((o) => o.lotId === lot.id);
+      for (const p of HOUSE_OBJECTS.filter((x) => x.def === 'crib')) {
+        if (here.some((o) => o.def === 'crib' && o.x === p.x && o.y === p.y)) continue;
+        if (overlaps(here, p.def, p.x, p.y)) continue;
+        s.objects.push({ id: `o${s.nextId++}`, lotId: lot.id, ...p });
+      }
     }
   },
 };

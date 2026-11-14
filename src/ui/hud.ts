@@ -4,7 +4,7 @@
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { NEED_INFO, SPECIES, lifeStage, needLabel } from '../data/species';
-import { CAREERS, JOB_CAREERS, WEEKDAY_NAMES, gradeLabel, scheduleText } from '../data/careers';
+import { CAREERS, JOB_CAREERS, WEEKDAY_LONG, WEEKDAY_NAMES, gradeLabel, scheduleText } from '../data/careers';
 import { getRel, isAdult, relLabel } from '../sim/social';
 import { NEED_KEYS, type Agent, type Rel, type SpeciesId } from '../sim/types';
 import { MAX_MEMBERS, TRAVEL_MINUTES, moodScore, type Target, type World } from '../sim/world';
@@ -127,6 +127,15 @@ export class Hud {
     });
 
     $('#menu-btn').addEventListener('click', () => this.toggleMenu(true));
+    $('#gone').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b?.dataset.continue) return;
+      this.world.continueWith(b.dataset.continue);
+      this.world.state.speed = 1;
+      $('#gone').hidden = true;
+      this.needsFor = '';
+      this.render();
+    });
     $('#profile-btn').addEventListener('click', () => this.openProfile());
     $('#who').addEventListener('click', () => this.openProfile());
     $('#profile').addEventListener('click', (e) => {
@@ -172,6 +181,12 @@ export class Hud {
         case 'save': this.cb.onSave(); this.toggleMenu(false); break;
         case 'export': this.cb.onExport(); break;
         case 'import': $<HTMLInputElement>('#import-file').click(); break;
+        case undefined:
+          if (b?.dataset.aging) {
+            this.world.setAging(b.dataset.aging as 'off' | 'normal' | 'fast');
+            this.renderAging();
+          }
+          break;
         case 'new':
           if (confirm('¿Empezar una partida nueva? Se perderá la actual si no la has exportado.')) {
             this.cb.onNewGame();
@@ -276,7 +291,37 @@ export class Hud {
     </div>`;
   }
 
+  private renderAging() {
+    const mode = this.world.state.aging ?? 'normal';
+    for (const b of $('#aging').querySelectorAll<HTMLButtonElement>('button')) b.classList.toggle('on', b.dataset.aging === mode);
+  }
+
+  /** La familia se ha quedado sin nadie: elegir con qué familia del barrio seguir. */
+  private renderGone() {
+    const w = this.world;
+    const el = $('#gone');
+    if (!w.state.familyGone) {
+      el.hidden = true;
+      return;
+    }
+    if (!el.hidden) return;
+    const cards = w.state.households
+      .filter((h) => h.id !== w.household.id)
+      .map((h) => {
+        const ms = h.memberIds.map((id) => w.agent(id)!).filter(Boolean);
+        const who = ms.map((m) => (m.kind === 'person' ? `${esc(m.name)} (${esc(lifeStage(m.species, m.ageDays).label.toLowerCase())})` : `${SPECIES[m.species].icon} ${esc(m.name)}`)).join(', ');
+        return `<div class="place"><div class="place-title">${esc(h.name)}</div><div class="muted small">${who} · §${h.funds.toLocaleString('es-ES')}</div>
+          <div class="place-actions"><button class="map-btn" data-continue="${h.id}">Seguir con esta familia</button></div></div>`;
+      })
+      .join('');
+    el.innerHTML = `<div class="map-card"><div class="sheet-title">🕯️ La ${esc(w.household.name)} ya no está</div>
+      <p class="sheet-note">La partida no termina: elige otra familia del barrio y continúa su historia.</p>
+      <div class="places">${cards}</div></div>`;
+    el.hidden = false;
+  }
+
   private toggleMenu(open: boolean) {
+    if (open) this.renderAging();
     $('#menu').hidden = !open;
   }
 
@@ -304,7 +349,7 @@ export class Hud {
     if (target.kind === 'object') {
       const o = w.object(target.id)!;
       const d = OBJECTS[o.def];
-      title = `${d.icon} ${d.name}`;
+      title = o.label ? `${d.icon} Aquí descansa ${o.label}` : `${d.icon} ${d.name}`;
       const parts: string[] = [];
       if (d.maxStock) parts.push(`Comida: ${o.stock ?? 0}/${d.maxStock}`);
       if (d.maxDirt) parts.push((o.dirt ?? 0) === 0 ? 'Limpio' : `Suciedad: ${o.dirt}/${d.maxDirt}`);
@@ -411,6 +456,12 @@ export class Hud {
         jobHtml = `<div class="prof-sec"><div class="prof-h">💼 Sin trabajo</div><div class="muted small">Busca trabajo en el ordenador de casa.</div></div>`;
       }
     }
+    const h = w.householdOf(a);
+    if (h?.expecting && h.expecting.parents.includes(a.id)) {
+      const due = h.expecting.due;
+      const day = Math.floor(due / 1440) + 1;
+      jobHtml += `<div class="prof-sec"><div class="prof-h">🍼 Bebé en camino</div><div class="muted small">Llegará el ${WEEKDAY_LONG[(day - 1) % 7]} (día ${day}).</div></div>`;
+    }
     // Relaciones con quien conoce
     const rows = Object.entries(w.state.rels)
       .map(([k, rel]) => {
@@ -442,7 +493,7 @@ export class Hud {
     $('#profile').innerHTML = `<div class="map-card">
       <div class="sheet-head">
         <div><div class="sheet-title">${a.kind === 'person' ? '🧑' : SPECIES[a.species].icon} ${esc(a.name)}</div>
-        <div class="sheet-sub">${esc(SPECIES[a.species].label)} · ${esc(stage.label)} · ${a.ageDays} días</div></div>
+        <div class="sheet-sub">${esc(SPECIES[a.species].label)} · ${esc(stage.label)} · ${a.ageDays} ${a.ageDays === 1 ? 'día' : 'días'}</div></div>
         <button class="icon-btn" data-close>✕</button>
       </div>
       ${jobHtml}
@@ -487,6 +538,7 @@ export class Hud {
     const w = this.world;
     const a = w.activeAgent;
 
+    this.renderGone();
     $('#clock').textContent = `${WEEKDAY_NAMES[w.weekday]} ${w.day} · ${w.clock}`;
     $('#funds').textContent = `§ ${w.household.funds.toLocaleString('es-ES')}`;
     $('#funds').classList.toggle('neg', w.household.funds < 0);
@@ -514,7 +566,7 @@ export class Hud {
     // Cabecera del panel
     const md = mood(a);
     const stage = lifeStage(a.species, a.ageDays);
-    $('#who').innerHTML = `<b>${esc(a.name)}</b> <span class="muted">${esc(stage.label)} · ${a.ageDays} días</span> <span title="${md.label}">${md.icon}</span>`;
+    $('#who').innerHTML = `<b>${esc(a.name)}</b> <span class="muted">${esc(stage.label)} · ${a.ageDays} ${a.ageDays === 1 ? 'día' : 'días'}</span> <span title="${md.label}">${md.icon}</span>`;
 
     // Cola de acciones
     const tasks = [a.current, ...a.queue].filter((t) => t && t.actionId !== 'idle');
@@ -537,7 +589,8 @@ export class Hud {
       .join('');
     if (!queueHtml) {
       const own = w.optionsFor(a.id, { kind: 'agent', id: a.id }).length > 0;
-      const where = a.home ? 'Toca su jaula' : 'Toca algo';
+      const homeDef = a.home ? w.object(a.home)?.def : undefined;
+      const where = homeDef === 'crib' ? 'Toca su cuna' : homeDef ? 'Toca su jaula' : 'Toca algo';
       queueHtml = `<div class="hint">${a.kind === 'pet' ? '🐾' : '👆'} ${where}${own ? ` o a ${esc(a.name)}` : ''} para darle una orden</div>`;
     }
     if (queueHtml !== this.lastQueueHtml) {

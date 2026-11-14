@@ -324,8 +324,8 @@ export class HouseScene extends Phaser.Scene {
         // Bandeja con serrín; los barrotes se dibujan delante del animal.
         this.box(gfx, o.x + 0.05, o.y + 0.05, d.w - 0.1, d.h - 0.1, 7, d.color);
         this.box(gfx, o.x + 0.12, o.y + 0.12, d.w - 0.24, d.h - 0.24, 0, 0xe9d8a6);
-        // casita
-        this.box(gfx, o.x + d.w - 0.6, o.y + 0.25, 0.45, 0.5, 9, 0xd98c4a);
+        // casita (solo en la jaula de la cobaya)
+        if (o.def === 'cage') this.box(gfx, o.x + d.w - 0.6, o.y + 0.25, 0.45, 0.5, 9, 0xd98c4a);
         front = this.add.graphics().setDepth(depth + 3);
         const A = isoToScreen(o.x + 0.05, o.y + 0.05), B = isoToScreen(o.x + d.w - 0.05, o.y + 0.05), C = isoToScreen(o.x + d.w - 0.05, o.y + d.h - 0.05), D = isoToScreen(o.x + 0.05, o.y + d.h - 0.05);
         const H = d.height;

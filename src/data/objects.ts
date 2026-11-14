@@ -49,6 +49,10 @@ const D: ObjectDef[] = [
   { id: 'cage', name: 'Jaula de cobaya', icon: '', w: 2, h: 1, height: 22, color: 0x4a90d9, shape: 'cage', capacity: 2, actions: ['cage_eat', 'cage_sleep', 'cage_run', 'cage_pee', 'refill_hay', 'clean_cage'], maxStock: 3, maxDirt: 5 },
   { id: 'hammock', name: 'Hamaca de hurón', icon: '', w: 1, h: 1, height: 26, color: 0x8e5bd6, shape: 'hammock', capacity: 1, snap: true, actions: ['ferret_sleep'] },
   { id: 'pond', name: 'Estanque', icon: '', w: 2, h: 2, height: 0, color: 0x4aa3df, shape: 'pond', capacity: 3, snap: true, actions: ['swim'] },
+  // Ciclo de vida
+  { id: 'crib', name: 'Cuna', icon: '', w: 1, h: 1, height: 20, color: 0xf2a7c3, shape: 'cage', capacity: 3, actions: ['baby_sleep'] },
+  { id: 'grave', name: 'Lápida', icon: '🪦', w: 1, h: 1, height: 0, color: 0x888888, shape: 'none', capacity: 1, walkable: true, actions: ['remember'] },
+
   // Parque
   { id: 'bench', name: 'Banco', icon: '', w: 1, h: 1, height: 12, color: 0x8b5a2b, shape: 'bench', capacity: 2, snap: true, actions: ['sit_bench'] },
   { id: 'swings', name: 'Columpios', icon: '', w: 2, h: 1, height: 40, color: 0xd9534f, shape: 'swings', capacity: 2, snap: true, actions: ['swing'] },

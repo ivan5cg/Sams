@@ -54,6 +54,10 @@ export interface ActionDef {
   doneToast?: string;
   /** Se puede hacer estando de visita en casa ajena. */
   guestOk?: boolean;
+  /** Solo para estas etapas de la vida de quien la hace (bebés). */
+  actorStages?: string[];
+  /** Solo hacia estas etapas de la vida (cuidar bebés). */
+  targetStages?: string[];
 }
 
 const PETS_FREE: SpeciesId[] = ['dog', 'cat', 'ferret', 'capybara'];
@@ -114,6 +118,11 @@ const A: ActionDef[] = [
   { id: 'swing', label: 'Columpiarse', verb: 'Columpiándose', icon: '🎠', target: 'object', actors: ['person'], guestOk: true, duration: 30, effects: { fun: 0.7, energy: -0.05 }, until: 'full', interruptible: true },
   { id: 'buy_hotdog', label: 'Comprar un perrito (§5)', verb: 'Comiendo un perrito', icon: '🌭', target: 'object', actors: ['person'], guestOk: true, duration: 12, effects: { hunger: 4.5, fun: 0.1 }, until: 'full', cost: 5 },
 
+  // Ciclo de vida
+  { id: 'baby_sleep', label: 'Dormir en la cuna', verb: 'Durmiendo', icon: '💤', target: 'object', actors: ['person'], actorStages: ['baby'], duration: 240, effects: { energy: 0.4 }, until: 'full', decayMult: 0.5, interruptible: true },
+  { id: 'cry', label: 'Llorar', verb: 'Llorando', icon: '😭', target: 'self', actors: ['person'], actorStages: ['baby'], duration: 5, effects: { social: 0.3 }, interruptible: true },
+  { id: 'remember', label: 'Recordar', verb: 'Recordando', icon: '🕯️', target: 'object', actors: ['person'], guestOk: true, duration: 20, effects: { social: 0.2, fun: -0.1 } },
+
   // --- Social: persona → persona ---
   { id: 'chat', label: 'Charlar', verb: 'Charlando', icon: '💬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 30, effects: { social: 0.7, fun: 0.1 }, partnerEffects: { social: 0.7, fun: 0.1 }, until: 'full', interruptible: true },
   { id: 'joke', label: 'Contar un chiste', verb: 'Contando un chiste', icon: '😂', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: 0.6, social: 0.3 }, partnerEffects: { fun: 0.6, social: 0.3 } },
@@ -123,6 +132,11 @@ const A: ActionDef[] = [
   { id: 'ask_partner', label: 'Pedir salir', verb: 'Declarándose', icon: '💘', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 5, effects: { social: 1 }, partnerEffects: { social: 1 }, playerOnly: true },
   { id: 'propose', label: 'Pedir matrimonio', verb: 'Pidiendo matrimonio', icon: '💍', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: 2, fun: 1 }, partnerEffects: { social: 2, fun: 1 }, playerOnly: true },
   { id: 'move_in', label: 'Proponer vivir juntos', verb: 'Hablando de mudarse', icon: '🏡', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: 1 }, partnerEffects: { social: 1 }, playerOnly: true },
+  { id: 'try_baby', label: 'Intentar tener un bebé', verb: 'Buscando un bebé', icon: '🍼', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 20, effects: { social: 1, fun: 1, energy: -0.2 }, partnerEffects: { social: 1, fun: 1, energy: -0.2 }, playerOnly: true },
+  { id: 'feed_baby', label: 'Dar el biberón (§3)', verb: 'Dando el biberón', icon: '🍼', target: 'agent', actors: ['person'], targetKinds: ['person'], targetStages: ['baby'], cost: 3, duration: 10, effects: { social: 0.3 }, partnerEffects: { hunger: 6 } },
+  { id: 'change_diaper', label: 'Cambiar el pañal', verb: 'Cambiando el pañal', icon: '🧷', target: 'agent', actors: ['person'], targetKinds: ['person'], targetStages: ['baby'], duration: 5, effects: { fun: -0.3, hygiene: -0.3 }, partnerEffects: { hygiene: 12, bladder: 12 } },
+  { id: 'rock_baby', label: 'Mecer', verb: 'Meciendo', icon: '🤱', target: 'agent', actors: ['person'], targetKinds: ['person'], targetStages: ['baby'], duration: 15, effects: { social: 0.4 }, partnerEffects: { social: 2.5, energy: 0.6, fun: 0.4 } },
+  { id: 'play_baby', label: 'Hacer cucamonas', verb: 'Haciendo cucamonas', icon: '🤪', target: 'agent', actors: ['person'], targetKinds: ['person'], targetStages: ['baby'], duration: 10, effects: { fun: 0.4 }, partnerEffects: { fun: 2, social: 0.8 } },
   { id: 'say_goodbye', label: 'Despedirse', verb: 'Despidiéndose', icon: '👋', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 3, effects: { social: 0.5 }, partnerEffects: { social: 0.5 }, playerOnly: true },
   { id: 'hug', label: 'Abrazar', verb: 'Abrazando', icon: '🤗', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 4, effects: { social: 2 }, partnerEffects: { social: 2 } },
 
