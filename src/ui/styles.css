@@ -1188,3 +1188,16 @@ body.building #hud-bottom {
   width: 100%;
   margin-top: 10px;
 }
+
+.trait-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.trait-icon {
+  font-size: 22px;
+}

@@ -66,6 +66,8 @@ export interface Agent {
   known?: Record<string, string[]>;
   /** Deseos (solo la familia del jugador). */
   wishes?: Wish[];
+  /** Rasgos de personalidad (personas). */
+  traits?: string[];
   /** Está de visita (o en el parque) hasta este minuto; después vuelve a casa. Solo vecinos. */
   visitUntil?: number;
   /** Simulado de forma resumida (vecinos en parcelas donde no está el jugador). */
@@ -163,5 +165,7 @@ export interface WorldState {
   aging?: 'off' | 'normal' | 'fast';
   /** La familia del jugador se ha quedado sin personas: hay que elegir con quién seguir. */
   familyGone?: boolean;
+  /** Noticias del barrio (lo último primero): de qué se habla y se cotillea. */
+  news?: { day: number; text: string; about: string[] }[];
   objects: PlacedObject[];
 }

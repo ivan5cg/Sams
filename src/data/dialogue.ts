@@ -1,62 +1,95 @@
 // Frases de los personajes: conversaciones, sonidos de animales y pensamientos.
+// Muy de aquí: cañas, tortilla, el pueblo, los lunes... y algún que otro cuñado.
 
 import type { NeedKey, SpeciesId } from '../sim/types';
+
+/** Chistes malos (de los de toda la vida). */
+export const CHISTES: [string, string][] = [
+  ['¿Qué le dice un techo a otro? Techo de menos', '¡Jajaja! Qué malo, por favor'],
+  ['¿Cómo se llama el campeón japonés de buceo? Tokofondo', 'Jajaja, ¿y el subcampeón? Kasitoko'],
+  ['¿Qué le dice una iguana a su hermana gemela? Iguanita', 'No puedo con la risa'],
+  ['¿Por qué las focas miran al cielo? ¡Porque ahí están los focos!', 'Jajaja, ese me lo apunto'],
+  ['¿Cómo se dice pañuelo en japonés? Saka-moko', '¡Jajajaja!'],
+  ['¿Qué le dice un jardinero a otro? Disfrutemos mientras podamos', 'Jajaja, qué bueno'],
+  ['¿Cómo se llama el primo vegetariano de Bruce Lee? Broco-Lee', '¡Jajaja! Esto es de cuñado total'],
+  ['Van dos y se cae el del medio', '...¿qué? ¡Jajaja!'],
+  ['¿Qué hace una abeja en el gimnasio? ¡Zum-ba!', 'Jajaja, me meo'],
+  ['¿Cuál es el colmo de un electricista? Que su mujer se llame Luz y sus hijos le sigan la corriente', '¡Jajaja, muy bueno!'],
+  ['Mamá, mamá, en el colegio me llaman despistado. —Niño, tú no vives aquí', 'Jajaja, pobre crío'],
+  ['¿Sabes por qué el mar es azul? Porque los peces hacen blu, blu, blu', 'Jajaja, qué chorrada'],
+  ['¿Qué le dice el uno al diez? Para ser como yo, tienes que ser sincero', '¡Jajaja!'],
+];
 
 /** Pares [lo que dice quien empieza, lo que responde el otro] para cada interacción. */
 export const ACTION_LINES: Record<string, [string, string][]> = {
   chat: [
-    ['¿Qué tal el día?', '¡Bien! ¿Y el tuyo?'],
-    ['¿Has visto lo que hizo el hurón?', '¡Ese bicho es un ladrón!'],
-    ['Qué día tan bonito hace', 'Apetece ir al parque'],
-    ['¿Qué hay de cenar?', 'Lo que cocines tú'],
-    ['He soñado algo rarísimo...', '¿El qué? ¡Cuenta!'],
-    ['¿Has visto la última serie?', '¡Sin spoilers, eh!'],
-    ['Tengo que ir al gimnasio', 'Llevas un mes diciéndolo'],
-    ['Me encanta este barrio', 'Y a mí, la gente es maja'],
+    ['¿Qué pasa, máquina? ¿Cómo va eso?', 'Aquí andamos, tirando'],
+    ['¿Nos tomamos unas cañas luego?', '¡Y unas bravas, que no falten!'],
+    ['¿Tortilla con cebolla o sin cebolla?', 'Con cebolla. Lo otro es un crimen'],
+    ['Vaya calor que hace, ¿eh?', 'Y lo que queda, hijo, y lo que queda'],
+    ['¿Has visto cómo está el aceite?', 'Por las nubes. Ya es oro líquido'],
+    ['Este verano me voy al pueblo', 'Allí sí que se está bien, con la fresca'],
+    ['¿Viste el partido de anoche?', '¡Penalti clarísimo y no lo pitó!'],
+    ['He estado en el Mercadona y me he dejado un dineral', 'Si es que vas a por pan y sales con cien euros'],
+    ['¿Tú duermes siesta?', 'Todos los días. Es Patrimonio de la Humanidad'],
+    ['¿A qué hora cenáis vosotros?', 'Pronto, a las diez'],
+    ['¿Me has visto el móvil?', 'Lo tienes en la mano'],
+    ['¿Has visto lo que hizo el hurón?', 'Ese bicho tiene más vicios que un cuñado'],
   ],
-  talk: [
-    ['Oye, ¿tienes un momento?', 'Claro, dime'],
-  ],
-  joke: [
-    ['¿Qué le dice un pez a otro? ¡Nada!', '¡Ja, ja, ja!'],
-    ['¿Por qué el libro de mates está triste? ¡Tiene muchos problemas!', 'Jajaja, qué malo'],
-    ['¿Cómo se despiden los químicos? ¡Ácido un placer!', '¡Jajaja!'],
-    ['¿Qué hace una abeja en el gimnasio? ¡Zum-ba!', 'No puedo más, jajaja'],
-    ['Van dos y se cae el del medio', '¿Qué? ¡Jajaja!'],
-  ],
+  talk: [['Oye, ¿tienes un momento?', 'Claro, dime']],
+  joke: CHISTES,
   hug: [
-    ['¡Ven aquí!', '¡Qué gusto!'],
-    ['Necesitaba un abrazo', 'Y yo'],
+    ['¡Ven aquí, que te doy un achuchón!', '¡Ay, qué gusto!'],
+    ['Necesitaba un abrazo', 'Y yo, hombre, y yo'],
   ],
   insult: [
-    ['¡Eres un pesado!', '¡Y tú un borde!'],
-    ['¡Vaya pintas llevas!', '¡Mira quién habla!'],
-    ['¡Deja de hacer ruido!', '¡Hago lo que quiero!'],
+    ['¡Eres más pesado que una vaca en brazos!', '¡Y tú más borde que un bordillo!'],
+    ['¡Vaya pintas llevas, hijo!', '¡Mira quién fue a hablar!'],
+    ['¡Baja la música, que son las tantas!', '¡Pues cómprate unos tapones!'],
+    ['¡Tienes menos gracia que un pez espada!', '¡Y tú menos luces que un barco pirata!'],
   ],
   flirt: [
-    ['Hoy estás radiante', 'Me vas a sonrojar...'],
-    ['¿Sabes que tienes una sonrisa preciosa?', 'Tú tampoco estás nada mal'],
-    ['¿Te han dicho que tienes unos ojos bonitos?', '¿Ah, sí? Cuéntame más'],
+    ['¿Estudias o trabajas?', 'Jajaja, ¿en serio? ¿Esa frase todavía funciona?'],
+    ['Si la belleza fuera delito, te caía cadena perpetua', 'Ay, calla, calla... sigue'],
+    ['Hoy estás que lo tiras', 'Me vas a sacar los colores...'],
+    ['¿Te han dicho alguna vez que tienes unos ojos preciosos?', '¿Ah, sí? Cuéntame más'],
   ],
   kiss: [['Mua', '♥']],
   ask_partner: [['¿Quieres salir conmigo?', '¡Sí, claro que sí!']],
-  propose: [['¿Te quieres casar conmigo?', '¡Sí! ¡Mil veces sí!']],
-  move_in: [['¿Y si nos vamos a vivir juntos?', '¡Me encantaría!']],
+  propose: [['¿Te quieres casar conmigo? Con banquete y todo', '¡Sí! ¡Y que haya barra libre!']],
+  move_in: [['¿Y si nos vamos a vivir juntos?', '¡Me encantaría! Pero el mando de la tele es mío']],
   try_baby: [['¿Y si tenemos un bebé?', 'Vamos a intentarlo']],
   niqui: [['¿Nos vamos un ratito a la habitación?', 'Me parece un plan estupendo']],
-  say_goodbye: [['Bueno, que ya es tarde...', '¡Hasta pronto!']],
-  feed_baby: [['Aquí viene el avioncito...', '¡Ba-ba!']],
-  change_diaper: [['Uf, qué olor...', 'Agú']],
-  rock_baby: [['Duérmete, mi niño...', 'Mmm...']],
-  play_baby: [['¿Dónde está? ¡Aquí está!', '¡Jijiji!']],
-  pet_animal: [['¿Quién es el más bueno? ¡Tú!', '*']],
-  play_pet: [['¡A por ella!', '*']],
-  walk_dog: [['¿Vamos de paseo?', '*']],
-  bathe_pet: [['Quieto, que es un momento', '*']],
-  brush_capy: [['Qué pelo más bonito', '*']],
+  say_goodbye: [
+    ['Venga, que me voy, que mañana madrugo', '¡Hala, hasta luego!'],
+    ['Bueno, ya si eso nos vemos', 'Venga, dale recuerdos a tu madre'],
+  ],
+  feed_baby: [['Aquí viene el avioncito... ¡brrrum!', '¡Ba-ba!']],
+  change_diaper: [['Madre mía, qué olor... ¿qué has comido?', 'Agú']],
+  rock_baby: [['Duérmete niño, duérmete ya...', 'Mmm...']],
+  play_baby: [['¿Dónde está el bebé? ¡Aquí está!', '¡Jijiji!']],
+  pet_animal: [['¿Quién es el más bonito de la casa? ¡Tú!', '*']],
+  play_pet: [['¡A por ella, campeón!', '*']],
+  walk_dog: [['¿Vamos a dar un paseíto?', '*']],
+  bathe_pet: [['Quieto, que es un momentito', '*']],
+  brush_capy: [['Qué pelito más bonito tienes', '*']],
   beg_affection: [['*', 'Ay, ven aquí, bonito']],
-  play_with_person: [['*', '¡Vale, vamos a jugar!']],
+  play_with_person: [['*', '¡Vale, venga, vamos a jugar!']],
 };
+
+/** Respuestas cuando un cuñado empieza la conversación (y su réplica de sabelotodo). */
+export const CUNADO_LINES: [string, string][] = [
+  ['Esto lo arreglaba yo en dos tardes', 'Ya, como la estantería, ¿no?'],
+  ['Tú lo que tienes que hacer es comprarte un piso', 'Claro, con qué dinero'],
+  ['El aceite de oliva lo cura todo, te lo digo yo', 'Eso dice mi abuela también'],
+  ['Yo a tu edad ya tenía dos pisos y un apartamento en la playa', 'Y yo me lo creo'],
+  ['¿Cuánto te ha costado el coche? Te han timado', 'Pero si aún no te lo he dicho'],
+  ['Si me hicieran caso a mí, otro gallo cantaría', 'Ya empezamos...'],
+  ['Eso con WD-40 se arregla', '¿El qué? Si no te he contado nada'],
+  ['Un primo mío trabaja en eso y dice que...', 'Tu primo trabaja en todo, ¿eh?'],
+  ['La paella con chorizo es la buena', '¡Eso es un delito en Valencia!'],
+  ['Yo de fútbol sé más que el entrenador', 'Pues que te fiche, hombre'],
+];
 
 /** Sonidos de cada especie ('*' en las frases de arriba). */
 export const PET_SOUNDS: Partial<Record<SpeciesId, string[]>> = {
@@ -69,34 +102,37 @@ export const PET_SOUNDS: Partial<Record<SpeciesId, string[]>> = {
 
 /** Pensamientos cuando una necesidad está muy baja. */
 export const NEED_THOUGHTS: Record<NeedKey, string[]> = {
-  hunger: ['¡Qué hambre!', 'Me comería un caballo', 'Mi estómago ruge...'],
-  energy: ['Me caigo de sueño...', 'Necesito una siesta', 'Zzz... ¿eh?'],
-  bladder: ['¡Necesito un baño YA!', '¡Que no llego!'],
-  hygiene: ['Huelo un poco...', 'Necesito una ducha'],
-  fun: ['Me aburro...', 'Qué día más soso'],
-  social: ['Necesito hablar con alguien', 'Me siento solo/a...'],
+  hunger: ['Me comería un bocata de calamares', 'Tengo más hambre que el perro de un ciego', 'Unas bravas me salvarían la vida'],
+  energy: ['Necesito una siesta como el comer', 'Me caigo de sueño...', 'Estoy más cansado/a que un perro de dos amos'],
+  bladder: ['¡Que no llego!', 'Necesito un baño YA', '¡Ay, ay, ay!'],
+  hygiene: ['Huelo a tigre...', 'Necesito una ducha urgente', 'Hoy no me arrimo a nadie'],
+  fun: ['Me aburro como una ostra', 'Qué día más soso', 'Esto es más aburrido que un domingo por la tarde'],
+  social: ['Necesito hablar con alguien', 'Qué sola/o me siento...', '¿Nadie quiere un café?'],
 };
 
 /** Comentarios de vez en cuando mientras se hacen algunas cosas. */
 export const ACTION_QUIPS: Record<string, string[]> = {
-  watch_tv: ['¡Jajaja!', '¡No me lo puedo creer!', '¡Qué buen capítulo!'],
-  cook: ['Una pizca de sal...', '¡Huele de maravilla!'],
-  eat: ['¡Qué rico!', 'Ñam, ñam'],
-  paint: ['Un poco más de azul...', '¡Mi obra maestra!'],
-  read: ['Qué buen libro', 'Un capítulo más...'],
-  play_games: ['¡Toma ya!', '¡Nooo, me han matado!'],
-  run: ['¡Uf, qué cansancio!', 'Un kilómetro más...'],
-  pilates: ['Respira... estira...', 'Siento músculos nuevos'],
-  reformer: ['¡Uf, cómo quema!', 'Core, core, core...'],
-  repair: ['A ver esto...', '¿Dónde está la llave inglesa?'],
+  watch_tv: ['¡Jajaja!', 'Otra vez anuncios...', 'Este concurso está amañado', '¡Pero qué tonto el del programa!'],
+  cook: ['Un chorrito de aceite...', '¡Huele a gloria!', 'Como la de mi madre, ninguna', 'Le falta una pizca de sal'],
+  eat: ['¡Qué rico!', 'Ñam, ñam', 'Esto está de rechupete', 'Como en casa, en ningún sitio'],
+  snack: ['Solo un poquito...', 'Una más y lo dejo'],
+  paint: ['Un poco más de azul...', '¡Mi obra maestra!', 'Esto en el Prado no lo tienen'],
+  read: ['Qué buen libro', 'Un capítulo más y apago'],
+  play_games: ['¡Toma ya!', '¡Nooo, que me han matado!', 'Una partida más y lo dejo'],
+  run: ['¡Uf, qué fatiga!', 'Un kilómetro más...', 'Esto lo hago por las torrijas de Semana Santa'],
+  pilates: ['Respira... estira...', 'Siento músculos que no sabía que tenía'],
+  reformer: ['¡Ay, cómo quema!', 'Core, core, core...', 'Mañana no me levanto'],
+  repair: ['A ver esto...', '¿Quién ha tocado esto?', 'Esto con un poco de cinta americana...'],
   play_chess: ['Mmm... jaque', '¿Y si muevo el caballo?'],
-  dance: ['¡Esta canción me encanta!', '¡Vamos!'],
-  play_guitar: ['La, la, laaa', '¡Este acorde mola!'],
-  busk: ['¡Gracias, gracias!', 'Una moneda, por favor'],
-  homework: ['¿Cuánto es 7 por 8?', 'Qué rollo de deberes'],
-  clean: ['Qué asco...', 'Ya casi está'],
+  dance: ['¡Esta canción me encanta!', '¡Que no pare la fiesta!', '¡Vamos!'],
+  play_guitar: ['La, la, laaa', '¡Este acorde mola!', 'Ahora, una de Sabina'],
+  busk: ['¡Gracias, gracias!', 'Una monedita, por favor', 'Ahora, una rumbita'],
+  homework: ['¿Cuánto es 7 por 8?', 'Qué rollo de deberes', 'Esto no lo vamos a usar nunca'],
+  clean: ['Qué asco, por favor', 'Ya casi está'],
   clean_litter: ['Qué asco...', 'Misión cumplida'],
   swing: ['¡Más alto!', '¡Wiii!'],
+  sit_bench: ['Aquí se está de lujo', 'Qué bien se está a la fresca'],
+  buy_hotdog: ['¡Con mostaza, por favor!', 'Esto es alta cocina'],
 };
 
 // -----------------------------------------------------------------------------
@@ -108,7 +144,7 @@ export type Interest = (typeof INTERESTS)[number];
 
 export const INTEREST_LABEL: Record<Interest, string> = {
   mascotas: 'las mascotas',
-  deporte: 'el deporte',
+  deporte: 'el fútbol',
   musica: 'la música',
   arte: 'el arte',
   cocina: 'la cocina',
@@ -130,20 +166,25 @@ export interface TopicDef {
 }
 
 export const TOPICS: TopicDef[] = [
-  { id: 'dia', label: 'Preguntar qué tal el día', icon: '☀️', say: ['¿Qué tal tu día?', '¿Cómo te va todo?'], good: ['¡Muy bien, gracias por preguntar!', 'Genial, la verdad'], meh: ['Bueno... tirando', 'Normalito'], bad: ['Mejor no preguntes'] },
-  { id: 'mascotas', interest: 'mascotas', label: 'Hablar de mascotas', icon: '🐾', say: ['¿Te gustan los animales?', '¿Has visto qué mono es {pet}?'], good: ['¡Me encantan! Son lo mejor', '¡Yo me llevaría a casa a todos!'], meh: ['Están bien, supongo'], bad: ['Puaj, pelos por todas partes'] },
-  { id: 'deporte', interest: 'deporte', label: 'Hablar de deporte', icon: '⚽', say: ['¿Viste el partido de ayer?', 'Me he apuntado a pilates'], good: ['¡Qué partidazo! No me lo perdí', '¡Yo también! Es lo mejor'], meh: ['No lo vi, la verdad'], bad: ['El deporte me aburre muchísimo'] },
-  { id: 'musica', interest: 'musica', label: 'Hablar de música', icon: '🎵', say: ['¿Qué música te gusta?', '¿Has oído la última canción de moda?'], good: ['¡La música es mi vida!', '¡No paro de escucharla!'], meh: ['Escucho un poco de todo'], bad: ['Esa canción me pone de los nervios'] },
-  { id: 'arte', interest: 'arte', label: 'Hablar de arte', icon: '🎨', say: ['¿Te gusta pintar?', 'Fui a una exposición genial'], good: ['¡Me encanta! Tengo el salón lleno de cuadros', '¿Sí? ¡Tienes que llevarme!'], meh: ['No entiendo mucho de arte'], bad: ['Eso de los museos es un rollo'] },
-  { id: 'cocina', interest: 'cocina', label: 'Hablar de cocina', icon: '🍳', say: ['¿Sabes hacer tortilla?', 'He probado una receta nueva'], good: ['¡Con cebolla, por supuesto!', '¡Pásamela, por favor!'], meh: ['Yo solo sé hacer huevos fritos'], bad: ['¿Cocinar? Para eso está la pizza'] },
-  { id: 'ciencia', interest: 'ciencia', label: 'Hablar de ciencia', icon: '🔬', say: ['¿Sabías que los pulpos tienen tres corazones?', 'He leído algo sobre agujeros negros'], good: ['¡Qué fascinante! Cuéntame más', '¡Me encanta ese tema!'], meh: ['Ah... qué curioso'], bad: ['Uf, me estás dando dolor de cabeza'] },
-  { id: 'cotilleos', interest: 'cotilleos', label: 'Cotillear', icon: '🤫', say: ['¿Te has enterado de lo de {gossip}?', 'No se lo digas a nadie, pero {gossip}...'], good: ['¡No me digas! ¡Cuéntamelo todo!', '¡Lo sabía!'], meh: ['Ah, vale...'], bad: ['No me gusta hablar de los demás'] },
-  { id: 'viajes', interest: 'viajes', label: 'Hablar de viajes', icon: '✈️', say: ['¿Dónde te irías de vacaciones?', 'Quiero ir a Japón'], good: ['¡A la playa, sin dudarlo!', '¡Qué envidia! Llévame'], meh: ['Yo soy más de quedarme en casa'], bad: ['Odio hacer maletas'] },
-  { id: 'cumplido', label: 'Hacer un cumplido', icon: '🌟', say: ['Me caes genial, ¿sabes?', 'Siempre me alegras el día'], good: ['¡Oh, qué bonito! Tú también a mí', 'Gracias, de verdad'], meh: ['Eh... gracias'], bad: ['¿Y eso a qué viene?'] },
-  { id: 'chiste', label: 'Contar un chiste', icon: '😂', say: ['¿Qué le dice un pez a otro? ¡Nada!', '¿Cómo se despiden los químicos? ¡Ácido un placer!'], good: ['¡Jajaja! ¡Qué bueno!', 'No puedo con la risa'], meh: ['Je... je', 'Ese ya me lo sabía'], bad: ['Qué malo, por favor'] },
-  { id: 'quejarse', label: 'Quejarse de la vida', icon: '😮‍💨', say: ['Estoy un poco agobiado/a...', 'Hoy todo me sale mal'], good: ['Ánimo, aquí me tienes para lo que necesites', 'Ven, cuéntamelo todo'], meh: ['Ya pasará'], bad: ['Todos tenemos problemas, eh'] },
-  { id: 'coquetear', label: 'Coquetear', icon: '😏', say: ['¿Sabes que tienes una sonrisa preciosa?', 'Contigo el tiempo vuela'], good: ['Me estás sonrojando...', 'Tú tampoco estás nada mal'], meh: ['Eh... gracias, supongo'], bad: ['Mejor nos quedamos como amigos'] },
-  { id: 'parque', label: 'Proponer ir juntos al parque', icon: '🌳', say: ['¿Te vienes al parque conmigo?'], good: ['¡Venga, vamos!'], meh: ['Hoy no puedo, otro día'], bad: ['No me apetece'] },
+  { id: 'dia', label: 'Preguntar qué tal le va', icon: '☀️', say: ['¿Qué tal todo? ¿Cómo va la vida?', '¿Qué pasa, cómo estás?'], good: ['¡Muy bien! Aquí, disfrutando', 'Pues mira, no me puedo quejar'], meh: ['Tirando, que no es poco', 'Ahí vamos, como siempre'], bad: ['Mejor no preguntes, que me enciendo'] },
+  { id: 'mascotas', interest: 'mascotas', label: 'Hablar de las mascotas', icon: '🐾', say: ['¿Has visto qué mono es {pet}?', '¿Tú eres más de perros o de gatos?'], good: ['¡Me encantan! Son lo mejor del mundo', '¡Yo me los llevaría a todos a casa!'], meh: ['Están bien, pero sueltan mucho pelo'], bad: ['Puaj, pelos por todas partes. Ni hablar'] },
+  { id: 'deporte', interest: 'deporte', label: 'Hablar de fútbol', icon: '⚽', say: ['¿Viste el partido de anoche? ¡Vaya penalti!', 'Este año ganamos la liga, te lo digo yo'], good: ['¡Clarísimo! El árbitro estaba ciego', '¡Ojalá! Este año sí que sí'], meh: ['No lo vi, estaba en el pueblo'], bad: ['Once tíos detrás de un balón. Qué aburrimiento'] },
+  { id: 'musica', interest: 'musica', label: 'Hablar de música', icon: '🎵', say: ['¿Te vienes a un concierto en las fiestas del pueblo?', '¿Has oído la canción del verano?'], good: ['¡Ahí estaré, en primera fila!', '¡No me la quito de la cabeza!'], meh: ['Yo escucho un poco de todo'], bad: ['Esa canción me pone de los nervios'] },
+  { id: 'arte', interest: 'arte', label: 'Hablar de arte', icon: '🎨', say: ['¿Has ido al Prado?', 'He pintado un cuadro, ¿quieres verlo?'], good: ['¡Me encanta! Las Meninas me dejaron sin palabras', '¡Claro! A ver ese Picasso'], meh: ['Yo de arte entiendo poco'], bad: ['Eso de los museos es un tostón'] },
+  { id: 'cocina', interest: 'cocina', label: 'Debate: tortilla con o sin cebolla', icon: '🍳', say: ['Vamos a zanjar esto: ¿tortilla con cebolla o sin cebolla?', '¿Cuál es tu receta estrella?'], good: ['¡Con cebolla, por supuesto! Lo demás es un crimen', 'Mis croquetas. Las de mi abuela, vamos'], meh: ['A mí mientras tenga patata...'], bad: ['Sin cebolla. Y no hay más que hablar. Fin'] },
+  { id: 'ciencia', interest: 'ciencia', label: 'Contar un dato curioso', icon: '🔬', say: ['¿Sabías que los pulpos tienen tres corazones?', '¿Sabías que un día en Venus dura más que un año?'], good: ['¡Qué fuerte! Cuéntame más', '¡Me encantan estas cosas!'], meh: ['Ah... qué curioso'], bad: ['Uf, me estás dando dolor de cabeza'] },
+  { id: 'cotilleos', interest: 'cotilleos', label: 'Cotillear', icon: '🤫', say: ['¿Te has enterado de que {news}?', 'Yo no digo nada, pero... {news}'], good: ['¡No me digas! ¡Cuéntamelo todo!', '¡Lo sabía! Si es que se veía venir'], meh: ['Ah, vale... no lo sabía'], bad: ['No me gusta hablar de la gente a sus espaldas'] },
+  { id: 'viajes', interest: 'viajes', label: 'Hablar de las vacaciones', icon: '🏖️', say: ['¿Dónde os vais este verano? ¿A Benidorm?', 'Estoy pensando en ir al pueblo en agosto'], good: ['¡A la playa, con la sombrilla y la tortilla!', '¡Al pueblo, a la fresca y a las fiestas!'], meh: ['Yo este año me quedo en casa'], bad: ['Odio hacer maletas. Y los atascos'] },
+  { id: 'precios', label: 'Quejarse de lo caro que está todo', icon: '💸', say: ['¿Has visto cómo está todo de caro?', 'El aceite ya está a precio de oro'], good: ['¡Ni me hables! Vas a por pan y te dejas cincuenta euros', 'Si es que no se puede vivir'], meh: ['Ya, ya... es lo que hay'], bad: ['Bueno, tampoco es para tanto, ¿no?'] },
+  { id: 'cumplido', label: 'Hacer un cumplido', icon: '🌟', say: ['Me caes genial, ¿sabes?', 'Siempre me alegras el día'], good: ['¡Oh, qué bonito! Tú a mí también', 'Gracias, de verdad, eres un sol'], meh: ['Eh... gracias'], bad: ['¿Y eso a qué viene ahora?'] },
+  { id: 'chiste', label: 'Contar un chiste', icon: '😂', say: ['¿Qué le dice un techo a otro? Techo de menos', '¿Cómo se llama el campeón japonés de buceo? Tokofondo'], good: ['¡Jajaja! ¡Qué bueno!', 'No puedo con la risa, ¡para!'], meh: ['Je... je. Ese ya me lo sabía', 'Ese es más viejo que la tos'], bad: ['Qué malo, por favor. Eres un cuñado'] },
+  { id: 'quejarse', label: 'Desahogarse', icon: '😮‍💨', say: ['Estoy un poco agobiado/a con todo...', 'Hoy todo me sale mal'], good: ['Ánimo, aquí me tienes para lo que necesites', 'Ven, que te invito a un café y me lo cuentas'], meh: ['Ya pasará, hombre'], bad: ['Pues anda que yo... déjame que te cuente lo mío'] },
+  { id: 'coquetear', label: 'Coquetear', icon: '😏', say: ['¿Estudias o trabajas?', 'Si la belleza fuera delito, te caía cadena perpetua'], good: ['Ay, calla, calla... sigue', 'Me estás sacando los colores'], meh: ['Jajaja, ¿esa frase todavía funciona?'], bad: ['Mejor nos quedamos como amigos, ¿vale?'] },
+  { id: 'parque', label: 'Proponer ir juntos al parque', icon: '🌳', say: ['¿Te vienes a dar una vuelta por el parque?'], good: ['¡Venga, vamos, que hace un día estupendo!'], meh: ['Hoy no puedo, otro día'], bad: ['No me apetece nada'] },
 ];
 
 export const TOPIC_BY_ID: Record<string, TopicDef> = Object.fromEntries(TOPICS.map((t) => [t.id, t]));
+
+/** Reacciones a las noticias del barrio. */
+export const NEWS_REPLIES = ['¡No me digas!', '¡Qué fuerte!', 'Eso ya lo sabe todo el barrio', 'Lo sabía, se veía venir', 'Calla, calla, que me da algo'];
+export const CUNADO_NEWS_REPLIES = ['Eso ya lo sabía yo hace un mes', 'Normal, si es que yo ya lo dije', 'Pues un primo mío dice que no es así'];

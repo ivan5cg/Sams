@@ -5,6 +5,9 @@ import { migrate, serialize } from '../src/save/serialize';
 import type { Agent } from '../src/sim/types';
 import { canRomance, getRel, isAdult, setRel } from '../src/sim/social';
 import { converse, interestsOf, knownText, topicsFor } from '../src/sim/conversation';
+import { traitAffinity, traitsOf } from '../src/sim/traits';
+import { chatPair, contextPairs } from '../src/sim/chatter';
+import { CUNADO_LINES } from '../src/data/dialogue';
 
 /** Una partida con el formato de una versión anterior (sin barrio). */
 function oldSave(version: number) {
@@ -1135,5 +1138,61 @@ describe('diálogos, conversaciones y deseos', () => {
     const res = converse(w, a, t, 'dia');
     w.onTalkTurn(a, t, res, true);
     expect(w.ui.speech.map((s) => s.agentId)).toEqual(['a1', 'a2']);
+  });
+});
+
+describe('personalidad, noticias y charlas a la española', () => {
+  it('cada persona tiene 2 rasgos; Mateo es cuñado y tragón', () => {
+    const w = World.createNew();
+    for (const a of w.state.agents.filter((x) => x.kind === 'person')) expect(traitsOf(a)).toHaveLength(2);
+    expect(traitsOf(w.agent('a2')!).map((t) => t.id)).toEqual(['cunado', 'gloton']);
+    expect(traitsOf(w.agent('a3')!)).toEqual([]); // las mascotas no
+  });
+
+  it('al tragón le entra el hambre antes', () => {
+    const w = World.createNew();
+    isolate(w, ['a1', 'a2']);
+    const lucia = w.agent('a1')!, mateo = w.agent('a2')!;
+    for (const a of [lucia, mateo]) {
+      fullNeeds(a);
+      a.current = { id: `q${a.id}`, actionId: 'idle', byPlayer: false, phase: 'acting', remaining: 999 };
+    }
+    w.state.activeAgentId = 'nadie';
+    w.tick(60);
+    expect(mateo.needs.hunger).toBeLessThan(lucia.needs.hunger - 1);
+  });
+
+  it('a cada uno le apetecen más las cosas de su forma de ser', () => {
+    const w = World.createNew();
+    const lucia = w.agent('a1')!, mateo = w.agent('a2')!;
+    expect(traitAffinity(lucia, 'run')).toBeGreaterThan(1);
+    expect(traitAffinity(mateo, 'snack')).toBeGreaterThan(1);
+    expect(traitAffinity(mateo, 'chat')).toBeGreaterThan(1);
+  });
+
+  it('lo que pasa en el barrio se convierte en noticia y se cotillea', () => {
+    const w = World.createNew();
+    const hid = w.lotById('L1').householdId!;
+    const n = w.state.agents.find((a) => a.householdId === hid && a.kind === 'person' && isAdult(a))!;
+    n.job = { career: 'oficina', level: 1, perf: 99 };
+    n.lotId = 'L1';
+    w.state.minutes = 9 * 60 - 1;
+    w.tick(9 * 60);
+    expect((w.state.news ?? []).some((x) => x.text.includes(n.name) && x.text.includes('ascendido'))).toBe(true);
+    const gossip = w.gossipFor(w.agent('a1')!, w.agent('a2')!);
+    expect(gossip).toContain(n.name);
+    expect(topicsFor(w, w.agent('a1')!, w.agent('a2')!, 0).map((t) => t.id)).toContain('cotilleos');
+  });
+
+  it('las charlas dependen del día, la hora y lo que pasa', () => {
+    const w = World.createNew(); // lunes por la mañana
+    const pairs = contextPairs(w, w.agent('a1')!, w.agent('a2')!).map((p) => p[0]);
+    expect(pairs).toContain('Odio los lunes...');
+    expect(pairs.some((p) => p.includes('desayunado'))).toBe(true);
+    expect(pairs.some((p) => p.includes('Toby') || p.includes('Misi'))).toBe(true);
+    // El cuñado suelta sus cosas
+    let cunado = 0;
+    for (let i = 0; i < 60; i++) if (CUNADO_LINES.some((c) => c[0] === chatPair(w, w.agent('a2')!, w.agent('a1')!)[0])) cunado++;
+    expect(cunado).toBeGreaterThan(5);
   });
 });

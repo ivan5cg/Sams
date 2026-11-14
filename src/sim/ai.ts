@@ -3,6 +3,7 @@
 
 import { ACTIONS, SELF_ACTIONS, SOCIAL_ACTIONS } from '../data/actions';
 import { getRel } from './social';
+import { hasTrait, traitAffinity } from './traits';
 import type { World } from './world';
 import { NEED_KEYS, type Agent, type Needs } from './types';
 
@@ -61,7 +62,7 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
         // Averías: alguien se pone a arreglarlo (el baseScore ya lo hace atractivo).
       }
       if (score <= 0) continue;
-      options.push({ choice: { actionId, targetObjectId: o.id }, score: score * distFactor(o.x, o.y) * jitter() });
+      options.push({ choice: { actionId, targetObjectId: o.id }, score: score * traitAffinity(a, actionId) * distFactor(o.x, o.y) * jitter() });
     }
   }
 
@@ -69,7 +70,7 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
   for (const def of SELF_ACTIONS) {
     if (!world.checkSelfAction(a, def.id).ok) continue;
     const score = benefit(a.needs, def.effects, def.duration, urgentOnly) * 0.8 + (urgentOnly ? 0 : def.baseScore ?? 0);
-    if (score > 0) options.push({ choice: { actionId: def.id }, score: score * jitter() });
+    if (score > 0) options.push({ choice: { actionId: def.id }, score: score * traitAffinity(a, def.id) * jitter() });
   }
 
   // Interacciones con otros (quien vive en una jaula no sale a buscarlas)
@@ -85,8 +86,9 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
       // Por su cuenta solo se coquetea o se besa con la pareja, y solo se insulta a los enemigos.
       if ((def.id === 'flirt' || def.id === 'kiss') && !rel.status) continue;
       if (def.id === 'insult') {
-        if (rel.f > -40 || urgentOnly) continue;
-        options.push({ choice: { actionId: def.id, targetAgentId: t.id }, score: 3 * jitter() });
+        // Los gruñones saltan antes.
+        if (rel.f > (hasTrait(a, 'grunon') ? -10 : -40) || urgentOnly) continue;
+        options.push({ choice: { actionId: def.id, targetAgentId: t.id }, score: 3 * traitAffinity(a, def.id) * jitter() });
         continue;
       }
       let score = benefit(a.needs, def.effects, def.duration, urgentOnly) * relFactor;
@@ -97,7 +99,7 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
         score += (t.kind === 'pet' ? 0.6 : 1.2) * benefit(t.needs, def.partnerEffects, def.duration);
       }
       if (score <= 0) continue;
-      options.push({ choice: { actionId: def.id, targetAgentId: t.id }, score: score * distFactor(t.pos.x, t.pos.y) * jitter() });
+      options.push({ choice: { actionId: def.id, targetAgentId: t.id }, score: score * traitAffinity(a, def.id) * distFactor(t.pos.x, t.pos.y) * jitter() });
     }
   }
 

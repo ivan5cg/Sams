@@ -2,6 +2,7 @@
 
 import { INTERESTS, INTEREST_LABEL, TOPICS, TOPIC_BY_ID, type Interest, type TopicDef } from '../data/dialogue';
 import { acceptChance, canRomance, changeRel, getRel } from './social';
+import { hasTrait, traitsOf } from './traits';
 import type { Agent } from './types';
 import { moodScore, type World } from './world';
 
@@ -28,6 +29,8 @@ export function interestsOf(a: Agent): { likes: Interest[]; dislike: Interest } 
   // Su mejor habilidad también le gusta.
   const best = Object.entries(a.skills ?? {}).sort((x, y) => y[1] - x[1])[0];
   if (best && best[1] >= 2 && SKILL_INTEREST[best[0]]) likes.add(SKILL_INTEREST[best[0]]);
+  // Y lo que va con su forma de ser.
+  for (const t of traitsOf(a)) for (const i of t.interests ?? []) likes.add(i);
   const others = INTERESTS.filter((i) => !likes.has(i));
   return { likes: [...likes], dislike: others[(h >>> 9) % others.length] };
 }
@@ -51,7 +54,8 @@ export function topicsFor(world: World, a: Agent, t: Agent, turn: number): Topic
   const start = (hashStr(a.id + t.id) + turn * 3) % interestTopics.length;
   pool.push(interestTopics[start], interestTopics[(start + 1) % interestTopics.length]);
   pool.push(TOPIC_BY_ID[turn % 2 === 0 ? 'dia' : 'cumplido']);
-  pool.push(TOPIC_BY_ID[turn % 3 === 1 ? 'quejarse' : 'chiste']);
+  pool.push(TOPIC_BY_ID[['chiste', 'precios', 'quejarse'][turn % 3]]);
+  if (world.gossipFor(a, t) && !pool.some((x) => x.id === 'cotilleos')) pool.push(TOPIC_BY_ID.cotilleos);
   if (canRomance(world.state, a, t) && (rel.r >= 10 || rel.f >= 30)) pool.push(TOPIC_BY_ID.coquetear);
   const lot = world.lotById(a.lotId);
   if (lot.kind !== 'park' && world.hour >= 8 && world.hour < 20 && !t.home && world.isPlayerMember(a)) pool.push(TOPIC_BY_ID.parque);
@@ -65,8 +69,8 @@ export function knownInterests(a: Agent, t: Agent): Interest[] {
 
 function fill(text: string, world: World, a: Agent, t: Agent): string {
   const pet = world.state.agents.find((x) => x.kind === 'pet' && x.householdId === a.householdId);
-  const gossipAbout = world.state.agents.find((x) => x.kind === 'person' && x !== a && x !== t && x.householdId !== a.householdId && x.householdId !== t.householdId);
-  return text.replace('{pet}', pet?.name ?? 'mi mascota').replace('{gossip}', gossipAbout?.name ?? 'los vecinos').replace('{other}', t.name);
+  const news = world.gossipFor(a, t) ?? 'han llegado vecinos nuevos al barrio';
+  return text.replace('{pet}', pet?.name ?? 'mi mascota').replace('{news}', news).replace('{other}', t.name);
 }
 
 /** Un turno de conversación: aplica los efectos y devuelve lo que dice cada uno. */
@@ -75,7 +79,9 @@ export function converse(world: World, a: Agent, t: Agent, topicId: string): Con
   const rel = getRel(world.state, a.id, t.id);
   const { likes, dislike } = interestsOf(t);
   const charm = Math.floor(a.skills?.carisma ?? 0) * 0.04;
-  const base = 0.45 + rel.f / 200 + (moodScore(t) - 50) / 200 + charm;
+  // Su forma de ser cuenta: con un gruñón cuesta más, con un optimista menos.
+  const temper = hasTrait(t, 'grunon') ? -0.15 : hasTrait(t, 'optimista') ? 0.1 : 0;
+  const base = 0.45 + rel.f / 200 + (moodScore(t) - 50) / 200 + charm + temper;
   let pGood = base;
   let pBad = 0.15 - charm / 2;
   let learned: Interest | undefined;
@@ -98,12 +104,15 @@ export function converse(world: World, a: Agent, t: Agent, topicId: string): Con
   } else if (topic.id === 'cumplido') {
     pGood = rel.f < -20 ? 0.15 : 0.6 + rel.f / 200 + charm;
   } else if (topic.id === 'chiste') {
-    pGood = 0.55 + charm + (likes.includes('cotilleos') ? 0.1 : 0);
+    pGood = 0.5 + charm + (hasTrait(a, 'bromista') ? 0.25 : 0) + (hasTrait(t, 'bromista') || hasTrait(t, 'cunado') ? 0.15 : 0) + temper;
+  } else if (topic.id === 'precios') {
+    // A cuñados y gruñones les encanta quejarse de lo caro que está todo.
+    pGood = hasTrait(t, 'cunado') || hasTrait(t, 'grunon') ? 0.95 : 0.55 + temper;
   } else if (topic.id === 'quejarse') {
     pGood = rel.f >= 40 ? 0.85 : 0.2;
     pBad = rel.f >= 40 ? 0.05 : 0.4;
   } else if (topic.id === 'coquetear') {
-    pGood = acceptChance(world.state, a, t, 'flirt') + charm;
+    pGood = acceptChance(world.state, a, t, 'flirt') + charm + (hasTrait(t, 'romantico') ? 0.15 : 0);
     pBad = 1 - pGood - 0.15;
   } else if (topic.id === 'parque') {
     pGood = rel.f >= 15 && !world.busySoon(t, 2) && world.canTravel(t, 'P').ok ? 0.85 : 0;
@@ -140,7 +149,9 @@ export function converse(world: World, a: Agent, t: Agent, topicId: string): Con
   }
 
   const say = fill(pick(topic.say), world, a, t);
-  const reply = fill(pick(topic[outcome]), world, a, t);
+  let reply = fill(pick(topic[outcome]), world, a, t);
+  // El cuñado siempre tiene que añadir algo
+  if (hasTrait(t, 'cunado') && outcome !== 'bad' && Math.random() < 0.4) reply += pick([' Aunque yo lo haría de otra manera', ' Eso lo sé yo mejor que nadie', ' Te lo digo yo, que entiendo']) + '.';
   return { say, reply, outcome, learned: discovered, goPark: topic.id === 'parque' && outcome === 'good' };
 }
 

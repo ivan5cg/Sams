@@ -6,6 +6,7 @@ import { CAREERS, gradeLabel } from '../data/careers';
 import { CAREER_SKILL, MAX_SKILL, SKILL_BY_ID } from '../data/skills';
 import { chooseAutonomous } from './ai';
 import { matchWish, newWish, topUpWishes } from './wishes';
+import { hasTrait, traitDecay, traitsOf } from './traits';
 import { REJECT_TEXT, REL_EFFECTS, ROMANTIC, acceptChance, canRomance, changeRel, getRel, isAdult, partnerOf, relKey, setRel } from './social';
 import { PARK_LOT, PLAYER_LOT, STUDIO_LOT, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { findPath, isWalkable, pathLength, reachable, type Grid } from './pathfinding';
@@ -40,7 +41,9 @@ const clamp = (v: number) => Math.max(0, Math.min(100, v));
 export function moodScore(a: Agent): number {
   const vals = NEED_KEYS.map((k) => a.needs[k]);
   const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
-  return avg - vals.filter((v) => v < 20).length * 12;
+  // Los optimistas lo ven todo un poco mejor; los gruñones, un poco peor.
+  const temper = hasTrait(a, 'optimista') ? 6 : hasTrait(a, 'grunon') ? -4 : 0;
+  return avg - vals.filter((v) => v < 20).length * 12 + temper;
 }
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
@@ -72,7 +75,21 @@ export class World {
   constructor(state: WorldState) {
     this.state = state;
     this.rebuildGrid();
+    for (const a of state.agents) traitsOf(a);
     topUpWishes(this);
+  }
+
+  /** Algo que pasa en el barrio y de lo que la gente habla. */
+  addNews(text: string, about: string[]) {
+    const news = (this.state.news = this.state.news ?? []);
+    news.unshift({ day: this.day, text, about });
+    if (news.length > 30) news.length = 30;
+  }
+
+  /** Una noticia reciente de la que pueden hablar `a` y `t` (que no sea sobre ellos mismos). */
+  gossipFor(a: Agent, t: Agent): string | undefined {
+    const recent = (this.state.news ?? []).filter((n) => this.day - n.day <= 7 && !n.about.includes(a.id) && !n.about.includes(t.id));
+    return recent.length ? recent[Math.floor(Math.random() * Math.min(recent.length, 5))].text : undefined;
   }
 
   /** Un personaje dice (o piensa) algo: lo pinta la escena en un bocadillo. */
@@ -186,6 +203,8 @@ export class World {
       mk('a3', 'Toby', 'dog', 9, 0xc68642, 3, 7),
       mk('a4', 'Misi', 'cat', 12, 0x9a9a9a, 4, 5),
     );
+    state.agents[0].traits = ['deportista', 'romantico'];
+    state.agents[1].traits = ['cunado', 'gloton'];
     state.households.push({ id: 'h1', name: 'Familia García', funds: 2000, memberIds: state.agents.map((a) => a.id), lotId: PLAYER_LOT });
     // Lucía y Mateo son pareja; los dos están sin trabajo (lo eliges tú).
     setRel(state, 'a1', 'a2', { f: 70, r: 75, status: 'partner' });
@@ -553,6 +572,7 @@ export class World {
     this.state.agents.push(pet);
     this.household.memberIds.push(pet.id);
     this.toast(`¡Bienvenido/a a casa, ${name}! (${sp.label.toLowerCase()})`, '🎉');
+    this.addNews(`la ${this.household.name} ha adoptado ${species === 'guineapig' || species === 'capybara' ? 'una' : 'un'} ${sp.label.toLowerCase()}`, [pet.id]);
     return pet;
   }
 
@@ -781,6 +801,7 @@ export class World {
       job.level++;
       job.perf = 10;
       const lvl = c.levels[job.level - 1];
+      this.addNews(`han ascendido a ${a.name} a ${lvl.title.toLowerCase()}`, [a.id]);
       if (mine) this.toast(`¡Ascenso! ${a.name} ahora es ${lvl.title} (§${lvl.pay} por jornada)`, '🎉');
     } else if (mine) {
       this.toast(`${a.name} vuelve del trabajo: +§${pay}`, '💰');
@@ -813,6 +834,7 @@ export class World {
     // Su nueva familia
     for (const m of this.members) if (m.id !== t.id && m.kind === 'person' && !getRel(this.state, m.id, t.id).f) changeRel(this.state, m.id, t.id, 30);
     this.toast(`¡${t.name} se viene a vivir con la ${mine.name}!`, '🏡');
+    this.addNews(`${t.name} se ha ido a vivir con la ${mine.name}`, [t.id]);
     if (t.lotId !== mine.lotId) this.startTravel(t, mine.lotId);
 
     // Si se ha quedado sin personas, sus mascotas se vienen (si caben) y llega una familia nueva a esa casa.
@@ -875,6 +897,7 @@ export class World {
         else setRel(this.state, m.id, baby.id, { f: 30, r: 0 });
       }
       if (mine) this.toast(`¡Ha nacido ${name}! Bienvenido/a al mundo${parents.length ? `, bebé de ${parents.map((p) => p.name).join(' y ')}` : ''}`, '👶');
+      this.addNews(`ha nacido ${name}, el bebé de la ${h.name}`, [baby.id, ...parents.map((p) => p.id)]);
     }
   }
 
@@ -952,6 +975,7 @@ export class World {
       }
       if (h && mine) this.placeGrave(h.lotId, a);
     }
+    if (cause === 'old' && a.kind === 'person') this.addNews(`ha fallecido ${a.name}, de la ${h?.name ?? 'vecindad'}. Que en paz descanse`, [a.id]);
     const lastPerson = !!h && a.kind === 'person' && !h.memberIds.some((id) => id !== a.id && this.agent(id)?.kind === 'person');
     if (lastPerson && h) this.inherit(h, a);
 
@@ -1019,6 +1043,7 @@ export class World {
     }
     if (this.detailedLots().has(old.lotId)) for (const id of fresh.memberIds) this.agent(id)!.abstract = true;
     this.toast(`La ${fresh.name} se muda al barrio`, '🚚');
+    this.addNews(`han llegado vecinos nuevos: la ${fresh.name}`, fresh.memberIds);
   }
 
   /** La familia del jugador se ha extinguido: seguir con otra del barrio. */
@@ -1214,6 +1239,7 @@ export class World {
     if (r < 0.01) {
       h.funds += 500;
       this.toast('¡Os ha tocado la lotería! +§500', '🎟️');
+      this.addNews(`a la ${h.name} le ha tocado la lotería`, []);
     } else if (r < 0.08) {
       h.funds += 50;
       this.toast('Habéis encontrado §50 en el bolsillo de un abrigo viejo', '🧥');
@@ -1463,7 +1489,7 @@ export class World {
     const homeDirt = a.home ? (this.object(a.home)?.dirt ?? 0) : 0;
     for (const k of NEED_KEYS) {
       const extra = k === 'hygiene' ? 1 + homeDirt * 0.6 : 1;
-      a.needs[k] = clamp(a.needs[k] - decay[k] * dt * mult * extra);
+      a.needs[k] = clamp(a.needs[k] - decay[k] * dt * mult * extra * traitDecay(a, k));
     }
 
     this.checkFailures(a);
@@ -1961,10 +1987,12 @@ export class World {
       }
       rel.status = 'partner';
       if (loud) this.toast(`¡${a.name} y ${t.name} ahora son pareja!`, '💘');
+      this.addNews(`${a.name} y ${t.name} están saliendo`, [a.id, t.id]);
     }
     if (actionId === 'propose' && rel) {
       rel.status = 'married';
       if (loud) this.toast(`¡${a.name} y ${t.name} se casan!`, '💍');
+      this.addNews(`${a.name} y ${t.name} se casan`, [a.id, t.id]);
     }
     if (actionId === 'move_in') this.moveIn(t);
     if (actionId === 'try_baby') {
@@ -1979,6 +2007,7 @@ export class World {
       if (crib) crib.dirt = 0;
     }
     if (actionId === 'insult' && loud) this.toastOnce(`${key}:insult`, `${a.name} y ${t.name} han discutido`, '🤬', 120);
+    if (actionId === 'insult' && (rel?.f ?? 0) <= -50) this.addNews(`${a.name} y ${t.name} no se pueden ni ver`, [a.id, t.id]);
   }
 
   // --- Movimiento ------------------------------------------------------------

@@ -64,6 +64,17 @@ Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus n
 - Los vecinos también tienen hijos y adoptan mascotas; cuando una casa se queda vacía, llega una familia nueva.
 - **La partida no termina nunca**: si tu familia se queda sin nadie, eliges con qué familia del barrio continuar.
 
+## Forma de ser y vida de barrio
+
+- Cada persona tiene **dos rasgos** (de 13): cuñado/a, bromista, tragón/a, perezoso/a, deportista, romántico/a,
+  gruñón/a, cotilla, friki, fiestero/a, animalero/a, tiquismiquis y optimista. Mateo es cuñado y tragón; Lucía,
+  deportista y romántica. Los rasgos cambian lo que hacen por su cuenta, cuánto les bajan algunas necesidades,
+  de qué les gusta hablar y lo que dicen ("Esto lo arreglaba yo en dos tardes").
+- **Noticias del barrio**: ascensos, parejas, bodas, nacimientos, mudanzas, adopciones, peleas... Se comentan
+  en las charlas y se pueden cotillear.
+- Las charlas dependen del momento: los lunes se odian, los viernes se celebran, por la mañana se habla del
+  desayuno, del curro, del cole, de la mascota, de lo caro que está el aceite o de si la tortilla lleva cebolla.
+
 ## Diálogos, conversaciones y deseos
 
 - Los personajes **hablan**: en las interacciones salen bocadillos con frases (charlas, chistes, coqueteos,

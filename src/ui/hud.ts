@@ -11,6 +11,7 @@ import { CATALOG, CATEGORIES, OBJECTS, SELL_RATIO, type CatalogCategory } from '
 import type { HouseScene } from '../render/HouseScene';
 import { MAX_MEMBERS, TRAVEL_MINUTES, moodScore, type Target, type World } from '../sim/world';
 import { converse, knownText, topicsFor } from '../sim/conversation';
+import { hasTrait, traitsOf } from '../sim/traits';
 
 export interface HudCallbacks {
   onSave: () => void;
@@ -422,12 +423,17 @@ export class Hud {
   }
 
   private greeting(t: Agent): string {
-    const rel = getRel(this.world.state, this.world.activeAgent.id, t.id);
-    if (rel.status) return '¡Hola, cariño!';
-    if (rel.f >= 45) return '¡Hombre! ¿Qué tal?';
-    if (rel.f <= -15) return '¿Qué quieres ahora?';
-    if (rel.f < 5) return 'Hola... ¿nos conocemos?';
-    return '¡Hola! ¿Qué tal?';
+    const w = this.world;
+    const rel = getRel(w.state, w.activeAgent.id, t.id);
+    const h = w.hour;
+    const hello = h < 13 ? '¡Buenos días' : h < 21 ? '¡Buenas tardes' : '¡Buenas noches';
+    if (rel.status) return `${hello}, cariño!`;
+    if (rel.f <= -15) return '¿Y ahora qué quieres?';
+    if (hasTrait(t, 'cunado')) return '¿Qué pasa, máquina? Ven, que te cuento una cosa';
+    if (hasTrait(t, 'grunon')) return 'Hmpf. ¿Qué?';
+    if (rel.f >= 45) return '¡Hombre! ¿Qué pasa? ¡Cuánto tiempo!';
+    if (rel.f < 5) return `${hello}... ¿nos conocemos?`;
+    return `${hello}! ¿Qué tal?`;
   }
 
   private talkTurn(topicId: string) {
@@ -442,7 +448,7 @@ export class Hud {
     const mood = res.outcome === 'good' ? '😊' : res.outcome === 'bad' ? '😬' : '😐';
     tk.log.push({ who: a.name, text: res.say }, { who: t.name, text: res.reply, mood });
     if (res.learned) {
-      const what = ({ mascotas: 'n las mascotas', deporte: ' el deporte', musica: ' la música', arte: ' el arte', cocina: ' la cocina', ciencia: ' la ciencia', cotilleos: ' cotillear', viajes: ' viajar' } as Record<string, string>)[res.learned];
+      const what = ({ mascotas: 'n las mascotas', deporte: ' el fútbol', musica: ' la música', arte: ' el arte', cocina: ' la cocina', ciencia: ' la ciencia', cotilleos: ' cotillear', viajes: ' viajar' } as Record<string, string>)[res.learned];
       this.toast(`Has descubierto que a ${t.name} le encanta${what}`, '💡');
     }
     if (res.goPark) {
@@ -470,7 +476,7 @@ export class Hud {
     $('#talk').innerHTML = `<div class="talk-card">
       <div class="sheet-head">
         <div><div class="sheet-title">🗨️ ${esc(a.name)} y ${esc(t.name)}</div>
-        <div class="sheet-sub">${esc(relLabel(rel, a.kind, t.kind))}${known ? ` · ${esc(known)}` : ''}</div></div>
+        <div class="sheet-sub">${traitsOf(t).map((x) => x.icon).join('')} ${esc(relLabel(rel, a.kind, t.kind))}${known ? ` · ${esc(known)}` : ''}</div></div>
         <button class="icon-btn" data-endtalk>✕</button>
       </div>
       <div class="bar talk-bar"><div class="fill" style="width:${pct}%;background:${rel.f >= 15 ? '#4cd964' : rel.f <= -15 ? '#ff4d3d' : '#a3a9bf'}"></div></div>
@@ -716,7 +722,8 @@ export class Hud {
       const relText = t.id === active.id ? '' : ` · ${relLabel(rel, active.kind, t.kind)}${rel.r > 0 && !rel.kin ? ` · 💕 ${Math.round(rel.r)}` : ''}`;
       const hh = w.householdOf(t);
       const from = hh && hh.id !== w.household.id ? ` · ${hh.name}` : '';
-      subtitle = `${SPECIES[t.species].label} · ${lifeStage(t.species, t.ageDays).label}${from}${relText}`;
+      const traitTxt = t.kind === 'person' ? ` · ${traitsOf(t).map((x) => `${x.icon} ${x.label}`).join(', ')}` : '';
+      subtitle = `${SPECIES[t.species].label} · ${lifeStage(t.species, t.ageDays).label}${from}${relText}${traitTxt}`;
     }
 
     const opts = w.optionsFor(active.id, target);
@@ -862,6 +869,7 @@ export class Hud {
         <button class="icon-btn" data-close>✕</button>
       </div>
       ${jobHtml}
+      ${a.kind === 'person' ? `<div class="prof-sec"><div class="prof-h">🧬 Forma de ser</div>${traitsOf(a).map((x) => `<div class="trait-row"><span class="trait-icon">${x.icon}</span><div><b>${esc(x.label)}</b><div class="muted small">${esc(x.desc)}</div></div></div>`).join('')}</div>` : ''}
       ${skillsHtml}
       <div class="prof-sec"><div class="prof-h">👥 Relaciones</div>${relHtml}</div>
     </div>`;

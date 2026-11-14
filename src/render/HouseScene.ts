@@ -5,6 +5,7 @@ import { lifeStage } from '../data/species';
 import type { Agent, PlacedObject } from '../sim/types';
 import type { Target, World } from '../sim/world';
 import { ACTION_LINES, ACTION_QUIPS, NEED_THOUGHTS, PET_SOUNDS } from '../data/dialogue';
+import { chatPair, traitQuip } from '../sim/chatter';
 import { NEED_KEYS } from '../sim/types';
 import { P, SCREEN_GLOW, drawObjectArt, drawTile, drawWall, faceQuad, flat, prism, type LotStyle } from './art';
 import { SceneFx, type FxKind } from './fx';
@@ -585,14 +586,15 @@ export class HouseScene extends Phaser.Scene {
     const partner = cur?.targetAgentId ? this.world.agent(cur.targetAgentId) : undefined;
     if (lines && partner && cur?.phase === 'acting') {
       let c = this.convo.get(a.id);
-      if (!c || time >= c.next + 6000) c = { pair: pickOne(lines), step: 0, next: time };
+      const newPair = (): [string, string] => (acting === 'chat' ? chatPair(this.world, a, partner) : pickOne(lines));
+      if (!c || time >= c.next + 6000) c = { pair: newPair(), step: 0, next: time };
       if (time >= c.next) {
         const speaker = c.step === 0 ? a : partner;
         let line = c.pair[c.step];
         if (line === '*') line = pickOne(PET_SOUNDS[speaker.species] ?? ['...']);
         this.fx.say(speaker.id, line, 'say', time);
         if (c.step === 0) c = { ...c, step: 1, next: time + 1700 };
-        else c = { pair: pickOne(lines), step: 0, next: time + 3200 };
+        else c = { pair: newPair(), step: 0, next: time + 3200 };
       }
       this.convo.set(a.id, c);
       return;
@@ -613,6 +615,11 @@ export class HouseScene extends Phaser.Scene {
     // Comentarios mientras hacen algo
     const quips = ACTION_QUIPS[acting];
     if (quips && Math.random() < 0.55) return this.fx.say(a.id, pickOne(quips), 'say', time);
+    // Y lo que les sale por su forma de ser (el cuñado, el tragón, el gruñón...)
+    if (a.kind === 'person' && !acting.includes('sleep') && Math.random() < 0.35) {
+      const q = traitQuip(a);
+      if (q) return this.fx.say(a.id, q, 'say', time);
+    }
     // Las mascotas hacen sus ruidos de vez en cuando
     if (a.kind === 'pet' && !acting.includes('sleep') && Math.random() < 0.3) this.fx.say(a.id, pickOne(PET_SOUNDS[a.species] ?? ['...']), 'say', time);
   }
