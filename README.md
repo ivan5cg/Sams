@@ -64,6 +64,26 @@ Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus n
 - Los vecinos también tienen hijos y adoptan mascotas; cuando una casa se queda vacía, llega una familia nueva.
 - **La partida no termina nunca**: si tu familia se queda sin nadie, eliges con qué familia del barrio continuar.
 
+## Habilidades y actividades
+
+- Seis **habilidades** (cocina, música, forma física, lógica, carisma y arte), del 0 al 10. Suben practicando:
+  cocinar en la nevera, tocar la guitarra, pintar en el caballete, correr en la cinta, hacer pilates,
+  jugar al ajedrez, ensayar ante el espejo o charlar. Las ves en el perfil (👥).
+- Sirven para algo: se asciende antes en la carrera relacionada, los cuadros se venden (mejor cuanto más arte),
+  con música 3 se puede tocar en el parque por propinas, y quien cocina bien alimenta más.
+- Los niños pueden hacer los deberes (mejoran las notas) y jugar con el baúl de juguetes.
+- Carrera nueva: **Deporte** (de monitor/a de sala a instructor/a de pilates y más allá).
+
+## Estudio de pilates
+
+En el mapa del barrio hay un **estudio de pilates**: esterillas gratis y clases de reformer (§12) que dan más
+forma física. Los vecinos también van. Las esterillas también se pueden comprar para casa.
+
+## Ñiqui ñiqui
+
+Las parejas adultas (o quien tenga mucho romance, sin ser familia) pueden hacer ñiqui ñiqui en una cama de casa.
+Sube la diversión y el romance. Se representa con discreción: corazones y la cama moviéndose un poco.
+
 ## Construir y decorar
 
 - Con 🔨 (en el panel de abajo, estando en casa) entras en el **modo construcción**: el tiempo se para.

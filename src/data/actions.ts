@@ -58,6 +58,8 @@ export interface ActionDef {
   actorStages?: string[];
   /** Solo hacia estas etapas de la vida (cuidar bebés). */
   targetStages?: string[];
+  /** Practicar una habilidad: puntos por minuto (a nivel 0; cuesta más cuanto más nivel). */
+  skill?: { id: string; rate: number };
 }
 
 const PETS_FREE: SpeciesId[] = ['dog', 'cat', 'ferret', 'capybara'];
@@ -121,6 +123,19 @@ const A: ActionDef[] = [
   { id: 'play_games', label: 'Jugar a la consola', verb: 'Jugando a la consola', icon: '🎮', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { fun: 0.65, social: 0.05 }, until: 'full', interruptible: true },
   { id: 'repair', label: 'Reparar', verb: 'Reparando', icon: '🔧', target: 'object', actors: ['person'], duration: 40, effects: { fun: -0.15, hygiene: -0.1 }, baseScore: 12 },
 
+  // Habilidades
+  { id: 'cook', label: 'Cocinar (§8)', verb: 'Cocinando', icon: '🍳', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], cost: 8, duration: 45, effects: { hunger: 2.2, fun: 0.15 }, until: 'full', skill: { id: 'cocina', rate: 0.02 } },
+  { id: 'play_guitar', label: 'Tocar la guitarra', verb: 'Tocando la guitarra', icon: '🎸', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { fun: 0.4 }, until: 'full', interruptible: true, skill: { id: 'musica', rate: 0.02 }, baseScore: 2 },
+  { id: 'paint', label: 'Pintar un cuadro', verb: 'Pintando', icon: '🎨', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.35 }, interruptible: true, skill: { id: 'arte', rate: 0.02 }, baseScore: 2 },
+  { id: 'run', label: 'Correr', verb: 'Corriendo', icon: '🏃', target: 'object', actors: ['person'], duration: 40, effects: { fun: 0.2, energy: -0.3, hygiene: -0.3 }, skill: { id: 'forma', rate: 0.025 }, baseScore: 2 },
+  { id: 'play_chess', label: 'Jugar al ajedrez', verb: 'Jugando al ajedrez', icon: '♟️', target: 'object', actors: ['person'], guestOk: true, duration: 45, effects: { fun: 0.35, social: 0.1 }, until: 'full', interruptible: true, skill: { id: 'logica', rate: 0.02 }, baseScore: 2 },
+  { id: 'practice_speech', label: 'Ensayar ante el espejo', verb: 'Ensayando discursos', icon: '🗣️', target: 'object', actors: ['person'], duration: 30, effects: { fun: 0.1, social: 0.15 }, skill: { id: 'carisma', rate: 0.025 }, baseScore: 2 },
+  { id: 'play_toys', label: 'Jugar con juguetes', verb: 'Jugando', icon: '🧸', target: 'object', actors: ['person'], actorStages: ['child'], guestOk: true, duration: 45, effects: { fun: 0.9, social: 0.1 }, until: 'full', interruptible: true },
+  { id: 'homework', label: 'Hacer los deberes', verb: 'Haciendo los deberes', icon: '📝', target: 'self', actors: ['person'], actorStages: ['child', 'teen'], duration: 30, effects: { fun: -0.1 }, skill: { id: 'logica', rate: 0.01 }, baseScore: 5 },
+  { id: 'busk', label: 'Tocar a cambio de propinas', verb: 'Tocando en la calle', icon: '🪕', target: 'self', actors: ['person'], duration: 45, effects: { fun: 0.3, social: 0.2 }, skill: { id: 'musica', rate: 0.01 }, playerOnly: true },
+  { id: 'pilates', label: 'Hacer pilates', verb: 'Haciendo pilates', icon: '🧘', target: 'object', actors: ['person'], guestOk: true, duration: 45, effects: { fun: 0.3, energy: -0.12, hygiene: -0.15 }, skill: { id: 'forma', rate: 0.025 }, interruptible: true, baseScore: 3 },
+  { id: 'reformer', label: 'Clase de reformer (§12)', verb: 'En clase de reformer', icon: '🧘', target: 'object', actors: ['person'], guestOk: true, cost: 12, duration: 50, effects: { fun: 0.45, energy: -0.15, hygiene: -0.2, social: 0.1 }, skill: { id: 'forma', rate: 0.045 }, baseScore: 3 },
+
   // Parque
   { id: 'sit_bench', label: 'Sentarse en el banco', verb: 'Sentado en el banco', icon: '🪑', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { energy: 0.08, fun: 0.15, social: 0.05 }, until: 'full', interruptible: true },
   { id: 'swing', label: 'Columpiarse', verb: 'Columpiándose', icon: '🎠', target: 'object', actors: ['person'], guestOk: true, duration: 30, effects: { fun: 0.7, energy: -0.05 }, until: 'full', interruptible: true },
@@ -132,7 +147,7 @@ const A: ActionDef[] = [
   { id: 'remember', label: 'Recordar', verb: 'Recordando', icon: '🕯️', target: 'object', actors: ['person'], guestOk: true, duration: 20, effects: { social: 0.2, fun: -0.1 } },
 
   // --- Social: persona → persona ---
-  { id: 'chat', label: 'Charlar', verb: 'Charlando', icon: '💬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 30, effects: { social: 0.7, fun: 0.1 }, partnerEffects: { social: 0.7, fun: 0.1 }, until: 'full', interruptible: true },
+  { id: 'chat', label: 'Charlar', verb: 'Charlando', icon: '💬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 30, effects: { social: 0.7, fun: 0.1 }, partnerEffects: { social: 0.7, fun: 0.1 }, until: 'full', interruptible: true, skill: { id: 'carisma', rate: 0.005 } },
   { id: 'joke', label: 'Contar un chiste', verb: 'Contando un chiste', icon: '😂', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: 0.6, social: 0.3 }, partnerEffects: { fun: 0.6, social: 0.3 } },
   { id: 'insult', label: 'Insultar', verb: 'Discutiendo', icon: '🤬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { fun: 0.3 }, partnerEffects: { social: -2, fun: -1 } },
   { id: 'flirt', label: 'Coquetear', verb: 'Coqueteando', icon: '😏', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { social: 0.8, fun: 0.4 }, partnerEffects: { social: 0.8, fun: 0.3 } },
@@ -140,6 +155,7 @@ const A: ActionDef[] = [
   { id: 'ask_partner', label: 'Pedir salir', verb: 'Declarándose', icon: '💘', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 5, effects: { social: 1 }, partnerEffects: { social: 1 }, playerOnly: true },
   { id: 'propose', label: 'Pedir matrimonio', verb: 'Pidiendo matrimonio', icon: '💍', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: 2, fun: 1 }, partnerEffects: { social: 2, fun: 1 }, playerOnly: true },
   { id: 'move_in', label: 'Proponer vivir juntos', verb: 'Hablando de mudarse', icon: '🏡', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: 1 }, partnerEffects: { social: 1 }, playerOnly: true },
+  { id: 'niqui', label: 'Ñiqui ñiqui', verb: 'Ñiqui ñiqui', icon: '💞', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 20, effects: { fun: 1.5, social: 1.2, energy: -0.2, hygiene: -0.3 }, partnerEffects: { fun: 1.5, social: 1.2, energy: -0.2, hygiene: -0.3 }, playerOnly: true },
   { id: 'try_baby', label: 'Intentar tener un bebé', verb: 'Buscando un bebé', icon: '🍼', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 20, effects: { social: 1, fun: 1, energy: -0.2 }, partnerEffects: { social: 1, fun: 1, energy: -0.2 }, playerOnly: true },
   { id: 'feed_baby', label: 'Dar el biberón (§3)', verb: 'Dando el biberón', icon: '🍼', target: 'agent', actors: ['person'], targetKinds: ['person'], targetStages: ['baby'], cost: 3, duration: 10, effects: { social: 0.3 }, partnerEffects: { hunger: 6 } },
   { id: 'change_diaper', label: 'Cambiar el pañal', verb: 'Cambiando el pañal', icon: '🧷', target: 'agent', actors: ['person'], targetKinds: ['person'], targetStages: ['baby'], duration: 5, effects: { fun: -0.3, hygiene: -0.3 }, partnerEffects: { hygiene: 12, bladder: 12 } },

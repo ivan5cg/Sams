@@ -4,7 +4,7 @@
 
 export type TileType = 'wall' | 'wood' | 'tile' | 'grass' | 'door' | 'path';
 
-export type LayoutId = 'house' | 'park';
+export type LayoutId = 'house' | 'park' | 'studio';
 
 const HOUSE_MAP = [
   'WWWWWWWWWWWggg',
@@ -38,6 +38,19 @@ const PARK_MAP = [
   'ggggggggpggggggg',
 ];
 
+const STUDIO_MAP = [
+  'WWWWWWWWWWWW',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'WWWWWdWWWWWW',
+  'pppppppppppp',
+];
+
 const CHAR: Record<string, TileType> = { W: 'wall', '.': 'wood', t: 'tile', g: 'grass', d: 'door', p: 'path' };
 
 export interface LotLayout {
@@ -57,6 +70,7 @@ export function parseLot(rows: string[], entrance: { x: number; y: number }): Lo
 export const LAYOUTS: Record<LayoutId, LotLayout> = {
   house: parseLot(HOUSE_MAP, { x: 5, y: 11 }),
   park: parseLot(PARK_MAP, { x: 8, y: 13 }),
+  studio: parseLot(STUDIO_MAP, { x: 5, y: 9 }),
 };
 
 /** Entrada de la casa (todas las casas comparten plano). */
@@ -94,6 +108,24 @@ export const HOUSE_OBJECTS: ObjectPlacement[] = [
 
 /** Nombre antiguo (fases 1 y 2), usado por la migración de partidas. */
 export const START_OBJECTS = HOUSE_OBJECTS;
+
+export const STUDIO_OBJECTS: ObjectPlacement[] = [
+  { def: 'reformer', x: 1, y: 1 },
+  { def: 'reformer', x: 4, y: 1 },
+  { def: 'reformer', x: 7, y: 1 },
+  { def: 'toilet', x: 10, y: 1 },
+  { def: 'pilates_mat', x: 2, y: 4 },
+  { def: 'pilates_mat', x: 4, y: 4 },
+  { def: 'pilates_mat', x: 6, y: 4 },
+  { def: 'pilates_mat', x: 8, y: 4 },
+  { def: 'pilates_mat', x: 2, y: 6 },
+  { def: 'pilates_mat', x: 4, y: 6 },
+  { def: 'pilates_mat', x: 6, y: 6 },
+  { def: 'pilates_mat', x: 8, y: 6 },
+  { def: 'desk', x: 9, y: 7 },
+  { def: 'plant', x: 10, y: 4 },
+  { def: 'plant', x: 1, y: 7 },
+];
 
 export const PARK_OBJECTS: ObjectPlacement[] = [
   { def: 'toilet', x: 1, y: 1 },

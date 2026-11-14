@@ -158,8 +158,8 @@ export class HouseScene extends Phaser.Scene {
     const cam = this.cameras.main;
     const { width, height } = this.scale;
     // En casa se centra en el edificio; en el parque, en el centro.
-    const park = this.world.lotById(this.shownLot || this.world.viewLotId)?.layout === 'park';
-    const c = park ? isoToScreen(8, 7) : isoToScreen(5.5, 5.5);
+    const layout = this.world.lotById(this.shownLot || this.world.viewLotId)?.layout;
+    const c = layout === 'park' ? isoToScreen(8, 7) : layout === 'studio' ? isoToScreen(6, 4.5) : isoToScreen(5.5, 5.5);
     const cssW = width / DPR, cssH = height / DPR;
     cam.setZoom(Phaser.Math.Clamp(Math.min(cssW / 640, cssH / 520), 0.45, 1.6) * DPR);
     cam.centerOn(c.x, c.y + 10);
@@ -482,7 +482,7 @@ export class HouseScene extends Phaser.Scene {
         const cx = o.x + d.w / 2 + (along ? off : 0);
         const cy = o.y + d.h / 2 + (along ? 0 : off);
         const p = isoToScreen(cx, cy);
-        const lying = ['sleep', 'nap_sofa', 'nap_bed', 'pet_sleep'].includes(t.actionId);
+        const lying = ['sleep', 'nap_sofa', 'nap_bed', 'pet_sleep', 'niqui', 'pilates', 'reformer'].includes(t.actionId);
         const lift = d.shape === 'post' ? d.height : d.shape === 'hammock' ? d.height - 10 : d.shape === 'pond' ? -6 : d.shape === 'swings' ? 10 : d.height * 0.6;
         const depth = d.shape === 'pond' ? (cx + cy) * 10 : this.objectDepth(o) + 2;
         return { x: p.x, y: p.y - lift, depth, lying };
@@ -507,9 +507,12 @@ export class HouseScene extends Phaser.Scene {
       const p = this.agentScreenPos(a);
       const walking = a.path.length > 0;
       v.root.setPosition(p.x, p.y).setDepth(p.depth);
-      const dancing = a.current?.actionId === 'war_dance' && a.current.phase === 'acting';
-      v.body.y = dancing ? -Math.abs(Math.sin(time / 70)) * 10 : walking ? -Math.abs(Math.sin(time / 90)) * 3 : 0;
-      v.body.setRotation(dancing ? Math.sin(time / 60) * 0.5 : p.lying ? (a.kind === 'person' ? -1.25 : 0) : 0);
+      const acting = a.current?.phase === 'acting' ? a.current.actionId : '';
+      const dancing = acting === 'war_dance' || acting === 'dance';
+      // Ñiqui ñiqui: la cama se mueve un poco (y corazones). Nada más.
+      const wobble = acting === 'niqui' ? Math.sin(time / 55) * 2 : 0;
+      v.body.y = dancing ? -Math.abs(Math.sin(time / 70)) * (acting === 'dance' ? 5 : 10) : walking ? -Math.abs(Math.sin(time / 90)) * 3 : wobble;
+      v.body.setRotation(dancing ? Math.sin(time / 60) * (acting === 'dance' ? 0.25 : 0.5) : p.lying ? (a.kind === 'person' ? -1.25 : 0) : 0);
       v.body.x = p.lying && a.kind === 'person' ? 14 : 0;
       const size = STAGE_SCALE[lifeStage(a.species, a.ageDays).id] ?? 1;
       v.body.scaleY = size;

@@ -50,7 +50,7 @@ const D: ObjectDef[] = [
   { id: 'armchair', name: 'Sillón', icon: '💺', w: 1, h: 1, height: 14, color: 0x7b4fa0, capacity: 1, snap: true, actions: ['sit', 'watch_tv', 'sniff_sofa'], price: 120, category: 'descanso' },
   { id: 'crib', name: 'Cuna', icon: '', w: 1, h: 1, height: 20, color: 0xf2a7c3, shape: 'cage', capacity: 3, actions: ['baby_sleep'], price: 150, category: 'descanso' },
 
-  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['eat', 'snack', 'repair'], price: 250, category: 'cocina', breakable: true },
+  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'eat', 'snack', 'repair'], price: 250, category: 'cocina', breakable: true },
   { id: 'toilet', name: 'Váter', icon: '🚽', w: 1, h: 1, height: 14, color: 0xf4f4f4, capacity: 1, snap: true, actions: ['toilet', 'repair'], price: 120, category: 'cocina', breakable: true },
   { id: 'shower', name: 'Ducha', icon: '🚿', w: 1, h: 1, height: 6, color: 0x9fd3e6, capacity: 1, snap: true, actions: ['shower', 'repair'], price: 200, category: 'cocina', breakable: true },
   { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true },
@@ -66,6 +66,17 @@ const D: ObjectDef[] = [
   { id: 'rug', name: 'Alfombra', icon: '', w: 1, h: 1, height: 0, color: 0xc0392b, shape: 'flat', capacity: 0, walkable: true, actions: [], price: 60, category: 'deco', decor: 1 },
   { id: 'slippers', name: 'Zapatillas', icon: '🩴', w: 1, h: 1, height: 0, color: 0x5577aa, shape: 'none', capacity: 1, walkable: true, small: true, actions: ['steal'], price: 10, category: 'deco' },
   { id: 'puddle', name: 'Charco', icon: '💧', w: 1, h: 1, height: 0, color: 0xe8d55a, shape: 'flat', capacity: 1, walkable: true, actions: ['clean'] },
+
+  // Habilidades
+  { id: 'guitar', name: 'Guitarra', icon: '🎸', w: 1, h: 1, height: 6, color: 0x8b5a2b, shape: 'none', capacity: 1, actions: ['play_guitar'], price: 120, category: 'ocio' },
+  { id: 'easel', name: 'Caballete', icon: '🎨', w: 1, h: 1, height: 30, color: 0xb08968, shape: 'post', capacity: 1, actions: ['paint'], price: 150, category: 'ocio' },
+  { id: 'treadmill', name: 'Cinta de correr', icon: '🏃', w: 1, h: 1, height: 16, color: 0x3c4150, capacity: 1, snap: true, actions: ['run', 'repair'], price: 400, category: 'ocio', breakable: true },
+  { id: 'chess', name: 'Mesa de ajedrez', icon: '♟️', w: 1, h: 1, height: 16, color: 0xd2b48c, capacity: 2, actions: ['play_chess'], price: 90, category: 'ocio' },
+  { id: 'mirror', name: 'Espejo', icon: '🪞', w: 1, h: 1, height: 40, color: 0xc9d6df, capacity: 1, actions: ['practice_speech'], price: 80, category: 'deco' },
+  { id: 'toybox', name: 'Baúl de juguetes', icon: '🧸', w: 1, h: 1, height: 12, color: 0xe76f51, capacity: 2, actions: ['play_toys'], price: 60, category: 'ocio' },
+  { id: 'pilates_mat', name: 'Esterilla de pilates', icon: '', w: 1, h: 1, height: 0, color: 0x9b5de5, shape: 'flat', capacity: 1, snap: true, walkable: true, actions: ['pilates'], price: 40, category: 'ocio' },
+  { id: 'reformer', name: 'Reformer de pilates', icon: '', w: 2, h: 1, height: 10, color: 0xe9e4dc, capacity: 1, snap: true, actions: ['reformer'] },
+  { id: 'desk', name: 'Recepción', icon: '🧘', w: 1, h: 1, height: 24, color: 0xa47551, capacity: 0, actions: [] },
 
   // Mascotas
   { id: 'bowl', name: 'Comedero', icon: '🥣', w: 1, h: 1, height: 4, color: 0xd9534f, capacity: 1, actions: ['pet_eat', 'fill_bowl'], maxStock: 3, price: 20, category: 'mascotas' },

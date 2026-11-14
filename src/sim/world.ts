@@ -3,13 +3,14 @@ import { HOUSE_OBJECTS, LAYOUTS, isOutdoor, type LotLayout } from '../data/lot';
 import { OBJECTS, SELL_RATIO, type ObjectDef } from '../data/objects';
 import { SPECIES, lifeStage } from '../data/species';
 import { CAREERS, gradeLabel } from '../data/careers';
+import { CAREER_SKILL, MAX_SKILL, SKILL_BY_ID } from '../data/skills';
 import { chooseAutonomous } from './ai';
 import { REJECT_TEXT, REL_EFFECTS, ROMANTIC, acceptChance, canRomance, changeRel, getRel, isAdult, partnerOf, relKey, setRel } from './social';
-import { PARK_LOT, PLAYER_LOT, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
+import { PARK_LOT, PLAYER_LOT, STUDIO_LOT, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { findPath, isWalkable, pathLength, reachable, type Grid } from './pathfinding';
 import { NEED_KEYS, type Agent, type Household, type Lot, type NeedKey, type Needs, type PlacedObject, type SpeciesId, type Task, type Vec, type WorldState } from './types';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_MEMBERS = 8;
 /** Minutos de juego que se tarda en ir de una parcela a otra del barrio. */
@@ -312,6 +313,13 @@ export class World {
     if (def.targetStages ? !def.targetStages.includes(tStage) : tStage === 'baby') return { def, ok: false };
     if (ROMANTIC.has(actionId)) {
       if (!canRomance(this.state, a, t)) return { def, ok: false };
+      if (actionId === 'niqui') {
+        const rel0 = getRel(this.state, a.id, t.id);
+        if (!rel0.status && (rel0.r < 50 || rel0.f < 30)) return { def, ok: false };
+        const lot = this.lotById(a.lotId);
+        if (lot.kind !== 'home' || (lot.householdId !== a.householdId && lot.householdId !== t.householdId)) return { def, ok: false, reason: 'Mejor en casa' };
+        if (!this.freeBed(a.lotId)) return { def, ok: false, reason: 'Hace falta una cama libre' };
+      }
       if (actionId === 'try_baby') {
         const rel0 = getRel(this.state, a.id, t.id);
         if (!rel0.status || t.householdId !== a.householdId) return { def, ok: false };
@@ -345,7 +353,35 @@ export class World {
 
   checkSelfAction(a: Agent, actionId: string): ActionOption {
     const def = ACTIONS[actionId];
-    return { def, ok: this.speciesOk(a, def) };
+    if (!this.speciesOk(a, def)) return { def, ok: false };
+    if (actionId === 'homework' && a.job?.career !== 'school') return { def, ok: false };
+    if (actionId === 'busk') {
+      if (this.lotById(a.lotId)?.kind !== 'park') return { def, ok: false };
+      if (this.skillLevel(a, 'musica') < 3) return { def, ok: false, reason: 'Hace falta música nivel 3' };
+    }
+    return { def, ok: true };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Habilidades
+  // ---------------------------------------------------------------------------
+
+  skillLevel(a: Agent, id: string): number {
+    return Math.floor(a.skills?.[id] ?? 0);
+  }
+
+  /** Practicar sube la habilidad (cada nivel cuesta más que el anterior). */
+  private practice(a: Agent, skill: { id: string; rate: number }, dt: number) {
+    if (a.kind !== 'person') return;
+    a.skills = a.skills ?? {};
+    const before = a.skills[skill.id] ?? 0;
+    if (before >= MAX_SKILL) return;
+    const after = Math.min(MAX_SKILL, before + (skill.rate * dt) / (1 + Math.floor(before) * 0.35));
+    a.skills[skill.id] = after;
+    if (Math.floor(after) > Math.floor(before) && this.isPlayerMember(a)) {
+      const s = SKILL_BY_ID[skill.id];
+      this.toast(`${a.name} ha subido a ${s.label.toLowerCase()} nivel ${Math.floor(after)}`, s.icon);
+    }
   }
 
   /** Opciones para el menú de acciones del agente activo sobre un objetivo. */
@@ -360,7 +396,10 @@ export class World {
         .map((id) => this.checkObjectAction(a, o, id));
     }
     if (target.kind === 'agent') {
-      if (target.id === a.id) return SELF_ACTIONS.filter((d) => this.speciesOk(a, d)).map((d) => ({ def: d, ok: true }));
+      if (target.id === a.id) {
+        const self = [...SELF_ACTIONS, ACTIONS.busk];
+        return self.map((d) => this.checkSelfAction(a, d.id)).filter((o) => o.ok || o.reason);
+      }
       const t = this.agent(target.id);
       if (!t) return [];
       return Object.values(ACTIONS)
@@ -533,7 +572,8 @@ export class World {
     const n = Math.min(people.length, Math.random() < 0.5 ? 1 : 2);
     const group = people.sort(() => Math.random() - 0.5).slice(0, n);
     const dog = h.memberIds.map((id) => this.agent(id)!).find((a) => a.species === 'dog' && a.lotId === h.lotId && !a.travel);
-    if (dog && Math.random() < 0.6) group.push(dog);
+    // El perro va al parque o de visita, pero no a clase de pilates.
+    if (dog && lotId !== STUDIO_LOT && Math.random() < 0.6) group.push(dog);
     const until = Math.min(this.state.minutes + TRAVEL_MINUTES + rand(120, 240), this.endOfVisits());
     for (const a of group) {
       this.startTravel(a, lotId);
@@ -564,6 +604,7 @@ export class World {
     if (h >= 9 && h <= 19) {
       for (const nh of neighbours) {
         if (Math.random() < 0.08) this.sendVisit(nh, PARK_LOT, false);
+        else if (Math.random() < 0.04) this.sendVisit(nh, STUDIO_LOT, false);
       }
     }
   }
@@ -630,7 +671,8 @@ export class World {
     a.needs.bladder = 80;
     const mine = this.isPlayerMember(a);
     const before = job.perf;
-    job.perf = Math.max(0, Math.min(100, job.perf + (mood - 45) / 4 + rand(-3, 5)));
+    const skillBonus = CAREER_SKILL[job.career] ? this.skillLevel(a, CAREER_SKILL[job.career]) * 0.6 : 0;
+    job.perf = Math.max(0, Math.min(100, job.perf + (mood - 45) / 4 + rand(-3, 5) + skillBonus));
     if (reason === 'school') {
       if (mine && gradeLabel(before) !== gradeLabel(job.perf)) this.toast(`Notas de ${a.name}: ${gradeLabel(job.perf)}`, '📚');
       return;
@@ -703,6 +745,10 @@ export class World {
   // Ciclo de vida: nacimientos, crecer, morir
   // ---------------------------------------------------------------------------
 
+  freeBed(lotId: string): PlacedObject | undefined {
+    return this.objectsIn(lotId).find((o) => o.def === 'bed' && !o.broken && this.usersOf(o.id).length === 0);
+  }
+
   freeCrib(lotId: string): PlacedObject | undefined {
     return this.objectsIn(lotId).find((o) => o.def === 'crib' && !this.residentOf(o.id));
   }
@@ -733,6 +779,25 @@ export class World {
       }
       if (mine) this.toast(`¡Ha nacido ${name}! Bienvenido/a al mundo${parents.length ? `, bebé de ${parents.map((p) => p.name).join(' y ')}` : ''}`, '👶');
     }
+  }
+
+  /** Lo que da practicar: cuadros que se venden, propinas, notas, comida más rica. */
+  private skillPayoff(a: Agent, actionId: string) {
+    const h = this.householdOf(a);
+    const mine = this.isPlayerMember(a);
+    if (actionId === 'paint' && h) {
+      const lvl = this.skillLevel(a, 'arte');
+      const price = Math.round(10 + lvl * 15 + rand(0, 10 + lvl * 5));
+      h.funds += price;
+      if (mine) this.toast(`${a.name} ha vendido un cuadro por §${price}`, '🖼️');
+    }
+    if (actionId === 'busk' && h) {
+      const tips = Math.round(this.skillLevel(a, 'musica') * 8 + rand(0, 15));
+      h.funds += tips;
+      if (mine) this.toast(`${a.name} ha sacado §${tips} en propinas`, '🪕');
+    }
+    if (actionId === 'homework' && a.job?.career === 'school') a.job.perf = Math.min(100, a.job.perf + 4);
+    if (actionId === 'cook') a.needs.hunger = clamp(a.needs.hunger + this.skillLevel(a, 'cocina') * 3);
   }
 
   /** Lo que cambia al pasar de una etapa de la vida a otra. */
@@ -1498,6 +1563,7 @@ export class World {
       if (def.doneToast) this.toastOnce(`${a.id}:${def.id}`, def.doneToast.replace('{name}', a.name).replace('{obj}', od.name.toLowerCase()), def.icon);
     }
     if (task.actionId === 'adopt' && task.param) this.adopt(task.param as SpeciesId);
+    this.skillPayoff(a, task.actionId);
     if (task.actionId === 'find_job' && task.param) this.setJob(a, task.param);
     if (ACTIONS[task.actionId].target === 'agent' && task.actionId !== 'say_goodbye') {
       const t = this.agent(task.targetAgentId);
@@ -1559,6 +1625,7 @@ export class World {
       if (!partner || partner.current?.passiveOf !== a.id) return this.endTask(a);
     }
     this.applyEffects(a, def.effects, dt);
+    if (def.skill) this.practice(a, def.skill, dt);
     if (partner && def.partnerEffects) this.applyEffects(partner, def.partnerEffects, dt);
     task.remaining -= dt;
     if (task.remaining <= 0 || this.isSatisfied(a, def)) {
@@ -1685,9 +1752,18 @@ export class World {
           const hh = this.householdOf(a);
           if (hh) hh.funds -= def.cost;
         }
-        if (task.actionId === 'flirt' || task.actionId === 'kiss') this.jealousy(a, t);
+        if (task.actionId === 'flirt' || task.actionId === 'kiss' || task.actionId === 'niqui') this.jealousy(a, t);
+        let bedId: string | undefined;
+        if (task.actionId === 'niqui') {
+          bedId = this.freeBed(a.lotId)?.id;
+          if (!bedId) {
+            if (task.byPlayer) this.toast('Hace falta una cama libre', '🛏️');
+            return this.endTask(a);
+          }
+          task.targetObjectId = bedId;
+        }
         this.endTask(t);
-        t.current = { id: this.newId('t'), actionId: task.actionId, byPlayer: false, phase: 'acting', remaining: def.duration + 5, passiveOf: a.id };
+        t.current = { id: this.newId('t'), actionId: task.actionId, byPlayer: false, phase: 'acting', remaining: def.duration + 5, passiveOf: a.id, targetObjectId: bedId };
         t.path = [];
         task.phase = 'acting';
         task.remaining = def.duration;

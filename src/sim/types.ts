@@ -60,6 +60,8 @@ export interface Agent {
   job?: Job;
   /** Minutos seguidos con el hambre a cero. */
   starving?: number;
+  /** Habilidades (0 a 10, con decimales). */
+  skills?: Record<string, number>;
   /** Está de visita (o en el parque) hasta este minuto; después vuelve a casa. Solo vecinos. */
   visitUntil?: number;
   /** Simulado de forma resumida (vecinos en parcelas donde no está el jugador). */
@@ -117,8 +119,9 @@ export interface Household {
 export interface Lot {
   id: string;
   name: string;
-  kind: 'home' | 'park';
-  layout: 'house' | 'park';
+  /** home = casa de una familia; park/venue = sitios públicos (parque, estudio de pilates). */
+  kind: 'home' | 'park' | 'venue';
+  layout: 'house' | 'park' | 'studio';
   householdId?: string;
   /** Colores propios de cada casa. */
   style?: { wall: number; floor: number };

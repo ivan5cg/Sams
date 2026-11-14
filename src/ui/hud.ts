@@ -4,6 +4,7 @@
 import { ACTIONS } from '../data/actions';
 import { NEED_INFO, SPECIES, lifeStage, needLabel } from '../data/species';
 import { CAREERS, JOB_CAREERS, WEEKDAY_LONG, WEEKDAY_NAMES, gradeLabel, scheduleText } from '../data/careers';
+import { MAX_SKILL, SKILLS } from '../data/skills';
 import { getRel, isAdult, relLabel } from '../sim/social';
 import { NEED_KEYS, type Agent, type Rel, type SpeciesId } from '../sim/types';
 import { CATALOG, CATEGORIES, OBJECTS, SELL_RATIO, type CatalogCategory } from '../data/objects';
@@ -480,7 +481,7 @@ export class Hud {
         }</div>`
       : `<div class="map-comp muted small">${a.travel ? `${esc(a.name)} va de camino.` : 'Las mascotas salen acompañadas: controla a una persona para viajar.'}</div>`;
 
-    const order = [w.household.lotId, 'P', ...w.state.lots.filter((l) => l.kind === 'home' && l.id !== w.household.lotId).map((l) => l.id)];
+    const order = [w.household.lotId, ...w.state.lots.filter((l) => l.kind !== 'home').map((l) => l.id), ...w.state.lots.filter((l) => l.kind === 'home' && l.id !== w.household.lotId).map((l) => l.id)];
     const cards = order
       .map((lotId) => {
         const lot = w.lotById(lotId);
@@ -488,11 +489,11 @@ export class Hud {
         const coming = w.state.agents.filter((x) => x.travel?.to === lotId && w.isPlayerMember(x));
         const mine = lot.householdId === w.household.id;
         const hh = lot.householdId ? w.state.households.find((h) => h.id === lot.householdId) : undefined;
-        const title = mine ? `🏡 Vuestra casa` : lot.kind === 'park' ? '🌳 Parque del barrio' : `🏠 ${esc(hh?.name ?? lot.name)}`;
+        const title = mine ? `🏡 Vuestra casa` : lot.kind === 'park' ? '🌳 Parque del barrio' : lot.kind === 'venue' ? `🧘 ${esc(lot.name)}` : `🏠 ${esc(hh?.name ?? lot.name)}`;
         // Quién vive ahí y no está
         const awayResidents = hh && !mine ? hh.memberIds.map((id) => w.agent(id)!).filter((x) => x.lotId !== lotId || x.travel) : [];
         const go = w.canTravel(a, lotId);
-        const goLabel = mine ? 'Volver a casa' : lot.kind === 'park' ? 'Ir al parque' : 'Ir de visita';
+        const goLabel = mine ? 'Volver a casa' : lot.kind === 'park' ? 'Ir al parque' : lot.kind === 'venue' ? 'Ir a clase' : 'Ir de visita';
         const btns: string[] = [];
         if (a.lotId === lotId && !a.travel) btns.push(`<span class="here">📍 ${esc(a.name)} está aquí</span>`);
         else if (leaderOk) btns.push(`<button class="map-btn" data-go="${lotId}" ${go.ok ? '' : 'disabled'}>🚶 ${goLabel}</button>`);
@@ -691,6 +692,17 @@ export class Hud {
       const day = Math.floor(due / 1440) + 1;
       jobHtml += `<div class="prof-sec"><div class="prof-h">🍼 Bebé en camino</div><div class="muted small">Llegará el ${WEEKDAY_LONG[(day - 1) % 7]} (día ${day}).</div></div>`;
     }
+    // Habilidades
+    let skillsHtml = '';
+    if (a.kind === 'person' && this.world.stageOf(a) !== 'baby') {
+      const rows = SKILLS.map((sk) => {
+        const v = a.skills?.[sk.id] ?? 0;
+        const lvl = Math.floor(v);
+        const pct = Math.round((v / MAX_SKILL) * 100);
+        return `<div class="skill-row"><span>${sk.icon} ${esc(sk.label)}</span><div class="bar"><div class="fill" style="width:${pct}%;background:#f0a830"></div></div><b>${lvl}</b></div>`;
+      }).join('');
+      skillsHtml = `<div class="prof-sec"><div class="prof-h">⭐ Habilidades</div>${rows}<div class="muted small">Se practican cocinando, tocando la guitarra, pintando, haciendo deporte o pilates, jugando al ajedrez o charlando.</div></div>`;
+    }
     // Relaciones con quien conoce
     const rows = Object.entries(w.state.rels)
       .map(([k, rel]) => {
@@ -726,6 +738,7 @@ export class Hud {
         <button class="icon-btn" data-close>✕</button>
       </div>
       ${jobHtml}
+      ${skillsHtml}
       <div class="prof-sec"><div class="prof-h">👥 Relaciones</div>${relHtml}</div>
     </div>`;
   }

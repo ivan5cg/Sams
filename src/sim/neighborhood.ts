@@ -1,6 +1,7 @@
 // Creación del barrio: las 9 familias vecinas, sus casas y el parque.
 
-import { HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, type ObjectPlacement } from '../data/lot';
+import { HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, type ObjectPlacement } from '../data/lot';
+import { CAREER_SKILL } from '../data/skills';
 import { OBJECTS } from '../data/objects';
 import { JOB_CAREERS } from '../data/careers';
 import { SPECIES, lifeStage } from '../data/species';
@@ -9,6 +10,7 @@ import { NEED_KEYS, type Agent, type Lot, type Needs, type SpeciesId, type World
 
 export const PLAYER_LOT = 'L0';
 export const PARK_LOT = 'P';
+export const STUDIO_LOT = 'G';
 export const NEIGHBOUR_COUNT = 9;
 
 const SURNAMES = ['López', 'Martín', 'Sánchez', 'Romero', 'Navarro', 'Torres', 'Díaz', 'Moreno', 'Gil', 'Ruiz', 'Ortega', 'Molina'];
@@ -77,6 +79,23 @@ export function randomIndoorTile(): { x: number; y: number } {
   return { x, y };
 }
 
+/** Habilidades de un vecino adulto: algo de lo que pide su trabajo y un poco de otra cosa. */
+export function giveSkills(p: Agent) {
+  if (p.skills || !isAdult(p)) return;
+  p.skills = {};
+  const main = p.job ? CAREER_SKILL[p.job.career] : undefined;
+  if (main) p.skills[main] = Math.round(rand(1, 2 + (p.job?.level ?? 1)));
+  const extra = pick(['cocina', 'musica', 'forma', 'logica', 'carisma', 'arte']);
+  p.skills[extra] = Math.max(p.skills[extra] ?? 0, Math.round(rand(0, 4)));
+}
+
+/** El estudio de pilates del barrio. */
+export function addStudio(state: WorldState) {
+  if (state.lots.some((l) => l.id === STUDIO_LOT)) return;
+  state.lots.push({ id: STUDIO_LOT, name: 'Estudio de pilates', kind: 'venue', layout: 'studio', style: { wall: 0xf2efe9, floor: 0xd9c3a5 } });
+  placeObjects(state, STUDIO_LOT, STUDIO_OBJECTS);
+}
+
 /** Nombre y color de ropa para un recién nacido. */
 export function newbornLooks(state: WorldState): { name: string; color: number } {
   const used = new Set(state.agents.map((a) => a.name));
@@ -88,6 +107,7 @@ export function newbornLooks(state: WorldState): { name: string; color: number }
 export function generateNeighborhood(state: WorldState) {
   state.lots.push({ id: PARK_LOT, name: 'Parque del barrio', kind: 'park', layout: 'park' });
   placeObjects(state, PARK_LOT, PARK_OBJECTS);
+  addStudio(state);
 
   // Al menos una mascota de cada especie en el barrio.
   const petPool: SpeciesId[] = shuffle(['dog', 'cat', 'guineapig', 'ferret', 'capybara']);
@@ -185,6 +205,7 @@ export function setupFamilyLife(state: WorldState, members: Agent[], opts: { job
     else if (stage !== 'elder' && stage !== 'baby' && Math.random() < 0.85) {
       p.job = { career: pick(JOB_CAREERS).id, level: 1 + Math.floor(Math.random() * Math.random() * 4), perf: Math.round(rand(0, 60)) };
     }
+    giveSkills(p);
   }
 }
 

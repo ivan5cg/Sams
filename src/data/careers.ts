@@ -98,6 +98,21 @@ export const CAREERS: Record<string, Career> = {
       { title: 'Premio Nobel', pay: 300 },
     ],
   },
+  deporte: {
+    id: 'deporte',
+    name: 'Deporte',
+    icon: '🧘',
+    start: 7,
+    end: 14,
+    days: [0, 1, 2, 3, 4, 5],
+    levels: [
+      { title: 'Monitor/a de sala', pay: 55 },
+      { title: 'Instructor/a de pilates', pay: 90 },
+      { title: 'Entrenador/a personal', pay: 135 },
+      { title: 'Preparador/a físico/a', pay: 200 },
+      { title: 'Leyenda del fitness', pay: 300 },
+    ],
+  },
   school: {
     id: 'school',
     name: 'Colegio',

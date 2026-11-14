@@ -68,7 +68,7 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
   // Cosas que hace por sí mismo (siesta del gato, danza del hurón...)
   for (const def of SELF_ACTIONS) {
     if (!world.checkSelfAction(a, def.id).ok) continue;
-    const score = benefit(a.needs, def.effects, def.duration, urgentOnly) * 0.8;
+    const score = benefit(a.needs, def.effects, def.duration, urgentOnly) * 0.8 + (urgentOnly ? 0 : def.baseScore ?? 0);
     if (score > 0) options.push({ choice: { actionId: def.id }, score: score * jitter() });
   }
 
