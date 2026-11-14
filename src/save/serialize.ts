@@ -1,6 +1,7 @@
 import { START_OBJECTS } from '../data/lot';
 import { OBJECTS } from '../data/objects';
 import { SAVE_VERSION } from '../sim/world';
+import { PLAYER_LOT, generateNeighborhood } from '../sim/neighborhood';
 import type { PlacedObject, WorldState } from '../sim/types';
 
 export function serialize(state: WorldState): string {
@@ -25,11 +26,20 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       const d = OBJECTS[o.def];
       s.objects.push({
         id: `o${s.nextId++}`,
+        lotId: PLAYER_LOT,
         ...o,
         ...(d.maxStock ? { stock: 2 } : {}),
         ...(d.maxDirt ? { dirt: 0 } : {}),
       });
     }
+  },
+  // v2 → v3: llega el barrio. Todo lo que había pasa a estar en la casa del jugador.
+  2: (s) => {
+    for (const a of s.agents) a.lotId = PLAYER_LOT;
+    for (const o of s.objects) o.lotId = PLAYER_LOT;
+    for (const h of s.households) h.lotId = PLAYER_LOT;
+    s.lots = [{ id: PLAYER_LOT, name: 'Vuestra casa', kind: 'home', layout: 'house', householdId: s.playerHouseholdId }];
+    generateNeighborhood(s);
   },
 };
 

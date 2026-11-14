@@ -52,11 +52,20 @@ export interface Agent {
   hidden: boolean;
   /** Objeto en el que vive sin salir (la jaula de la cobaya). */
   home?: string;
+  /** Parcela en la que está. */
+  lotId: string;
+  /** De camino a otra parcela. */
+  travel?: { from: string; to: string; arrive: number };
+  /** Está de visita (o en el parque) hasta este minuto; después vuelve a casa. Solo vecinos. */
+  visitUntil?: number;
+  /** Simulado de forma resumida (vecinos en parcelas donde no está el jugador). */
+  abstract?: boolean;
 }
 
 export interface PlacedObject {
   id: string;
   def: string;
+  lotId: string;
   x: number;
   y: number;
   /** Raciones disponibles (comedero, heno). */
@@ -70,6 +79,18 @@ export interface Household {
   name: string;
   funds: number;
   memberIds: string[];
+  /** Su casa. */
+  lotId: string;
+}
+
+export interface Lot {
+  id: string;
+  name: string;
+  kind: 'home' | 'park';
+  layout: 'house' | 'park';
+  householdId?: string;
+  /** Colores propios de cada casa. */
+  style?: { wall: number; floor: number };
 }
 
 export interface WorldState {
@@ -81,6 +102,7 @@ export interface WorldState {
   playerHouseholdId: string;
   activeAgentId: string;
   households: Household[];
+  lots: Lot[];
   agents: Agent[];
   objects: PlacedObject[];
 }

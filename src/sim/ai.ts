@@ -40,8 +40,8 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
   const distFactor = (x: number, y: number) => 1 / (1 + Math.hypot(x - a.pos.x, y - a.pos.y) / 15);
   const jitter = () => 0.85 + Math.random() * 0.3;
 
-  // Objetos
-  for (const o of world.state.objects) {
+  // Objetos (de la parcela en la que está)
+  for (const o of world.objectsIn(a.lotId)) {
     const od = world.objDef(o);
     for (const actionId of od.actions) {
       const def = ACTIONS[actionId];
@@ -71,7 +71,7 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
   }
 
   // Interacciones con otros (quien vive en una jaula no sale a buscarlas)
-  for (const t of a.home ? [] : world.state.agents) {
+  for (const t of a.home ? [] : world.agentsIn(a.lotId)) {
     if (t === a || t.hidden) continue;
     const tc = t.current;
     if (tc && (tc.byPlayer || tc.passiveOf || !ACTIONS[tc.actionId].interruptible)) continue;

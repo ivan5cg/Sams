@@ -52,6 +52,8 @@ export interface ActionDef {
   removes?: boolean;
   /** Aviso al terminar; {name} = quien la hace, {obj} = el objeto. */
   doneToast?: string;
+  /** Se puede hacer estando de visita en casa ajena. */
+  guestOk?: boolean;
 }
 
 const PETS_FREE: SpeciesId[] = ['dog', 'cat', 'ferret', 'capybara'];
@@ -61,27 +63,27 @@ const A: ActionDef[] = [
   // --- Personas: objetos ---
   { id: 'sleep', label: 'Dormir', verb: 'Durmiendo', icon: '💤', target: 'object', actors: ['person'], duration: 540, effects: { energy: 0.22 }, until: 'full', decayMult: 0.4 },
   { id: 'eat', label: 'Comer', verb: 'Comiendo', icon: '🍝', target: 'object', actors: ['person'], duration: 25, effects: { hunger: 3, fun: 0.05 }, until: 'full' },
-  { id: 'snack', label: 'Picar algo', verb: 'Picando algo', icon: '🍪', target: 'object', actors: ['person'], duration: 8, effects: { hunger: 2 } },
-  { id: 'toilet', label: 'Usar el váter', verb: 'En el baño', icon: '🚽', target: 'object', actors: ['person'], duration: 8, effects: { bladder: 14 }, until: 'full' },
+  { id: 'snack', guestOk: true, label: 'Picar algo', verb: 'Picando algo', icon: '🍪', target: 'object', actors: ['person'], duration: 8, effects: { hunger: 2 } },
+  { id: 'toilet', guestOk: true, label: 'Usar el váter', verb: 'En el baño', icon: '🚽', target: 'object', actors: ['person'], duration: 8, effects: { bladder: 14 }, until: 'full' },
   { id: 'shower', label: 'Ducharse', verb: 'Duchándose', icon: '🚿', target: 'object', actors: ['person'], duration: 15, effects: { hygiene: 7, fun: 0.05 }, until: 'full' },
-  { id: 'watch_tv', label: 'Ver la tele', verb: 'Viendo la tele', icon: '📺', target: 'object', actors: ['person'], duration: 120, effects: { fun: 0.35 }, until: 'full', interruptible: true },
+  { id: 'watch_tv', guestOk: true, label: 'Ver la tele', verb: 'Viendo la tele', icon: '📺', target: 'object', actors: ['person'], duration: 120, effects: { fun: 0.35 }, until: 'full', interruptible: true },
   { id: 'nap_sofa', label: 'Echar una siesta', verb: 'Echando la siesta', icon: '😴', target: 'object', actors: ['person'], duration: 60, effects: { energy: 0.15 }, decayMult: 0.6, until: 'full' },
-  { id: 'read', label: 'Leer un libro', verb: 'Leyendo', icon: '📖', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.25 }, until: 'full', interruptible: true },
+  { id: 'read', guestOk: true, label: 'Leer un libro', verb: 'Leyendo', icon: '📖', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.25 }, until: 'full', interruptible: true },
   { id: 'browse', label: 'Navegar por internet', verb: 'En el ordenador', icon: '💻', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.3, social: 0.1 }, until: 'full', interruptible: true },
   { id: 'adopt', label: 'Adoptar una mascota', verb: 'Mirando la protectora', icon: '🏠', target: 'object', actors: ['person'], duration: 15, effects: { fun: 0.1 }, playerOnly: true },
   { id: 'fill_bowl', label: 'Llenar el comedero (§10)', verb: 'Llenando el comedero', icon: '🥣', target: 'object', actors: ['person'], duration: 2, effects: {}, cost: 10, refill: true },
   { id: 'refill_hay', label: 'Poner heno (§5)', verb: 'Poniendo heno', icon: '🌾', target: 'object', actors: ['person'], duration: 3, effects: {}, cost: 5, refill: true },
   { id: 'clean_cage', label: 'Limpiar la jaula', verb: 'Limpiando la jaula', icon: '🧹', target: 'object', actors: ['person'], duration: 10, effects: { fun: -0.15, hygiene: -0.2 }, cleans: true },
   { id: 'clean_litter', label: 'Limpiar el arenero', verb: 'Limpiando el arenero', icon: '🧹', target: 'object', actors: ['person'], duration: 5, effects: { fun: -0.2, hygiene: -0.3 }, cleans: true },
-  { id: 'clean', label: 'Limpiar', verb: 'Limpiando', icon: '🧽', target: 'object', actors: ['person'], duration: 4, effects: { fun: -0.2 }, baseScore: 6, removes: true },
+  { id: 'clean', guestOk: true, label: 'Limpiar', verb: 'Limpiando', icon: '🧽', target: 'object', actors: ['person'], duration: 4, effects: { fun: -0.2 }, baseScore: 6, removes: true },
 
   // --- Mascotas: objetos ---
   { id: 'pet_eat', label: 'Comer del comedero', verb: 'Comiendo', icon: '🦴', target: 'object', actors: ['pet'], species: PETS_FREE, duration: 15, effects: { hunger: 5 }, until: 'full', consumes: true },
   { id: 'pet_sleep', label: 'Dormir en su cama', verb: 'Durmiendo', icon: '💤', target: 'object', actors: ['pet'], species: ['dog'], duration: 480, effects: { energy: 0.3 }, until: 'full', decayMult: 0.4 },
   { id: 'nap_bed', label: 'Subirse a la cama', verb: 'Dormitando en la cama', icon: '😴', target: 'object', actors: ['pet'], species: PETS_INDOOR, duration: 120, effects: { energy: 0.25, social: 0.05 }, until: 'full', decayMult: 0.5 },
-  { id: 'play_ball', label: 'Jugar con la pelota', verb: 'Jugando con la pelota', icon: '🎾', target: 'object', actors: ['pet'], species: PETS_INDOOR, duration: 30, effects: { fun: 0.7, energy: -0.05 }, until: 'full', interruptible: true },
-  { id: 'pee_outside', label: 'Hacer pis', verb: 'Haciendo pis', icon: '🌳', target: 'object', actors: ['pet'], species: ['dog', 'capybara'], duration: 4, effects: { bladder: 25 }, until: 'full' },
-  { id: 'sniff_sofa', label: 'Tumbarse en el sofá', verb: 'Tumbado en el sofá', icon: '🛋️', target: 'object', actors: ['pet'], species: PETS_INDOOR, duration: 60, effects: { energy: 0.12, fun: 0.05 }, until: 'full', interruptible: true },
+  { id: 'play_ball', guestOk: true, label: 'Jugar con la pelota', verb: 'Jugando con la pelota', icon: '🎾', target: 'object', actors: ['pet'], species: PETS_INDOOR, duration: 30, effects: { fun: 0.7, energy: -0.05 }, until: 'full', interruptible: true },
+  { id: 'pee_outside', guestOk: true, label: 'Hacer pis', verb: 'Haciendo pis', icon: '🌳', target: 'object', actors: ['pet'], species: ['dog', 'capybara'], duration: 4, effects: { bladder: 25 }, until: 'full' },
+  { id: 'sniff_sofa', guestOk: true, label: 'Tumbarse en el sofá', verb: 'Tumbado en el sofá', icon: '🛋️', target: 'object', actors: ['pet'], species: PETS_INDOOR, duration: 60, effects: { energy: 0.12, fun: 0.05 }, until: 'full', interruptible: true },
 
   // Gato
   { id: 'use_litter', label: 'Usar el arenero', verb: 'En el arenero', icon: '🐾', target: 'object', actors: ['pet'], species: ['cat', 'ferret'], duration: 4, effects: { bladder: 25 }, until: 'full', dirties: true },
@@ -103,12 +105,18 @@ const A: ActionDef[] = [
   { id: 'war_dance', label: 'Danza de guerra', verb: '¡Danza de guerra!', icon: '🌀', target: 'self', actors: ['pet'], species: ['ferret'], duration: 8, effects: { fun: 1.4, energy: -0.3 }, until: 'full' },
 
   // Capibara
-  { id: 'swim', label: 'Bañarse en el estanque', verb: 'En remojo', icon: '💦', target: 'object', actors: ['pet'], species: ['capybara', 'dog'], duration: 60, effects: { hygiene: 2, fun: 0.3 }, until: 'full', interruptible: true },
+  { id: 'swim', guestOk: true, label: 'Bañarse en el estanque', verb: 'En remojo', icon: '💦', target: 'object', actors: ['pet'], species: ['capybara', 'dog'], duration: 60, effects: { hygiene: 2, fun: 0.3 }, until: 'full', interruptible: true },
   { id: 'capy_sleep', label: 'Dormir en la paja', verb: 'Durmiendo', icon: '💤', target: 'object', actors: ['pet'], species: ['capybara'], duration: 420, effects: { energy: 0.3 }, until: 'full', decayMult: 0.4 },
+
+  // Parque
+  { id: 'sit_bench', label: 'Sentarse en el banco', verb: 'Sentado en el banco', icon: '🪑', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { energy: 0.08, fun: 0.15, social: 0.05 }, until: 'full', interruptible: true },
+  { id: 'swing', label: 'Columpiarse', verb: 'Columpiándose', icon: '🎠', target: 'object', actors: ['person'], guestOk: true, duration: 30, effects: { fun: 0.7, energy: -0.05 }, until: 'full', interruptible: true },
+  { id: 'buy_hotdog', label: 'Comprar un perrito (§5)', verb: 'Comiendo un perrito', icon: '🌭', target: 'object', actors: ['person'], guestOk: true, duration: 12, effects: { hunger: 4.5, fun: 0.1 }, until: 'full', cost: 5 },
 
   // --- Social: persona → persona ---
   { id: 'chat', label: 'Charlar', verb: 'Charlando', icon: '💬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 30, effects: { social: 0.7, fun: 0.1 }, partnerEffects: { social: 0.7, fun: 0.1 }, until: 'full', interruptible: true },
   { id: 'joke', label: 'Contar un chiste', verb: 'Contando un chiste', icon: '😂', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: 0.6, social: 0.3 }, partnerEffects: { fun: 0.6, social: 0.3 } },
+  { id: 'say_goodbye', label: 'Despedirse', verb: 'Despidiéndose', icon: '👋', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 3, effects: { social: 0.5 }, partnerEffects: { social: 0.5 }, playerOnly: true },
   { id: 'hug', label: 'Abrazar', verb: 'Abrazando', icon: '🤗', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 4, effects: { social: 2 }, partnerEffects: { social: 2 } },
 
   // --- Social: persona → mascota ---

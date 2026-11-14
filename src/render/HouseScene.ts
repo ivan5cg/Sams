@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
-import { SPECIES } from '../data/species';
+import { SPECIES, lifeStage } from '../data/species';
 import type { Agent, PlacedObject, SpeciesId } from '../sim/types';
 import type { Target, World } from '../sim/world';
 import { TILE_H, TILE_W, isoToScreen, screenToTile, shade, tileCenter } from './iso';
@@ -9,7 +9,9 @@ import { TILE_H, TILE_W, isoToScreen, screenToTile, shade, tileCenter } from './
 /** Minutos de juego por segundo real para cada velocidad. */
 export const SPEEDS = [0, 1, 3, 8];
 
-const FLOOR_COLORS = { wood: 0xc89f6e, tile: 0xdde6eb, grass: 0x7cb95b, door: 0xa67c52, wall: 0xe9e1d4 };
+const FLOOR_COLORS = { wood: 0xc89f6e, tile: 0xdde6eb, grass: 0x7cb95b, door: 0xa67c52, wall: 0xe9e1d4, path: 0xd8c9a3 };
+/** Tamaño según la etapa de la vida. */
+const STAGE_SCALE: Record<string, number> = { baby: 0.5, child: 0.72, teen: 0.88 };
 const SKIN = [0xf1c27d, 0xe0ac69, 0xc68642, 0x8d5524];
 const HAIR = [0x3b2314, 0x111111, 0xb5651d, 0xe6c35c];
 
@@ -105,6 +107,9 @@ export class HouseScene extends Phaser.Scene {
   private agentViews = new Map<string, AgentView>();
   private objectViews = new Map<string, ObjectView>();
   private night!: Phaser.GameObjects.Rectangle;
+  /** Parcela dibujada ahora mismo y sus gráficos fijos (suelo y paredes). */
+  private shownLot = '';
+  private lotGraphics: Phaser.GameObjects.Graphics[] = [];
   private pointers = new Map<number, { x: number; y: number }>();
   private dragStart: { x: number; y: number; scrollX: number; scrollY: number } | null = null;
   private dragged = false;
@@ -122,15 +127,24 @@ export class HouseScene extends Phaser.Scene {
   /** Cambia el mundo (al cargar o empezar partida nueva). */
   setWorld(world: World) {
     this.world = world;
+    this.shownLot = '';
+  }
+
+  /** Cambia la parcela que se ve (al ir al parque, a otra casa o cambiar de personaje). */
+  private showLot(lotId: string) {
     for (const v of this.agentViews.values()) v.root.destroy();
     for (const v of this.objectViews.values()) this.destroyObjectView(v);
     this.agentViews.clear();
     this.objectViews.clear();
+    for (const g of this.lotGraphics) g.destroy();
+    this.lotGraphics = [];
+    this.shownLot = lotId;
+    this.drawLot();
+    this.fitCamera();
   }
 
   create() {
     this.cameras.main.setBackgroundColor('#3d5a40');
-    this.drawLot();
     this.night = this.add.rectangle(0, 0, 10, 10, 0x0b1640, 0).setOrigin(0).setScrollFactor(0).setDepth(1e6);
     this.fitCamera();
     this.scale.on('resize', () => this.fitCamera());
@@ -140,8 +154,9 @@ export class HouseScene extends Phaser.Scene {
   private fitCamera() {
     const cam = this.cameras.main;
     const { width, height } = this.scale;
-    // Centrar en la casa (no en toda la parcela).
-    const c = isoToScreen(5.5, 5.5);
+    // En casa se centra en el edificio; en el parque, en el centro.
+    const park = this.world.lotById(this.shownLot || this.world.viewLotId)?.layout === 'park';
+    const c = park ? isoToScreen(8, 7) : isoToScreen(5.5, 5.5);
     const cssW = width / DPR, cssH = height / DPR;
     cam.setZoom(Phaser.Math.Clamp(Math.min(cssW / 640, cssH / 520), 0.45, 1.6) * DPR);
     cam.centerOn(c.x, c.y + 10);
@@ -153,14 +168,19 @@ export class HouseScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   private drawLot() {
-    const { tiles, w, h } = this.world.lot;
+    const lot = this.world.lotById(this.shownLot);
+    const { tiles, w, h } = this.world.layoutOf(this.shownLot);
+    const wallColor = lot.style?.wall ?? FLOOR_COLORS.wall;
+    const woodColor = lot.style?.floor ?? FLOOR_COLORS.wood;
     const floor = this.add.graphics().setDepth(-1e5);
+    this.lotGraphics.push(floor);
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const t = tiles[y][x];
         if (t === 'wall') continue;
-        let color = FLOOR_COLORS[t];
+        let color = t === 'wood' ? woodColor : FLOOR_COLORS[t];
         if (t === 'wood') color = shade(color, (x + y) % 2 ? 1 : 0.94);
+        if (t === 'path') color = shade(color, (x + y) % 2 ? 1 : 0.95);
         if (t === 'tile') color = shade(color, (x + y) % 2 ? 1 : 0.9);
         if (t === 'grass') color = shade(color, 0.95 + ((hash(`${x},${y}`) % 10) / 100));
         this.diamond(floor, x, y, color);
@@ -172,7 +192,8 @@ export class HouseScene extends Phaser.Scene {
         if (tiles[y][x] !== 'wall') continue;
         const back = x === 0 || y === 0;
         const g = this.add.graphics().setDepth((x + y) * 10 + 9);
-        this.box(g, x, y, 1, 1, back ? 52 : 12, FLOOR_COLORS.wall);
+        this.lotGraphics.push(g);
+        this.box(g, x, y, 1, 1, back ? 52 : 12, wallColor);
       }
     }
   }
@@ -267,6 +288,38 @@ export class HouseScene extends Phaser.Scene {
         gfx.fillPath();
         break;
       }
+      case 'bench': {
+        const p1 = isoToScreen(o.x + 0.2, o.y + 0.5), p2 = isoToScreen(o.x + 0.8, o.y + 0.5);
+        gfx.lineStyle(3, 0x444444, 1);
+        gfx.lineBetween(p1.x, p1.y, p1.x, p1.y - d.height);
+        gfx.lineBetween(p2.x, p2.y, p2.x, p2.y - d.height);
+        this.box(gfx, o.x + 0.1, o.y + 0.3, 0.8, 0.4, 0, d.color);
+        const A = isoToScreen(o.x + 0.1, o.y + 0.3), B = isoToScreen(o.x + 0.9, o.y + 0.3);
+        gfx.fillStyle(shade(d.color, 0.8), 1);
+        gfx.fillPoints([{ x: A.x, y: A.y - d.height }, { x: B.x, y: B.y - d.height }, { x: B.x, y: B.y - d.height - 12 }, { x: A.x, y: A.y - d.height - 12 }], true);
+        const up = (q: { x: number; y: number }) => ({ x: q.x, y: q.y - d.height });
+        gfx.fillStyle(d.color, 1);
+        gfx.fillPoints([isoToScreen(o.x + 0.1, o.y + 0.3), isoToScreen(o.x + 0.9, o.y + 0.3), isoToScreen(o.x + 0.9, o.y + 0.7), isoToScreen(o.x + 0.1, o.y + 0.7)].map(up), true);
+        break;
+      }
+      case 'swings': {
+        const a1 = isoToScreen(o.x + 0.1, o.y + 0.5), a2 = isoToScreen(o.x + d.w - 0.1, o.y + 0.5);
+        gfx.lineStyle(4, d.color, 1);
+        gfx.lineBetween(a1.x - 6, a1.y, a1.x, a1.y - d.height);
+        gfx.lineBetween(a1.x + 6, a1.y + 3, a1.x, a1.y - d.height);
+        gfx.lineBetween(a2.x - 6, a2.y, a2.x, a2.y - d.height);
+        gfx.lineBetween(a2.x + 6, a2.y + 3, a2.x, a2.y - d.height);
+        gfx.lineBetween(a1.x, a1.y - d.height, a2.x, a2.y - d.height);
+        gfx.lineStyle(1.5, 0x555555, 1);
+        for (const f of [0.33, 0.67]) {
+          const top = { x: a1.x + (a2.x - a1.x) * f, y: a1.y + (a2.y - a1.y) * f - d.height };
+          gfx.lineBetween(top.x - 4, top.y, top.x - 4, top.y + d.height - 12);
+          gfx.lineBetween(top.x + 4, top.y, top.x + 4, top.y + d.height - 12);
+          gfx.fillStyle(0x333333, 1);
+          gfx.fillRect(top.x - 6, top.y + d.height - 13, 12, 3);
+        }
+        break;
+      }
       case 'cage': {
         // Bandeja con serrín; los barrotes se dibujan delante del animal.
         this.box(gfx, o.x + 0.05, o.y + 0.05, d.w - 0.1, d.h - 0.1, 7, d.color);
@@ -315,7 +368,7 @@ export class HouseScene extends Phaser.Scene {
 
   private syncObjects() {
     const seen = new Set<string>();
-    for (const o of this.world.state.objects) {
+    for (const o of this.world.objectsIn(this.shownLot)) {
       seen.add(o.id);
       let v = this.objectViews.get(o.id);
       // Los objetos pueden cambiar de sitio (el hurón los esconde).
@@ -426,7 +479,7 @@ export class HouseScene extends Phaser.Scene {
         const cy = o.y + d.h / 2 + (along ? 0 : off);
         const p = isoToScreen(cx, cy);
         const lying = ['sleep', 'nap_sofa', 'nap_bed', 'pet_sleep'].includes(t.actionId);
-        const lift = d.shape === 'post' ? d.height : d.shape === 'hammock' ? d.height - 10 : d.shape === 'pond' ? -6 : d.height * 0.6;
+        const lift = d.shape === 'post' ? d.height : d.shape === 'hammock' ? d.height - 10 : d.shape === 'pond' ? -6 : d.shape === 'swings' ? 10 : d.height * 0.6;
         const depth = d.shape === 'pond' ? (cx + cy) * 10 : this.objectDepth(o) + 2;
         return { x: p.x, y: p.y - lift, depth, lying };
       }
@@ -438,7 +491,7 @@ export class HouseScene extends Phaser.Scene {
   private syncAgents(time: number) {
     const seen = new Set<string>();
     const activeId = this.world.state.activeAgentId;
-    for (const a of this.world.state.agents) {
+    for (const a of this.world.agentsIn(this.shownLot)) {
       seen.add(a.id);
       let v = this.agentViews.get(a.id);
       if (!v) {
@@ -454,8 +507,12 @@ export class HouseScene extends Phaser.Scene {
       v.body.y = dancing ? -Math.abs(Math.sin(time / 70)) * 10 : walking ? -Math.abs(Math.sin(time / 90)) * 3 : 0;
       v.body.setRotation(dancing ? Math.sin(time / 60) * 0.5 : p.lying ? (a.kind === 'person' ? -1.25 : 0) : 0);
       v.body.x = p.lying && a.kind === 'person' ? 14 : 0;
-      if (v.sprite) v.sprite.scaleX = a.facing > 0 ? -1 : 1;
-      else v.body.scaleX = a.facing;
+      const size = STAGE_SCALE[lifeStage(a.species, a.ageDays).id] ?? 1;
+      v.body.scaleY = size;
+      if (v.sprite) {
+        v.sprite.scaleX = a.facing > 0 ? -1 : 1;
+        v.body.scaleX = size;
+      } else v.body.scaleX = a.facing * size;
 
       const active = a.id === activeId;
       v.plumbob.setVisible(active);
@@ -488,6 +545,7 @@ export class HouseScene extends Phaser.Scene {
     const dt = Math.min(delta, 100) / 1000;
     const speed = SPEEDS[this.world.state.speed] ?? 1;
     if (speed > 0) this.world.tick(dt * speed);
+    if (this.world.viewLotId !== this.shownLot) this.showLot(this.world.viewLotId);
     this.syncObjects();
     this.syncAgents(time);
     this.updateNight();
@@ -566,7 +624,7 @@ export class HouseScene extends Phaser.Scene {
   private handleTap(wx: number, wy: number) {
     // 1) Agentes (lo más cercano al dedo)
     let bestAgent: { a: Agent; d: number } | null = null;
-    for (const a of this.world.state.agents) {
+    for (const a of this.world.agentsIn(this.shownLot)) {
       if (a.hidden) continue;
       const p = this.agentScreenPos(a);
       const h = a.kind === 'person' ? 44 : 26;
@@ -577,7 +635,7 @@ export class HouseScene extends Phaser.Scene {
 
     // 2) Objetos (por su caja en pantalla, el de delante gana)
     let bestObj: { o: PlacedObject; depth: number } | null = null;
-    for (const o of this.world.state.objects) {
+    for (const o of this.world.objectsIn(this.shownLot)) {
       const d = OBJECTS[o.def];
       const minX = isoToScreen(o.x, o.y + d.h).x, maxX = isoToScreen(o.x + d.w, o.y).x;
       const minY = isoToScreen(o.x, o.y).y - Math.max(d.height, 26) - 6, maxY = isoToScreen(o.x + d.w, o.y + d.h).y;
@@ -595,7 +653,8 @@ export class HouseScene extends Phaser.Scene {
 
     // 3) Suelo
     const t = screenToTile(wx, wy);
-    if (t.x >= 0 && t.y >= 0 && t.x < this.world.lot.w && t.y < this.world.lot.h) {
+    const layout = this.world.layoutOf(this.shownLot);
+    if (t.x >= 0 && t.y >= 0 && t.x < layout.w && t.y < layout.h) {
       this.showMarker(t.x, t.y);
       this.onTap({ kind: 'tile', x: t.x, y: t.y });
     }

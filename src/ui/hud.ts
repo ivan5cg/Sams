@@ -5,7 +5,7 @@ import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { NEED_INFO, SPECIES, lifeStage, needLabel } from '../data/species';
 import { NEED_KEYS, type Agent, type SpeciesId } from '../sim/types';
-import { MAX_MEMBERS, type Target, type World } from '../sim/world';
+import { MAX_MEMBERS, TRAVEL_MINUTES, type Target, type World } from '../sim/world';
 
 export interface HudCallbacks {
   onSave: () => void;
@@ -120,6 +120,29 @@ export class Hud {
     });
 
     $('#menu-btn').addEventListener('click', () => this.toggleMenu(true));
+    $('#map-btn').addEventListener('click', () => this.openMap());
+    $('#map').addEventListener('click', (e) => {
+      const el = e.target as HTMLElement;
+      if (el.id === 'map') return this.closeMap();
+      const b = el.closest('button');
+      if (!b) return;
+      if (b.dataset.close !== undefined) return this.closeMap();
+      if (b.dataset.comp) {
+        if (this.companions.has(b.dataset.comp)) this.companions.delete(b.dataset.comp);
+        else this.companions.add(b.dataset.comp);
+        return this.renderMap();
+      }
+      if (b.dataset.go) {
+        const a = this.world.activeAgent;
+        const ids = [a.id, ...[...this.companions].filter((id) => this.canAccompany(id))];
+        if (this.world.travel(ids, b.dataset.go)) this.closeMap();
+        return;
+      }
+      if (b.dataset.invite) {
+        if (this.world.invite(b.dataset.invite)) this.closeMap();
+        return;
+      }
+    });
     $('#menu').addEventListener('click', (e) => {
       const el = e.target as HTMLElement;
       if (el.id === 'menu') return this.toggleMenu(false);
@@ -146,6 +169,93 @@ export class Hud {
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // Mapa del barrio
+  // ---------------------------------------------------------------------------
+
+  private companions = new Set<string>();
+
+  /** Puede acompañar al personaje activo: está en el mismo sitio y es libre de moverse. */
+  private canAccompany(id: string): boolean {
+    const w = this.world;
+    const a = w.activeAgent;
+    const c = w.agent(id);
+    return !!c && c.id !== a.id && c.lotId === a.lotId && !c.travel && !c.home && !c.hidden;
+  }
+
+  private openMap() {
+    this.companions.clear();
+    this.closeSheet();
+    $('#map').hidden = false;
+    this.renderMap();
+  }
+
+  private closeMap() {
+    $('#map').hidden = true;
+  }
+
+  private placeName(lotId: string): string {
+    const lot = this.world.lotById(lotId);
+    if (lot.householdId === this.world.household.id) return 'Casa';
+    return lot.kind === 'park' ? 'Parque' : lot.name;
+  }
+
+  private renderMap() {
+    const w = this.world;
+    const a = w.activeAgent;
+    const chip = (x: Agent) => {
+      const face = x.kind === 'person' ? esc(x.name) : `${SPECIES[x.species].icon} ${esc(x.name)}`;
+      return `<span class="who-chip${w.isPlayerMember(x) ? ' mine' : ''}">${face}</span>`;
+    };
+    const travellers = w.members.filter((m) => this.canAccompany(m.id));
+    const leaderOk = a.kind === 'person' && !a.travel;
+    const compRow = leaderOk
+      ? `<div class="map-comp"><span class="muted small">Con ${esc(a.name)} van:</span>${
+          travellers.length
+            ? travellers.map((m) => `<button class="comp ${this.companions.has(m.id) ? 'on' : ''}" data-comp="${m.id}">${m.kind === 'pet' ? SPECIES[m.species].icon : '🧑'} ${esc(m.name)}</button>`).join('')
+            : '<span class="muted small">nadie más aquí</span>'
+        }</div>`
+      : `<div class="map-comp muted small">${a.travel ? `${esc(a.name)} va de camino.` : 'Las mascotas salen acompañadas: controla a una persona para viajar.'}</div>`;
+
+    const order = [w.household.lotId, 'P', ...w.state.lots.filter((l) => l.kind === 'home' && l.id !== w.household.lotId).map((l) => l.id)];
+    const cards = order
+      .map((lotId) => {
+        const lot = w.lotById(lotId);
+        const here = w.agentsIn(lotId);
+        const coming = w.state.agents.filter((x) => x.travel?.to === lotId && w.isPlayerMember(x));
+        const mine = lot.householdId === w.household.id;
+        const hh = lot.householdId ? w.state.households.find((h) => h.id === lot.householdId) : undefined;
+        const title = mine ? `🏡 Vuestra casa` : lot.kind === 'park' ? '🌳 Parque del barrio' : `🏠 ${esc(hh?.name ?? lot.name)}`;
+        // Quién vive ahí y no está
+        const awayResidents = hh && !mine ? hh.memberIds.map((id) => w.agent(id)!).filter((x) => x.lotId !== lotId || x.travel) : [];
+        const go = w.canTravel(a, lotId);
+        const goLabel = mine ? 'Volver a casa' : lot.kind === 'park' ? 'Ir al parque' : 'Ir de visita';
+        const btns: string[] = [];
+        if (a.lotId === lotId && !a.travel) btns.push(`<span class="here">📍 ${esc(a.name)} está aquí</span>`);
+        else if (leaderOk) btns.push(`<button class="map-btn" data-go="${lotId}" ${go.ok ? '' : 'disabled'}>🚶 ${goLabel}</button>`);
+        if (hh && !mine) {
+          const inv = w.canInvite(hh.id);
+          btns.push(`<button class="map-btn ghost" data-invite="${hh.id}" ${inv.ok ? '' : 'disabled'} title="${esc(inv.reason ?? '')}">📞 Invitar${inv.ok ? '' : ` · ${esc(inv.reason ?? '')}`}</button>`);
+        }
+        return `<div class="place ${a.lotId === lotId ? 'current' : ''}">
+          <div class="place-title">${title}</div>
+          <div class="place-who">${here.length ? here.map(chip).join('') : '<span class="muted small">No hay nadie</span>'}${coming.length ? `<span class="muted small">· de camino: ${coming.map((c) => esc(c.name)).join(', ')}</span>` : ''}</div>
+          ${awayResidents.length ? `<div class="muted small">Fuera: ${awayResidents.map((x) => esc(x.name)).join(', ')}</div>` : ''}
+          <div class="place-actions">${btns.join('')}</div>
+        </div>`;
+      })
+      .join('');
+
+    $('#map').innerHTML = `<div class="map-card">
+      <div class="sheet-head">
+        <div><div class="sheet-title">🗺️ El barrio</div><div class="sheet-sub">Ir andando a cualquier sitio lleva ${TRAVEL_MINUTES} minutos</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      ${compRow}
+      <div class="places">${cards}</div>
+    </div>`;
+  }
+
   private toggleMenu(open: boolean) {
     $('#menu').hidden = !open;
   }
@@ -160,7 +270,7 @@ export class Hud {
 
     if (target.kind === 'tile') {
       this.closeSheet();
-      if (w.grid[target.y]?.[target.x]) w.command(active.id, 'move', target);
+      if (w.gridOf(w.viewLotId)[target.y]?.[target.x]) w.command(active.id, 'move', target);
       return;
     }
 
@@ -263,7 +373,7 @@ export class Hud {
 
     $('#clock').textContent = `Día ${w.day} · ${w.clock}`;
     $('#funds').textContent = `§ ${w.household.funds.toLocaleString('es-ES')}`;
-    $('#family').textContent = w.household.name;
+    $('#family').textContent = `📍 ${this.placeName(w.viewLotId)} · ${w.household.name}`;
     for (const b of $('#speed').querySelectorAll<HTMLButtonElement>('button')) {
       b.classList.toggle('on', Number(b.dataset.speed) === w.state.speed);
     }
@@ -274,7 +384,7 @@ export class Hud {
         const md = mood(m);
         const face = m.kind === 'person' ? esc(m.name[0]) : SPECIES[m.species].icon;
         const bg = m.kind === 'person' ? hexColor(m.color) : '#3a3f55';
-        return `<button class="portrait ${m.id === a.id ? 'active' : ''} ${m.hidden ? 'away' : ''}" data-id="${m.id}" style="--ring:${md.color};--bg:${bg}" aria-label="${esc(m.name)}">
+        return `<button class="portrait ${m.id === a.id ? 'active' : ''} ${m.hidden || m.travel || m.lotId !== w.viewLotId ? 'away' : ''}" data-id="${m.id}" style="--ring:${md.color};--bg:${bg}" aria-label="${esc(m.name)}">
           <span class="face">${face}</span><span class="pmood">${md.icon}</span>
         </button>`;
       })
@@ -291,7 +401,8 @@ export class Hud {
 
     // Cola de acciones
     const tasks = [a.current, ...a.queue].filter((t) => t && t.actionId !== 'idle');
-    let queueHtml = tasks
+    const travelChip = a.travel ? `<div class="chip now"><span>🚶</span><span class="chip-l">De camino a: ${esc(this.placeName(a.travel.to))}</span></div>` : '';
+    let queueHtml = travelChip + tasks
       .map((t, i) => {
         const def = ACTIONS[t!.actionId];
         const target = t!.targetAgentId ? w.agent(t!.targetAgentId)?.name : '';
@@ -302,7 +413,7 @@ export class Hud {
       .join('');
     if (!queueHtml) {
       const own = w.optionsFor(a.id, { kind: 'agent', id: a.id }).length > 0;
-      const where = a.home ? 'Toca su jaula' : 'Toca algo de la casa';
+      const where = a.home ? 'Toca su jaula' : 'Toca algo';
       queueHtml = `<div class="hint">${a.kind === 'pet' ? '🐾' : '👆'} ${where}${own ? ` o a ${esc(a.name)}` : ''} para darle una orden</div>`;
     }
     if (queueHtml !== this.lastQueueHtml) {

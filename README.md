@@ -21,6 +21,20 @@ Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
 - Todos envejecen un día por cada día de juego.
 - La partida se guarda sola. Desde el menú ☰ puedes exportarla o importarla como archivo.
 
+## El barrio
+
+Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus niños y mascotas) y un **parque**.
+
+- Con el botón 🗺️ abres el mapa: el personaje activo puede ir al parque o de visita a otra casa,
+  y llevarse a quien quiera de los que están con él (por ejemplo, al perro).
+- En el parque hay columpios, bancos, un puesto de perritos (§5), un estanque y árboles para los perros.
+- Desde el mapa también puedes **invitar** a una familia. Y a veces vienen solos: llaman a la puerta.
+  Si quieres que se vayan, tócalos y elige "Despedirse".
+- De visita en casa ajena solo se pueden usar algunas cosas (el baño, la tele, el sofá…), no la cama ni la nevera.
+- Los vecinos también salen al parque por su cuenta, así que allí te los cruzarás.
+- Solo se simula al detalle donde hay alguien de tu familia; el resto del barrio se simula de forma resumida
+  cada hora, para que el móvil no se caliente ni gaste batería.
+
 ## Mascotas
 
 Se adoptan en la protectora desde el **ordenador** de casa (máximo 8 miembros en la familia).
@@ -75,7 +89,7 @@ acciones en `src/data/actions.ts`: la IA lo usará automáticamente.
 
 1. ✅ **MVP**: casa con 2 personas y un perro, 6 necesidades, autonomía, control de un personaje cada vez, guardado.
 2. ✅ Gatos, cobayas, hurones y capibaras, con sus objetos (rascador, jaula, estanque…) y la protectora.
-3. Barrio con 10 unidades domésticas (las otras 9 controladas por la IA con simulación resumida), visitas y parque.
+3. ✅ Barrio con 10 unidades domésticas (las otras 9 controladas por la IA con simulación resumida), visitas y parque.
 4. Relaciones, trabajo y economía.
 5. Ciclo de vida completo: etapas, parejas, nacimientos, muertes y herencias.
 6. Modo construcción, tienda de muebles y pulido.
