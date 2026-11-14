@@ -85,7 +85,9 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
     for (const def of SOCIAL_ACTIONS) {
       if (def.playerOnly || !world.checkSocialAction(a, t, def.id).ok) continue;
       // Por su cuenta solo se coquetea o se besa con la pareja, y solo se insulta a los enemigos.
-      if ((def.id === 'flirt' || def.id === 'kiss') && !rel.status) continue;
+      // (salvo con su lío, o con unas copas de más: ahí se coquetea con cualquiera)
+      if ((def.id === 'flirt' || def.id === 'kiss') && !rel.status && !rel.affair && !(def.id === 'flirt' && hasEmotion(a, 'borracho'))) continue;
+      if (t.role && def.id !== 'chat' && def.id !== 'ask_gossip') continue;
       if (def.id === 'argue') {
         // Se discute con quien te ha hecho algo, y si estás enfadado/a.
         const angry = hasEmotion(a, 'enfadado') || hasEmotion(a, 'celos') || hasEmotion(a, 'insultado');

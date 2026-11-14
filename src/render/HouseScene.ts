@@ -9,7 +9,7 @@ import { chatPair, traitQuip } from '../sim/chatter';
 import { NEED_KEYS } from '../sim/types';
 import { P, SCREEN_GLOW, drawObjectArt, drawTile, drawWall, faceQuad, flat, prism, type LotStyle } from './art';
 import { SceneFx, type FxKind } from './fx';
-import { PET_ART, drawBaby, drawLeg, drawPersonBody, personLook, petColor } from './characters';
+import { PET_ART, drawAccessory, drawBaby, drawLeg, drawPersonBody, personLook, petColor } from './characters';
 import { TILE_H, TILE_W, isoToScreen, screenToTile, shade, tileCenter } from './iso';
 
 /** Minutos de juego por segundo real para cada velocidad. */
@@ -22,6 +22,14 @@ const NIGHT_MAX = 0.42;
 
 /** Partículas que acompañan a cada acción (y cada cuántos ms sale una). */
 const ACTION_FX: Record<string, { kind: FxKind; every: number }> = {
+  fart: { kind: 'gas', every: 200 },
+  sing: { kind: 'notes', every: 350 },
+  rap: { kind: 'notes', every: 300 },
+  play_accordion: { kind: 'notes', every: 600 },
+  chotis: { kind: 'notes', every: 500 },
+  tragaperras: { kind: 'stars', every: 500 },
+  vomit: { kind: 'drops', every: 150 },
+  play_mus: { kind: 'stars', every: 1600 },
   sleep: { kind: 'zzz', every: 900 },
   nap_sofa: { kind: 'zzz', every: 900 },
   nap_bed: { kind: 'zzz', every: 900 },
@@ -109,10 +117,18 @@ const ZOOM_MIN = 0.4 * DPR;
 const ZOOM_MAX = 2.5 * DPR;
 
 /** Ventanas y espejos de las paredes del fondo, según el plano. */
-function wallDeco(layout: string, x: number, y: number): { face: 'L' | 'R'; kind: 'window' | 'mirror' | 'stripe'; color?: number } | undefined {
+function wallDeco(layout: string, x: number, y: number): { face: 'L' | 'R'; kind: 'window' | 'mirror' | 'stripe' | 'tunnel'; color?: number } | undefined {
   if (layout === 'super') {
     if (y === 0) return { face: 'L', kind: 'stripe', color: 0x2e8b57 };
     if (x === 0) return y % 3 === 1 ? { face: 'R', kind: 'window' } : { face: 'R', kind: 'stripe', color: 0x2e8b57 };
+  }
+  if (layout === 'metro') {
+    if (y === 0) return { face: 'L', kind: 'tunnel', color: x % 2 ? 0xe63946 : 0x0074c8 };
+    if (x === 0) return { face: 'R', kind: 'stripe', color: 0x0074c8 };
+  }
+  if (layout === 'bar') {
+    if (y === 0) return x % 4 === 2 ? { face: 'L', kind: 'window' } : { face: 'L', kind: 'stripe', color: 0x8b2e3c };
+    if (x === 0) return { face: 'R', kind: 'stripe', color: 0x8b2e3c };
   }
   if (layout === 'acai') {
     if (y === 0) return x % 3 === 0 ? { face: 'L', kind: 'window' } : { face: 'L', kind: 'stripe', color: 0x7b4fd0 };
@@ -437,7 +453,14 @@ export class HouseScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   private agentKey(a: Agent) {
-    return `${lifeStage(a.species, a.ageDays).id}:${a.color}`;
+    return `${lifeStage(a.species, a.ageDays).id}:${a.color}:${a.role ?? ''}:${this.chulapo(a)}`;
+  }
+
+  /** En San Isidro, en el parque y la plaza, la gente va de chulapo. */
+  private chulapo(a: Agent): boolean {
+    if (a.kind !== 'person' || a.role) return false;
+    const lot = this.world.lotById(a.lotId);
+    return this.world.hasEvent('sanisidro') && (lot?.layout === 'park' || lot?.layout === 'plaza');
   }
 
   private createAgentView(a: Agent): AgentView {
@@ -467,6 +490,8 @@ export class HouseScene extends Phaser.Scene {
         drawLeg(fore, look, 0.5);
         const torso = this.add.graphics();
         headY = drawPersonBody(torso, look);
+        const acc = a.role ?? (this.chulapo(a) ? 'chulapo' : '');
+        if (acc) drawAccessory(torso, acc);
         body.add([back, fore, torso]);
         legs = [back, fore];
       }
@@ -623,6 +648,10 @@ export class HouseScene extends Phaser.Scene {
       y = Math.sin(t / 55) * 2;
     } else if (running) {
       y = -Math.abs(Math.sin(t / 55)) * 3;
+    } else if (walking && (a.alcohol ?? 0) >= 50) {
+      y = -Math.abs(Math.sin(t / 90)) * 1.5;
+      rot = Math.sin(t / 260) * 0.2;
+      x += Math.sin(t / 330) * 3;
     } else if (walking) {
       y = -Math.abs(Math.sin(t / 90)) * 1.5;
     } else if (EATING.has(acting)) {

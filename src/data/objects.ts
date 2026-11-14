@@ -63,13 +63,13 @@ const D: ObjectDef[] = [
   { id: 'armchair', name: 'Sillón', icon: '💺', w: 1, h: 1, height: 14, color: 0x7b4fa0, capacity: 1, snap: true, actions: ['sit', 'watch_tv', 'sniff_sofa'], price: 120, category: 'descanso', tiers: true },
   { id: 'crib', name: 'Cuna', icon: '', w: 1, h: 1, height: 20, color: 0xf2a7c3, shape: 'cage', capacity: 3, actions: ['baby_sleep'], price: 150, category: 'descanso' },
 
-  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'eat', 'snack', 'repair'], price: 250, category: 'cocina', breakable: true, tiers: true },
+  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'eat', 'snack', 'drink_beer', 'repair'], price: 250, category: 'cocina', breakable: true, tiers: true },
   { id: 'toilet', name: 'Váter', icon: '🚽', w: 1, h: 1, height: 14, color: 0xf4f4f4, capacity: 1, snap: true, actions: ['toilet', 'repair'], price: 120, category: 'cocina', breakable: true, tiers: true },
   { id: 'shower', name: 'Ducha', icon: '🚿', w: 1, h: 1, height: 6, color: 0x9fd3e6, capacity: 1, snap: true, actions: ['shower', 'repair'], price: 200, category: 'cocina', breakable: true, tiers: true },
   { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true, tiers: true },
 
   { id: 'tv', name: 'Televisión', icon: '📺', w: 1, h: 1, height: 30, color: 0x333a44, capacity: 0, actions: ['repair'], price: 220, category: 'ocio', breakable: true, tiers: true },
-  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'find_job', 'throw_party', 'day_off', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
+  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'whatsapp', 'order_glovo', 'find_job', 'throw_party', 'day_off', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
   { id: 'bookshelf', name: 'Estantería', icon: '📚', w: 1, h: 1, height: 44, color: 0x8b5a2b, capacity: 1, actions: ['read'], price: 90, category: 'ocio', tiers: true },
   { id: 'stereo', name: 'Equipo de música', icon: '📻', w: 1, h: 1, height: 24, color: 0x2d2d3a, capacity: 3, actions: ['dance', 'listen_music', 'repair'], price: 150, category: 'ocio', breakable: true, tiers: true },
   { id: 'gamebox', name: 'Videoconsola', icon: '🎮', w: 1, h: 1, height: 18, color: 0x3a3f55, capacity: 2, actions: ['play_games', 'repair'], price: 280, category: 'ocio', breakable: true, tiers: true },
@@ -116,6 +116,19 @@ const D: ObjectDef[] = [
   { id: 'acai_counter', name: 'Barra de açaí', icon: '', w: 3, h: 1, height: 24, color: 0xf4f2ee, capacity: 2, actions: ['acai_bowl', 'smoothie'] },
   { id: 'cafe_table', name: 'Mesa', icon: '', w: 1, h: 1, height: 16, color: 0xd9c3a5, capacity: 2, snap: true, actions: ['sit'] },
   { id: 'neon_sign', name: 'Neón', icon: '', w: 1, h: 1, height: 44, color: 0x2d2540, capacity: 1, actions: ['selfie'] },
+
+  // Metro
+  { id: 'metro_seat', name: 'Asientos del metro', icon: '', w: 2, h: 1, height: 14, color: 0x3d6db5, capacity: 2, snap: true, actions: ['sit'] },
+  { id: 'metro_pole', name: 'Barra', icon: '', w: 1, h: 1, height: 50, color: 0xd0d4d8, capacity: 0, actions: [] },
+  { id: 'metro_sign', name: 'Plano del metro', icon: '', w: 1, h: 1, height: 40, color: 0xffffff, capacity: 1, actions: ['read_map'] },
+  // Plaza de Alcorcón
+  { id: 'fountain', name: 'Fuente', icon: '', w: 2, h: 2, height: 22, color: 0x9fb6c9, capacity: 3, actions: ['throw_coin'] },
+  { id: 'churreria', name: 'Churrería', icon: '', w: 2, h: 1, height: 36, color: 0xf2e6c9, capacity: 2, actions: ['churros', 'rosquillas'] },
+  // Bar
+  { id: 'bar_counter', name: 'Barra del bar', icon: '', w: 3, h: 1, height: 24, color: 0x8b5a2b, capacity: 3, actions: ['cana', 'vermut', 'chupito', 'calamares', 'bravas', 'tortilla'] },
+  { id: 'slot_machine', name: 'Tragaperras', icon: '', w: 1, h: 1, height: 40, color: 0x2b2d42, capacity: 1, actions: ['tragaperras'] },
+  { id: 'bar_tv', name: 'Tele del bar', icon: '', w: 1, h: 1, height: 44, color: 0x333a44, capacity: 4, actions: ['watch_football'] },
+  { id: 'mus_table', name: 'Mesa de mus', icon: '', w: 1, h: 1, height: 16, color: 0x6b8e4e, capacity: 4, actions: ['play_mus', 'sit'] },
 
   // Parque (algunas cosas también se pueden comprar)
   { id: 'bench', name: 'Banco', icon: '', w: 1, h: 1, height: 12, color: 0x8b5a2b, shape: 'bench', capacity: 2, snap: true, actions: ['sit_bench'], price: 70, category: 'deco' },

@@ -22,8 +22,8 @@ Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
 
 ## El barrio
 
-Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus niños y mascotas), un **parque**,
-un estudio de pilates, un **Mercadona** y dos locales de **açaí**.
+Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar, con sus niños y mascotas), un
+**parque**, un estudio de pilates, un **Mercadona** y dos locales de **açaí**. Y en metro, **Alcorcón** (ver más abajo).
 
 - Con el botón 🗺️ abres el mapa: el personaje activo puede ir al parque o de visita a otra casa,
   y llevarse a quien quiera de los que están con él (por ejemplo, al perro).
@@ -119,6 +119,42 @@ un estudio de pilates, un **Mercadona** y dos locales de **açaí**.
   barata), algún **apagón** por la noche (sin tele ni ordenador, y a oscuras) y **Navidad** al final del invierno:
   lotería (décimos a §20 en la caja del Mercadona, sorteo el último día, con Gordo, pedrea y reintegro) y cena con
   el cuñado arreglando el país.
+
+## Alcorcón y el metro
+
+- El barrio de siempre es **Madrid**. Ahora también está **Alcorcón**: la plaza (fuente, bancos y churrería), el
+  **Bar Casa Paco** y tres casas más (en una viven unos okupas). Para ir de un sitio a otro se coge el **metro**
+  (Línea 10 hasta Puerta del Sur y MetroSur): el vagón se ve y se puede vivir el trayecto.
+- En el metro hay un **vendedor de chuches** ("¡Chupachups, chicles, kleenex, a un euro!"), un **músico con
+  acordeón** y **MC Kalimotxo**, un rapero que te dedica temas con tu nombre, tu trabajo, tu mascota, tu pareja o
+  tu forma de ser. Si le das una moneda, te saca otro.
+- En el bar: cañas, vermut, chupitos, bocata de calamares, bravas, tortilla, tragaperras, mus y el derbi del
+  domingo en la tele. En la plaza: churros con chocolate, rosquillas y echar una moneda a la fuente.
+- Por la calle: **repartidores de Glovo** (pide comida desde el ordenador) y, en campaña electoral,
+  **militantes del PSOE** que te paran en el parque o llaman a la puerta para pedirte el voto.
+
+## Salseo, pedos, borracheras y cuernos
+
+- **Salseo**: entre los vecinos pasan cosas (líos, deudas, broncas, operaciones de nariz, el que dice que trabaja
+  en un banco y está en el paro...). Se corre de boca en boca y las **vecinas cotillas** del banco del parque y de
+  la plaza (Doña Puri, Doña Remedios, Doña Encarna y Doña Maruja) acaban sabiéndolo todo. Para enterarte:
+  pregúntales, **cotillea** con los vecinos o mira el **grupo de WhatsApp del barrio**. Lo que sabéis está en
+  ☰ → 🌶️ Salseo del barrio. Y si se lo cuentas a las cotillas, mañana lo sabe todo el barrio.
+- **Pedos**: se pueden tirar (y después de comer, se escapan solos). Unos se ríen, otros se quejan... y si es en
+  público, acaba en el salseo.
+- **Beber**: cerveza en casa o cañas en el bar. Achispado/a (más bailón y simpático), borracho/a (se tambalea,
+  canta, coquetea con quien sea), si se pasa se queda frito/a o vomita... y al día siguiente, resaca.
+- **Infidelidad**: con pareja, se puede "proponer un lío" a otra persona. Si tu pareja os pilla (o se entera por
+  las cotillas o por un chivatazo), cuernos: se enfada muchísimo, se acuerda y puede dejarte. Y "cotillear" con
+  alguien a quien le ponen los cuernos... se lo cuenta.
+
+## Folclore
+
+- **San Isidro** (sábado de primavera): chulapos y chulapas con su parpusa en el parque y la plaza, chotis y
+  rosquillas tontas y listas. "Bailar un chotis" con cualquiera, cualquier día.
+- **Campaña electoral** y elecciones en primavera, **derbi** Madrid–Atleti los domingos en el bar, **las uvas** en
+  Nochevieja (y el cuñado atragantándose con la quinta), además de la verbena, la lotería de Navidad...
+- Las charlas tiran de castizo: "¡Esto mola mazo!", "De Madrid al cielo", "Me piro, vampiro", el Alcorconazo...
 
 ## Diálogos, conversaciones y deseos
 
@@ -249,3 +285,5 @@ acciones en `src/data/actions.ts`: la IA lo usará automáticamente.
 6. ✅ Modo construcción, tienda de muebles y pulido.
 7. ✅ Más profundidad: emociones con causa, metas de vida, rasgos heredados, relaciones con memoria, trabajo con
    decisiones, estaciones y eventos, mascotas con carácter, muebles por calidades y ampliar la casa.
+8. ✅ Alcorcón y el metro, gente de la calle, salseo con vecinas cotillas, pedos, borracheras, infidelidades y
+   folclore madrileño.

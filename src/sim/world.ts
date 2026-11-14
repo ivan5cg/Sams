@@ -5,6 +5,8 @@ import { SPECIES, lifeStage } from '../data/species';
 import { CAREERS, gradeLabel } from '../data/careers';
 import { DILEMMAS, DILEMMA_BY_ID } from '../data/dilemmas';
 import { ELECTRIC, EVENTS, POWERED_ACTIONS, SEASONS } from '../data/seasons';
+import { ACCORDION_LINES, ALCOHOL, CAMPAIGN_LINES, CHISMOSA_LINES, DRUNK_LINES, FART_LAUGHS, FART_LINES, FART_REACTIONS, GASSY, GLOVO_LINES, RAP_INTRO, RAP_OUTRO, RAP_VERSES, VENDOR_LINES } from '../data/street';
+import { addSecret, bestSecretFor, inventGossip, spreadGossip } from './gossip';
 import { CAREER_SKILL, MAX_SKILL, SKILL_BY_ID } from '../data/skills';
 import { chooseAutonomous } from './ai';
 import { matchWish, newWish, topUpWishes } from './wishes';
@@ -15,15 +17,17 @@ import { emotionMood, feel as feelEmotion, forget, hasEmotion, pruneEmotions } f
 import { EMOTIONS } from '../data/emotions';
 import { TRAITS, TRAIT_BY_ID } from '../data/traits';
 import { REJECT_TEXT, REL_EFFECTS, ROMANTIC, acceptChance, canRomance, changeRel, getRel, grudgeOf, isAdult, partnerOf, relKey, setRel } from './social';
-import { ACAI_LOTS, PARK_LOT, PLAYER_LOT, STUDIO_LOT, SUPER_LOT, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
+import { ACAI_LOTS, BAR_LOT, METRO_LOT, PARK_LOT, PLAYER_LOT, PLAZA_LOT, STUDIO_LOT, SUPER_LOT, addAlcorcon, generateOkupas, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { findPath, isWalkable, pathLength, reachable, type Grid } from './pathfinding';
 import { NEED_KEYS, type Agent, type Household, type Lot, type NeedKey, type Needs, type PlacedObject, type SpeciesId, type Task, type Vec, type WorldState } from './types';
 
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_MEMBERS = 8;
 /** Minutos de juego que se tarda en ir de una parcela a otra del barrio. */
 export const TRAVEL_MINUTES = 15;
+/** Lo que dura el trayecto en metro entre Madrid y Alcorcón. */
+export const RIDE_MINUTES = 22;
 const MAX_STEP = 0.5;
 
 export type Target =
@@ -194,6 +198,16 @@ export class World {
     if (w.kind === 'action' && w.action) {
       const def = ACTIONS[w.action];
       if (def.target === 'self') return this.command(a.id, w.action, { kind: 'agent', id: a.id });
+      if (def.target === 'agent' && def.targetRoles) {
+        const npc = this.agentsIn(a.lotId).find((x) => x.role && def.targetRoles!.includes(x.role) && !x.hidden);
+        if (npc) return this.command(a.id, w.action, { kind: 'agent', id: npc.id });
+        const post = this.state.agents.find((x) => x.role && def.targetRoles!.includes(x.role))?.post;
+        if (post && post !== a.lotId) {
+          this.toast(`${a.name} va a ${this.lotById(post).name}`, '💡');
+          return this.travel([a.id], post);
+        }
+        return false;
+      }
       if (def.target === 'agent') {
         if (w.target === 'vecino') {
           const n = this.agentsIn(a.lotId).find((x) => x.kind === 'person' && x.householdId !== a.householdId && this.stageOf(x) !== 'baby');
@@ -212,7 +226,7 @@ export class World {
       }
       const o = this.objectsIn(a.lotId).find((x) => this.objDef(x).actions.includes(w.action!) && this.checkObjectAction(a, x, w.action!).ok);
       // Cosas que se hacen fuera de casa: primero, ir allí.
-      const away: Record<string, string> = { shop_small: 'super', shop_big: 'super', acai_bowl: 'acai', smoothie: 'acai', selfie: 'acai' };
+      const away: Record<string, string> = { shop_small: 'super', shop_big: 'super', acai_bowl: 'acai', smoothie: 'acai', selfie: 'acai', cana: 'bar', calamares: 'bar', bravas: 'bar', play_mus: 'bar', churros: 'plaza', throw_coin: 'plaza' };
       if (!o && away[w.action]) {
         const lot = this.state.lots.find((l) => l.layout === away[w.action!]);
         if (lot && lot.id !== a.lotId) {
@@ -280,6 +294,7 @@ export class World {
     setupFamilyLife(state, state.agents, { jobs: false });
     placeObjects(state, PLAYER_LOT, HOUSE_OBJECTS);
     generateNeighborhood(state);
+    addAlcorcon(state);
     return new World(state);
   }
 
@@ -550,6 +565,7 @@ export class World {
       if (!a.job || CAREERS[a.job.career]?.school) return { def, ok: false, reason: 'No tiene trabajo' };
       if (a.job.dayOff === this.day + 1) return { def, ok: false, reason: 'Ya lo tiene pedido' };
     }
+    if (ALCOHOL[actionId] && this.hour < 12 && this.hour >= 6) return { def, ok: false, reason: '¿Alcohol a estas horas? Mejor un café' };
     if (actionId === 'buy_lottery') {
       const why = this.lotteryReason(a);
       if (why) return { def, ok: false, reason: why };
@@ -598,6 +614,17 @@ export class World {
       }
     }
     const relX = getRel(this.state, a.id, t.id);
+    // Gente de la calle: solo lo suyo (y charlar).
+    if (def.targetRoles && !def.targetRoles.includes(t.role ?? '')) return { def, ok: false };
+    if (t.role && !def.targetRoles && !['chat', 'talk', 'joke', 'gossip_with', 'hug'].includes(actionId)) return { def, ok: false };
+    if (a.role && !['chat', 'joke'].includes(actionId)) return { def, ok: false };
+    if (actionId === 'ask_affair') {
+      if (relX.status || relX.affair || relX.kin || !canRomance(this.state, a, t)) return { def, ok: false };
+      if (!partnerOf(this.state, a.id) && !partnerOf(this.state, t.id)) return { def, ok: false };
+      if (relX.r < 40) return { def, ok: false, reason: 'Aún no hay tanta química' };
+    }
+    if (actionId === 'end_affair' && !relX.affair) return { def, ok: false };
+    if (actionId === 'chotis' && (!['young', 'adult', 'elder', 'teen'].includes(tStage) || this.stageOf(a) === 'child')) return { def, ok: false };
     if (actionId === 'break_up' && relX.status !== 'partner') return { def, ok: false };
     if (actionId === 'divorce' && relX.status !== 'married') return { def, ok: false };
     if (actionId === 'apologize' && !this.grudge(t, a) && relX.f >= -10) return { def, ok: false };
@@ -618,6 +645,8 @@ export class World {
   checkSelfAction(a: Agent, actionId: string): ActionOption {
     const def = ACTIONS[actionId];
     if (!this.speciesOk(a, def)) return { def, ok: false };
+    if (def.roles ? !def.roles.includes(a.role ?? '') : !!a.role && actionId !== 'idle') return { def, ok: false };
+    if (actionId === 'fart' && a.kind === 'person' && this.stageOf(a) === 'baby') return { def, ok: false };
     if (actionId === 'homework' && a.job?.career !== 'school') return { def, ok: false };
     if (actionId === 'busk') {
       if (this.lotById(a.lotId)?.kind !== 'park') return { def, ok: false };
@@ -756,11 +785,37 @@ export class World {
     return true;
   }
 
-  private startTravel(a: Agent, to: string) {
+  /** Barrio de una parcela: Madrid, Alcorcón o el metro. */
+  districtOf(lotId: string): string {
+    return this.lotById(lotId)?.district ?? 'madrid';
+  }
+
+  /** ¿Hace falta coger el metro para ir de una parcela a otra? */
+  needsMetro(from: string, to: string): boolean {
+    const a = this.districtOf(from), b = this.districtOf(to);
+    return a !== b && a !== 'metro' && b !== 'metro';
+  }
+
+  /** Echa a andar hacia otra parcela. Entre Madrid y Alcorcón se va en metro (salvo `direct`: trabajo, cole). */
+  private startTravel(a: Agent, to: string, direct = false) {
     this.endTask(a);
     a.queue = [];
-    a.travel = { from: a.lotId, to, arrive: this.state.minutes + TRAVEL_MINUTES };
+    a.via = undefined;
+    let mins = TRAVEL_MINUTES;
+    if (!direct && this.needsMetro(a.lotId, to)) {
+      a.via = to;
+      to = METRO_LOT;
+      mins = 8;
+    } else if (this.districtOf(a.lotId) === 'metro') {
+      mins = 8;
+    }
+    a.travel = { from: a.lotId, to, arrive: this.state.minutes + mins };
     a.hidden = false;
+  }
+
+  /** Minutos que se tarda en ir a una parcela (para el mapa). */
+  travelMinutes(from: string, to: string): number {
+    return this.needsMetro(from, to) ? 8 + RIDE_MINUTES + 8 : TRAVEL_MINUTES;
   }
 
   private arrive(a: Agent) {
@@ -779,6 +834,13 @@ export class World {
     this.wishEvent(a, { lotKind: this.lotById(to).kind, layout: this.lotById(to).layout });
     this.onArriveShopping(a, to);
     if (to === this.householdOf(a)?.lotId) this.petGreeting(a);
+    if (to === METRO_LOT && a.via) {
+      a.rideUntil = this.state.minutes + RIDE_MINUTES;
+      if (this.isPlayerMember(a) && a.kind === 'person') this.toastOnce(`${a.id}:metro`, `${a.name} sube al metro: Línea 10 hasta Puerta del Sur y MetroSur hasta ${this.lotById(a.via).district === 'alcorcon' ? 'Alcorcón Central' : 'Madrid'}`, '🚇', 30);
+      if (this.isPlayerMember(a) && a.kind === 'person' && Math.random() < 0.7) this.rapQueue.push(a.id);
+    }
+    if (a.role === 'glovo') this.deliverFood(a);
+    if (a.role === 'militante' && to === this.household.lotId) this.toastOnce('militantes', `¡Llaman a la puerta! Es ${a.name}, militante del PSOE, que viene a pedir el voto`, '🌹', 600);
   }
 
   /** Una casilla libre (sin nadie encima) cerca de un punto, para no aparecer unos encima de otros. */
@@ -866,6 +928,9 @@ export class World {
     for (const a of this.state.agents) pruneEmotions(a, this.state.minutes);
     this.partyHour();
     this.eventsHour();
+    this.streetHours();
+    this.campaignHour();
+    this.bodyHour();
     this.checkAspirations();
     if (this.wishesEnabled) topUpWishes(this);
     this.closingTime();
@@ -879,9 +944,19 @@ export class World {
       const nh = neighbours[Math.floor(Math.random() * neighbours.length)];
       if (nh) this.sendVisit(nh, this.household.lotId, true);
     }
-    // Paseos al parque
-    if (h >= 9 && h <= 19) {
+    // Paseos al parque (los de Alcorcón, a su plaza y a su bar; y a veces se cruzan en metro)
+    if (h >= 9 && h <= 22) {
       for (const nh of neighbours) {
+        const alc = this.districtOf(nh.lotId) === 'alcorcon';
+        if (alc || Math.random() < 0.02) {
+          if (h <= 20 && Math.random() < (alc ? 0.08 : 0.3)) this.sendVisit(nh, PLAZA_LOT, false);
+          else if (h >= 12 && Math.random() < (alc ? 0.07 : 0.3)) this.sendVisit(nh, BAR_LOT, false);
+          if (alc) continue;
+        }
+        if (h > 19) {
+          if (Math.random() < 0.02) this.sendVisit(nh, BAR_LOT, false);
+          continue;
+        }
         if (Math.random() < 0.08) this.sendVisit(nh, PARK_LOT, false);
         else if (Math.random() < 0.04) this.sendVisit(nh, STUDIO_LOT, false);
         else if (Math.random() < 0.05 && !this.closedReason(SUPER_LOT)) this.sendVisit(nh, SUPER_LOT, false);
@@ -958,6 +1033,20 @@ export class World {
       this.toast('Días de la huerta en el Mercadona: la compra, un 30% más barata', '🥬');
     }
     if (se === 1 && wd === 5) this.toast('Esta noche hay verbena en el parque. ¡Que no falte nadie!', '🎆');
+    // Primavera: campaña electoral (martes a viernes), San Isidro (sábado) y elecciones (domingo).
+    if (se === 0 && wd === 1) {
+      this.startEvent('campana', 4 * MINUTES_PER_DAY);
+      this.toast('Empieza la campaña electoral: carteles, mítines y militantes llamando a las puertas', '🗳️');
+    }
+    if (se === 0 && wd === 5) {
+      this.startEvent('sanisidro', MINUTES_PER_DAY);
+      this.toast('¡San Isidro! Chulapos y chulapas, chotis en la pradera y rosquillas tontas y listas', '🎩');
+      this.addNews('todo el barrio se ha vestido de chulapo por San Isidro', []);
+    }
+    if (se === 0 && wd === 6) {
+      const cunado = this.members.find((m) => hasTrait(m, 'cunado'));
+      this.toast(cunado ? `Hoy hay elecciones. ${cunado.name} dice que él ya sabía el resultado desde hace un mes` : 'Hoy hay elecciones: colas en el colegio electoral y tertulias en el bar', '🗳️');
+    }
     if (se === 3 && wd === 6) {
       this.startEvent('navidad', MINUTES_PER_DAY);
       for (const m of this.members) if (m.kind === 'person') this.feel(m, 'navidad');
@@ -1003,6 +1092,22 @@ export class World {
         if (cur && (ELECTRIC.has(cur.def) || POWERED_ACTIONS.has(a.current!.actionId))) this.endTask(a);
       }
       this.toast('¡Apagón! Se ha ido la luz en toda la calle. ¿Dónde están las velas?', '🕯️');
+    }
+    // San Isidro: en el parque y la plaza, todo el mundo castizo.
+    if (this.hasEvent('sanisidro')) {
+      for (const lotId of [PARK_LOT, PLAZA_LOT]) for (const a of this.agentsIn(lotId)) if (a.kind === 'person' && !a.travel && !a.role) this.feel(a, 'castizo');
+      if (h === 11) for (const hh of this.state.households) if (hh.id !== this.household.id && Math.random() < 0.5) this.sendVisit(hh, this.districtOf(hh.lotId) === 'alcorcon' ? PLAZA_LOT : PARK_LOT, false);
+    }
+    // Domingo por la tarde: derbi en la tele del bar.
+    if (this.weekday === 6 && h === 19) {
+      for (const hh of this.state.households) if (hh.id !== this.household.id && Math.random() < 0.35) this.sendVisit(hh, BAR_LOT, false);
+      if (this.members.some((m) => m.kind === 'person' && isAdult(m))) this.toastOnce('derbi', 'Esta tarde hay derbi Madrid–Atleti. En el Bar Casa Paco lo ponen en la tele', '⚽', 600);
+    }
+    // Nochevieja (último día del invierno): las uvas.
+    if (se === 3 && this.weekday === 6 && h === 23) {
+      const cunado = this.members.find((m) => hasTrait(m, 'cunado'));
+      this.toast(cunado ? `¡Las doce campanadas! ${cunado.name} se ha atragantado con la quinta uva. Feliz año` : '¡Las doce campanadas! Doce uvas, cava y ¡feliz año nuevo!', '🍇');
+      for (const m of this.members) if (m.kind === 'person') this.feel(m, 'fiesta', undefined, 6);
     }
     // Lotería de Navidad: el sorteo, el último día del invierno a mediodía.
     if (se === 3 && this.weekday === 6 && h === 12 && this.state.lottery?.length) this.lotteryDraw();
@@ -1105,8 +1210,8 @@ export class World {
     job.lastShiftDay = this.day;
     const home = this.householdOf(a)?.lotId ?? a.lotId;
     const dayStart = Math.floor(this.state.minutes / MINUTES_PER_DAY) * MINUTES_PER_DAY;
-    this.startTravel(a, home);
-    a.travel = { ...a.travel!, arrive: dayStart + end, reason: c.school ? 'school' : 'work', mood: moodScore(a) };
+    this.startTravel(a, home, true);
+    a.travel = { ...a.travel!, to: home, arrive: dayStart + end, reason: c.school ? 'school' : 'work', mood: moodScore(a) };
     a.visitUntil = undefined;
     if (mine) this.toast(`${a.name} se va ${c.school ? 'al colegio' : 'a trabajar'}`, c.icon);
     this.maybeDilemma(a);
@@ -1397,6 +1502,11 @@ export class World {
   private replaceFamily(old: Household, extraPets: Agent[]) {
     const pets = [...old.memberIds.map((id) => this.agent(id)!).filter(Boolean), ...extraPets];
     this.state.households = this.state.households.filter((x) => x.id !== old.id);
+    if (this.districtOf(old.lotId) === 'alcorcon' && Math.random() < 0.4) {
+      generateOkupas(this.state, old.lotId);
+      this.addNews('unos okupas se han metido en la casa vacía de Alcorcón', []);
+      return;
+    }
     const fresh = generateFamily(this.state, old.lotId);
     for (const pet of pets) {
       pet.householdId = fresh.id;
@@ -1834,6 +1944,15 @@ export class World {
     for (const a of this.state.agents) {
       if (a.travel && this.state.minutes >= a.travel.arrive) this.arrive(a);
     }
+    // Fin del trayecto en metro: se bajan en su estación.
+    for (const a of this.state.agents) {
+      if (a.via && !a.travel && a.lotId === METRO_LOT && this.state.minutes >= (a.rideUntil ?? 0)) {
+        const dest = a.via;
+        if (this.isPlayerMember(a) && a.kind === 'person') this.toastOnce(`${a.id}:bajada`, `Próxima estación: ${this.lotById(dest).district === 'alcorcon' ? 'Alcorcón Central' : 'Madrid'}. ${a.name} se baja`, '🚇', 30);
+        this.startTravel(a, dest);
+      }
+    }
+    this.rapTick();
 
     this.births();
     this.checkDelivery();
@@ -1859,7 +1978,19 @@ export class World {
     a.abstract = false;
     a.current = null;
     a.path = [];
-    if (a.home) {
+    if (a.role) {
+      // La gente de la calle, repartida por su sitio (no todos en la puerta).
+      const grid = this.gridOf(a.lotId);
+      const lay = this.layoutOf(a.lotId);
+      for (let i = 0; i < 20; i++) {
+        const x = 1 + Math.floor(Math.random() * (lay.w - 2)), y = 1 + Math.floor(Math.random() * (lay.h - 2));
+        if (isWalkable(grid, x, y) && !isOutdoor(lay.tiles[y][x]) === !isOutdoor(lay.tiles[1]?.[1])) {
+          a.pos = { x, y };
+          return;
+        }
+      }
+      a.pos = this.freeSpotNear(a.lotId, lay.entrance);
+    } else if (a.home) {
       const h = this.object(a.home);
       if (h) a.pos = { x: h.x, y: h.y };
     } else if (SPECIES[a.species].outdoor) {
@@ -1891,6 +2022,15 @@ export class World {
 
   private goHome(a: Agent) {
     a.visitUntil = undefined;
+    if (a.role) {
+      // La gente de la calle vuelve a su sitio (o desaparece, si es un rider o una militante).
+      if (a.role === 'glovo' || a.role === 'militante') {
+        a.hidden = true;
+        a.current = null;
+        a.lotId = a.post ?? a.lotId;
+      } else if (a.post && a.lotId !== a.post) this.startTravel(a, a.post);
+      return;
+    }
     const home = this.householdOf(a)?.lotId;
     if (home && home !== a.lotId) this.startTravel(a, home);
   }
@@ -1906,7 +2046,7 @@ export class World {
     if (this.weekday === 0 && this.day > 1) {
       for (const h of this.state.households) {
         const ms = h.memberIds.map((id) => this.agent(id)!).filter(Boolean);
-        const bill = 60 + 20 * ms.filter((m) => m.kind === 'person').length + 10 * ms.filter((m) => m.kind === 'pet').length;
+        const bill = h.okupa ? 0 : 60 + 20 * ms.filter((m) => m.kind === 'person').length + 10 * ms.filter((m) => m.kind === 'pet').length;
         h.funds -= bill;
         for (const m of ms) {
           if (m.job && CAREERS[m.job.career]?.business) {
@@ -1923,6 +2063,7 @@ export class World {
     }
     this.dailyEvents();
     this.seasonalDay();
+    this.dailyGossip();
     this.evolveTraits();
     // Cada día, el deseo más antiguo de cada uno cambia por otro.
     for (const m of this.members) {
@@ -1945,6 +2086,7 @@ export class World {
     const step = this.state.aging === 'off' ? 0 : this.state.aging === 'fast' ? 2 : 1;
     if (step) {
       for (const a of [...this.state.agents]) {
+        if (a.role) continue;
         const before = lifeStage(a.species, a.ageDays);
         a.ageDays += step;
         const after = lifeStage(a.species, a.ageDays);
@@ -1955,7 +2097,7 @@ export class World {
         }
       }
       for (const a of [...this.state.agents]) {
-        if (Math.random() < this.deathChance(a)) this.die(a, 'old');
+        if (!a.role && Math.random() < this.deathChance(a)) this.die(a, 'old');
       }
     }
     // Dramas del barrio: alguna pareja de vecinos se separa (y hay que contarlo).
@@ -2012,6 +2154,7 @@ export class World {
   }
 
   private stepAgent(a: Agent, dt: number) {
+    if (a.role) return this.stepRole(a, dt);
     const cur = a.current;
     const curDef = cur ? ACTIONS[cur.actionId] : undefined;
     const acting = cur?.phase === 'acting';
@@ -2229,6 +2372,7 @@ export class World {
     }
     if (task.actionId === 'adopt' && task.param) this.adopt(task.param as SpeciesId);
     if (task.actionId === 'throw_party') this.startParty(a);
+    this.streetTask(a, task.actionId);
     if (task.actionId === 'train_pet') {
       const pet = this.agent(task.targetAgentId);
       if (pet) this.trainPet(a, pet);
@@ -2450,7 +2594,7 @@ export class World {
           const hh = this.householdOf(a);
           if (hh) hh.funds -= def.cost;
         }
-        if (task.actionId === 'flirt' || task.actionId === 'kiss' || task.actionId === 'niqui') this.jealousy(a, t);
+        if (task.actionId === 'flirt' || task.actionId === 'kiss' || task.actionId === 'niqui' || task.actionId === 'ask_affair') this.jealousy(a, t, task.actionId);
         let bedId: string | undefined;
         if (task.actionId === 'niqui') {
           bedId = this.freeBed(a.lotId)?.id;
@@ -2739,6 +2883,514 @@ export class World {
     }
   }
 
+  // --- Gente de la calle ------------------------------------------------------
+
+  /** Raps pendientes (ids de quien acaba de subir al metro) y el que está sonando. */
+  private rapQueue: string[] = [];
+  private rap: { by: string; lines: string[]; next: number; about: string } | null = null;
+  private lastRap = new Map<string, number>();
+
+  /** La gente de la calle hace lo suyo: no tiene necesidades ni autonomía normal. */
+  private stepRole(a: Agent, dt: number) {
+    for (const k of NEED_KEYS) a.needs[k] = 80;
+    if (!a.current) {
+      const next = a.queue.shift();
+      if (next) this.beginTask(a, next);
+      else this.roleIdle(a);
+    }
+    if (a.current) this.runTask(a, a.current, dt);
+  }
+
+  private roleIdle(a: Agent) {
+    const audience = this.agentsIn(a.lotId).some((x) => this.isPlayerMember(x) && !x.travel && !x.hidden);
+    const say = (lines: string[], p = 0.4) => {
+      if (audience && Math.random() < p) this.say(a.id, lines[Math.floor(Math.random() * lines.length)]);
+    };
+    const wander = (): boolean => {
+      const grid = this.gridOf(a.lotId);
+      for (let i = 0; i < 10; i++) {
+        const lay = this.layoutOf(a.lotId);
+        const x = 1 + Math.floor(Math.random() * (lay.w - 2)), y = 1 + Math.floor(Math.random() * (lay.h - 2));
+        if (isWalkable(grid, x, y) && isOutdoor(lay.tiles[y][x]) === isOutdoor(lay.tiles[Math.round(a.pos.y)]?.[Math.round(a.pos.x)])) {
+          return this.beginTask(a, { id: this.newId('t'), actionId: 'move', byPlayer: false, phase: 'walking', remaining: 0, dest: { x, y } });
+        }
+      }
+      return false;
+    };
+    const idle = (min: number, max: number) => {
+      a.current = { id: this.newId('t'), actionId: 'idle', byPlayer: false, phase: 'acting', remaining: rand(min, max) };
+    };
+    switch (a.role) {
+      case 'vendedor':
+        say(VENDOR_LINES, 0.5);
+        if (Math.random() < 0.6 && wander()) return;
+        return idle(3, 6);
+      case 'musico':
+        say(ACCORDION_LINES, 0.3);
+        a.current = { id: this.newId('t'), actionId: 'play_accordion', byPlayer: false, phase: 'acting', remaining: 30 };
+        return;
+      case 'rapero':
+        if (Math.random() < 0.3 && wander()) return;
+        return idle(4, 8);
+      case 'chismosa': {
+        // A su banco, a ver pasar a la gente.
+        const bench = this.objectsIn(a.lotId).find((o) => o.def === 'bench' && this.usersOf(o.id).length < 2);
+        say(CHISMOSA_LINES, 0.35);
+        if (bench && Math.random() < 0.8) {
+          a.current = { id: this.newId('t'), actionId: 'sit_bench', byPlayer: false, phase: 'walking', remaining: 0, targetObjectId: bench.id };
+          if (!this.beginTask(a, a.current)) idle(5, 10);
+          return;
+        }
+        return idle(5, 10);
+      }
+      case 'militante': {
+        // Se acerca a quien haya de la familia a pedirle el voto.
+        const target = this.agentsIn(a.lotId).find((x) => this.isPlayerMember(x) && x.kind === 'person' && isAdult(x) && !x.travel && !x.hidden);
+        say(CAMPAIGN_LINES, 0.5);
+        if (target && Math.random() < 0.5) {
+          const best = this.bestPath(a, this.neighbours(a.lotId, Math.round(target.pos.x), Math.round(target.pos.y)));
+          if (best) {
+            a.current = { id: this.newId('t'), actionId: 'move', byPlayer: false, phase: 'walking', remaining: 0, dest: best.goal };
+            a.path = best.path;
+            return;
+          }
+        }
+        if (Math.random() < 0.4 && wander()) return;
+        return idle(4, 8);
+      }
+      case 'glovo':
+        say(GLOVO_LINES, 0.3);
+        return idle(3, 5);
+    }
+    idle(5, 10);
+  }
+
+  /** Cada hora: quién está en la calle (las cotillas comen en casa; el metro cierra de madrugada). */
+  private streetHours() {
+    const h = this.hour;
+    for (const a of this.state.agents) {
+      if (!a.role || a.travel) continue;
+      let on = true;
+      if (a.role === 'chismosa') on = (h >= 9 && h < 14) || (h >= 17 && h < 21);
+      else if (a.role === 'vendedor' || a.role === 'rapero' || a.role === 'musico') on = h >= 7 && h < 24;
+      else continue; // riders y militantes van por su cuenta
+      if (on === a.hidden) {
+        a.hidden = !on;
+        a.current = null;
+        a.path = [];
+        if (on) a.pos = this.freeSpotNear(a.lotId, this.layoutOf(a.lotId).entrance);
+      }
+    }
+  }
+
+  /** Raps del metro: dedica un tema a alguien de la familia (línea a línea, en bocadillos). */
+  private rapTick() {
+    const rapper = this.state.agents.find((x) => x.role === 'rapero' && !x.hidden && x.lotId === METRO_LOT);
+    if (!rapper) return;
+    if (!this.rap && this.rapQueue.length) {
+      const target = this.agent(this.rapQueue.shift());
+      const last = target ? this.lastRap.get(target.id) ?? -1e9 : 0;
+      if (target && target.lotId === METRO_LOT && !target.travel && this.state.minutes - last > 120) this.startRap(rapper, target);
+    }
+    const r = this.rap;
+    if (!r || this.state.minutes < r.next) return;
+    const line = r.lines.shift();
+    if (line) {
+      this.say(r.by, line);
+      r.next = this.state.minutes + 1.6;
+      if (!rapper.current || rapper.current.actionId !== 'rap') rapper.current = { id: this.newId('t'), actionId: 'rap', byPlayer: false, phase: 'acting', remaining: 30 };
+    } else {
+      this.rap = null;
+      if (rapper.current?.actionId === 'rap') rapper.current = null;
+    }
+  }
+
+  /** Un rap con lo que se sabe de `t`: trabajo, mascota, pareja, rasgos... */
+  startRap(rapper: Agent, t: Agent) {
+    const fill = (pair: [string, string], x = '', y = '') => pair.map((l) => l.replace('{name}', t.name).replace('{x}', x).replace('{y}', y));
+    const pickPair = (list: [string, string][]) => list[Math.floor(Math.random() * list.length)];
+    const lines: string[] = [...fill(pickPair(RAP_INTRO))];
+    const verses: string[][] = [];
+    if (t.job && !CAREERS[t.job.career]?.school) verses.push(fill(RAP_VERSES.job[0], CAREERS[t.job.career].levels[t.job.level - 1].title.toLowerCase()));
+    else if (isAdult(t)) verses.push(fill(RAP_VERSES.paro[0]));
+    const pet = this.state.agents.find((x) => x.kind === 'pet' && x.householdId === t.householdId);
+    if (pet) verses.push(fill(RAP_VERSES.pet[0], SPECIES[pet.species].label.toLowerCase(), pet.name));
+    const pid = partnerOf(this.state, t.id);
+    if (pid) verses.push(fill(RAP_VERSES.partner[0], this.agent(pid)?.name ?? ''));
+    for (const tr of traitsOf(t)) if (RAP_VERSES[tr.id]) verses.push(fill(RAP_VERSES[tr.id][0]));
+    if (hasEmotion(t, 'enamorado')) verses.push(fill(RAP_VERSES.enamorado[0]));
+    verses.sort(() => Math.random() - 0.5);
+    for (const v of verses.slice(0, 2)) lines.push(...v);
+    lines.push(...fill(pickPair(RAP_OUTRO)));
+    this.rap = { by: rapper.id, lines, next: this.state.minutes, about: t.id };
+    this.lastRap.set(t.id, this.state.minutes);
+    this.feel(t, 'rapeado');
+    if (this.isPlayerMember(t)) this.toast(`🎤 ${rapper.name} le está dedicando un rap a ${t.name}: «${lines[0]}»`, '🎤');
+  }
+
+  /** Pedir comida: un rider sale hacia casa. */
+  private orderGlovo(a: Agent) {
+    const rider = this.state.agents.find((x) => x.role === 'glovo' && x.hidden && !x.travel);
+    const home = this.householdOf(a)?.lotId;
+    if (!rider || !home) {
+      this.toast('No hay riders libres ahora mismo. Inténtalo en un rato', '🛵');
+      return;
+    }
+    rider.deliverTo = a.id;
+    rider.hidden = false;
+    rider.lotId = METRO_LOT;
+    rider.travel = { from: METRO_LOT, to: home, arrive: this.state.minutes + 25 };
+    this.toast(`${a.name} ha pedido comida por Glovo. Llega en unos 25 minutos`, '🛵');
+  }
+
+  private deliverFood(rider: Agent) {
+    const who = this.agent(rider.deliverTo);
+    rider.deliverTo = undefined;
+    rider.visitUntil = this.state.minutes + 10;
+    this.say(rider.id, GLOVO_LINES[Math.floor(Math.random() * GLOVO_LINES.length)]);
+    if (who && who.lotId === rider.lotId && !who.travel) {
+      who.needs.hunger = clamp(who.needs.hunger + 65);
+      this.feel(who, 'glovo');
+      this.bump(who, 'eat');
+      this.toast(`¡Ding, dong! ${rider.name} trae la comida de ${who.name}`, '🛵');
+    } else {
+      const h = who && this.householdOf(who);
+      if (h) h.pantry = Math.min(PANTRY_MAX, (h.pantry ?? 0) + 2);
+      this.toast('El rider de Glovo ha dejado la comida en la nevera', '🛵');
+    }
+  }
+
+  /** Campaña electoral: las militantes salen a la calle y llaman a las puertas. */
+  private campaignHour() {
+    const on = this.hasEvent('campana');
+    const h = this.hour;
+    for (const m of this.state.agents.filter((x) => x.role === 'militante')) {
+      if (m.travel) continue;
+      const out = on && ((h >= 11 && h < 14) || (h >= 17 && h < 20));
+      if (!out) {
+        if (!m.hidden) this.goHome(m);
+        continue;
+      }
+      if (m.hidden) {
+        m.hidden = false;
+        m.lotId = m.post ?? PARK_LOT;
+        m.pos = this.freeSpotNear(m.lotId, this.layoutOf(m.lotId).entrance);
+      }
+      // Una vez al día, llaman a la puerta de la familia.
+      const someoneHome = this.members.some((x) => x.kind === 'person' && x.lotId === this.household.lotId && !x.travel);
+      if (someoneHome && this.campaignKnockDay !== this.day && Math.random() < 0.35 && this.districtOf(m.post ?? '') === this.districtOf(this.household.lotId)) {
+        this.campaignKnockDay = this.day;
+        this.startTravel(m, this.household.lotId);
+        m.visitUntil = this.state.minutes + TRAVEL_MINUTES + 45;
+      }
+    }
+  }
+  private campaignKnockDay = -1;
+
+  /** Lo que pasa al interactuar con la gente de la calle. */
+  private streetOutcome(a: Agent, t: Agent, id: string) {
+    const loud = this.isPlayerMember(a);
+    switch (id) {
+      case 'buy_candy':
+        this.say(t.id, '¡Gracias, guapo/a! ¡Que aproveche!');
+        break;
+      case 'tip_artist':
+      case 'ask_rap':
+        if (t.role === 'rapero') this.startRap(t, a);
+        else this.say(t.id, '♪ ¡Gracias! Esta va por ti ♪');
+        break;
+      case 'ask_gossip':
+        if (loud) this.askChismosa(a, t);
+        else {
+          const sec = bestSecretFor(this.state, [t.id], [a.id]);
+          if (sec) sec.known.push(a.id);
+        }
+        break;
+      case 'tell_chismosa': {
+        const fam = this.members.map((m) => m.id);
+        const sec = bestSecretFor(this.state, fam, [t.id]);
+        if (!sec) {
+          if (loud) this.toast(`${a.name} no sabe nada que ${t.name} no sepa ya`, '🤷');
+          break;
+        }
+        sec.known.push(t.id);
+        this.say(t.id, '¡No me digas! ¡Esto lo sabe mañana todo el barrio!');
+        if (loud) this.toast(`${t.name} ya lo sabe. Mañana lo sabrá todo el barrio...`, '🤫');
+        if (Math.random() < 0.6) this.makePublic(sec);
+        break;
+      }
+      case 'listen_campaign':
+        this.say(t.id, CAMPAIGN_LINES[Math.floor(Math.random() * CAMPAIGN_LINES.length)]);
+        if (hasTrait(a, 'cunado')) this.say(a.id, 'Mira, yo es que de política entiendo mucho...');
+        break;
+      case 'promise_vote':
+        this.say(t.id, '¡Gracias! ¡Este domingo, a votar! Le dejo una rosa');
+        changeRel(this.state, a.id, t.id, 8);
+        break;
+      case 'decline_vote':
+        this.say(t.id, 'Nada, nada. ¡Que tenga un buen día!');
+        t.visitUntil = this.state.minutes;
+        break;
+    }
+  }
+
+  /** Lo que pasa al terminar acciones de bar, metro, plaza, pedos... */
+  private streetTask(a: Agent, id: string) {
+    if (ALCOHOL[id]) this.drink(a, ALCOHOL[id]);
+    if (GASSY.has(id)) a.gas = Math.min(3, (a.gas ?? 0) + (Math.random() < 0.5 ? 1 : 0));
+    const mine = this.isPlayerMember(a);
+    switch (id) {
+      case 'fart':
+        this.fartReactions(a);
+        break;
+      case 'tragaperras': {
+        const h = this.householdOf(a);
+        const r = Math.random();
+        if (h && r < 0.01) {
+          h.funds += 100;
+          this.feel(a, 'premio');
+          if (mine) this.toast(`¡Premio gordo en la tragaperras! ${a.name} se lleva §100`, '🎰');
+        } else if (h && r < 0.07) {
+          h.funds += 15;
+          this.feel(a, 'premio');
+          if (mine) this.toast(`¡Ding, ding, ding! ${a.name} saca §15 de la tragaperras`, '🎰');
+        }
+        break;
+      }
+      case 'watch_football':
+        this.feel(a, Math.random() < 0.55 ? 'gol' : 'derrota');
+        break;
+      case 'throw_coin':
+        this.feel(a, 'deseo_fuente');
+        break;
+      case 'read_map':
+        if (mine) this.toast('Línea 10 hasta Puerta del Sur, transbordo y MetroSur hasta Alcorcón Central. Fácil, ¿no?', '🗺️');
+        break;
+      case 'whatsapp': {
+        if (!mine) break;
+        const fam = this.members.map((m) => m.id);
+        const cand = (this.state.secrets ?? []).filter((sx) => !sx.known.some((x) => fam.includes(x)) && sx.known.length >= 2);
+        const sec = Math.random() < 0.45 + (hasTrait(a, 'cotilla') ? 0.25 : 0) ? cand[Math.floor(Math.random() * cand.length)] : undefined;
+        if (sec) this.learnSecret(a, sec, 'En el grupo de WhatsApp del barrio alguien ha soltado');
+        else this.toast('En el grupo del barrio solo hay audios de 5 minutos y cadenas de «buenos días»', '📱');
+        break;
+      }
+      case 'order_glovo':
+        this.orderGlovo(a);
+        break;
+      case 'sing':
+        if (hasEmotion(a, 'borracho') || hasEmotion(a, 'achispado')) this.say(a.id, '♪ ¡Mi gran noche! ♪');
+        break;
+    }
+  }
+
+  // --- Salseo ---------------------------------------------------------------
+
+  /** La familia del jugador se entera de un secreto. */
+  private learnSecret(a: Agent, sec: { id: string; text: string; known: string[]; kind: string; about: string[] }, how: string) {
+    if (!sec.known.includes(a.id)) sec.known.push(a.id);
+    this.feel(a, 'salseo');
+    this.toast(`🌶️ ${how}: ${sec.text}`, '🌶️');
+    // Si el salseo es que te ponen los cuernos...
+    if (sec.kind === 'lio' && sec.about[2] === a.id) {
+      const [x, y] = sec.about.map((id) => this.agent(id));
+      if (x && y) this.catchAffair(x, y, a, 'cotilleo');
+    }
+  }
+
+  private askChismosa(a: Agent, c: Agent) {
+    const fam = this.members.map((m) => m.id);
+    // Primero, lo que va de ti (si te ponen los cuernos, ellas lo saben).
+    const aboutYou = (this.state.secrets ?? []).find((sx) => sx.kind === 'lio' && sx.about[2] === a.id && sx.known.includes(c.id) && !sx.known.includes(a.id));
+    const sec = aboutYou ?? bestSecretFor(this.state, [c.id], fam);
+    if (!sec) {
+      this.say(c.id, 'Pues hija, hoy no hay nada. ¡Qué barrio más aburrido!');
+      if (this.isPlayerMember(a)) this.toast(`${c.name} no sabe nada nuevo. Vuelve otro día`, '🗣️');
+      return;
+    }
+    this.say(c.id, aboutYou ? 'Ay, hijo/a... ¿tú no sabes lo de tu pareja?' : 'Acércate, que te cuento...');
+    this.learnSecret(a, sec, `${c.name} te cuenta`);
+  }
+
+  /** Cotillear con alguien: si sabe algo que tú no, te lo cuenta; si no, se lo cuentas tú. */
+  private gossipOutcome(a: Agent, t: Agent) {
+    const fam = this.isPlayerMember(a) ? this.members.map((m) => m.id) : [a.id];
+    // Si sabes que a `t` le ponen los cuernos... se lo cuentas.
+    const cuernos = (this.state.secrets ?? []).find((sx) => sx.kind === 'lio' && sx.about[2] === t.id && sx.known.some((id) => fam.includes(id)) && !sx.known.includes(t.id));
+    if (cuernos) {
+      cuernos.known.push(t.id);
+      const [x, y] = cuernos.about.map((id) => this.agent(id));
+      if (x && y) this.catchAffair(x, y, t, 'chivatazo', a);
+      changeRel(this.state, a.id, t.id, 5);
+      return;
+    }
+    const theirs = getRel(this.state, a.id, t.id).f >= 10 ? bestSecretFor(this.state, [t.id], fam) : undefined;
+    if (theirs && this.isPlayerMember(a)) {
+      this.learnSecret(a, theirs, `${t.name} te cuenta`);
+      changeRel(this.state, a.id, t.id, 3);
+      return;
+    }
+    const mine = bestSecretFor(this.state, fam, [t.id]);
+    if (mine) {
+      mine.known.push(t.id);
+      this.say(a.id, '¿Te has enterado...?');
+      this.say(t.id, '¡No me digas! ¡Qué fuerte!');
+      changeRel(this.state, a.id, t.id, 3);
+      if (this.isPlayerMember(a)) this.toast(`${a.name} le cuenta el salseo a ${t.name}`, '🌶️');
+    } else if (this.isPlayerMember(a)) {
+      this.toast(`${t.name} no sabe nada jugoso. Prueba con las vecinas del banco`, '🌶️');
+    }
+  }
+
+  /** Un secreto se sabe en todo el barrio: noticia y consecuencias. */
+  private makePublic(sec: { text: string; public?: boolean; kind: string; about: string[]; known: string[] }) {
+    if (sec.public) return;
+    sec.public = true;
+    this.addNews(`dicen que ${sec.text}`, sec.about);
+    if (this.members.some((m) => sec.about.includes(m.id))) this.toast(`Todo el barrio lo sabe ya: ${sec.text}`, '📢');
+    if (sec.kind === 'lio') {
+      const [x, y, p] = sec.about.map((id) => this.agent(id));
+      if (x && y && p && !sec.known.includes(p.id)) {
+        sec.known.push(p.id);
+        this.catchAffair(x, y, p, 'cotilleo');
+      }
+    }
+  }
+
+  /** Cada día: salseo nuevo entre vecinos y lo que corre de boca en boca. */
+  private dailyGossip() {
+    for (let i = 0; i < (Math.random() < 0.5 ? 2 : 1); i++) inventGossip(this.state, this.household.id, this.day);
+    for (const sec of spreadGossip(this.state, this.household.id, this.day)) {
+      sec.public = false;
+      this.makePublic(sec);
+    }
+  }
+
+  // --- Infidelidad -----------------------------------------------------------
+
+  /** `betrayed` descubre que `cheater` tiene un lío con `lover`. */
+  catchAffair(cheater: Agent, lover: Agent, betrayed: Agent, how: 'pillado' | 'cotilleo' | 'chivatazo', teller?: Agent) {
+    const rel = getRel(this.state, cheater.id, betrayed.id);
+    if (!rel.status && !rel.ex) return;
+    changeRel(this.state, cheater.id, betrayed.id, -40, -50);
+    changeRel(this.state, lover.id, betrayed.id, -40, 0);
+    this.remember(betrayed, cheater, 'infidelidad');
+    this.feel(betrayed, 'traicionado', cheater.name);
+    this.feel(cheater, 'verguenza');
+    const text =
+      how === 'pillado'
+        ? `¡${betrayed.name} ha pillado a ${cheater.name} con ${lover.name}!`
+        : how === 'chivatazo'
+          ? `${teller?.name ?? 'Alguien'} le ha contado a ${betrayed.name} que ${cheater.name} tiene un lío con ${lover.name}`
+          : `${betrayed.name} se ha enterado por las vecinas de que ${cheater.name} tiene un lío con ${lover.name}`;
+    const loud = [cheater, lover, betrayed, teller].some((x) => x && this.isPlayerMember(x));
+    if (loud) this.toast(text, '🦌');
+    this.addNews(how === 'pillado' ? `${betrayed.name} pilló a ${cheater.name} con ${lover.name}. Hubo gritos` : `a ${betrayed.name} le ponen los cuernos con ${lover.name}`, [cheater.id, lover.id, betrayed.id]);
+    for (const sx of this.state.secrets ?? []) if (sx.kind === 'lio' && sx.about[0] === cheater.id && sx.about[1] === lover.id) sx.public = true;
+    // Si quien lo descubre no es de la familia del jugador, decide por su cuenta: muchas veces, se acabó.
+    if (!this.isPlayerMember(betrayed) && Math.random() < 0.7) {
+      const key = relKey(cheater.id, betrayed.id);
+      const r = this.state.rels[key];
+      if (r?.status) {
+        const married = r.status === 'married';
+        r.status = undefined;
+        if (cheater.householdId === betrayed.householdId) r.ex = true;
+        this.remember(cheater, betrayed, married ? 'divorcio' : 'ruptura');
+        this.feel(cheater, 'corazon_roto', betrayed.name);
+        if (loud) this.toast(`${betrayed.name} ${married ? 'pide el divorcio a' : 'deja a'} ${cheater.name}`, '💔');
+      }
+    }
+  }
+
+  // --- Pedos y alcohol -------------------------------------------------------
+
+  /** Reacciones de quien está cerca cuando alguien se tira un pedo. */
+  private fartReactions(a: Agent) {
+    const near = this.agentsIn(a.lotId).filter((x) => x !== a && x.kind === 'person' && !x.hidden && !x.travel && Math.hypot(x.pos.x - a.pos.x, x.pos.y - a.pos.y) <= 4);
+    if (a.kind === 'person') this.say(a.id, FART_LINES[Math.floor(Math.random() * FART_LINES.length)]);
+    for (const x of near) {
+      if (hasTrait(x, 'bromista') || this.stageOf(x) === 'child' || hasEmotion(x, 'borracho')) {
+        x.needs.fun = clamp(x.needs.fun + 6);
+        this.feel(x, 'risas');
+        if (Math.random() < 0.6) this.say(x.id, FART_LAUGHS[Math.floor(Math.random() * FART_LAUGHS.length)]);
+      } else {
+        x.needs.fun = clamp(x.needs.fun - (hasTrait(x, 'tiquismiquis') ? 10 : 4));
+        if (Math.random() < 0.6) this.say(x.id, a.kind === 'pet' ? `¡${a.name}! ¡Qué peste!` : FART_REACTIONS[Math.floor(Math.random() * FART_REACTIONS.length)]);
+        if (a.kind === 'person') changeRel(this.state, a.id, x.id, -1);
+      }
+    }
+    if (a.kind !== 'person') return;
+    const strangers = near.filter((x) => x.householdId !== a.householdId);
+    if (strangers.length && !hasTrait(a, 'bromista') && !hasTrait(a, 'cunado')) this.feel(a, 'verguenza');
+    if (strangers.length && this.lotById(a.lotId).kind !== 'home') {
+      addSecret(this.state, { kind: 'pedo', text: `a ${a.name} se le escapó un pedo en ${this.lotById(a.lotId).name}`, about: [a.id], known: strangers.map((x) => x.id), juicy: 1, day: this.day });
+    }
+  }
+
+  /** Beber: achispado, borracho... y, si se pasa, al suelo. */
+  private drink(a: Agent, n: number) {
+    a.alcohol = Math.min(100, (a.alcohol ?? 0) + n);
+    a.alcoholMax = Math.max(a.alcoholMax ?? 0, a.alcohol);
+    this.updateDrunk(a);
+    if (a.alcohol >= 60 && Math.random() < 0.5) this.say(a.id, DRUNK_LINES[Math.floor(Math.random() * DRUNK_LINES.length)]);
+    if (a.alcohol >= 90) {
+      this.endTask(a);
+      a.queue = [];
+      a.current = { id: this.newId('t'), actionId: 'pass_out', byPlayer: false, phase: 'acting', remaining: ACTIONS.pass_out.duration };
+      this.toastFor(a, `${a.name} ha bebido demasiado y se ha quedado frito/a`, '🥴');
+    }
+    // Borracho delante de los vecinos: salseo asegurado.
+    const strangers = this.agentsIn(a.lotId).filter((x) => x.kind === 'person' && x.householdId !== a.householdId && !x.hidden);
+    if (a.alcohol >= 60 && strangers.length && this.lotById(a.lotId).kind !== 'home') {
+      addSecret(this.state, { kind: 'borrachera', text: `${a.name} se cogió un pedo en ${this.lotById(a.lotId).name} y acabó cantando «Mi gran noche» encima de una silla`, about: [a.id], known: strangers.map((x) => x.id), juicy: 2, day: this.day });
+    }
+  }
+
+  private updateDrunk(a: Agent) {
+    const v = a.alcohol ?? 0;
+    if (v >= 60) {
+      forget(a, 'achispado');
+      this.feel(a, 'borracho');
+    } else if (v >= 30) {
+      forget(a, 'borracho');
+      this.feel(a, 'achispado');
+    } else {
+      forget(a, 'borracho');
+      forget(a, 'achispado');
+    }
+  }
+
+  /** Cada hora: se pasa la borrachera (o se vomita), y los gases buscan salida. */
+  private bodyHour() {
+    const h = this.hour;
+    const detailed = this.detailedLots();
+    for (const a of this.state.agents) {
+      if (a.alcohol) {
+        a.alcohol = Math.max(0, a.alcohol - 12);
+        this.updateDrunk(a);
+        if (a.alcohol >= 70 && !a.travel && detailed.has(a.lotId) && Math.random() < 0.2 && a.current?.actionId !== 'pass_out') {
+          this.endTask(a);
+          a.current = { id: this.newId('t'), actionId: 'vomit', byPlayer: false, phase: 'acting', remaining: 3 };
+          this.spawnPuddle(a.lotId, Math.round(a.pos.x), Math.round(a.pos.y));
+          this.toastFor(a, `${a.name} ha vomitado. Qué espectáculo`, '🤮');
+        }
+      }
+      if (h === 9 && (a.alcoholMax ?? 0) >= 50) {
+        this.feel(a, 'resaca');
+        a.alcoholMax = 0;
+      } else if (h === 9) a.alcoholMax = 0;
+      // Gases: tarde o temprano, salen.
+      if ((a.gas ?? 0) > 0 && !a.travel && !a.hidden && detailed.has(a.lotId) && Math.random() < 0.18 * (a.gas ?? 0) * (hasTrait(a, 'gloton') ? 1.5 : 1)) {
+        a.gas = Math.max(0, (a.gas ?? 0) - 1);
+        const busy = a.current && ACTIONS[a.current.actionId].forced;
+        if (!busy && this.checkSelfAction(a, 'fart').ok && this.stageOf(a) !== 'baby') {
+          a.queue.unshift({ id: this.newId('t'), actionId: 'fart', byPlayer: false, phase: 'walking', remaining: 0 });
+          if (a.current && !a.current.byPlayer && ACTIONS[a.current.actionId].interruptible) this.endTask(a);
+        }
+      }
+    }
+  }
+
   // --- Fiestas ---------------------------------------------------------------
 
   /** La familia monta una fiesta en casa: vienen vecinos de varias familias. */
@@ -2791,12 +3443,17 @@ export class World {
   }
 
   /** Coquetear delante de la pareja tiene consecuencias. */
-  private jealousy(a: Agent, t: Agent) {
+  private jealousy(a: Agent, t: Agent, actionId = 'flirt') {
     for (const [who, other] of [[a, t], [t, a]] as const) {
       const pid = partnerOf(this.state, who.id);
       if (!pid || pid === other.id) continue;
       const p = this.agent(pid);
       if (!p || p.lotId !== who.lotId || p.travel || p.hidden) continue;
+      // Un beso (o algo más) delante de tu pareja: pillado/a.
+      if (actionId !== 'flirt' || getRel(this.state, who.id, other.id).affair) {
+        this.catchAffair(who, other, p, 'pillado');
+        continue;
+      }
       changeRel(this.state, who.id, p.id, -12, -15);
       this.feel(p, 'celos', who.name);
       this.remember(p, who, 'celos');
@@ -2832,6 +3489,28 @@ export class World {
     }
     if (actionId === 'move_in') this.moveIn(t);
     this.socialFeelings(a, t, actionId);
+    if (ACTIONS[actionId].targetRoles) this.streetOutcome(a, t, actionId);
+    if (actionId === 'gossip_with') this.gossipOutcome(a, t);
+    if (actionId === 'chotis' && (this.hasEvent('sanisidro') || Math.random() < 0.3)) {
+      this.feel(a, 'castizo');
+      this.feel(t, 'castizo');
+    }
+    if (actionId === 'ask_affair' && rel) {
+      rel.affair = true;
+      this.feel(a, 'enamorado', t.name);
+      this.feel(t, 'enamorado', a.name);
+      if (!hasTrait(a, 'grunon') && Math.random() < 0.6) this.feel(a, 'remordimientos');
+      const cheater = partnerOf(this.state, a.id) ? a : t;
+      const lover = cheater === a ? t : a;
+      const p = this.agent(partnerOf(this.state, cheater.id));
+      if (p) addSecret(this.state, { kind: 'lio', text: `${cheater.name} tiene un lío con ${lover.name}, y ${p.name} no sabe nada`, about: [cheater.id, lover.id, p.id], known: [a.id, t.id], juicy: 3, day: this.day });
+      if (loud) this.toast(`${a.name} y ${t.name} tienen un lío a escondidas. Que no se entere nadie...`, '🤫');
+    }
+    if (actionId === 'end_affair' && rel) {
+      rel.affair = false;
+      this.feel(t, 'calabazas', a.name);
+      if (loud) this.toast(`${a.name} deja el lío con ${t.name}`, '🚪');
+    }
     if (actionId === 'try_baby') {
       const h = this.householdOf(a);
       if (h && !h.expecting && Math.random() < 0.7) {

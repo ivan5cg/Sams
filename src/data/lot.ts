@@ -4,7 +4,7 @@
 
 export type TileType = 'wall' | 'wood' | 'tile' | 'grass' | 'door' | 'path';
 
-export type LayoutId = 'house' | 'park' | 'studio' | 'super' | 'acai';
+export type LayoutId = 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar';
 
 const HOUSE_MAP = [
   'WWWWWWWWWWWggg',
@@ -113,6 +113,46 @@ const ACAI_MAP = [
   'pppppppppppp',
 ];
 
+// Un vagón del metro (Línea 10 → MetroSur), con el andén delante.
+const METRO_MAP = [
+  'WWWWWWWWWWWWWWWWWW',
+  'Wtttttttttttttttt' + 'W',
+  'Wtttttttttttttttt' + 'W',
+  'Wtttttttttttttttt' + 'W',
+  'Wtttttttttttttttt' + 'W',
+  'WWWdWWWWWWWWWWdWWW',
+  'pppppppppppppppppp',
+];
+
+// La plaza de Alcorcón: bancos, fuente, churrería y árboles.
+const PLAZA_MAP = [
+  'gggppppppppppggg',
+  'gppppppppppppppg',
+  'pppppppppppppppp',
+  'pppppppppppppppp',
+  'pppppppppppppppp',
+  'pppppppppppppppp',
+  'pppppppppppppppp',
+  'pppppppppppppppp',
+  'pppppppppppppppp',
+  'pppppppppppppppp',
+  'gppppppppppppppg',
+  'gggppppppppppggg',
+];
+
+// El bar de toda la vida.
+const BAR_MAP = [
+  'WWWWWWWWWWWW',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'WWWWWdWWWWWW',
+  'pppppppppppp',
+];
+
 const CHAR: Record<string, TileType> = { W: 'wall', '.': 'wood', t: 'tile', g: 'grass', d: 'door', p: 'path' };
 
 export interface LotLayout {
@@ -137,6 +177,9 @@ export const LAYOUTS: Record<LayoutId, LotLayout> = {
   studio: parseLot(STUDIO_MAP, { x: 5, y: 9 }),
   super: parseLot(SUPER_MAP, { x: 5, y: 10 }),
   acai: parseLot(ACAI_MAP, { x: 4, y: 8 }),
+  metro: parseLot(METRO_MAP, { x: 3, y: 6 }),
+  plaza: parseLot(PLAZA_MAP, { x: 8, y: 11 }),
+  bar: parseLot(BAR_MAP, { x: 5, y: 8 }),
 };
 
 /** Planos de la casa según lo ampliada que esté (1, 2 o 3). */
@@ -248,4 +291,43 @@ export const PARK_OBJECTS: ObjectPlacement[] = [
   { def: 'flowers', x: 10, y: 1 },
   { def: 'flowers', x: 6, y: 12 },
   { def: 'flowers', x: 1, y: 9 },
+];
+
+export const METRO_OBJECTS: ObjectPlacement[] = [
+  { def: 'metro_seat', x: 1, y: 1 },
+  { def: 'metro_seat', x: 5, y: 1 },
+  { def: 'metro_seat', x: 9, y: 1 },
+  { def: 'metro_seat', x: 13, y: 1 },
+  { def: 'metro_seat', x: 6, y: 4 },
+  { def: 'metro_seat', x: 10, y: 4 },
+  { def: 'metro_pole', x: 4, y: 3 },
+  { def: 'metro_pole', x: 8, y: 2 },
+  { def: 'metro_pole', x: 12, y: 3 },
+  { def: 'metro_sign', x: 16, y: 1 },
+];
+
+export const PLAZA_OBJECTS: ObjectPlacement[] = [
+  { def: 'fountain', x: 7, y: 5 },
+  { def: 'bench', x: 3, y: 3 },
+  { def: 'bench', x: 4, y: 8 },
+  { def: 'bench', x: 11, y: 3 },
+  { def: 'churreria', x: 11, y: 8 },
+  { def: 'tree', x: 1, y: 1 },
+  { def: 'tree', x: 14, y: 1 },
+  { def: 'tree', x: 1, y: 10 },
+  { def: 'tree', x: 14, y: 10 },
+  { def: 'flowers', x: 6, y: 2 },
+  { def: 'flowers', x: 10, y: 6 },
+  { def: 'lamp', x: 2, y: 6 },
+  { def: 'lamp', x: 13, y: 5 },
+];
+
+export const BAR_OBJECTS: ObjectPlacement[] = [
+  { def: 'bar_counter', x: 2, y: 1 },
+  { def: 'slot_machine', x: 9, y: 1 },
+  { def: 'bar_tv', x: 10, y: 3 },
+  { def: 'mus_table', x: 3, y: 4 },
+  { def: 'mus_table', x: 7, y: 4 },
+  { def: 'toilet', x: 1, y: 6 },
+  { def: 'plant', x: 10, y: 6 },
 ];

@@ -233,3 +233,74 @@ export const PET_ART: Partial<Record<SpeciesId, (g: G, color: number) => number>
     return -22;
   },
 };
+
+/** Complementos de la gente de la calle (y la gorra de chulapo en San Isidro). Se dibujan sobre el cuerpo. */
+export function drawAccessory(g: G, kind: string) {
+  const hy = -45;
+  switch (kind) {
+    case 'rapero':
+      // Gorra hacia atrás y cadena
+      g.fillStyle(0xe63946, 1);
+      g.slice(0, hy - 2, 9.6, Math.PI, 0, false);
+      g.fillPath();
+      g.fillRect(-14, hy - 3, 7, 2.5);
+      g.lineStyle(1.5, 0xf2c14e, 1);
+      g.strokeCircle(0, -28, 4.5);
+      break;
+    case 'vendedor':
+      // Caja de chuches colgada
+      g.fillStyle(0xc9a66b, 1);
+      g.fillRect(-9, -26, 18, 9);
+      for (let i = 0; i < 5; i++) {
+        g.fillStyle([0xe63946, 0xf2c14e, 0x52b788, 0x9b5de5, 0xff8fab][i], 1);
+        g.fillCircle(-7 + i * 3.5, -27, 1.8);
+      }
+      g.lineStyle(1, 0x8b5a2b, 1);
+      g.lineBetween(-8, -26, -5, -36);
+      g.lineBetween(8, -26, 5, -36);
+      break;
+    case 'musico':
+      // Acordeón
+      g.fillStyle(0xd62828, 1);
+      g.fillRect(-11, -30, 8, 13);
+      g.fillRect(3, -30, 8, 13);
+      g.fillStyle(0x222222, 1);
+      for (let i = 0; i < 4; i++) g.fillRect(-3 + i * 1.6, -30, 0.8, 13);
+      g.fillStyle(0xffffff, 1);
+      g.fillRect(-10, -28, 2, 9);
+      break;
+    case 'glovo':
+      // Mochila amarilla
+      g.fillStyle(0xffc244, 1);
+      g.fillRoundedRect(-17, -40, 12, 15, 2);
+      g.fillStyle(0x2b2d42, 1);
+      g.fillRect(-15, -35, 8, 1.5);
+      break;
+    case 'militante':
+      // Una rosa y folletos
+      g.fillStyle(0xffffff, 1);
+      g.fillRect(4, -25, 7, 5);
+      g.lineStyle(1.2, 0x2d6a4f, 1);
+      g.lineBetween(7, -24, 9, -34);
+      g.fillStyle(0xd62828, 1);
+      g.fillCircle(9.5, -35, 2.6);
+      break;
+    case 'chismosa':
+      // Bolso de mano
+      g.fillStyle(0x5a3a1c, 1);
+      g.fillRoundedRect(4, -24, 7, 6, 1.5);
+      g.lineStyle(1, 0x5a3a1c, 1);
+      g.strokeCircle(7.5, -25, 2.5);
+      break;
+    case 'chulapo':
+      // Parpusa de cuadros
+      g.fillStyle(0x6b6f76, 1);
+      g.slice(0, hy - 3, 9.4, Math.PI, 0, false);
+      g.fillPath();
+      g.fillStyle(0x2b2d42, 1);
+      g.fillRect(2, hy - 4, 10, 2.2);
+      g.fillStyle(0xffffff, 0.35);
+      for (let i = -6; i <= 6; i += 4) g.fillRect(i, hy - 10, 1.4, 6);
+      break;
+  }
+}

@@ -186,7 +186,7 @@ export function drawTile(g: G, t: TileType, x: number, y: number, style: LotStyl
 }
 
 /** Pared de una casilla, con zócalo, remate y (si toca) ventana o espejo en la cara que da al interior. */
-export function drawWall(g: G, x: number, y: number, height: number, color: number, deco?: { face: 'L' | 'R'; kind: 'window' | 'mirror' | 'stripe'; color?: number }) {
+export function drawWall(g: G, x: number, y: number, height: number, color: number, deco?: { face: 'L' | 'R'; kind: 'window' | 'mirror' | 'stripe' | 'tunnel'; color?: number }) {
   const r = R(x, y, 1, 1);
   prism(g, r, 0, height, color, { top: shade(color, 1.08) });
   // Zócalo
@@ -199,6 +199,11 @@ export function drawWall(g: G, x: number, y: number, height: number, color: numb
       faceQuad(g, r, deco.face, 0.24, 0.5, 31, 41, 0xc9ecfa, 0.7);
       faceQuad(g, r, deco.face, 0.48, 0.52, 21, 41, 0xffffff, 0.9);
       faceQuad(g, r, deco.face, 0.24, 0.76, 30, 32, 0xffffff, 0.9);
+    } else if (deco.kind === 'tunnel') {
+      // Ventana del vagón: túnel oscuro con alguna luz pasando
+      faceQuad(g, r, deco.face, 0.08, 0.92, 22, 44, 0x1d2233);
+      faceQuad(g, r, deco.face, 0.3, 0.38, 26, 40, 0xf2e6a6, 0.35);
+      faceQuad(g, r, deco.face, 0, 1, 8, 12, deco.color ?? 0xe63946);
     } else if (deco.kind === 'stripe') {
       faceQuad(g, r, deco.face, 0, 1, 40, 48, deco.color ?? 0x2e8b57);
       faceQuad(g, r, deco.face, 0, 1, 37, 38.5, 0xf28c28);
@@ -897,6 +902,131 @@ const ART: Record<string, Art> = {
     g.lineStyle(2, 0x5df2ff, 1);
     const t = facePoint(r, 'L', 0.5, 40);
     g.lineBetween(t.x - 10, t.y + 2, t.x + 10, t.y - 3);
+  },
+  // --- Metro ---
+  metro_seat: (g, _f, X, Y) => {
+    const r = R(X + 0.05, Y + 0.2, 1.9, 0.6);
+    shadowUnder(g, X + 1, Y + 0.5, 60, 0.1);
+    prism(g, R(X + 0.1, Y + 0.25, 1.8, 0.5), 0, 8, 0x9aa3ad);
+    prism(g, r, 8, 13, 0x3d6db5, { top: 0x4f82cf });
+    prism(g, R(X + 0.05, Y + 0.12, 1.9, 0.14), 13, 30, 0x355f9e);
+    for (let i = 0; i < 6; i++) faceQuad(g, R(X + 0.05, Y + 0.12, 1.9, 0.14), 'L', i / 6 + 0.02, i / 6 + 0.1, 16, 28, 0xf2c14e, 0.5);
+  },
+  metro_pole: (g, _f, X, Y) => {
+    const b = P(X + 0.5, Y + 0.5);
+    g.fillStyle(0x000000, 0.15);
+    g.fillEllipse(b.x, b.y, 12, 5);
+    g.fillStyle(0xd0d4d8, 1);
+    g.fillRect(b.x - 1.6, b.y - 62, 3.2, 62);
+    g.fillStyle(0xffffff, 0.6);
+    g.fillRect(b.x - 1, b.y - 62, 1, 62);
+  },
+  metro_sign: (g, _f, X, Y) => {
+    const r = R(X + 0.15, Y + 0.05, 0.7, 0.1);
+    prism(g, r, 10, 46, 0xffffff);
+    // El plano: líneas de colores con estaciones
+    const cols = [0x0074c8, 0xfdc300, 0x9b5de5, 0xe63946];
+    cols.forEach((c, i) => faceQuad(g, r, 'L', 0.1, 0.9, 16 + i * 7, 18 + i * 7, c));
+    faceQuad(g, r, 'L', 0.05, 0.95, 40, 45, 0xe63946);
+  },
+  // --- Plaza ---
+  fountain: (g, _f, X, Y) => {
+    shadowUnder(g, X + 1, Y + 1, 70, 0.12);
+    prism(g, R(X + 0.05, Y + 0.05, 1.9, 1.9), 0, 8, 0xb8c2cc, { top: 0x6fb6e8 });
+    flat(g, R(X + 0.2, Y + 0.2, 1.6, 1.6), 8.2, 0x7cc6f0);
+    prism(g, R(X + 0.8, Y + 0.8, 0.4, 0.4), 8, 20, 0xb8c2cc);
+    prism(g, R(X + 0.6, Y + 0.6, 0.8, 0.8), 20, 23, 0xc9d3dc, { top: 0x7cc6f0 });
+    const t = P(X + 1, Y + 1, 30);
+    g.fillStyle(0xbfe6ff, 0.85);
+    for (const [dx, dy] of [[-6, 4], [6, 4], [0, -2], [-3, 8], [3, 8]]) g.fillCircle(t.x + dx, t.y + dy, 1.8);
+  },
+  churreria: (g, f, X, Y) => {
+    const r = R(X + 0.08, Y + 0.25, 1.84, 0.6);
+    shadowUnder(g, X + 1, Y + 0.6, 64, 0.12);
+    // Churrero detrás
+    const c = P(X + 1.1, Y + 0.12);
+    g.fillStyle(0xffffff, 1);
+    g.fillRoundedRect(c.x - 7, c.y - 30, 14, 18, 5);
+    g.fillStyle(0xe0ac69, 1);
+    g.fillCircle(c.x, c.y - 37, 7);
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(c.x - 6, c.y - 47, 12, 6);
+    prism(f, r, 0, 22, 0xf2e6c9, { top: 0xd9c3a5 });
+    faceQuad(f, r, 'L', 0, 1, 22, 26, 0xd62828);
+    for (let i = 0; i < 6; i++) faceQuad(f, r, 'L', i / 6, i / 6 + 0.08, 26, 36, i % 2 ? 0xffffff : 0xd62828);
+    const p = P(X + 0.6, Y + 0.45, 22);
+    f.fillStyle(0xc68642, 1);
+    for (let i = 0; i < 4; i++) f.fillRoundedRect(p.x - 8 + i * 4, p.y - 3, 3, 8, 1.5);
+    const cup = P(X + 1.5, Y + 0.45, 22);
+    f.fillStyle(0xffffff, 1);
+    f.fillRect(cup.x - 3, cup.y - 6, 6, 6);
+    f.fillStyle(0x5a3825, 1);
+    f.fillEllipse(cup.x, cup.y - 6, 6, 2);
+  },
+  // --- Bar ---
+  bar_counter: (g, f, X, Y) => {
+    const r = R(X + 0.05, Y + 0.3, 2.9, 0.6);
+    shadowUnder(g, X + 1.5, Y + 0.6, 90, 0.12);
+    // Paco, el del bar, con su delantal
+    const c = P(X + 1.8, Y + 0.12);
+    g.fillStyle(0xffffff, 1);
+    g.fillRoundedRect(c.x - 7, c.y - 30, 14, 18, 5);
+    g.fillStyle(0x2b2d42, 1);
+    g.fillRect(c.x - 6, c.y - 24, 12, 12);
+    g.fillStyle(0xd9a066, 1);
+    g.fillCircle(c.x, c.y - 37, 7);
+    g.fillStyle(0x222222, 1);
+    g.fillRect(c.x - 4, c.y - 34.5, 8, 2);
+    // Botellas en la pared
+    for (let i = 0; i < 7; i++) {
+      const b = P(X + 0.3 + i * 0.38, Y + 0.08, 30);
+      g.fillStyle([0x2d6a4f, 0x8b2e3c, 0xc9a227, 0x3a4a7a][i % 4], 1);
+      g.fillRect(b.x - 2, b.y - 10, 4, 10);
+      g.fillRect(b.x - 1, b.y - 13, 2, 3);
+    }
+    prism(f, r, 0, 24, 0x8b5a2b, { top: 0xb8875a });
+    faceQuad(f, r, 'L', 0, 1, 3, 7, 0x5a3a1c);
+    // Grifo de cerveza y unas cañas
+    const t = P(X + 0.6, Y + 0.55, 24);
+    f.fillStyle(0xd0d4d8, 1);
+    f.fillRect(t.x - 1.5, t.y - 14, 3, 14);
+    f.fillStyle(0xe63946, 1);
+    f.fillCircle(t.x, t.y - 15, 3);
+    for (const dx of [0.95, 1.25, 2.3]) {
+      const q = P(X + dx, Y + 0.6, 24);
+      f.fillStyle(0xf2b134, 0.95);
+      f.fillRect(q.x - 2.5, q.y - 8, 5, 8);
+      f.fillStyle(0xffffff, 1);
+      f.fillRect(q.x - 2.5, q.y - 9.5, 5, 2);
+    }
+    // Plato de bravas
+    const pl = P(X + 1.8, Y + 0.6, 24);
+    f.fillStyle(0xffffff, 1);
+    f.fillEllipse(pl.x, pl.y - 1, 12, 5);
+    f.fillStyle(0xe76f51, 1);
+    for (const dx of [-3, 0, 3]) f.fillRect(pl.x + dx - 1.5, pl.y - 3, 3, 3);
+  },
+  slot_machine: (g, _f, X, Y) => {
+    const r = R(X + 0.15, Y + 0.2, 0.7, 0.55);
+    shadowUnder(g, X + 0.5, Y + 0.5, 30, 0.14);
+    prism(g, r, 0, 44, 0x2b2d42, { top: 0x3a3f55 });
+    faceQuad(g, r, 'L', 0.1, 0.9, 26, 38, 0xf2c14e);
+    for (let i = 0; i < 3; i++) faceQuad(g, r, 'L', 0.15 + i * 0.25, 0.35 + i * 0.25, 28, 36, 0xffffff);
+    faceQuad(g, r, 'L', 0.15, 0.85, 12, 18, 0xe63946);
+    faceQuad(g, r, 'L', 0.1, 0.9, 40, 44, 0x9b5de5);
+  },
+  bar_tv: (g, _f, X, Y) => {
+    const r = R(X + 0.1, Y + 0.4, 0.8, 0.2);
+    prism(g, R(X + 0.45, Y + 0.45, 0.1, 0.1), 0, 30, 0x555555);
+    prism(g, r, 30, 50, 0x222222);
+    faceQuad(g, r, 'L', 0.06, 0.94, 32, 48, 0x2d6a4f);
+    faceQuad(g, r, 'L', 0.48, 0.52, 32, 48, 0xffffff, 0.8);
+  },
+  mus_table: (g, _f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 34, 0.12);
+    prism(g, R(X + 0.45, Y + 0.45, 0.1, 0.1), 0, 14, 0x5a3a1c);
+    prism(g, R(X + 0.08, Y + 0.08, 0.84, 0.84), 14, 16, 0x6b4a2c, { top: 0x2d6a4f });
+    for (const [cx, cy] of [[0.35, 0.4], [0.6, 0.55], [0.45, 0.65]]) flat(g, R(X + cx, Y + cy, 0.12, 0.16), 16.2, 0xffffff);
   },
   flowers: (g, _f, X, Y) => {
     const c = P(X + 0.5, Y + 0.5);

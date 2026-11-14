@@ -60,6 +60,10 @@ export interface ActionDef {
   targetStages?: string[];
   /** Practicar una habilidad: puntos por minuto (a nivel 0; cuesta más cuanto más nivel). */
   skill?: { id: string; rate: number };
+  /** Solo la pueden hacer personajes con este papel (el rapero, el del acordeón...). */
+  roles?: string[];
+  /** Solo hacia personajes con este papel (comprar chuches al vendedor...). */
+  targetRoles?: string[];
 }
 
 const PETS_FREE: SpeciesId[] = ['dog', 'cat', 'ferret', 'capybara'];
@@ -76,6 +80,9 @@ const A: ActionDef[] = [
   { id: 'nap_sofa', label: 'Echar una siesta', verb: 'Echando la siesta', icon: '😴', target: 'object', actors: ['person'], duration: 60, effects: { energy: 0.15 }, decayMult: 0.6, until: 'full' },
   { id: 'read', guestOk: true, label: 'Leer un libro', verb: 'Leyendo', icon: '📖', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.25 }, until: 'full', interruptible: true },
   { id: 'browse', label: 'Navegar por internet', verb: 'En el ordenador', icon: '💻', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.3, social: 0.1 }, until: 'full', interruptible: true },
+  { id: 'whatsapp', label: 'Mirar el grupo de WhatsApp del barrio', verb: 'Mirando el WhatsApp', icon: '📱', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], duration: 15, effects: { fun: 0.3, social: 0.3 }, interruptible: true },
+  { id: 'order_glovo', label: 'Pedir comida por Glovo (§15)', verb: 'Pidiendo comida', icon: '🛵', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], cost: 15, duration: 5, effects: {}, playerOnly: true },
+  { id: 'drink_beer', label: 'Tomarse una cerveza', verb: 'Tomándose una cerveza', icon: '🍺', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], duration: 12, effects: { fun: 0.5, social: 0.1, bladder: -0.4 } },
   { id: 'throw_party', label: 'Montar una fiesta (§120)', verb: 'Organizando una fiesta', icon: '🥳', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], duration: 15, effects: { fun: 0.2 }, cost: 120, playerOnly: true },
   { id: 'day_off', label: 'Pedir el día libre mañana', verb: 'Pidiendo el día libre', icon: '🏖️', target: 'object', actors: ['person'], duration: 5, effects: {}, playerOnly: true },
   { id: 'find_job', label: 'Buscar trabajo', verb: 'Buscando trabajo', icon: '📰', target: 'object', actors: ['person'], duration: 20, effects: { fun: -0.05 }, playerOnly: true },
@@ -141,6 +148,19 @@ const A: ActionDef[] = [
   // Mercadona
   { id: 'shop_small', label: 'Compra pequeña (§45 · 8 raciones)', verb: 'Haciendo la compra', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 45, duration: 20, effects: { social: 0.1 }, playerOnly: true },
   { id: 'buy_lottery', label: 'Lotería de Navidad (§20)', verb: 'Comprando lotería', icon: '🎫', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], guestOk: true, cost: 20, duration: 5, effects: { fun: 0.5 }, playerOnly: true },
+  { id: 'cana', label: 'Una caña (§2)', verb: 'Tomándose una caña', icon: '🍺', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], guestOk: true, cost: 2, duration: 15, effects: { fun: 0.5, social: 0.3, bladder: -0.4 } },
+  { id: 'vermut', label: 'Un vermut (§3)', verb: 'Tomándose un vermut', icon: '🍷', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], guestOk: true, cost: 3, duration: 15, effects: { fun: 0.5, social: 0.3 } },
+  { id: 'chupito', label: 'Un chupito (§3)', verb: 'Chupito va', icon: '🥃', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], guestOk: true, cost: 3, duration: 3, effects: { fun: 2.5 }, playerOnly: true },
+  { id: 'calamares', label: 'Bocadillo de calamares (§5)', verb: 'Comiéndose un bocata', icon: '🥖', target: 'object', actors: ['person'], guestOk: true, cost: 5, duration: 20, effects: { hunger: 3.2, fun: 0.2 }, until: 'full' },
+  { id: 'bravas', label: 'Unas bravas (§4)', verb: 'Comiendo bravas', icon: '🍟', target: 'object', actors: ['person'], guestOk: true, cost: 4, duration: 15, effects: { hunger: 2.6, fun: 0.3, social: 0.2 } },
+  { id: 'tortilla', label: 'Pincho de tortilla (§3)', verb: 'Comiendo tortilla', icon: '🍳', target: 'object', actors: ['person'], guestOk: true, cost: 3, duration: 10, effects: { hunger: 3 } },
+  { id: 'tragaperras', label: 'Echar a la tragaperras (§1)', verb: 'Jugando a la tragaperras', icon: '🎰', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], guestOk: true, cost: 1, duration: 10, effects: { fun: 0.7 } },
+  { id: 'watch_football', label: 'Ver el fútbol', verb: 'Viendo el fútbol', icon: '⚽', target: 'object', actors: ['person'], guestOk: true, duration: 90, effects: { fun: 0.35, social: 0.2 }, until: 'full', interruptible: true },
+  { id: 'play_mus', label: 'Echar un mus', verb: 'Jugando al mus', icon: '🃏', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, duration: 45, effects: { fun: 0.5, social: 0.4 }, until: 'full', interruptible: true, skill: { id: 'logica', rate: 0.01 } },
+  { id: 'churros', label: 'Churros con chocolate (§3)', verb: 'Mojando churros', icon: '🥨', target: 'object', actors: ['person'], guestOk: true, cost: 3, duration: 15, effects: { hunger: 2.4, fun: 0.4 } },
+  { id: 'rosquillas', label: 'Rosquillas tontas y listas (§2)', verb: 'Comiendo rosquillas', icon: '🍩', target: 'object', actors: ['person'], guestOk: true, cost: 2, duration: 8, effects: { hunger: 1.8, fun: 0.4 } },
+  { id: 'throw_coin', label: 'Echar una moneda a la fuente (§1)', verb: 'Pidiendo un deseo', icon: '🪙', target: 'object', actors: ['person'], guestOk: true, cost: 1, duration: 3, effects: { fun: 1.5 }, playerOnly: true },
+  { id: 'read_map', label: 'Mirar el plano del metro', verb: 'Mirando el plano', icon: '🗺️', target: 'object', actors: ['person'], guestOk: true, duration: 5, effects: { fun: 0.1 }, playerOnly: true },
   { id: 'shop_big', label: 'Compra grande (§95 · 20 raciones)', verb: 'Haciendo la compra grande', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 95, duration: 35, effects: { social: 0.1, energy: -0.05 }, playerOnly: true },
   { id: 'browse_aisles', label: 'Pasear por los pasillos', verb: 'Mirando ofertas', icon: '🧐', target: 'object', actors: ['person'], guestOk: true, duration: 25, effects: { fun: 0.15, social: 0.05 }, until: 'full', interruptible: true, baseScore: 1 },
   { id: 'buy_fruit', label: 'Comprar fruta (§3)', verb: 'Comiendo fruta', icon: '🍎', target: 'object', actors: ['person'], guestOk: true, cost: 3, duration: 8, effects: { hunger: 2.5 }, until: 'full' },
@@ -164,6 +184,19 @@ const A: ActionDef[] = [
   { id: 'talk', label: 'Conversar…', verb: 'Conversando', icon: '🗨️', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 90, effects: { social: 0.15 }, partnerEffects: { social: 0.15 }, playerOnly: true, interruptible: true },
   { id: 'chat', label: 'Charlar', verb: 'Charlando', icon: '💬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 30, effects: { social: 0.7, fun: 0.1 }, partnerEffects: { social: 0.7, fun: 0.1 }, until: 'full', interruptible: true, skill: { id: 'carisma', rate: 0.005 } },
   { id: 'joke', label: 'Contar un chiste', verb: 'Contando un chiste', icon: '😂', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: 0.6, social: 0.3 }, partnerEffects: { fun: 0.6, social: 0.3 } },
+  { id: 'gossip_with', label: 'Cotillear', verb: 'Cotilleando', icon: '🌶️', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 15, effects: { social: 0.6, fun: 0.3 }, partnerEffects: { social: 0.6, fun: 0.3 }, interruptible: true },
+  { id: 'chotis', label: 'Bailar un chotis', verb: 'Bailando un chotis', icon: '🎩', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 15, effects: { fun: 0.8, social: 0.5 }, partnerEffects: { fun: 0.8, social: 0.5 } },
+  { id: 'ask_affair', label: 'Proponer un lío', verb: 'Tirando los tejos', icon: '🤫', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: 1, fun: 0.5 }, partnerEffects: { social: 1 }, playerOnly: true },
+  { id: 'end_affair', label: 'Dejar el lío', verb: 'Dejando el lío', icon: '🚪', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: -0.3 }, partnerEffects: { social: -1 }, playerOnly: true },
+  // Gente de la calle
+  { id: 'buy_candy', label: 'Comprar un chupachups (§1)', verb: 'Comprando chuches', icon: '🍭', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['vendedor'], cost: 1, duration: 3, effects: { hunger: 1, fun: 1.5 }, guestOk: true, playerOnly: true },
+  { id: 'tip_artist', label: 'Darle una moneda (§1)', verb: 'Dando una moneda', icon: '🪙', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['rapero', 'musico'], cost: 1, duration: 3, effects: { fun: 1 }, guestOk: true, playerOnly: true },
+  { id: 'ask_rap', label: 'Pedirle un rap', verb: 'Escuchando un rap', icon: '🎤', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['rapero'], duration: 10, effects: { fun: 1.2 }, guestOk: true, playerOnly: true },
+  { id: 'ask_gossip', label: 'Preguntar por los cotilleos', verb: 'Escuchando cotilleos', icon: '🗣️', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['chismosa'], duration: 15, effects: { social: 0.7, fun: 0.4 }, guestOk: true },
+  { id: 'tell_chismosa', label: 'Contarles un secreto', verb: 'Contando un secreto', icon: '🤫', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['chismosa'], duration: 8, effects: { social: 0.6, fun: 0.4 }, guestOk: true, playerOnly: true },
+  { id: 'listen_campaign', label: 'Escuchar su programa', verb: 'Escuchando el programa', icon: '📋', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['militante'], duration: 10, effects: { social: 0.4, fun: -0.2 }, guestOk: true, playerOnly: true },
+  { id: 'promise_vote', label: 'Prometerle el voto', verb: 'Prometiendo el voto', icon: '🌹', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['militante'], actorStages: ['young', 'adult', 'elder'], duration: 4, effects: { social: 0.5 }, guestOk: true, playerOnly: true },
+  { id: 'decline_vote', label: 'Ya tengo el voto decidido', verb: 'Despachando a la militante', icon: '✋', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['militante'], duration: 3, effects: {}, guestOk: true, playerOnly: true },
   { id: 'argue', label: 'Discutir', verb: 'Discutiendo', icon: '💢', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: -0.3, social: 0.3 }, partnerEffects: { fun: -0.6, social: -0.3 } },
   { id: 'apologize', label: 'Pedir perdón', verb: 'Pidiendo perdón', icon: '🙏', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: 0.8 }, partnerEffects: { social: 0.8 } },
   { id: 'break_up', label: 'Cortar', verb: 'Cortando', icon: '💔', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: -0.5 }, partnerEffects: { social: -1.5, fun: -1 }, playerOnly: true },
@@ -202,6 +235,11 @@ const A: ActionDef[] = [
   { id: 'chase', label: 'Perseguir', verb: 'Persiguiendo', icon: '💨', target: 'agent', actors: ['pet'], species: ['dog', 'ferret'], targetKinds: ['pet'], targetSpecies: ['cat', 'dog', 'ferret'], duration: 6, effects: { fun: 1.5, energy: -0.3 }, partnerEffects: { fun: 0.5, energy: -0.3 } },
 
   // --- Propias ---
+  { id: 'fart', label: 'Tirarse un pedo', verb: 'Tirándose un pedo', icon: '💨', target: 'self', actors: ['person', 'pet'], species: ['human', 'dog', 'capybara'], duration: 2, effects: { fun: 2 } },
+  { id: 'sing', label: 'Cantar a pleno pulmón', verb: 'Cantando', icon: '🎤', target: 'self', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], duration: 8, effects: { fun: 1, social: 0.1 }, playerOnly: true },
+  { id: 'vomit', label: 'Vomitar', verb: 'Vomitando', icon: '🤮', target: 'self', actors: ['person'], duration: 3, effects: { hunger: -5 }, forced: true, playerOnly: true },
+  { id: 'rap', label: 'Rapear', verb: 'Rapeando', icon: '🎤', target: 'self', actors: ['person'], roles: ['rapero'], duration: 6, effects: {}, playerOnly: true, interruptible: true },
+  { id: 'play_accordion', label: 'Tocar el acordeón', verb: 'Tocando el acordeón', icon: '🪗', target: 'self', actors: ['person'], roles: ['musico'], duration: 30, effects: {}, playerOnly: true, interruptible: true },
   { id: 'move', label: 'Ir aquí', verb: 'Caminando', icon: '👣', target: 'tile', actors: ['person', 'pet'], duration: 0, effects: {}, playerOnly: true },
   { id: 'idle', label: 'Esperar', verb: 'Pensando', icon: '💭', target: 'self', actors: ['person', 'pet'], duration: 15, effects: {}, interruptible: true, playerOnly: true },
   { id: 'pass_out', label: 'Desmayarse', verb: 'Agotado en el suelo', icon: '😵', target: 'self', actors: ['person', 'pet'], duration: 300, effects: { energy: 0.5 }, until: { energy: 40 }, forced: true, playerOnly: true },

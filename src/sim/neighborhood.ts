@@ -1,7 +1,8 @@
 import { PET_TRAITS } from '../data/pets';
+import { STREET_NPCS } from '../data/street';
 // Creación del barrio: las 9 familias vecinas, sus casas y el parque.
 
-import { ACAI_OBJECTS, HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, SUPER_OBJECTS, type ObjectPlacement } from '../data/lot';
+import { ACAI_OBJECTS, HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, SUPER_OBJECTS, type ObjectPlacement, METRO_OBJECTS, PLAZA_OBJECTS, BAR_OBJECTS } from '../data/lot';
 import { CAREER_SKILL } from '../data/skills';
 import { OBJECTS } from '../data/objects';
 import { JOB_CAREERS } from '../data/careers';
@@ -14,6 +15,10 @@ export const PARK_LOT = 'P';
 export const STUDIO_LOT = 'G';
 export const SUPER_LOT = 'M';
 export const ACAI_LOTS = ['A1', 'A2'];
+export const METRO_LOT = 'MT';
+export const PLAZA_LOT = 'PL';
+export const BAR_LOT = 'BR';
+export const ALCORCON_HOMES = ['AL1', 'AL2', 'AL3'];
 export const NEIGHBOUR_COUNT = 9;
 
 const SURNAMES = ['López', 'Martín', 'Sánchez', 'Romero', 'Navarro', 'Torres', 'Díaz', 'Moreno', 'Gil', 'Ruiz', 'Ortega', 'Molina'];
@@ -114,6 +119,68 @@ export function addShops(state: WorldState) {
     if (state.lots.some((l) => l.id === a.id)) continue;
     state.lots.push({ id: a.id, name: a.name, kind: 'venue', layout: 'acai', style: a.style });
     placeObjects(state, a.id, ACAI_OBJECTS);
+  }
+}
+
+/** Alcorcón: plaza, bar, tres casas (una okupada) y el metro para llegar. Y la gente de la calle. */
+export function addAlcorcon(state: WorldState) {
+  for (const l of state.lots) l.district = l.district ?? 'madrid';
+  if (!state.lots.some((l) => l.id === METRO_LOT)) {
+    state.lots.push({ id: METRO_LOT, name: 'Metro (Línea 10 → MetroSur)', kind: 'venue', layout: 'metro', district: 'metro', style: { wall: 0xe8e8e4, floor: 0xb7bcc2 } });
+    placeObjects(state, METRO_LOT, METRO_OBJECTS);
+  }
+  if (!state.lots.some((l) => l.id === PLAZA_LOT)) {
+    state.lots.push({ id: PLAZA_LOT, name: 'Plaza de Alcorcón', kind: 'park', layout: 'plaza', district: 'alcorcon' });
+    placeObjects(state, PLAZA_LOT, PLAZA_OBJECTS);
+  }
+  if (!state.lots.some((l) => l.id === BAR_LOT)) {
+    state.lots.push({ id: BAR_LOT, name: 'Bar Casa Paco', kind: 'venue', layout: 'bar', district: 'alcorcon', style: { wall: 0xe9dcc0, floor: 0xb8a48a } });
+    placeObjects(state, BAR_LOT, BAR_OBJECTS);
+  }
+  ALCORCON_HOMES.forEach((lotId, i) => {
+    if (state.lots.some((l) => l.id === lotId)) return;
+    state.lots.push({ id: lotId, name: '', kind: 'home', layout: 'house', district: 'alcorcon', style: { wall: WALLS[(i + 4) % WALLS.length], floor: FLOORS[(i + 2) % FLOORS.length] } });
+    placeObjects(state, lotId, HOUSE_OBJECTS);
+    if (i === ALCORCON_HOMES.length - 1) generateOkupas(state, lotId);
+    else generateFamily(state, lotId);
+  });
+  addStreetNpcs(state);
+}
+
+/** Unos okupas en una casa que llevaba años vacía. */
+export function generateOkupas(state: WorldState, lotId: string) {
+  const hid = `h${state.nextId++}`;
+  const lot = state.lots.find((l) => l.id === lotId)!;
+  lot.name = 'Casa okupada';
+  lot.householdId = hid;
+  const used = new Set(state.agents.map((a) => a.name));
+  const names = ['Iker', 'Lore', 'Rubén', 'Ainhoa', 'Dani', 'Nerea', 'Edu', 'Yoli'].filter((n) => !used.has(n));
+  const members: Agent[] = [];
+  for (let k = 0; k < 3; k++) {
+    members.push(makeAgent({ id: `a${state.nextId++}`, name: names[k] ?? `Okupa ${k + 1}`, species: 'human', ageDays: Math.round(rand(21, 34)), color: pick(CLOTHES), householdId: hid, lotId, ...randomIndoorTile() }));
+  }
+  members.push(makeAgent({ id: `a${state.nextId++}`, name: 'Canelo', species: 'dog', ageDays: 10, color: 0x999999, householdId: hid, lotId, ...randomIndoorTile() }));
+  for (const m of members) m.abstract = true;
+  state.agents.push(...members);
+  state.households.push({ id: hid, name: 'Los okupas', funds: 150, memberIds: members.map((m) => m.id), lotId, pantry: 15, okupa: true });
+  setupFamilyLife(state, members, { jobs: false });
+  // Entre ellos son amigos (no pareja), y el perro es de todos.
+  for (const a of members) for (const b of members) if (a !== b && a.kind === 'person' && b.kind === 'person') setRel(state, a.id, b.id, { f: 60, r: 0 });
+}
+
+/** Vendedor, rapero y músico del metro, vecinas cotillas, militantes y riders. */
+export function addStreetNpcs(state: WorldState) {
+  for (const n of STREET_NPCS) {
+    if (state.agents.some((a) => a.role === n.role && a.name === n.name)) continue;
+    const lay = layoutOf(state.lots.find((l) => l.id === n.post)!);
+    const a = makeAgent({ id: `a${state.nextId++}`, name: n.name, species: 'human', ageDays: n.ageDays, color: n.color, householdId: 'calle', lotId: n.post, x: lay.entrance.x, y: Math.max(0, lay.entrance.y - 2) });
+    a.role = n.role;
+    a.post = n.post;
+    a.abstract = true;
+    // Los riders y las militantes solo aparecen cuando toca.
+    if (n.role === 'glovo' || n.role === 'militante') a.hidden = true;
+    a.traits = n.role === 'chismosa' ? ['cotilla', 'grunon'] : n.role === 'rapero' ? ['fiestero', 'bromista'] : n.role === 'militante' ? ['optimista', 'cotilla'] : ['optimista', 'perezoso'];
+    state.agents.push(a);
   }
 }
 

@@ -2,7 +2,7 @@ import { HOUSE_OBJECTS, START_OBJECTS } from '../data/lot';
 import { OBJECTS } from '../data/objects';
 import { PET_TRAITS } from '../data/pets';
 import { SAVE_VERSION } from '../sim/world';
-import { PLAYER_LOT, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
+import { PLAYER_LOT, addAlcorcon, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
 import { setRel } from '../sim/social';
 import type { PlacedObject, WorldState } from '../sim/types';
 
@@ -56,6 +56,11 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       }
       setupFamilyLife(s, members, { jobs: !player });
     }
+  },
+  // v9 → v10: Alcorcón, el metro, la gente de la calle y el salseo.
+  9: (s) => {
+    addAlcorcon(s);
+    s.secrets = s.secrets ?? [];
   },
   // v8 → v9: emociones, metas de vida, mascotas con carácter, estaciones (todo son campos nuevos opcionales).
   8: (s) => {

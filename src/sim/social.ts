@@ -85,6 +85,15 @@ export const REL_EFFECTS: Record<string, [number, number]> = {
   propose: [5, 5],
   move_in: [3, 3],
   try_baby: [3, 6],
+  ask_affair: [3, 10],
+  end_affair: [-5, -20],
+  chotis: [5, 2],
+  gossip_with: [3, 0],
+  ask_gossip: [3, 0],
+  buy_candy: [2, 0],
+  tip_artist: [3, 0],
+  listen_campaign: [3, 0],
+  decline_vote: [-1, 0],
   niqui: [3, 8],
   feed_baby: [3, 0],
   change_diaper: [2, 0],
@@ -103,7 +112,7 @@ export const REL_EFFECTS: Record<string, [number, number]> = {
 };
 
 /** Acciones de romance. */
-export const ROMANTIC = new Set(['flirt', 'kiss', 'ask_partner', 'propose', 'move_in', 'try_baby', 'niqui']);
+export const ROMANTIC = new Set(['flirt', 'kiss', 'ask_partner', 'propose', 'move_in', 'try_baby', 'niqui', 'ask_affair']);
 
 /**
  * Probabilidad de que `t` acepte la interacción de `a`.
@@ -137,6 +146,13 @@ export function acceptChance(state: WorldState, a: Agent, t: Agent, actionId: st
       return taken ? 0.3 : rel.r >= 70 ? 0.7 : 0.1;
     case 'try_baby':
       return rel.r >= 50 ? 0.92 : 0.4;
+    case 'ask_affair': {
+      // Más fácil si su propia pareja va mal.
+      const own = partnerOf(state, t.id);
+      const ownRel = own ? getRel(state, t.id, own) : undefined;
+      const base = 0.15 + rel.r / 200 + (ownRel && ownRel.r < 40 ? 0.3 : 0) + (!own ? 0.25 : 0);
+      return Math.min(0.9, base);
+    }
     case 'apologize':
       // Perdonar cuesta más cuanto peor está la cosa.
       return Math.max(0.25, Math.min(0.95, 0.65 + rel.f / 150));
@@ -156,6 +172,7 @@ export const REJECT_TEXT: Record<string, string> = {
   try_baby: 'aún no se siente preparado/a para tener un bebé con',
   niqui: 'no está de humor para ñiqui ñiqui con',
   apologize: 'no acepta las disculpas de',
+  ask_affair: 'le ha parado los pies a',
 };
 
 /** Recuerdos: lo que se cuenta de cada uno ({by} = quien lo hizo, {other} = a quien). */
@@ -172,6 +189,7 @@ export const MEMORY_TEXT: Record<string, { icon: string; text: string; bad?: boo
   boda: { icon: '💍', text: 'La boda de {by} y {other}' },
   fiesta: { icon: '🥳', text: 'La fiesta de {by}, con {other}' },
   favor: { icon: '🤝', text: '{by} echó una mano a {other}' },
+  infidelidad: { icon: '🦌', text: '{by} le puso los cuernos a {other}', bad: true },
 };
 
 /** Lo que `t` le hizo a `a` y aún no le ha perdonado (si hay algo). */

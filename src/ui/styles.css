@@ -1303,3 +1303,9 @@ body.building #hud-bottom {
 .tier-row .comp { flex: 1; text-align: center; padding: 5px 6px; }
 #build-tiers:empty { display: none; }
 .build-note { margin: 2px 0 6px; }
+
+.map-district {
+  font-weight: 800;
+  font-size: 15px;
+  margin: 12px 2px 4px;
+}

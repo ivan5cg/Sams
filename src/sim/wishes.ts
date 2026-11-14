@@ -62,6 +62,10 @@ export function newWish(world: World, a: Agent): Wish | null {
     options.push({ id: wid(), kind: 'action', label: 'Hacer la compra en el Mercadona', icon: '🛒', action: 'shop_small', reward: reward() });
     options.push({ id: wid(), kind: 'action', label: 'Comerse un açaí bowl', icon: '🫐', action: 'acai_bowl', reward: reward() });
     if (homeObjects.has('computer')) options.push({ id: wid(), kind: 'action', label: 'Montar una fiesta en casa', icon: '🥳', action: 'throw_party', reward: reward() + 30 });
+    options.push({ id: wid(), kind: 'place', label: 'Ir a Alcorcón en metro', icon: '🚇', lot: 'plaza', reward: reward() + 10 });
+    options.push({ id: wid(), kind: 'action', label: 'Enterarse de un cotilleo', icon: '🌶️', action: 'ask_gossip', reward: reward() });
+    options.push({ id: wid(), kind: 'action', label: 'Comerse unos churros con chocolate', icon: '🥨', action: 'churros', reward: reward() });
+    if (stage !== 'teen') options.push({ id: wid(), kind: 'action', label: 'Tomarse una caña en el bar', icon: '🍺', action: 'cana', reward: reward() });
     const sk = pick(SKILLS);
     const lvl = Math.floor(a.skills?.[sk.id] ?? 0) + 1;
     if (lvl <= 10) options.push({ id: wid(), kind: 'skill', label: `Llegar a ${sk.label.toLowerCase()} nivel ${lvl}`, icon: sk.icon, skill: sk.id, level: lvl, reward: 40 + lvl * 10 });

@@ -29,6 +29,8 @@ export const EVENTS: Record<string, EventDef> = {
   ofertas: { id: 'ofertas', label: 'Días de la huerta en el Mercadona', icon: '🥬' },
   apagon: { id: 'apagon', label: 'Apagón', icon: '🕯️' },
   navidad: { id: 'navidad', label: 'Navidad', icon: '🎄' },
+  campana: { id: 'campana', label: 'Campaña electoral', icon: '🗳️' },
+  sanisidro: { id: 'sanisidro', label: 'San Isidro', icon: '🎩' },
 };
 
 /** Aparatos que no funcionan sin luz. */

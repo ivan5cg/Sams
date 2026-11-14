@@ -12,6 +12,7 @@ import { TRAITS } from '../data/traits';
 import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
 import { DILEMMA_BY_ID } from '../data/dilemmas';
 import { EVENTS } from '../data/seasons';
+import { ROLE_LABEL } from '../data/street';
 import { NEED_KEYS, type Agent, type Rel, type SpeciesId } from '../sim/types';
 import { CATALOG, CATEGORIES, OBJECTS, QUALITY, SELL_RATIO, priceOf, type CatalogCategory } from '../data/objects';
 import type { HouseScene } from '../render/HouseScene';
@@ -304,6 +305,7 @@ export class Hud {
         case 'close': this.toggleMenu(false); break;
         case 'save': this.cb.onSave(); this.toggleMenu(false); break;
         case 'log': this.toggleMenu(false); this.showLog(); break;
+        case 'salseo': this.toggleMenu(false); this.showSalseo(); break;
         case 'tutorial': this.toggleMenu(false); this.showTutorial(true); break;
         case 'export': this.cb.onExport(); break;
         case 'import': $<HTMLInputElement>('#import-file').click(); break;
@@ -594,6 +596,20 @@ export class Hud {
     $('#log').hidden = false;
   }
 
+  /** Lo que sabe la familia del salseo del barrio (y lo que ya sabe todo el mundo). */
+  private showSalseo() {
+    const w = this.world;
+    const fam = w.members.map((m) => m.id);
+    const list = (w.state.secrets ?? []).filter((s) => s.public || s.known.some((id) => fam.includes(id)));
+    const rows = list.length
+      ? list
+          .map((s) => `<div class="log-row"><span class="log-icon">${'🌶️'.repeat(s.juicy)}</span><div><div class="muted small">Día ${s.day}${s.public ? ' · lo sabe todo el barrio' : ' · secreto'}</div><div>${esc(s.text.charAt(0).toUpperCase() + s.text.slice(1))}</div></div></div>`)
+          .join('')
+      : '<p class="muted small">No os habéis enterado de nada todavía. Preguntad a las vecinas del banco del parque (o de la plaza de Alcorcón), cotillead con los vecinos o mirad el grupo de WhatsApp del barrio en el ordenador.</p>';
+    $('#log').innerHTML = `<div class="map-card"><div class="sheet-head"><div><div class="sheet-title">🌶️ Salseo del barrio</div><div class="sheet-sub">Lo que sabéis (y lo que sabe todo el mundo)</div></div><button class="icon-btn" data-close>✕</button></div><div class="places">${rows}</div></div>`;
+    $('#log').hidden = false;
+  }
+
   private tutorialStep = 0;
   private speedBeforeTutorial = 1;
 
@@ -663,7 +679,7 @@ export class Hud {
   private placeName(lotId: string): string {
     const lot = this.world.lotById(lotId);
     if (lot.householdId === this.world.household.id) return 'Casa';
-    return lot.kind === 'park' ? 'Parque' : lot.name;
+    return lot.layout === 'park' ? 'Parque' : lot.name;
   }
 
   private renderMap() {
@@ -683,25 +699,37 @@ export class Hud {
         }</div>`
       : `<div class="map-comp muted small">${a.travel ? `${esc(a.name)} va de camino.` : 'Las mascotas salen acompañadas: controla a una persona para viajar.'}</div>`;
 
-    const order = [w.household.lotId, ...w.state.lots.filter((l) => l.kind !== 'home').map((l) => l.id), ...w.state.lots.filter((l) => l.kind === 'home' && l.id !== w.household.lotId).map((l) => l.id)];
-    const cards = order
+    const dist = (id: string) => w.districtOf(id);
+    const homeD = dist(w.household.lotId);
+    const section = (d: string) => [
+      ...w.state.lots.filter((l) => dist(l.id) === d && l.kind !== 'home').map((l) => l.id),
+      ...w.state.lots.filter((l) => dist(l.id) === d && l.kind === 'home' && l.id !== w.household.lotId).map((l) => l.id),
+    ];
+    const other = homeD === 'alcorcon' ? 'madrid' : 'alcorcon';
+    const header = (d: string) =>
+      `<div class="map-district">${d === 'alcorcon' ? '🏙️ Alcorcón' : d === 'metro' ? '🚇 Metro' : '🏛️ Madrid'}${d !== homeD && d !== 'metro' ? ` <span class="muted small">· en metro, unos ${w.travelMinutes(a.lotId === w.household.lotId ? a.lotId : w.household.lotId, section(d)[0] ?? w.household.lotId)} min</span>` : ''}</div>`;
+    const order: string[] = [w.household.lotId, ...section(homeD), `#${other}`, ...section(other), '#metro', ...section('metro')];
+    const cards = [`<div class="map-district">${homeD === 'alcorcon' ? '🏙️ Alcorcón' : '🏛️ Madrid'}</div>`, ...order]
       .map((lotId) => {
+        if (lotId.startsWith('<')) return lotId;
+        if (lotId.startsWith('#')) return header(lotId.slice(1));
         const lot = w.lotById(lotId);
         const here = w.agentsIn(lotId);
         const coming = w.state.agents.filter((x) => x.travel?.to === lotId && w.isPlayerMember(x));
         const mine = lot.householdId === w.household.id;
         const hh = lot.householdId ? w.state.households.find((h) => h.id === lot.householdId) : undefined;
-        const venueIcon = lot.layout === 'super' ? '🛒' : lot.layout === 'acai' ? '🫐' : '🧘';
+        const venueIcon = lot.layout === 'super' ? '🛒' : lot.layout === 'acai' ? '🫐' : lot.layout === 'bar' ? '🍺' : lot.layout === 'metro' ? '🚇' : '🧘';
         const closed = lot.kind === 'venue' ? w.closedReason(lotId) : undefined;
-        const title = mine ? `🏡 Vuestra casa` : lot.kind === 'park' ? '🌳 Parque del barrio' : lot.kind === 'venue' ? `${venueIcon} ${esc(lot.name)}${closed ? ' <span class="muted small">· cerrado</span>' : ''}` : `🏠 ${esc(hh?.name ?? lot.name)}`;
+        const title = mine ? `🏡 Vuestra casa` : lot.layout === 'plaza' ? `⛲ ${esc(lot.name)}` : hh?.okupa ? `🏚️ ${esc(lot.name)} <span class="muted small">· okupas</span>` : lot.kind === 'park' ? '🌳 Parque del barrio' : lot.kind === 'venue' ? `${venueIcon} ${esc(lot.name)}${closed ? ' <span class="muted small">· cerrado</span>' : ''}` : `🏠 ${esc(hh?.name ?? lot.name)}`;
         // Quién vive ahí y no está
         const awayResidents = hh && !mine ? hh.memberIds.map((id) => w.agent(id)!).filter((x) => x.lotId !== lotId || x.travel) : [];
         const go = w.canTravel(a, lotId);
-        const venueGo = lot.layout === 'super' ? 'Ir a hacer la compra' : lot.layout === 'acai' ? 'Ir a por un açaí' : 'Ir a clase';
-        const goLabel = mine ? 'Volver a casa' : lot.kind === 'park' ? 'Ir al parque' : lot.kind === 'venue' ? venueGo : 'Ir de visita';
+        const venueGo = lot.layout === 'super' ? 'Ir a hacer la compra' : lot.layout === 'acai' ? 'Ir a por un açaí' : lot.layout === 'bar' ? 'Ir de cañas' : lot.layout === 'metro' ? 'Bajar al metro' : 'Ir a clase';
+        const baseGo = mine ? 'Volver a casa' : lot.layout === 'plaza' ? 'Ir a la plaza' : lot.kind === 'park' ? 'Ir al parque' : lot.kind === 'venue' ? venueGo : 'Ir de visita';
+        const goLabel = w.needsMetro(a.lotId, lotId) ? `${baseGo} (en metro)` : baseGo;
         const btns: string[] = [];
         if (a.lotId === lotId && !a.travel) btns.push(`<span class="here">📍 ${esc(a.name)} está aquí</span>`);
-        else if (leaderOk) btns.push(`<button class="map-btn" data-go="${lotId}" ${go.ok ? '' : 'disabled'}>🚶 ${goLabel}</button>`);
+        else if (leaderOk) btns.push(`<button class="map-btn" data-go="${lotId}" ${go.ok ? '' : 'disabled'}>${w.needsMetro(a.lotId, lotId) ? '🚇' : '🚶'} ${goLabel}</button>`);
         if (hh && !mine) {
           const inv = w.canInvite(hh.id);
           btns.push(`<button class="map-btn ghost" data-invite="${hh.id}" ${inv.ok ? '' : 'disabled'} title="${esc(inv.reason ?? '')}">📞 Invitar${inv.ok ? '' : ` · ${esc(inv.reason ?? '')}`}</button>`);
@@ -717,7 +745,7 @@ export class Hud {
 
     $('#map').innerHTML = `<div class="map-card">
       <div class="sheet-head">
-        <div><div class="sheet-title">🗺️ El barrio</div><div class="sheet-sub">Ir andando a cualquier sitio lleva ${TRAVEL_MINUTES} minutos</div></div>
+        <div><div class="sheet-title">🗺️ El barrio</div><div class="sheet-sub">Andando, ${TRAVEL_MINUTES} minutos. Entre Madrid y Alcorcón se va en metro (Línea 10 + MetroSur)</div></div>
         <button class="icon-btn" data-close>✕</button>
       </div>
       ${compRow}
@@ -806,8 +834,9 @@ export class Hud {
       const from = hh && hh.id !== w.household.id ? ` · ${hh.name}` : '';
       const pt = t.kind === 'pet' ? PET_TRAIT_BY_ID[t.petTrait ?? ''] : undefined;
       const fav = t.kind === 'pet' ? w.favoriteOf(t) : undefined;
-      const traitTxt =
-        t.kind === 'person'
+      const traitTxt = t.role
+        ? ` · ${ROLE_LABEL[t.role as keyof typeof ROLE_LABEL] ?? ''}`
+        : t.kind === 'person'
           ? ` · ${traitsOf(t).map((x) => `${x.icon} ${x.label}`).join(', ')}`
           : `${pt ? ` · ${pt.icon} ${pt.label}` : ''}${fav ? ` · ❤️ ${fav.name}` : ''}${t.tricks?.length ? ` · 🎪 ${t.tricks.length} ${t.tricks.length === 1 ? 'truco' : 'trucos'}` : ''}`;
       subtitle = `${SPECIES[t.species].label} · ${lifeStage(t.species, t.ageDays).label}${from}${relText}${traitTxt}`;

@@ -90,6 +90,19 @@ export interface Agent {
   traitPick?: boolean;
   /** Día en que cambió de rasgo por última vez (los hábitos cambian a la gente, pero despacio). */
   traitChangedDay?: number;
+  /** Gente de la calle: su papel (vendedor, rapero, cotilla...) y dónde está. */
+  role?: string;
+  post?: string;
+  /** Alcohol en sangre (0-100) y lo máximo que ha llegado hoy. */
+  alcohol?: number;
+  alcoholMax?: number;
+  /** Gases acumulados (después, pedos). */
+  gas?: number;
+  /** Viaje en metro: destino final y hasta cuándo dura el trayecto. */
+  via?: string;
+  rideUntil?: number;
+  /** Repartidor: a quién le lleva la comida. */
+  deliverTo?: string;
   /** Mascotas: carácter y trucos aprendidos (0-100 de adiestramiento). */
   petTrait?: string;
   training?: number;
@@ -105,7 +118,7 @@ export interface Wish {
   /** Con quién (id), o 'vecino' para cualquiera de otra familia. */
   target?: string;
   /** Plano del sitio al que ir ('venue' = estudio, en partidas antiguas). */
-  lot?: 'park' | 'venue' | 'studio' | 'super' | 'acai';
+  lot?: 'park' | 'venue' | 'studio' | 'super' | 'acai' | 'plaza' | 'bar' | 'metro';
   skill?: string;
   level?: number;
   money?: number;
@@ -139,6 +152,8 @@ export interface Rel {
   mem?: { k: string; d: number; by: string }[];
   /** Separados (divorciados o lo dejaron) que siguen bajo el mismo techo. */
   ex?: boolean;
+  /** Tienen un lío a escondidas. */
+  affair?: boolean;
 }
 
 export interface PlacedObject {
@@ -172,6 +187,8 @@ export interface Household {
   pantry?: number;
   /** Compra a domicilio en camino. */
   delivery?: { at: number; amount: number };
+  /** Okupas (no pagan facturas, pero tampoco tienen trabajo). */
+  okupa?: boolean;
 }
 
 export interface Lot {
@@ -179,12 +196,29 @@ export interface Lot {
   name: string;
   /** home = casa de una familia; park/venue = sitios públicos (parque, estudio de pilates). */
   kind: 'home' | 'park' | 'venue';
-  layout: 'house' | 'park' | 'studio' | 'super' | 'acai';
+  layout: 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar';
+  /** Barrio: Madrid (por defecto), Alcorcón o el propio metro. */
+  district?: 'madrid' | 'alcorcon' | 'metro';
   householdId?: string;
   /** Colores propios de cada casa. */
   style?: { wall: number; floor: number };
   /** Tamaño de la casa (1 = la de siempre; 2 y 3 = ampliada). */
   size?: number;
+}
+
+export interface Secret {
+  id: string;
+  kind: string;
+  text: string;
+  /** De quién va. */
+  about: string[];
+  day: number;
+  /** Quién lo sabe (ids). */
+  known: string[];
+  /** Lo jugoso que es (1-3 guindillas). */
+  juicy: number;
+  /** Ya lo sabe todo el barrio. */
+  public?: boolean;
 }
 
 export interface WorldState {
@@ -204,6 +238,8 @@ export interface WorldState {
   aging?: 'off' | 'normal' | 'fast';
   /** La familia del jugador se ha quedado sin personas: hay que elegir con quién seguir. */
   familyGone?: boolean;
+  /** Salseo: secretos del barrio, quién los sabe y si ya son públicos. */
+  secrets?: Secret[];
   /** Fiesta en casa de la familia del jugador. */
   party?: { lotId: string; host: string; until: number; birthday?: string };
   /** Eventos del barrio en marcha (verbena, ola de calor, apagón...). */

@@ -11,7 +11,7 @@ interface Bubble {
   kind: 'say' | 'think';
 }
 
-export type FxKind = 'zzz' | 'notes' | 'hearts' | 'drops' | 'sparks' | 'angry' | 'stars' | 'paint' | 'sweat';
+export type FxKind = 'zzz' | 'notes' | 'hearts' | 'drops' | 'sparks' | 'angry' | 'stars' | 'paint' | 'sweat' | 'gas';
 
 const NOTE_COLORS = ['#7b4fd0', '#e76f51', '#2a9d8f', '#3d8fcf'];
 const PAINT_COLORS = [0xe76f51, 0x4f8fd9, 0xf2c14e, 0x52b788, 0x9b5de5];
@@ -138,6 +138,9 @@ export class SceneFx {
         break;
       case 'sweat':
         this.drop(x + rnd(-4, 8), y + 2, 0xbfe6ff, 1.4, 10);
+        break;
+      case 'gas':
+        this.floatText('☁', x + rnd(-14, 4), y + rnd(20, 34), '#9acd32', rnd(12, 18), rnd(-14, -4), -10, 1400);
         break;
       case 'paint':
         this.drop(x + rnd(4, 16), y + rnd(10, 20), PAINT_COLORS[Math.floor(Math.random() * PAINT_COLORS.length)], 2, -8);
