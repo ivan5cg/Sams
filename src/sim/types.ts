@@ -76,6 +76,24 @@ export interface Agent {
   visitUntil?: number;
   /** Simulado de forma resumida (vecinos en parcelas donde no está el jugador). */
   abstract?: boolean;
+  /** Emociones activas: id, hasta qué minuto dura y por quién/qué (texto). */
+  emotions?: { id: string; until: number; about?: string }[];
+  /** Cuántas veces ha hecho cada cosa (para metas, rasgos y trucos). */
+  stats?: Record<string, number>;
+  /** Meta de vida y etapa alcanzada (0 = ninguna aún). */
+  aspiration?: { id: string; stage: number };
+  /** Metas de vida ya cumplidas. */
+  aspirationsDone?: string[];
+  /** Padres (para saber quién es hijo/nieto de quién). */
+  parents?: string[];
+  /** Puede elegir un rasgo nuevo (al hacerse adulto). */
+  traitPick?: boolean;
+  /** Día en que cambió de rasgo por última vez (los hábitos cambian a la gente, pero despacio). */
+  traitChangedDay?: number;
+  /** Mascotas: carácter y trucos aprendidos (0-100 de adiestramiento). */
+  petTrait?: string;
+  training?: number;
+  tricks?: string[];
 }
 
 export interface Wish {
@@ -102,6 +120,10 @@ export interface Job {
   perf: number;
   /** Último día (número de día) en que fue o faltó. */
   lastShiftDay?: number;
+  /** Día libre pedido (número de día). */
+  dayOff?: number;
+  /** Días seguidos rindiendo fatal (para los despidos). */
+  badDays?: number;
 }
 
 /** Relación entre dos personajes. */
@@ -113,6 +135,10 @@ export interface Rel {
   status?: 'partner' | 'married';
   /** Son familia (padres, hijos, hermanos): sin romance. */
   kin?: boolean;
+  /** Recuerdos de lo que ha pasado entre los dos: qué (k), qué día (d) y quién lo hizo (by). */
+  mem?: { k: string; d: number; by: string }[];
+  /** Separados (divorciados o lo dejaron) que siguen bajo el mismo techo. */
+  ex?: boolean;
 }
 
 export interface PlacedObject {
@@ -129,6 +155,8 @@ export interface PlacedObject {
   label?: string;
   /** Estropeado: hay que repararlo antes de usarlo. */
   broken?: boolean;
+  /** Calidad: 1 básica, 2 normal (por defecto), 3 de lujo. */
+  q?: 1 | 2 | 3;
 }
 
 export interface Household {
@@ -155,6 +183,8 @@ export interface Lot {
   householdId?: string;
   /** Colores propios de cada casa. */
   style?: { wall: number; floor: number };
+  /** Tamaño de la casa (1 = la de siempre; 2 y 3 = ampliada). */
+  size?: number;
 }
 
 export interface WorldState {
@@ -174,6 +204,14 @@ export interface WorldState {
   aging?: 'off' | 'normal' | 'fast';
   /** La familia del jugador se ha quedado sin personas: hay que elegir con quién seguir. */
   familyGone?: boolean;
+  /** Fiesta en casa de la familia del jugador. */
+  party?: { lotId: string; host: string; until: number; birthday?: string };
+  /** Eventos del barrio en marcha (verbena, ola de calor, apagón...). */
+  events?: { id: string; until: number; lotId?: string }[];
+  /** Décimos de lotería de Navidad comprados este año (ids de quien los compró). */
+  lottery?: string[];
+  /** Dilema del trabajo esperando respuesta del jugador. */
+  dilemma?: { id: string; agentId: string; until: number };
   /** Noticias del barrio (lo último primero): de qué se habla y se cotillea. */
   news?: { day: number; text: string; about: string[] }[];
   objects: PlacedObject[];

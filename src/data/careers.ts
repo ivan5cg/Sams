@@ -18,6 +18,9 @@ export interface Career {
   levels: CareerLevel[];
   /** El colegio: no se cobra y no se elige en el ordenador. */
   school?: boolean;
+  /** Negocio propio: cuesta montarlo, se gana según el día y hay cuota de autónomos. */
+  business?: boolean;
+  startup?: number;
 }
 
 const WEEKDAYS = [0, 1, 2, 3, 4];
@@ -111,6 +114,23 @@ export const CAREERS: Record<string, Career> = {
       { title: 'Entrenador/a personal', pay: 135 },
       { title: 'Preparador/a físico/a', pay: 200 },
       { title: 'Leyenda del fitness', pay: 300 },
+    ],
+  },
+  negocio: {
+    id: 'negocio',
+    name: 'Negocio propio',
+    icon: '🏪',
+    start: 9,
+    end: 17,
+    days: [0, 1, 2, 3, 4, 5],
+    business: true,
+    startup: 2500,
+    levels: [
+      { title: 'Bar de tapas recién abierto', pay: 100 },
+      { title: 'Bar con clientela fija', pay: 160 },
+      { title: 'El bar de moda del barrio', pay: 240 },
+      { title: 'Cadena de bares', pay: 350 },
+      { title: 'Franquicia por toda España', pay: 520 },
     ],
   },
   school: {

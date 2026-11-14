@@ -51,6 +51,7 @@ export function newWish(world: World, a: Agent): Wish | null {
     } else if (m.kind === 'pet') {
       options.push({ id: wid(), kind: 'action', label: `Jugar con ${m.name}`, icon: '🎾', action: 'play_pet', target: m.id, reward: reward() });
       if (m.species === 'dog') options.push({ id: wid(), kind: 'action', label: `Sacar a pasear a ${m.name}`, icon: '🦮', action: 'walk_dog', target: m.id, reward: reward() });
+      if (stage !== 'child' && ['dog', 'cat', 'ferret', 'capybara'].includes(m.species) && (m.training ?? 0) < 100) options.push({ id: wid(), kind: 'action', label: `Enseñarle un truco a ${m.name}`, icon: '🦴', action: 'train_pet', target: m.id, reward: reward() + 10 });
     }
   }
   if (stage !== 'child') {
@@ -60,6 +61,7 @@ export function newWish(world: World, a: Agent): Wish | null {
     options.push({ id: wid(), kind: 'place', label: 'Tomarse algo en un local de açaí', icon: '🫐', lot: 'acai', reward: reward() });
     options.push({ id: wid(), kind: 'action', label: 'Hacer la compra en el Mercadona', icon: '🛒', action: 'shop_small', reward: reward() });
     options.push({ id: wid(), kind: 'action', label: 'Comerse un açaí bowl', icon: '🫐', action: 'acai_bowl', reward: reward() });
+    if (homeObjects.has('computer')) options.push({ id: wid(), kind: 'action', label: 'Montar una fiesta en casa', icon: '🥳', action: 'throw_party', reward: reward() + 30 });
     const sk = pick(SKILLS);
     const lvl = Math.floor(a.skills?.[sk.id] ?? 0) + 1;
     if (lvl <= 10) options.push({ id: wid(), kind: 'skill', label: `Llegar a ${sk.label.toLowerCase()} nivel ${lvl}`, icon: sk.icon, skill: sk.id, level: lvl, reward: 40 + lvl * 10 });

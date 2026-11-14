@@ -72,6 +72,13 @@ export const REL_EFFECTS: Record<string, [number, number]> = {
   joke: [5, 0],
   hug: [4, 1],
   insult: [-15, -5],
+  argue: [-10, -4],
+  apologize: [12, 2],
+  break_up: [-25, -50],
+  divorce: [-30, -60],
+  throw_party: [0, 0],
+  train_pet: [3, 0],
+  show_trick: [3, 0],
   flirt: [2, 8],
   kiss: [2, 10],
   ask_partner: [3, 5],
@@ -130,6 +137,9 @@ export function acceptChance(state: WorldState, a: Agent, t: Agent, actionId: st
       return taken ? 0.3 : rel.r >= 70 ? 0.7 : 0.1;
     case 'try_baby':
       return rel.r >= 50 ? 0.92 : 0.4;
+    case 'apologize':
+      // Perdonar cuesta más cuanto peor está la cosa.
+      return Math.max(0.25, Math.min(0.95, 0.65 + rel.f / 150));
     default:
       return 1;
   }
@@ -145,4 +155,33 @@ export const REJECT_TEXT: Record<string, string> = {
   move_in: 'no quiere irse a vivir con',
   try_baby: 'aún no se siente preparado/a para tener un bebé con',
   niqui: 'no está de humor para ñiqui ñiqui con',
+  apologize: 'no acepta las disculpas de',
 };
+
+/** Recuerdos: lo que se cuenta de cada uno ({by} = quien lo hizo, {other} = a quien). */
+export const MEMORY_TEXT: Record<string, { icon: string; text: string; bad?: boolean }> = {
+  insulto: { icon: '🤬', text: '{by} insultó a {other}', bad: true },
+  pelea: { icon: '💢', text: '{by} y {other} tuvieron una bronca', bad: true },
+  celos: { icon: '😤', text: '{by} coqueteó con otra persona delante de {other}', bad: true },
+  ruptura: { icon: '💔', text: '{by} cortó con {other}', bad: true },
+  divorcio: { icon: '📄', text: '{by} pidió el divorcio a {other}', bad: true },
+  cobra: { icon: '😳', text: '{by} le hizo la cobra a {other}' },
+  rechazo: { icon: '🎃', text: '{by} le dio calabazas a {other}' },
+  perdon: { icon: '🕊️', text: '{by} pidió perdón a {other}' },
+  primer_beso: { icon: '💋', text: 'El primer beso de {by} y {other}' },
+  boda: { icon: '💍', text: 'La boda de {by} y {other}' },
+  fiesta: { icon: '🥳', text: 'La fiesta de {by}, con {other}' },
+  favor: { icon: '🤝', text: '{by} echó una mano a {other}' },
+};
+
+/** Lo que `t` le hizo a `a` y aún no le ha perdonado (si hay algo). */
+export function grudgeOf(rel: Rel, aId: string, tId: string, today: number): string | undefined {
+  const mem = rel.mem ?? [];
+  for (let i = mem.length - 1; i >= 0; i--) {
+    const m = mem[i];
+    if (m.k === 'perdon' && m.by === tId) return undefined;
+    if (MEMORY_TEXT[m.k]?.bad && (m.by === tId || m.k === 'pelea') && today - m.d <= 10) return m.k;
+  }
+  void aId;
+  return undefined;
+}

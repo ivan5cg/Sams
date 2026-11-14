@@ -5,9 +5,15 @@ import { ACTIONS } from '../data/actions';
 import { NEED_INFO, SPECIES, lifeStage, needLabel } from '../data/species';
 import { CAREERS, JOB_CAREERS, WEEKDAY_LONG, WEEKDAY_NAMES, gradeLabel, scheduleText } from '../data/careers';
 import { MAX_SKILL, SKILLS } from '../data/skills';
-import { getRel, isAdult, relLabel } from '../sim/social';
+import { MEMORY_TEXT, getRel, isAdult, relLabel } from '../sim/social';
+import { emotionsOf } from '../sim/emotions';
+import { ASPIRATIONS, ASPIRATION_BY_ID } from '../sim/aspirations';
+import { TRAITS } from '../data/traits';
+import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
+import { DILEMMA_BY_ID } from '../data/dilemmas';
+import { EVENTS } from '../data/seasons';
 import { NEED_KEYS, type Agent, type Rel, type SpeciesId } from '../sim/types';
-import { CATALOG, CATEGORIES, OBJECTS, SELL_RATIO, type CatalogCategory } from '../data/objects';
+import { CATALOG, CATEGORIES, OBJECTS, QUALITY, SELL_RATIO, priceOf, type CatalogCategory } from '../data/objects';
 import type { HouseScene } from '../render/HouseScene';
 import { MAX_MEMBERS, TRAVEL_MINUTES, moodScore, type Target, type World } from '../sim/world';
 import { converse, knownText, topicsFor } from '../sim/conversation';
@@ -178,8 +184,24 @@ export class Hud {
       this.buildCat = b.dataset.cat as CatalogCategory;
       this.renderBuild();
     });
+    $('#build-tiers').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b?.dataset.tier) return;
+      this.buildTier = Number(b.dataset.tier) as 1 | 2 | 3;
+      if (this.buildSel?.kind === 'buy') this.selectForBuild(this.buildSel);
+      else this.renderBuild();
+    });
     $('#build-items').addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('button');
+      if (b && b.dataset.expand !== undefined) {
+        const ex = this.world.nextExpansion();
+        if (ex && confirm(`¿Ampliar la casa por §${ex.price.toLocaleString('es-ES')}? (${ex.label})`)) {
+          this.selectForBuild(null);
+          this.world.expandHouse();
+          this.renderBuild();
+        }
+        return;
+      }
       if (!b?.dataset.item) return;
       const sel = this.buildSel;
       if (sel?.kind === 'buy' && sel.def === b.dataset.item) this.selectForBuild(null);
@@ -223,6 +245,33 @@ export class Hud {
         this.world.quitJob(this.world.activeAgent);
         this.renderProfile();
       }
+      const a = this.world.activeAgent;
+      if (b.dataset.aspChange !== undefined) {
+        this.aspPicking = !this.aspPicking;
+        this.renderProfile();
+      }
+      if (b.dataset.asp) {
+        this.world.setAspiration(a, b.dataset.asp);
+        this.aspPicking = false;
+        this.renderProfile();
+      }
+      if (b.dataset.tout) {
+        this.traitOut = b.dataset.tout;
+        this.renderProfile();
+      }
+      if (b.dataset.tin && this.traitOut) {
+        this.world.pickTrait(a, this.traitOut, b.dataset.tin);
+        this.traitOut = '';
+        this.renderProfile();
+      }
+    });
+    $('#dilemma').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b?.dataset.dl) return;
+      this.world.resolveDilemma(Number(b.dataset.dl));
+      $('#dilemma').hidden = true;
+      this.world.state.speed = this.speedBeforeDilemma;
+      this.render();
     });
     $('#map-btn').addEventListener('click', () => this.openMap());
     $('#map').addEventListener('click', (e) => {
@@ -340,8 +389,9 @@ export class Hud {
       const can = sel.kind === 'move' ? w.canPlace(sel.def, tile.x, tile.y, sel.id) : w.canPlace(sel.def, tile.x, tile.y);
       w.ui.ghost = { def: sel.def, x: tile.x, y: tile.y, ok: can.ok };
       const d = OBJECTS[sel.def];
-      const price = sel.kind === 'buy' ? ` (§${d.price})` : '';
-      const poor = sel.kind === 'buy' && w.household.funds < (d.price ?? 0);
+      const cost = priceOf(d, this.buildTier);
+      const price = sel.kind === 'buy' ? ` (§${cost})` : '';
+      const poor = sel.kind === 'buy' && w.household.funds < cost;
       const label = !can.ok ? `🚫 ${esc(can.reason ?? 'No cabe')}` : poor ? '💸 No hay dinero' : `✓ ${sel.kind === 'move' ? 'Mover aquí' : `Colocar aquí${price}`}`;
       $('#placebar').innerHTML = `<button class="map-btn" data-place ${can.ok && !poor ? '' : 'disabled'}>${label}</button><button class="icon-btn" data-cancel>✕</button>`;
       return;
@@ -351,9 +401,11 @@ export class Hud {
     if (!o || o.lotId !== w.household.lotId) return;
     const d = OBJECTS[o.def];
     const why = w.cantTouch(o);
-    const refund = d.price ? Math.floor(d.price * SELL_RATIO) : 0;
+    const paid = priceOf(d, o.q ?? 2);
+    const refund = d.price ? Math.floor(paid * SELL_RATIO) : 0;
+    const ql = d.tiers ? ` · ${QUALITY[o.q ?? 2].label}` : '';
     $('#sheet').innerHTML = `<div class="sheet-card">
-      <div class="sheet-head"><div><div class="sheet-title">${d.icon || '📦'} ${esc(d.name)}</div><div class="sheet-sub">${why ? esc(why) : d.price ? `Costó §${d.price}` : 'No se puede vender'}</div></div>
+      <div class="sheet-head"><div><div class="sheet-title">${d.icon || '📦'} ${esc(d.name)}</div><div class="sheet-sub">${why ? esc(why) : d.price ? `Costó §${paid}${ql}` : 'No se puede vender'}</div></div>
       <button class="icon-btn" data-close>✕</button></div>
       <div class="sheet-actions">
         <button class="act" data-bmove="${o.id}" ${why ? 'disabled' : ''}><span class="act-icon">↔️</span><span class="act-label">Mover</span></button>
@@ -368,7 +420,7 @@ export class Hud {
     const sel = this.buildSel;
     const g = w.ui.ghost;
     if (!sel || !g) return;
-    const ok = sel.kind === 'move' ? w.moveObject(sel.id, g.x, g.y) : w.buy(sel.def, g.x, g.y);
+    const ok = sel.kind === 'move' ? w.moveObject(sel.id, g.x, g.y) : w.buy(sel.def, g.x, g.y, OBJECTS[sel.def].tiers ? this.buildTier : 2);
     if (!ok) return;
     if (sel.kind === 'move') this.selectForBuild(null);
     else {
@@ -383,16 +435,32 @@ export class Hud {
     if ($('#build').hidden) return;
     const w = this.world;
     $('#build-funds').textContent = `§ ${w.household.funds.toLocaleString('es-ES')}`;
-    $('#build-tabs').innerHTML = CATEGORIES.map((c) => `<button class="comp ${c.id === this.buildCat ? 'on' : ''}" data-cat="${c.id}">${c.icon} ${esc(c.label)}</button>`).join('');
+    const ex = w.nextExpansion();
+    $('#build-tabs').innerHTML =
+      CATEGORIES.map((c) => `<button class="comp ${c.id === this.buildCat ? 'on' : ''}" data-cat="${c.id}">${c.icon} ${esc(c.label)}</button>`).join('') +
+      `<button class="comp ${this.buildCat === ('reformas' as CatalogCategory) ? 'on' : ''}" data-cat="reformas">🏗️ Reformas</button>`;
     const sel = this.buildSel;
-    $('#build-items').innerHTML = CATALOG.filter((d) => d.category === this.buildCat)
-      .map((d) => {
-        const poor = w.household.funds < (d.price ?? 0);
-        const chosen = sel?.kind === 'buy' && sel.def === d.id;
-        const face = d.icon || `<span class="swatch" style="background:#${d.color.toString(16).padStart(6, '0')}"></span>`;
-        return `<button class="item ${chosen ? 'on' : ''}" data-item="${d.id}" ${poor ? 'disabled' : ''}><span class="item-icon">${face}</span><span class="item-name">${esc(d.name)}</span><span class="item-price">§${d.price}</span></button>`;
-      })
-      .join('');
+    if (this.buildCat === ('reformas' as CatalogCategory)) {
+      $('#build-tiers').innerHTML = `<div class="muted small build-note">${ex ? `Amplía la casa: <b>${esc(ex.label)}</b>. Lo del jardín se corre solo.` : 'La casa ya está ampliada al máximo. ¡Menuda mansión!'}</div>`;
+      $('#build-items').innerHTML = ex
+        ? `<button class="item" data-expand ${w.household.funds < ex.price ? 'disabled' : ''}><span class="item-icon">🏗️</span><span class="item-name">Ampliar la casa</span><span class="item-price">§${ex.price.toLocaleString('es-ES')}</span></button>`
+        : '';
+      return;
+    }
+    const tiered = CATALOG.some((d) => d.category === this.buildCat && d.tiers);
+    $('#build-tiers').innerHTML = tiered
+      ? `<div class="tier-row"><span class="muted small">Calidad:</span>${([1, 2, 3] as const).map((q) => `<button class="comp ${this.buildTier === q ? 'on' : ''}" data-tier="${q}">${q === 3 ? '✨ ' : ''}${QUALITY[q].label}</button>`).join('')}</div>`
+      : '';
+    $('#build-items').innerHTML =
+      CATALOG.filter((d) => d.category === this.buildCat)
+        .map((d) => {
+          const cost = priceOf(d, this.buildTier);
+          const poor = w.household.funds < cost;
+          const chosen = sel?.kind === 'buy' && sel.def === d.id;
+          const face = d.icon || `<span class="swatch" style="background:#${d.color.toString(16).padStart(6, '0')}"></span>`;
+          return `<button class="item ${chosen ? 'on' : ''}" data-item="${d.id}" ${poor ? 'disabled' : ''}><span class="item-icon">${face}</span><span class="item-name">${esc(d.name)}</span><span class="item-price">§${cost}</span></button>`;
+        })
+        .join('');
   }
 
   // ---------------------------------------------------------------------------
@@ -400,6 +468,11 @@ export class Hud {
   // ---------------------------------------------------------------------------
 
   private lastWishHtml = '';
+  private lastEmoHtml = '';
+  private aspPicking = false;
+  private speedBeforeDilemma = 1;
+  private buildTier: 1 | 2 | 3 = 2;
+  private traitOut = '';
   private talking: { aId: string; tId: string; taskId: string; turn: number; log: { who: string; text: string; mood?: string }[]; speed: number } | null = null;
 
   /** Abre el panel cuando empieza un "Conversar…" del jugador, y lo cierra si se acaba. */
@@ -711,7 +784,7 @@ export class Hud {
     if (target.kind === 'object') {
       const o = w.object(target.id)!;
       const d = OBJECTS[o.def];
-      title = o.label ? `${d.icon} Aquí descansa ${o.label}` : `${d.icon} ${d.name}`;
+      title = o.label ? `${d.icon} Aquí descansa ${o.label}` : `${d.icon} ${d.name}${d.tiers && o.q && o.q !== 2 ? ` (${QUALITY[o.q].short})` : ''}`;
       const parts: string[] = [];
       if (d.maxStock) parts.push(`Comida: ${o.stock ?? 0}/${d.maxStock}`);
       if (d.maxDirt) parts.push((o.dirt ?? 0) === 0 ? 'Limpio' : `Suciedad: ${o.dirt}/${d.maxDirt}`);
@@ -731,7 +804,12 @@ export class Hud {
       const relText = t.id === active.id ? '' : ` · ${relLabel(rel, active.kind, t.kind)}${rel.r > 0 && !rel.kin ? ` · 💕 ${Math.round(rel.r)}` : ''}`;
       const hh = w.householdOf(t);
       const from = hh && hh.id !== w.household.id ? ` · ${hh.name}` : '';
-      const traitTxt = t.kind === 'person' ? ` · ${traitsOf(t).map((x) => `${x.icon} ${x.label}`).join(', ')}` : '';
+      const pt = t.kind === 'pet' ? PET_TRAIT_BY_ID[t.petTrait ?? ''] : undefined;
+      const fav = t.kind === 'pet' ? w.favoriteOf(t) : undefined;
+      const traitTxt =
+        t.kind === 'person'
+          ? ` · ${traitsOf(t).map((x) => `${x.icon} ${x.label}`).join(', ')}`
+          : `${pt ? ` · ${pt.icon} ${pt.label}` : ''}${fav ? ` · ❤️ ${fav.name}` : ''}${t.tricks?.length ? ` · 🎪 ${t.tricks.length} ${t.tricks.length === 1 ? 'truco' : 'trucos'}` : ''}`;
       subtitle = `${SPECIES[t.species].label} · ${lifeStage(t.species, t.ageDays).label}${from}${relText}${traitTxt}`;
     }
 
@@ -779,7 +857,7 @@ export class Hud {
       const current = a.job?.career === c.id;
       return `<button class="act" data-career="${c.id}" ${current ? 'disabled' : ''}>
         <span class="act-icon">${c.icon}</span>
-        <span class="act-label">${esc(c.name)} · ${esc(c.levels[0].title)}<small class="info">§${c.levels[0].pay}/jornada · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
+        <span class="act-label">${esc(c.name)} · ${esc(c.levels[0].title)}<small class="info">${c.business ? `Montarlo: §${c.startup?.toLocaleString('es-ES')} · ganancias variables · cuota §90/semana` : `§${c.levels[0].pay}/jornada`} · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
       </button>`;
     }).join('');
     $('#sheet').querySelector('.sheet-card')!.innerHTML = `
@@ -864,6 +942,19 @@ export class Hud {
                 <div><b>${esc(o.name)}</b> <span class="muted small">${esc(where)}</span></div>
                 <div class="small">${esc(relLabel(rel, a.kind, o.kind))}${rel.r > 0 && !rel.kin ? ` · 💕 ${Math.round(rel.r)}` : ''}</div>
                 ${knownText(a, o) ? `<div class="small muted">💡 ${esc(knownText(a, o))}</div>` : ''}
+                ${(rel.mem ?? [])
+                  .slice(-2)
+                  .reverse()
+                  .map((m) => {
+                    const mt = MEMORY_TEXT[m.k];
+                    if (!mt) return '';
+                    const by = m.by === a.id ? a.name : o.name;
+                    const other = m.by === a.id ? o.name : a.name;
+                    return `<div class="mem ${mt.bad ? 'bad' : ''}">${mt.icon} ${esc(mt.text.replace('{by}', by).replace('{other}', other))} · día ${m.d}</div>`;
+                  })
+                  .join('')}
+                ${w.grudge(a, o) ? `<div class="mem bad">😒 ${esc(a.name)} aún no se lo ha perdonado</div>` : ''}
+                ${rel.ex ? '<div class="mem">🏠 Ex, pero comparten piso</div>' : ''}
                 <div class="bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
               </div>
             </div>`;
@@ -877,11 +968,103 @@ export class Hud {
         <div class="sheet-sub">${esc(SPECIES[a.species].label)} · ${esc(stage.label)} · ${a.ageDays} ${a.ageDays === 1 ? 'día' : 'días'}</div></div>
         <button class="icon-btn" data-close>✕</button>
       </div>
+      ${this.emotionsHtml(a)}
+      ${this.aspirationHtml(a)}
       ${jobHtml}
-      ${a.kind === 'person' ? `<div class="prof-sec"><div class="prof-h">🧬 Forma de ser</div>${traitsOf(a).map((x) => `<div class="trait-row"><span class="trait-icon">${x.icon}</span><div><b>${esc(x.label)}</b><div class="muted small">${esc(x.desc)}</div></div></div>`).join('')}</div>` : ''}
+      ${a.kind === 'person' ? `<div class="prof-sec"><div class="prof-h">🧬 Forma de ser</div>${traitsOf(a).map((x) => `<div class="trait-row"><span class="trait-icon">${x.icon}</span><div><b>${esc(x.label)}</b><div class="muted small">${esc(x.desc)}</div></div></div>`).join('')}${this.traitPickHtml(a)}<div class="muted small">Los hijos heredan un rasgo de sus padres. Y los hábitos cambian a la gente: quien corre mucho acaba siendo deportista.</div></div>` : ''}
       ${skillsHtml}
+      ${this.petHtml(a)}
       <div class="prof-sec"><div class="prof-h">👥 Relaciones</div>${relHtml}</div>
     </div>`;
+  }
+
+  private petHtml(a: Agent): string {
+    if (a.kind !== 'pet') return '';
+    const pt = PET_TRAIT_BY_ID[a.petTrait ?? ''];
+    const fav = this.world.favoriteOf(a);
+    const list = TRICKS[a.species];
+    const tricks = list
+      ? `<div class="perf"><span class="small">Adiestramiento</span><div class="bar"><div class="fill" style="width:${Math.round(a.training ?? 0)}%;background:#f0a830"></div></div></div>
+        ${list.map((t, i) => `<div class="asp-stage ${a.tricks?.includes(t) ? '' : 'muted'}"><span>${a.tricks?.includes(t) ? '🎪' : '🔒'}</span>${esc(t)}<span class="muted small">${a.tricks?.includes(t) ? '' : ` (${(i + 1) * 20}%)`}</span></div>`).join('')}
+        <div class="muted small">Tócale y elige «Adiestrar». Aprende antes si es listo, si está contento y con su persona favorita.</div>`
+      : '<div class="muted small">Vive a su ritmo en su jaula: no aprende trucos, pero agradece los mimos.</div>';
+    return `<div class="prof-sec"><div class="prof-h">🐾 Carácter</div>
+      ${pt ? `<div class="trait-row"><span class="trait-icon">${pt.icon}</span><div><b>${esc(pt.label)}</b><div class="muted small">${esc(pt.desc)}</div></div></div>` : ''}
+      <div class="small">${fav ? `❤️ Su persona favorita: <b>${esc(fav.name)}</b> (la recibe al llegar a casa)` : '❤️ Aún no tiene persona favorita: dale cariño'}</div></div>
+      <div class="prof-sec"><div class="prof-h">🎪 Trucos</div>${tricks}</div>`;
+  }
+
+  /** Si hay un dilema del trabajo, se para el tiempo y se pregunta. */
+  private syncDilemma() {
+    const w = this.world;
+    const dl = w.state.dilemma;
+    const box = $('#dilemma');
+    if (!dl) {
+      if (!box.hidden) box.hidden = true;
+      return;
+    }
+    if (!box.hidden || this.talking || w.ui.building) return;
+    const d = DILEMMA_BY_ID[dl.id];
+    const who = w.agent(dl.agentId);
+    if (!d || !who) return w.resolveDilemma(0);
+    const c = who.job ? CAREERS[who.job.career] : undefined;
+    this.speedBeforeDilemma = w.state.speed || 1;
+    w.state.speed = 0;
+    box.innerHTML = `<div class="dilemma-card">
+      <h3>${c?.icon ?? '💼'} ${esc(d.title)}</h3>
+      <div class="muted small">${esc(who.name)} · ${esc(c?.levels[(who.job?.level ?? 1) - 1]?.title ?? 'en el trabajo')}</div>
+      <p>${esc(d.text.replace('{name}', who.name))}</p>
+      ${d.options.map((o, i) => `<button class="act" data-dl="${i}"><span class="act-icon">${o.icon}</span><span class="act-label">${esc(o.label)}${o.chance !== undefined ? '<small class="info">Puede salir bien... o no</small>' : ''}</span></button>`).join('')}
+    </div>`;
+    box.hidden = false;
+  }
+
+  private aspirationHtml(a: Agent): string {
+    const w = this.world;
+    if (a.kind !== 'person' || !w.isPlayerMember(a) || !a.aspiration) return '';
+    const def = ASPIRATION_BY_ID[a.aspiration.id];
+    if (!def) return '';
+    const done = a.aspiration.stage >= def.stages.length;
+    const stages = def.stages
+      .map((st, i) => `<div class="asp-stage ${i < a.aspiration!.stage ? 'done' : i === a.aspiration!.stage ? 'now' : ''}"><span>${i < a.aspiration!.stage ? '✅' : i === a.aspiration!.stage ? '👉' : '⬜'}</span>${esc(st.label)}</div>`)
+      .join('');
+    const picker = this.aspPicking
+      ? `<div class="chips-wrap">${ASPIRATIONS.filter((x) => x.id !== def.id)
+          .map((x) => `<button class="comp" data-asp="${x.id}">${x.icon} ${esc(x.label)}${(a.aspirationsDone ?? []).includes(x.id) ? ' ✓' : ''}</button>`)
+          .join('')}</div><div class="muted small">Al cambiar de meta se empieza de cero (lo que ya tenga hecho cuenta).</div>`
+      : '';
+    return `<div class="prof-sec"><div class="prof-h">🎯 Meta de vida: ${def.icon} ${esc(def.label)}${done ? ' 🏆' : ''}</div>
+      <div class="muted small">${esc(def.desc)}${done ? ' ¡Cumplida!' : ` Cada etapa da dinero; la meta entera, §1.500.`}</div>
+      ${stages}
+      <button class="map-btn ghost small-btn" data-asp-change>${done ? 'Elegir otra meta' : this.aspPicking ? 'Cancelar' : 'Cambiar de meta'}</button>
+      ${picker}</div>`;
+  }
+
+  private traitPickHtml(a: Agent): string {
+    if (!a.traitPick) return '';
+    const mine = traitsOf(a).map((t) => t.id);
+    if (!this.traitOut) {
+      return `<div class="prof-h" style="margin-top:8px">✨ Ya es adulto/a: ¿qué rasgo cambia?</div><div class="chips-wrap">${traitsOf(a)
+        .map((t) => `<button class="comp" data-tout="${t.id}">${t.icon} Cambiar ${esc(t.label.toLowerCase())}</button>`)
+        .join('')}</div>`;
+    }
+    return `<div class="prof-h" style="margin-top:8px">✨ ¿Por cuál?</div><div class="chips-wrap">${TRAITS.filter((t) => !mine.includes(t.id))
+      .map((t) => `<button class="comp" data-tin="${t.id}">${t.icon} ${esc(t.label)}</button>`)
+      .join('')}</div>`;
+  }
+
+  private emotionsHtml(a: Agent): string {
+    const w = this.world;
+    const emos = emotionsOf(a).filter((e) => e.until > w.state.minutes);
+    const md = mood(a);
+    const rows = emos
+      .sort((x, y) => y.def.value - x.def.value)
+      .map((e) => {
+        const h = Math.max(1, Math.round((e.until - w.state.minutes) / 60));
+        return `<div class="emo-row"><span>${e.def.icon}</span><span>${esc(e.def.label)}${e.about ? ` <span class="muted small">(${esc(e.about)})</span>` : ''}<div class="muted small">${h >= 24 ? `${Math.round(h / 24)} ${Math.round(h / 24) === 1 ? 'día' : 'días'}` : `${h} h`} más</div></span><span class="v ${e.def.value < 0 ? 'bad' : 'good'}">${e.def.value > 0 ? '+' : ''}${e.def.value}</span></div>`;
+      })
+      .join('');
+    return `<div class="prof-sec"><div class="prof-h">${md.icon} Ánimo: ${esc(md.label)}</div>${rows || '<div class="muted small">Nada especial: va tirando. El ánimo depende de sus necesidades y de lo que le pase.</div>'}</div>`;
   }
 
   /** Protectora: elegir qué mascota adoptar. */
@@ -927,7 +1110,10 @@ export class Hud {
       if (!this.world.canBuildHere()) this.exitBuild();
       else $('#build-funds').textContent = `§ ${this.world.household.funds.toLocaleString('es-ES')}`;
     }
-    $('#clock').textContent = `${WEEKDAY_NAMES[w.weekday]} ${w.day} · ${w.clock}`;
+    // Un solo icono: el del evento en marcha o, si no hay, el de la estación.
+    const ev = w.activeEvents().filter((e) => !e.lotId || e.lotId === w.viewLotId)[0];
+    $('#clock').textContent = `${(ev && EVENTS[ev.id]?.icon) || w.seasonDef.icon} ${WEEKDAY_NAMES[w.weekday]} ${w.day} · ${w.clock}`;
+    $('#clock').title = `${w.seasonDef.label}${w.activeEvents().length ? ` · ${w.activeEvents().map((e) => EVENTS[e.id]?.label).join(', ')}` : ''}`;
     $('#funds').textContent = `§ ${w.household.funds.toLocaleString('es-ES')}`;
     $('#funds').classList.toggle('neg', w.household.funds < 0);
     $('#family').textContent = `📍 ${this.placeName(w.viewLotId)} · ${w.household.name}`;
@@ -996,7 +1182,20 @@ export class Hud {
       this.lastWishHtml = wishHtml;
     }
 
+    // Cómo se siente (emociones con causa)
+    const emos = emotionsOf(a)
+      .filter((e) => e.until > w.state.minutes)
+      .sort((x, y) => Math.abs(y.def.value) - Math.abs(x.def.value));
+    const emoHtml = emos
+      .map((e) => `<span class="emo ${e.def.value < 0 ? 'bad' : ''}">${e.def.icon} ${esc(e.def.label)} <b>${e.def.value > 0 ? '+' : ''}${e.def.value}</b></span>`)
+      .join('');
+    if (emoHtml !== this.lastEmoHtml) {
+      $('#emotions').innerHTML = emoHtml;
+      this.lastEmoHtml = emoHtml;
+    }
+
     this.syncTalk();
+    this.syncDilemma();
 
     // Necesidades
     if (this.needsFor !== a.id) {

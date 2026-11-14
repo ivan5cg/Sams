@@ -171,6 +171,52 @@ export class HouseScene extends Phaser.Scene {
     this.shownLot = '';
   }
 
+  /** Lo que obliga a redibujar la parcela: la estación y el tamaño de la casa. */
+  private shownKey = '';
+  private lotKey() {
+    return `${this.world.season}:${this.world.lotById(this.shownLot)?.size ?? 1}`;
+  }
+  /** Adornos de los eventos (guirnaldas de la verbena). */
+  private eventDeco: Phaser.GameObjects.Graphics[] = [];
+  private eventKey = '';
+
+  private syncEventDeco() {
+    const verbena = this.world.hasEvent('verbena', this.shownLot) && this.world.lotById(this.shownLot)?.kind === 'park';
+    const key = `${verbena}:${this.shownLot}`;
+    if (key === this.eventKey) return;
+    this.eventKey = key;
+    for (const g of this.eventDeco) g.destroy();
+    this.eventDeco = [];
+    if (!verbena) return;
+    // Guirnaldas de bombillas sobre los caminos del parque
+    const lines = this.add.graphics().setDepth(5e4);
+    const bulbs = this.add.graphics().setDepth(1e6 + 2).setBlendMode(Phaser.BlendModes.ADD);
+    const cols = [0xff5d5d, 0xffd23f, 0x5df2ff, 0x8ac926, 0xff5dc8];
+    const strings: [number, number, number, number][] = [[0.5, 6.5, 15.5, 6.5], [7.5, 0.5, 7.5, 13.5], [0.5, 8.5, 15.5, 8.5], [9.5, 0.5, 9.5, 13.5]];
+    for (const [x0, y0, x1, y1] of strings) {
+      const n = 14;
+      let prev: { x: number; y: number } | undefined;
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        const sag = Math.sin(t * Math.PI * 4) * 4;
+        const p = P(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 46 - Math.abs(sag));
+        if (prev) {
+          lines.lineStyle(1.2, 0x333333, 0.8);
+          lines.lineBetween(prev.x, prev.y, p.x, p.y);
+        }
+        prev = p;
+        const c = cols[i % cols.length];
+        lines.fillStyle(c, 1);
+        lines.fillCircle(p.x, p.y + 2, 2.2);
+        bulbs.fillStyle(c, 0.35);
+        bulbs.fillCircle(p.x, p.y + 2, 7);
+      }
+    }
+    bulbs.setAlpha(Math.max(0.3, this.nightLevel));
+    this.glows.push(bulbs);
+    this.eventDeco.push(lines, bulbs);
+  }
+
   /** Cambia la parcela que se ve (al ir al parque, a otra casa o cambiar de personaje). */
   private showLot(lotId: string) {
     for (const v of this.agentViews.values()) v.root.destroy();
@@ -180,6 +226,9 @@ export class HouseScene extends Phaser.Scene {
     for (const g of this.lotGraphics) g.destroy();
     this.lotGraphics = [];
     this.glows = [];
+    for (const g of this.eventDeco) g.destroy();
+    this.eventDeco = [];
+    this.eventKey = '';
     this.fx?.clearAll();
     this.convo.clear();
     this.pendingSpeech = [];
@@ -204,8 +253,9 @@ export class HouseScene extends Phaser.Scene {
     const layout = this.world.lotById(this.shownLot || this.world.viewLotId)?.layout;
     const lay = this.world.layoutOf(this.shownLot || this.world.viewLotId);
     // Las tiendas y el estudio: centrados y que quepan casi enteros a lo ancho.
-    const venue = layout !== 'park' && layout !== 'house';
-    const c = layout === 'park' ? isoToScreen(8, 7) : layout === 'house' ? isoToScreen(5.5, 5.5) : isoToScreen(lay.w / 2, lay.h / 2);
+    const big = layout === 'house' && lay.w > 14;
+    const venue = (layout !== 'park' && layout !== 'house') || big;
+    const c = layout === 'park' ? isoToScreen(8, 7) : layout === 'house' ? isoToScreen(lay.w / 2 - 1.5, lay.h / 2 - 0.5) : isoToScreen(lay.w / 2, lay.h / 2);
     const cssW = width / DPR, cssH = height / DPR;
     const fitW = venue ? Math.max(640, ((lay.w + lay.h) * TILE_W) / 2 * 0.9) : 640;
     const zoom = Phaser.Math.Clamp(Math.min(cssW / fitW, cssH / 520), 0.45, 1.6);
@@ -223,12 +273,14 @@ export class HouseScene extends Phaser.Scene {
     const lot = this.world.lotById(this.shownLot);
     const layout = this.world.layoutOf(this.shownLot);
     const { tiles, w, h } = layout;
-    const style: LotStyle = { wall: lot.style?.wall ?? DEFAULT_STYLE.wall, floor: lot.style?.floor ?? DEFAULT_STYLE.floor };
+    const season = this.world.seasonDef;
+    const style: LotStyle = { wall: lot.style?.wall ?? DEFAULT_STYLE.wall, floor: lot.style?.floor ?? DEFAULT_STYLE.floor, grass: season.grass, snow: season.id === 'invierno' };
+    this.shownKey = this.lotKey();
 
     // Alrededores: césped y, delante de las casas y el estudio, acera y calle.
     const around = this.add.graphics().setDepth(-2e5);
     this.lotGraphics.push(around);
-    flat(around, { x: -10, y: -10, w: w + 20, h: h + 20 }, 0, 0x5d9147);
+    flat(around, { x: -10, y: -10, w: w + 20, h: h + 20 }, 0, shade(season.grass, 0.78));
     if (lot.layout !== 'park') {
       flat(around, { x: -10, y: h, w: w + 20, h: 0.55 }, 0, 0xcfc9bc);
       flat(around, { x: -10, y: h + 0.55, w: w + 20, h: 1.9 }, 0, 0x4d525b);
@@ -271,7 +323,7 @@ export class HouseScene extends Phaser.Scene {
 
   /** Lo que cambia el dibujo de un objeto: sitio, si tiene comida, si está sucio o roto. */
   private objKey(o: PlacedObject) {
-    return `${o.x},${o.y},${(o.stock ?? 0) > 0},${(o.dirt ?? 0) >= 2},${!!o.broken}`;
+    return `${o.x},${o.y},${(o.stock ?? 0) > 0},${(o.dirt ?? 0) >= 2},${!!o.broken},${o.q ?? 2}`;
   }
 
   private createObjectView(o: PlacedObject): ObjectView {
@@ -285,6 +337,20 @@ export class HouseScene extends Phaser.Scene {
       prism(gfx, { x: o.x + 0.1, y: o.y + 0.1, w: d.w - 0.2, h: d.h - 0.2 }, 0, d.height, d.color);
       const c = isoToScreen(o.x + d.w / 2, o.y + d.h / 2);
       if (d.icon) icon = this.add.text(c.x, c.y - d.height, d.icon, { resolution: TEXT_RES, fontSize: '22px' }).setOrigin(0.5, 0.8).setDepth(depth + 0.5);
+    }
+    if (o.q === 3) {
+      // Lo de lujo lleva un ribete dorado y brilla un poco.
+      const r = { x: o.x + 0.04, y: o.y + 0.04, w: d.w - 0.08, h: d.h - 0.08 };
+      faceQuad(front, r, 'L', 0, 1, 0, 2.5, 0xe6b422);
+      faceQuad(front, r, 'R', 0, 1, 0, 2.5, 0xc9971a);
+      const t = P(o.x + d.w * 0.8, o.y + d.h * 0.2, Math.max(d.height, 8) + 6);
+      front.fillStyle(0xffe27a, 1);
+      front.fillPoints([{ x: t.x, y: t.y - 5 }, { x: t.x + 1.4, y: t.y - 1.4 }, { x: t.x + 5, y: t.y }, { x: t.x + 1.4, y: t.y + 1.4 }, { x: t.x, y: t.y + 5 }, { x: t.x - 1.4, y: t.y + 1.4 }, { x: t.x - 5, y: t.y }, { x: t.x - 1.4, y: t.y - 1.4 }], true);
+    } else if (o.q === 1) {
+      // Lo básico: un parche de cinta americana.
+      const p = P(o.x + d.w * 0.35, o.y + d.h * 0.85, Math.min(d.height, 12) * 0.5);
+      front.fillStyle(0xb8b8b8, 0.9);
+      front.fillRect(p.x - 4, p.y - 2, 8, 4);
     }
     const c = isoToScreen(o.x + d.w / 2, o.y + d.h / 2);
     let badge: Phaser.GameObjects.Text | undefined;
@@ -664,7 +730,8 @@ export class HouseScene extends Phaser.Scene {
     const dt = Math.min(delta, 100) / 1000;
     const speed = SPEEDS[this.world.state.speed] ?? 1;
     if (speed > 0) this.world.tick(dt * speed);
-    if (this.world.viewLotId !== this.shownLot) this.showLot(this.world.viewLotId);
+    if (this.world.viewLotId !== this.shownLot || this.lotKey() !== this.shownKey) this.showLot(this.world.viewLotId);
+    this.syncEventDeco();
     this.syncObjects();
     this.syncAgents(time);
     this.syncGhost();
@@ -679,8 +746,10 @@ export class HouseScene extends Phaser.Scene {
     else if (h < 8) a = NIGHT_MAX * (1 - (h - 6) / 2);
     else if (h > 22) a = NIGHT_MAX;
     else if (h > 19) a = NIGHT_MAX * ((h - 19) / 3);
+    const blackout = this.world.hasEvent('apagon', this.shownLot);
+    if (blackout) a = Math.min(0.75, a * 1.35 + 0.1);
     this.night.setFillStyle(0x0b1640, a);
-    const level = a / NIGHT_MAX;
+    const level = blackout ? 0 : a / NIGHT_MAX;
     if (Math.abs(level - this.nightLevel) > 0.01) {
       this.nightLevel = level;
       for (const g of this.glows) g.setAlpha(level);

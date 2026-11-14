@@ -21,6 +21,42 @@ const HOUSE_MAP = [
   'gggggggggggggg',
 ];
 
+// Casa ampliada: una habitación nueva hacia el jardín (el jardín se corre a la derecha).
+const HOUSE2_MAP = [
+  'WWWWWWWWWWWWWWWggg',
+  'WtttW.....W...Wggg',
+  'WtttW.....W...Wggg',
+  'WtttW.....W...Wggg',
+  'WWdWW.....W...Wggg',
+  'W.........d...dggg',
+  'W.........W...Wggg',
+  'W.........W...Wggg',
+  'W.........W...Wggg',
+  'W.........W...Wggg',
+  'WWWWWdWWWWWWWWWggg',
+  'gggggggggggggggggg',
+];
+
+// Casa ampliada dos veces: además, un salón grande hacia la calle.
+const HOUSE3_MAP = [
+  'WWWWWWWWWWWWWWWggg',
+  'WtttW.....W...Wggg',
+  'WtttW.....W...Wggg',
+  'WtttW.....W...Wggg',
+  'WWdWW.....W...Wggg',
+  'W.........d...dggg',
+  'W.........W...Wggg',
+  'W.........W...Wggg',
+  'W.........W...Wggg',
+  'W.........W...Wggg',
+  'WWWWWdWWWWWWdWWggg',
+  'W.............Wggg',
+  'W.............Wggg',
+  'W.............Wggg',
+  'WWWWWdWWWWWWWWWggg',
+  'gggggggggggggggggg',
+];
+
 const PARK_MAP = [
   'ggggggggpggggggg',
   'ggggggggpggggggg',
@@ -86,20 +122,31 @@ export interface LotLayout {
   tiles: TileType[][];
   /** Por dónde se entra y se sale de la parcela. */
   entrance: { x: number; y: number };
+  /** Un sitio del jardín (donde aparecen las mascotas de exterior). */
+  garden?: { x: number; y: number };
 }
 
-export function parseLot(rows: string[], entrance: { x: number; y: number }): LotLayout {
+export function parseLot(rows: string[], entrance: { x: number; y: number }, garden?: { x: number; y: number }): LotLayout {
   const tiles = rows.map((r) => [...r].map((c) => CHAR[c] ?? 'grass'));
-  return { w: rows[0].length, h: rows.length, tiles, entrance };
+  return { w: rows[0].length, h: rows.length, tiles, entrance, ...(garden ? { garden } : {}) };
 }
 
 export const LAYOUTS: Record<LayoutId, LotLayout> = {
-  house: parseLot(HOUSE_MAP, { x: 5, y: 11 }),
+  house: parseLot(HOUSE_MAP, { x: 5, y: 11 }, { x: 11, y: 6 }),
   park: parseLot(PARK_MAP, { x: 8, y: 13 }),
   studio: parseLot(STUDIO_MAP, { x: 5, y: 9 }),
   super: parseLot(SUPER_MAP, { x: 5, y: 10 }),
   acai: parseLot(ACAI_MAP, { x: 4, y: 8 }),
 };
+
+/** Planos de la casa según lo ampliada que esté (1, 2 o 3). */
+export const HOUSE_SIZES: LotLayout[] = [LAYOUTS.house, parseLot(HOUSE2_MAP, { x: 5, y: 11 }, { x: 16, y: 6 }), parseLot(HOUSE3_MAP, { x: 5, y: 15 }, { x: 16, y: 6 })];
+
+/** Ampliaciones: precio y lo que se gana. */
+export const EXPANSIONS = [
+  { size: 2, price: 6000, label: 'Habitación nueva junto al jardín', shiftX: 4 },
+  { size: 3, price: 12000, label: 'Salón grande hacia la calle', shiftX: 0 },
+];
 
 /** Entrada de la casa (todas las casas comparten plano). */
 export const ENTRANCE = LAYOUTS.house.entrance;

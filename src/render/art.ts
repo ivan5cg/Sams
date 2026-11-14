@@ -116,6 +116,10 @@ function shadowUnder(g: G, cx: number, cy: number, w: number, alpha = 0.18) {
 export interface LotStyle {
   wall: number;
   floor: number;
+  /** Color del césped (cambia con la estación). */
+  grass?: number;
+  /** Nieve en el suelo (invierno). */
+  snow?: boolean;
 }
 
 const GRASS = 0x79b65a;
@@ -157,15 +161,22 @@ export function drawTile(g: G, t: TileType, x: number, y: number, style: LotStyl
     }
     default: {
       // Césped con matas
-      flat(g, r, 0, shade(GRASS, 0.93 + ((h % 12) / 100)));
-      g.lineStyle(1, shade(GRASS, 0.7), 0.7);
+      const grass = style.grass ?? GRASS;
+      flat(g, r, 0, shade(grass, 0.93 + ((h % 12) / 100)));
+      g.lineStyle(1, shade(grass, 0.7), 0.7);
       for (let i = 0; i < 3; i++) {
         const fx = (((h >>> (i * 5)) % 80) + 10) / 100, fy = (((h >>> (i * 5 + 3)) % 80) + 10) / 100;
         const c = P(x + fx, y + fy);
         g.lineBetween(c.x - 2, c.y, c.x - 1, c.y - 3);
         g.lineBetween(c.x + 1, c.y, c.x + 2, c.y - 3);
       }
-      if (h % 23 === 0) {
+      if (style.snow) {
+        for (let i = 0; i < 4; i++) {
+          const c = P(x + (((h >>> (i * 4)) % 90) + 5) / 100, y + (((h >>> (i * 4 + 2)) % 90) + 5) / 100);
+          g.fillStyle(0xffffff, 0.85);
+          g.fillEllipse(c.x, c.y, 6, 2.6);
+        }
+      } else if (h % 23 === 0) {
         const c = P(x + 0.5, y + 0.5);
         g.fillStyle([0xffffff, 0xf7d84a, 0xf28db2][h % 3], 0.9);
         g.fillCircle(c.x, c.y - 1, 1.6);

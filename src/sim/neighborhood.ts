@@ -1,3 +1,4 @@
+import { PET_TRAITS } from '../data/pets';
 // Creación del barrio: las 9 familias vecinas, sus casas y el parque.
 
 import { ACAI_OBJECTS, HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, SUPER_OBJECTS, type ObjectPlacement } from '../data/lot';
@@ -56,6 +57,7 @@ export function makeAgent(p: { id: string; name: string; species: SpeciesId; age
     current: null,
     facing: 1,
     hidden: false,
+    ...(SPECIES[p.species].kind === 'pet' ? { petTrait: PET_TRAITS[Math.floor(Math.random() * PET_TRAITS.length)].id } : {}),
   };
 }
 

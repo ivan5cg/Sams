@@ -76,6 +76,50 @@ un estudio de pilates, un **Mercadona** y dos locales de **açaí**.
 - Las charlas dependen del momento: los lunes se odian, los viernes se celebran, por la mañana se habla del
   desayuno, del curro, del cole, de la mascota, de lo caro que está el aceite o de si la tortilla lleva cebolla.
 
+## Emociones, metas de vida y forma de ser que cambia
+
+- **Emociones con causa**: lo que les pasa deja huella unas horas o días. "😋 Açaí riquísimo", "🛌 Ha dormido como
+  un bebé", "😍 Enamorada", "😳 Le han hecho la cobra", "🖤 De luto", "😡 Enfadado"... Se ven en el panel (verde lo
+  bueno, rojo lo malo) y en el perfil, con la causa y lo que les queda. Suben o bajan el ánimo y cambian lo que les
+  apetece: de luto se va a la lápida a recordar, enfadado se busca bronca, con resaca se pide sofá. El ánimo influye
+  en el trabajo y en que te acepten un abrazo o un beso.
+- **Metas de vida**: cada persona (desde adolescente) tiene una, con 4 etapas: chef con estrella, gran familia,
+  forrado/a, el alma del barrio, artista bohemio/a, cuerpo de anuncio, amigo/a de los animales, emprendedor/a o
+  sabelotodo. Cada etapa da dinero y orgullo; la meta entera, §1.500. Se cambia desde el perfil.
+- **Rasgos heredados**: los bebés sacan un rasgo de su padre o de su madre. Al hacerse adulto, el jugador elige
+  cambiar uno. Y **los hábitos cambian a la gente**: quien corre mucho se vuelve deportista; quien discute mucho,
+  gruñón (como mucho un cambio por semana).
+
+## Relaciones con memoria y conflictos
+
+- Las relaciones **recuerdan** lo que pasó (con día): el primer beso, la boda, el insulto, la cobra, la fiesta...
+  Se ve en el perfil. Lo malo deja **rencor**: quien te la ha hecho tiene menos posibilidades de que le aceptes nada.
+- **Discutir** (los enfadados lo hacen solos), **pedir perdón** (quita el rencor y hacen las paces), **cortar** y
+  **pedir el divorcio**. Si viven juntos, siguen bajo el mismo techo: la hipoteca no entiende de sentimientos.
+- **Fiestas en casa** (desde el ordenador, §120): vienen vecinos de varias familias, se baila, se hacen amigos y
+  hay quien acaba con resaca. Si alguien cumple años (al cambiar de etapa), es fiesta de cumpleaños.
+- En el barrio también hay dramas: alguna pareja de vecinos se separa (y se cotillea).
+
+## Trabajo con decisiones
+
+- A veces, en mitad de la jornada, hay un **dilema** y el tiempo se para para que decidas: horas extra, un
+  compañero que se lleva el mérito, la cena de empresa con karaoke, la cafetera rota, una paella con chorizo, el
+  Excel borrado, un chihuahua del infierno, una boda que quiere Paquito el Chocolatero tres veces... Algunas
+  opciones salen bien o mal según la suerte.
+- **Día libre** desde el ordenador. Si se rinde fatal tres jornadas seguidas (o se falta), **despido**.
+- **Negocio propio** (bar de tapas, §2.500 para montarlo): las ganancias cambian cada día (a veces no entra ni el
+  tato) y cada lunes toca pagar la **cuota de autónomos**.
+
+## Estaciones y eventos
+
+- Cada semana es una estación (🌸 primavera, ☀️ verano, 🍂 otoño, ❄️ invierno): cambia el color del césped y en
+  invierno hay nieve.
+- **Ola de calor** en verano (la higiene baja más, apetecen duchas y batidos), **verbena** el sábado de verano por
+  la noche en el parque (guirnaldas, todo el barrio bailando), **días de la huerta** en otoño (la compra un 30% más
+  barata), algún **apagón** por la noche (sin tele ni ordenador, y a oscuras) y **Navidad** al final del invierno:
+  lotería (décimos a §20 en la caja del Mercadona, sorteo el último día, con Gordo, pedrea y reintegro) y cena con
+  el cuñado arreglando el país.
+
 ## Diálogos, conversaciones y deseos
 
 - Los personajes **hablan**: en las interacciones salen bocadillos con frases (charlas, chistes, coqueteos,
@@ -131,6 +175,12 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
 - Novedades en la tienda: equipo de música (bailar o escuchar), bañera, videoconsola, sillón, lámpara y alfombra.
 - La **decoración** (plantas, flores, lámparas, alfombras, árboles) alegra a quien está cerca.
 - Los electrodomésticos a veces **se estropean** (🔧): no se pueden usar hasta que alguien los repare.
+- **Calidades**: camas, sofás, sillones, nevera, váter, ducha, bañera, tele, equipo de música, consola y
+  estantería se venden en tres calidades. Lo **básico** (la mitad de precio, con su parche de cinta americana)
+  rinde menos, se rompe más y da dolor de espalda; lo **de lujo** (el triple, con ribete dorado) rinde más, casi
+  no se rompe, alegra el ambiente y se duerme "como un bebé".
+- **🏗️ Reformas**: amplía la casa. Primero una habitación nueva junto al jardín (§6.000; lo del jardín se corre
+  solo) y después un salón grande hacia la calle (§12.000).
 - A veces pasan cosas: encontrar dinero en un abrigo viejo... o que os toque la lotería.
 - En el menú ☰: **📜 Diario** con todo lo que ha pasado y **❓ Cómo se juega**.
 
@@ -147,6 +197,11 @@ Se adoptan en la protectora desde el **ordenador** de casa (máximo 8 miembros e
 | 🦫 Capibara | §300 | Vive en el jardín, necesita bañarse en el estanque y es tan tranquila que relaja a todos los que están cerca |
 
 (No hay emojis de cobaya, hurón ni capibara: en el juego están dibujados a mano.)
+- **Carácter**: cada mascota tiene el suyo (juguetón, dormilón, tragón, trasto, mimoso, listo o tranquilo), que
+  cambia lo que hace y lo rápido que aprende.
+- **Trucos**: perros, gatos, hurones y capibaras se pueden **adiestrar** (sentarse, dar la pata, hacerse el muerto,
+  llevar una mandarina en la cabeza...). Luego, "Pedirle un truco" divierte a todo el que mira.
+- **Persona favorita**: a quien más quiere la recibe al llegar a casa (el perro moviendo el rabo como loco).
 
 ## Desarrollo
 
@@ -192,3 +247,5 @@ acciones en `src/data/actions.ts`: la IA lo usará automáticamente.
 4. ✅ Relaciones, trabajo y economía.
 5. ✅ Ciclo de vida completo: etapas, parejas, nacimientos, muertes y herencias.
 6. ✅ Modo construcción, tienda de muebles y pulido.
+7. ✅ Más profundidad: emociones con causa, metas de vida, rasgos heredados, relaciones con memoria, trabajo con
+   decisiones, estaciones y eventos, mascotas con carácter, muebles por calidades y ampliar la casa.

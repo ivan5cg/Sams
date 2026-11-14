@@ -2,6 +2,8 @@
 
 import { TRAITS, TRAIT_BY_ID, type TraitDef } from '../data/traits';
 import type { Agent, NeedKey } from './types';
+import { emotionAffinity } from './emotions';
+import { PET_TRAIT_BY_ID } from '../data/pets';
 
 const hashStr = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 
@@ -27,14 +29,20 @@ export function hasTrait(a: Agent, id: string): boolean {
 
 /** Cuánto más rápido (o lento) le baja una necesidad por su forma de ser. */
 export function traitDecay(a: Agent, need: NeedKey): number {
-  let m = 1;
+  let m = (a.petTrait && PET_TRAIT_BY_ID[a.petTrait]?.decay?.[need]) || 1;
   for (const t of traitsOf(a)) m *= t.decay?.[need] ?? 1;
   return m;
 }
 
-/** Cuánto le apetece una acción por su forma de ser (para la autonomía). */
+/** Cuánto le apetece una acción por su forma de ser y cómo se siente ahora (para la autonomía). */
 export function traitAffinity(a: Agent, actionId: string): number {
-  let m = 1;
+  let m = (a.petTrait && PET_TRAIT_BY_ID[a.petTrait]?.likes?.[actionId]) || 1;
   for (const t of traitsOf(a)) m *= t.likesActions?.[actionId] ?? 1;
-  return m;
+  return m * emotionAffinity(a, actionId);
+}
+
+/** Un carácter al azar para una mascota. */
+export function randomPetTrait(_a: Agent): string {
+  const ids = Object.keys(PET_TRAIT_BY_ID);
+  return ids[Math.floor(Math.random() * ids.length)];
 }

@@ -4,6 +4,7 @@
 import { ACTIONS, SELF_ACTIONS, SOCIAL_ACTIONS } from '../data/actions';
 import { getRel } from './social';
 import { hasTrait, traitAffinity } from './traits';
+import { hasEmotion } from './emotions';
 import type { World } from './world';
 import { NEED_KEYS, type Agent, type Needs } from './types';
 
@@ -85,6 +86,20 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
       if (def.playerOnly || !world.checkSocialAction(a, t, def.id).ok) continue;
       // Por su cuenta solo se coquetea o se besa con la pareja, y solo se insulta a los enemigos.
       if ((def.id === 'flirt' || def.id === 'kiss') && !rel.status) continue;
+      if (def.id === 'argue') {
+        // Se discute con quien te ha hecho algo, y si estás enfadado/a.
+        const angry = hasEmotion(a, 'enfadado') || hasEmotion(a, 'celos') || hasEmotion(a, 'insultado');
+        if (urgentOnly || !angry || rel.f > 40 || (!world.grudge(a, t) && !hasTrait(a, 'grunon'))) continue;
+        options.push({ choice: { actionId: def.id, targetAgentId: t.id }, score: 3.5 * traitAffinity(a, def.id) * jitter() });
+        continue;
+      }
+      if (def.id === 'apologize') {
+        // Quien la ha liado, a veces, pide perdón (los gruñones, nunca).
+        if (urgentOnly || hasTrait(a, 'grunon') || !world.grudge(t, a) || hasEmotion(a, 'enfadado')) continue;
+        options.push({ choice: { actionId: def.id, targetAgentId: t.id }, score: 3 * traitAffinity(a, def.id) * jitter() });
+        continue;
+      }
+      if (def.id === 'show_trick' && t.householdId !== a.householdId) continue;
       if (def.id === 'insult') {
         // Los gruñones saltan antes.
         if (rel.f > (hasTrait(a, 'grunon') ? -10 : -40) || urgentOnly) continue;

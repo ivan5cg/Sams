@@ -27,5 +27,6 @@ export const CAREER_SKILL: Record<string, string> = {
   ciencia: 'logica',
   veterinaria: 'logica',
   deporte: 'forma',
+  negocio: 'carisma',
   school: 'logica',
 };

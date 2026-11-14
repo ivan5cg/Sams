@@ -6,6 +6,8 @@ import { ACTION_LINES, CUNADO_LINES, CUNADO_NEWS_REPLIES, NEWS_REPLIES } from '.
 import { SKILL_BY_ID } from '../data/skills';
 import { getRel } from './social';
 import { hasTrait, traitsOf } from './traits';
+import { hasEmotion } from './emotions';
+import { ASPIRATION_BY_ID } from './aspirations';
 import type { Agent } from './types';
 import type { World } from './world';
 
@@ -63,6 +65,27 @@ export function contextPairs(world: World, a: Agent, t: Agent): [string, string]
   }
   const hh2 = world.householdOf(a);
   if (hh2 && (hh2.pantry ?? 0) <= 2 && hh2.id === t.householdId) pairs.push(['La nevera está vacía', 'Pues habrá que ir al Mercadona']);
+
+  // Lo que ha pasado entre los dos y cómo se sienten
+  const grudge = world.grudge(a, t);
+  if (grudge) pairs.push(['Todavía me acuerdo de lo que me hiciste', '¿Otra vez con eso? Pide perdón y ya está']);
+  if (rel.ex) pairs.push(['¿Te acuerdas de cuando estábamos juntos?', 'Mejor no hablemos de eso. ¿Quién ha dejado los platos sin fregar?']);
+  if ((rel.mem ?? []).some((m) => m.k === 'fiesta')) pairs.push(['¡Qué fiesta la del otro día!', '¡Todavía me duelen los pies de bailar!']);
+  if ((rel.mem ?? []).some((m) => m.k === 'boda')) pairs.push(['¿Te acuerdas de nuestra boda?', 'Cómo olvidarla: tu tío bailando encima de la mesa']);
+  if (hasEmotion(a, 'luto')) pairs.push(['Le echo mucho de menos...', 'Era una persona maravillosa']);
+  if (hasEmotion(a, 'corazon_roto')) pairs.push(['Me han dejado...', 'Hay más peces en el mar. Y en el Mercadona, en la pescadería']);
+  if (hasEmotion(a, 'resaca')) pairs.push(['Habla más bajito, por favor', 'Eso te pasa por mezclar']);
+  if (hasEmotion(a, 'enamorado')) pairs.push(['Estoy en una nube', 'Se te nota, se te nota']);
+  if (a.job?.career === 'negocio') pairs.push(['¿Qué tal el bar?', 'Entre la cuota de autónomos y la luz, ni me hables']);
+  const asp = a.aspiration && ASPIRATION_BY_ID[a.aspiration.id];
+  if (asp) pairs.push([`¿Sabes cuál es mi sueño? ${asp.label}`, 'Pues a por ello, que la vida son dos días']);
+  // La estación
+  const se = world.season;
+  if (se === 1) pairs.push(['¡Qué calor hace!', 'Ni con el ventilador a tope']);
+  if (se === 3) pairs.push(['¿Has comprado lotería?', 'Sí, la de la peña del bar. Este año toca, seguro']);
+  if (se === 2) pairs.push(['Ya se nota el otoño', 'A mí me encanta: castañas y mantita']);
+  if (se === 0) pairs.push(['Huele a primavera', '¡Y a alergia! Achís']);
+  if (world.hasEvent('apagon', a.lotId)) pairs.push(['¿Dónde están las velas?', 'En el cajón de las pilas que no funcionan']);
 
   const news = world.gossipFor(a, t);
   if (news) pairs.push([`¿Te has enterado de que ${news}?`, pick(hasTrait(t, 'cunado') ? CUNADO_NEWS_REPLIES : NEWS_REPLIES)]);

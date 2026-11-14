@@ -34,6 +34,19 @@ export interface ObjectDef {
   decor?: number;
   /** Se puede estropear y hay que repararlo. */
   breakable?: boolean;
+  /** Se vende en tres calidades (básica, normal, de lujo). */
+  tiers?: boolean;
+}
+
+/** Calidades de los muebles: precio, cuánto mejor funcionan, lo que se rompen. */
+export const QUALITY: Record<1 | 2 | 3, { label: string; short: string; price: number; mult: number; breaks: number }> = {
+  1: { label: 'Básica', short: 'básico/a', price: 0.5, mult: 0.8, breaks: 2 },
+  2: { label: 'Normal', short: '', price: 1, mult: 1, breaks: 1 },
+  3: { label: 'De lujo', short: 'de lujo', price: 3, mult: 1.35, breaks: 0.3 },
+};
+
+export function priceOf(d: ObjectDef, q: 1 | 2 | 3 = 2): number {
+  return Math.round((d.price ?? 0) * (d.tiers ? QUALITY[q].price : 1));
 }
 
 export const CATEGORIES: { id: CatalogCategory; label: string; icon: string }[] = [
@@ -45,21 +58,21 @@ export const CATEGORIES: { id: CatalogCategory; label: string; icon: string }[] 
 ];
 
 const D: ObjectDef[] = [
-  { id: 'bed', name: 'Cama de matrimonio', icon: '🛏️', w: 2, h: 1, height: 14, color: 0x6c8ebf, capacity: 3, snap: true, actions: ['sleep', 'nap_bed'], price: 300, category: 'descanso' },
-  { id: 'sofa', name: 'Sofá', icon: '🛋️', w: 1, h: 2, height: 16, color: 0xb5651d, capacity: 2, snap: true, actions: ['watch_tv', 'nap_sofa', 'sniff_sofa', 'scratch_sofa'], price: 180, category: 'descanso' },
-  { id: 'armchair', name: 'Sillón', icon: '💺', w: 1, h: 1, height: 14, color: 0x7b4fa0, capacity: 1, snap: true, actions: ['sit', 'watch_tv', 'sniff_sofa'], price: 120, category: 'descanso' },
+  { id: 'bed', name: 'Cama de matrimonio', icon: '🛏️', w: 2, h: 1, height: 14, color: 0x6c8ebf, capacity: 3, snap: true, actions: ['sleep', 'nap_bed'], price: 300, category: 'descanso', tiers: true },
+  { id: 'sofa', name: 'Sofá', icon: '🛋️', w: 1, h: 2, height: 16, color: 0xb5651d, capacity: 2, snap: true, actions: ['watch_tv', 'nap_sofa', 'sniff_sofa', 'scratch_sofa'], price: 180, category: 'descanso', tiers: true },
+  { id: 'armchair', name: 'Sillón', icon: '💺', w: 1, h: 1, height: 14, color: 0x7b4fa0, capacity: 1, snap: true, actions: ['sit', 'watch_tv', 'sniff_sofa'], price: 120, category: 'descanso', tiers: true },
   { id: 'crib', name: 'Cuna', icon: '', w: 1, h: 1, height: 20, color: 0xf2a7c3, shape: 'cage', capacity: 3, actions: ['baby_sleep'], price: 150, category: 'descanso' },
 
-  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'eat', 'snack', 'repair'], price: 250, category: 'cocina', breakable: true },
-  { id: 'toilet', name: 'Váter', icon: '🚽', w: 1, h: 1, height: 14, color: 0xf4f4f4, capacity: 1, snap: true, actions: ['toilet', 'repair'], price: 120, category: 'cocina', breakable: true },
-  { id: 'shower', name: 'Ducha', icon: '🚿', w: 1, h: 1, height: 6, color: 0x9fd3e6, capacity: 1, snap: true, actions: ['shower', 'repair'], price: 200, category: 'cocina', breakable: true },
-  { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true },
+  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'eat', 'snack', 'repair'], price: 250, category: 'cocina', breakable: true, tiers: true },
+  { id: 'toilet', name: 'Váter', icon: '🚽', w: 1, h: 1, height: 14, color: 0xf4f4f4, capacity: 1, snap: true, actions: ['toilet', 'repair'], price: 120, category: 'cocina', breakable: true, tiers: true },
+  { id: 'shower', name: 'Ducha', icon: '🚿', w: 1, h: 1, height: 6, color: 0x9fd3e6, capacity: 1, snap: true, actions: ['shower', 'repair'], price: 200, category: 'cocina', breakable: true, tiers: true },
+  { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true, tiers: true },
 
-  { id: 'tv', name: 'Televisión', icon: '📺', w: 1, h: 1, height: 30, color: 0x333a44, capacity: 0, actions: ['repair'], price: 220, category: 'ocio', breakable: true },
-  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'find_job', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
-  { id: 'bookshelf', name: 'Estantería', icon: '📚', w: 1, h: 1, height: 44, color: 0x8b5a2b, capacity: 1, actions: ['read'], price: 90, category: 'ocio' },
-  { id: 'stereo', name: 'Equipo de música', icon: '📻', w: 1, h: 1, height: 24, color: 0x2d2d3a, capacity: 3, actions: ['dance', 'listen_music', 'repair'], price: 150, category: 'ocio', breakable: true },
-  { id: 'gamebox', name: 'Videoconsola', icon: '🎮', w: 1, h: 1, height: 18, color: 0x3a3f55, capacity: 2, actions: ['play_games', 'repair'], price: 280, category: 'ocio', breakable: true },
+  { id: 'tv', name: 'Televisión', icon: '📺', w: 1, h: 1, height: 30, color: 0x333a44, capacity: 0, actions: ['repair'], price: 220, category: 'ocio', breakable: true, tiers: true },
+  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'find_job', 'throw_party', 'day_off', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
+  { id: 'bookshelf', name: 'Estantería', icon: '📚', w: 1, h: 1, height: 44, color: 0x8b5a2b, capacity: 1, actions: ['read'], price: 90, category: 'ocio', tiers: true },
+  { id: 'stereo', name: 'Equipo de música', icon: '📻', w: 1, h: 1, height: 24, color: 0x2d2d3a, capacity: 3, actions: ['dance', 'listen_music', 'repair'], price: 150, category: 'ocio', breakable: true, tiers: true },
+  { id: 'gamebox', name: 'Videoconsola', icon: '🎮', w: 1, h: 1, height: 18, color: 0x3a3f55, capacity: 2, actions: ['play_games', 'repair'], price: 280, category: 'ocio', breakable: true, tiers: true },
 
   { id: 'plant', name: 'Planta', icon: '🪴', w: 1, h: 1, height: 10, color: 0x6b8e4e, shape: 'none', capacity: 0, actions: [], price: 25, category: 'deco', decor: 1 },
   { id: 'lamp', name: 'Lámpara de pie', icon: '💡', w: 1, h: 1, height: 10, color: 0xf3d36b, shape: 'none', capacity: 0, actions: [], price: 40, category: 'deco', decor: 1 },
@@ -97,7 +110,7 @@ const D: ObjectDef[] = [
   { id: 'super_fridge', name: 'Nevera de lácteos', icon: '', w: 2, h: 1, height: 46, color: 0xe8eef1, capacity: 1, actions: ['browse_aisles'] },
   { id: 'super_shelf', name: 'Estantería', icon: '', w: 3, h: 1, height: 34, color: 0xb9c2c9, capacity: 2, actions: ['browse_aisles'] },
   { id: 'fruit_stand', name: 'Frutería', icon: '', w: 1, h: 1, height: 18, color: 0x9c6b3f, capacity: 1, actions: ['buy_fruit'] },
-  { id: 'checkout', name: 'Caja', icon: '', w: 2, h: 1, height: 20, color: 0xdedede, capacity: 1, actions: ['shop_small', 'shop_big'] },
+  { id: 'checkout', name: 'Caja', icon: '', w: 2, h: 1, height: 20, color: 0xdedede, capacity: 1, actions: ['shop_small', 'shop_big', 'buy_lottery'] },
   { id: 'carts', name: 'Carros', icon: '', w: 1, h: 1, height: 16, color: 0x9aa0a6, capacity: 0, actions: [] },
   // Açaí
   { id: 'acai_counter', name: 'Barra de açaí', icon: '', w: 3, h: 1, height: 24, color: 0xf4f2ee, capacity: 2, actions: ['acai_bowl', 'smoothie'] },

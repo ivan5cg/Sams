@@ -1201,3 +1201,105 @@ body.building #hud-bottom {
 .trait-icon {
   font-size: 22px;
 }
+
+/* --- Emociones --- */
+#emotions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 2px 0;
+  scrollbar-width: none;
+}
+#emotions:empty {
+  display: none;
+}
+.emo {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  background: rgba(76, 217, 100, 0.13);
+  border: 1px solid rgba(76, 217, 100, 0.4);
+}
+.emo.bad {
+  background: rgba(255, 77, 61, 0.13);
+  border-color: rgba(255, 77, 61, 0.45);
+}
+.emo b {
+  font-size: 10.5px;
+  opacity: 0.85;
+}
+.emo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.emo-row .v {
+  margin-left: auto;
+  font-weight: 700;
+  font-size: 12px;
+}
+.emo-row .v.good { color: #4cd964; }
+.emo-row .v.bad { color: #ff6b5b; }
+.mem {
+  font-size: 11.5px;
+  opacity: 0.85;
+}
+.mem.bad { color: #ff9b8f; }
+
+/* --- Metas de vida --- */
+.asp-stage {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  padding: 3px 0;
+}
+.asp-stage.done { opacity: 0.6; text-decoration: line-through; }
+.asp-stage.now { font-weight: 700; }
+.small-btn { margin-top: 6px; }
+.chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+/* --- Dilemas --- */
+#dilemma {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(10, 12, 20, 0.55);
+}
+#dilemma[hidden] { display: none; }
+.dilemma-card {
+  max-width: 420px;
+  width: 100%;
+  background: #23273a;
+  border-radius: 18px;
+  padding: 18px 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+.dilemma-card h3 { margin: 0 0 4px; font-size: 18px; }
+.dilemma-card p { margin: 6px 0 14px; font-size: 14.5px; line-height: 1.4; }
+.dilemma-card .act { width: 100%; margin-bottom: 8px; }
+
+/* --- Estación y evento en la barra de arriba --- */
+#season {
+  font-size: 11px;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tier-row { display: flex; gap: 6px; align-items: center; margin: 2px 0 6px; }
+.tier-row .comp { flex: 1; text-align: center; padding: 5px 6px; }
+#build-tiers:empty { display: none; }
+.build-note { margin: 2px 0 6px; }

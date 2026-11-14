@@ -76,6 +76,8 @@ const A: ActionDef[] = [
   { id: 'nap_sofa', label: 'Echar una siesta', verb: 'Echando la siesta', icon: '😴', target: 'object', actors: ['person'], duration: 60, effects: { energy: 0.15 }, decayMult: 0.6, until: 'full' },
   { id: 'read', guestOk: true, label: 'Leer un libro', verb: 'Leyendo', icon: '📖', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.25 }, until: 'full', interruptible: true },
   { id: 'browse', label: 'Navegar por internet', verb: 'En el ordenador', icon: '💻', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.3, social: 0.1 }, until: 'full', interruptible: true },
+  { id: 'throw_party', label: 'Montar una fiesta (§120)', verb: 'Organizando una fiesta', icon: '🥳', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], duration: 15, effects: { fun: 0.2 }, cost: 120, playerOnly: true },
+  { id: 'day_off', label: 'Pedir el día libre mañana', verb: 'Pidiendo el día libre', icon: '🏖️', target: 'object', actors: ['person'], duration: 5, effects: {}, playerOnly: true },
   { id: 'find_job', label: 'Buscar trabajo', verb: 'Buscando trabajo', icon: '📰', target: 'object', actors: ['person'], duration: 20, effects: { fun: -0.05 }, playerOnly: true },
   { id: 'adopt', label: 'Adoptar una mascota', verb: 'Mirando la protectora', icon: '🏠', target: 'object', actors: ['person'], duration: 15, effects: { fun: 0.1 }, playerOnly: true },
   { id: 'fill_bowl', label: 'Llenar el comedero (§10)', verb: 'Llenando el comedero', icon: '🥣', target: 'object', actors: ['person'], duration: 2, effects: {}, cost: 10, refill: true },
@@ -138,6 +140,7 @@ const A: ActionDef[] = [
 
   // Mercadona
   { id: 'shop_small', label: 'Compra pequeña (§45 · 8 raciones)', verb: 'Haciendo la compra', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 45, duration: 20, effects: { social: 0.1 }, playerOnly: true },
+  { id: 'buy_lottery', label: 'Lotería de Navidad (§20)', verb: 'Comprando lotería', icon: '🎫', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], guestOk: true, cost: 20, duration: 5, effects: { fun: 0.5 }, playerOnly: true },
   { id: 'shop_big', label: 'Compra grande (§95 · 20 raciones)', verb: 'Haciendo la compra grande', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 95, duration: 35, effects: { social: 0.1, energy: -0.05 }, playerOnly: true },
   { id: 'browse_aisles', label: 'Pasear por los pasillos', verb: 'Mirando ofertas', icon: '🧐', target: 'object', actors: ['person'], guestOk: true, duration: 25, effects: { fun: 0.15, social: 0.05 }, until: 'full', interruptible: true, baseScore: 1 },
   { id: 'buy_fruit', label: 'Comprar fruta (§3)', verb: 'Comiendo fruta', icon: '🍎', target: 'object', actors: ['person'], guestOk: true, cost: 3, duration: 8, effects: { hunger: 2.5 }, until: 'full' },
@@ -161,6 +164,10 @@ const A: ActionDef[] = [
   { id: 'talk', label: 'Conversar…', verb: 'Conversando', icon: '🗨️', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 90, effects: { social: 0.15 }, partnerEffects: { social: 0.15 }, playerOnly: true, interruptible: true },
   { id: 'chat', label: 'Charlar', verb: 'Charlando', icon: '💬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 30, effects: { social: 0.7, fun: 0.1 }, partnerEffects: { social: 0.7, fun: 0.1 }, until: 'full', interruptible: true, skill: { id: 'carisma', rate: 0.005 } },
   { id: 'joke', label: 'Contar un chiste', verb: 'Contando un chiste', icon: '😂', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: 0.6, social: 0.3 }, partnerEffects: { fun: 0.6, social: 0.3 } },
+  { id: 'argue', label: 'Discutir', verb: 'Discutiendo', icon: '💢', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: -0.3, social: 0.3 }, partnerEffects: { fun: -0.6, social: -0.3 } },
+  { id: 'apologize', label: 'Pedir perdón', verb: 'Pidiendo perdón', icon: '🙏', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: 0.8 }, partnerEffects: { social: 0.8 } },
+  { id: 'break_up', label: 'Cortar', verb: 'Cortando', icon: '💔', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: -0.5 }, partnerEffects: { social: -1.5, fun: -1 }, playerOnly: true },
+  { id: 'divorce', label: 'Pedir el divorcio', verb: 'Pidiendo el divorcio', icon: '📄', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 8, effects: { social: -0.5 }, partnerEffects: { social: -1.5, fun: -1 }, playerOnly: true },
   { id: 'insult', label: 'Insultar', verb: 'Discutiendo', icon: '🤬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { fun: 0.3 }, partnerEffects: { social: -2, fun: -1 } },
   { id: 'flirt', label: 'Coquetear', verb: 'Coqueteando', icon: '😏', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { social: 0.8, fun: 0.4 }, partnerEffects: { social: 0.8, fun: 0.3 } },
   { id: 'kiss', label: 'Besar', verb: 'Besando', icon: '💋', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 4, effects: { social: 2, fun: 0.5 }, partnerEffects: { social: 2, fun: 0.5 } },
@@ -178,6 +185,8 @@ const A: ActionDef[] = [
 
   // --- Social: persona → mascota ---
   { id: 'pet_animal', label: 'Acariciar', verb: 'Acariciando', icon: '🤚', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 8, effects: { social: 0.4, fun: 0.1 }, partnerEffects: { social: 1.6 } },
+  { id: 'train_pet', label: 'Adiestrar', verb: 'Adiestrando', icon: '🦴', target: 'agent', actors: ['person'], targetKinds: ['pet'], targetSpecies: ['dog', 'cat', 'ferret', 'capybara'], duration: 30, effects: { fun: 0.15, energy: -0.05 }, partnerEffects: { fun: 0.25, energy: -0.15 }, playerOnly: true, guestOk: false },
+  { id: 'show_trick', label: 'Pedirle un truco', verb: 'Haciendo un truco', icon: '🎪', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 6, effects: { fun: 1.6 }, partnerEffects: { fun: 0.8, social: 0.6 } },
   { id: 'play_pet', label: 'Jugar', verb: 'Jugando', icon: '🎾', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 20, effects: { fun: 0.6, energy: -0.1 }, partnerEffects: { fun: 1, energy: -0.1 } },
   { id: 'walk_dog', label: 'Sacar a pasear', verb: 'De paseo', icon: '🦮', target: 'agent', actors: ['person'], targetKinds: ['pet'], targetSpecies: ['dog'], duration: 45, effects: { fun: 0.3, social: 0.2, energy: -0.1 }, partnerEffects: { fun: 0.8, bladder: 4, social: 0.5, energy: -0.15 }, offLot: true },
   { id: 'bathe_pet', label: 'Bañar', verb: 'Bañando', icon: '🫧', target: 'agent', actors: ['person'], targetKinds: ['pet'], targetSpecies: ['dog', 'cat', 'ferret'], duration: 15, effects: { hygiene: -0.3 }, partnerEffects: { hygiene: 6, fun: -0.2 } },

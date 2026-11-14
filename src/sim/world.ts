@@ -1,18 +1,25 @@
 import { ACTIONS, SELF_ACTIONS, type ActionDef } from '../data/actions';
-import { HOUSE_OBJECTS, LAYOUTS, isOutdoor, type LotLayout } from '../data/lot';
-import { OBJECTS, SELL_RATIO, type ObjectDef } from '../data/objects';
+import { EXPANSIONS, HOUSE_OBJECTS, HOUSE_SIZES, LAYOUTS, isOutdoor, type LotLayout } from '../data/lot';
+import { OBJECTS, QUALITY, SELL_RATIO, priceOf, type ObjectDef } from '../data/objects';
 import { SPECIES, lifeStage } from '../data/species';
 import { CAREERS, gradeLabel } from '../data/careers';
+import { DILEMMAS, DILEMMA_BY_ID } from '../data/dilemmas';
+import { ELECTRIC, EVENTS, POWERED_ACTIONS, SEASONS } from '../data/seasons';
 import { CAREER_SKILL, MAX_SKILL, SKILL_BY_ID } from '../data/skills';
 import { chooseAutonomous } from './ai';
 import { matchWish, newWish, topUpWishes } from './wishes';
-import { hasTrait, traitDecay, traitsOf } from './traits';
-import { REJECT_TEXT, REL_EFFECTS, ROMANTIC, acceptChance, canRomance, changeRel, getRel, isAdult, partnerOf, relKey, setRel } from './social';
+import { ASPIRATION_BY_ID, canAspire, suggestAspiration } from './aspirations';
+import { hasTrait, randomPetTrait, traitDecay, traitsOf } from './traits';
+import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
+import { emotionMood, feel as feelEmotion, forget, hasEmotion, pruneEmotions } from './emotions';
+import { EMOTIONS } from '../data/emotions';
+import { TRAITS, TRAIT_BY_ID } from '../data/traits';
+import { REJECT_TEXT, REL_EFFECTS, ROMANTIC, acceptChance, canRomance, changeRel, getRel, grudgeOf, isAdult, partnerOf, relKey, setRel } from './social';
 import { ACAI_LOTS, PARK_LOT, PLAYER_LOT, STUDIO_LOT, SUPER_LOT, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { findPath, isWalkable, pathLength, reachable, type Grid } from './pathfinding';
 import { NEED_KEYS, type Agent, type Household, type Lot, type NeedKey, type Needs, type PlacedObject, type SpeciesId, type Task, type Vec, type WorldState } from './types';
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_MEMBERS = 8;
 /** Minutos de juego que se tarda en ir de una parcela a otra del barrio. */
@@ -36,6 +43,36 @@ export interface Toast {
 }
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
+
+/** Hábitos que acaban cambiando la forma de ser: acciones y cuántas veces. */
+const HABITS: { trait: string; actions: string[]; min: number }[] = [
+  { trait: 'deportista', actions: ['run', 'pilates', 'reformer'], min: 25 },
+  { trait: 'bromista', actions: ['joke'], min: 25 },
+  { trait: 'gloton', actions: ['eat', 'snack', 'cook', 'acai_bowl', 'buy_hotdog', 'buy_fruit'], min: 80 },
+  { trait: 'friki', actions: ['play_games', 'play_chess', 'browse'], min: 30 },
+  { trait: 'fiestero', actions: ['dance', 'parties', 'listen_music'], min: 30 },
+  { trait: 'animalero', actions: ['pet_animal', 'play_pet', 'walk_dog', 'train_pet', 'brush_capy', 'bathe_pet'], min: 45 },
+  { trait: 'tiquismiquis', actions: ['clean', 'clean_litter', 'clean_cage'], min: 25 },
+  { trait: 'grunon', actions: ['insult', 'argue'], min: 12 },
+  { trait: 'cotilla', actions: ['chat', 'talk', 'browse_aisles'], min: 70 },
+  { trait: 'romantico', actions: ['flirt', 'kiss', 'hug'], min: 45 },
+  { trait: 'perezoso', actions: ['nap_sofa', 'watch_tv'], min: 60 },
+  { trait: 'optimista', actions: ['apologize', 'wishes_done'], min: 25 },
+];
+const HABIT_TEXT: Record<string, string> = {
+  deportista: 'Tanto correr y tanto pilates...',
+  bromista: 'De tanto contar chistes...',
+  gloton: 'Entre tapa y tapa...',
+  friki: 'Tantas horas delante de la pantalla...',
+  fiestero: 'De fiesta en fiesta...',
+  animalero: 'Tanto cariño a los animales...',
+  tiquismiquis: 'De tanto limpiar...',
+  grunon: 'Tanta bronca acaba pasando factura...',
+  cotilla: 'De tanto charlar con todo el mundo...',
+  romantico: 'Tanto amor en el aire...',
+  perezoso: 'Entre siesta y siesta...',
+  optimista: 'Viéndole el lado bueno a todo...',
+};
 /** Lo que se come de la nevera (gasta raciones de la despensa). */
 const FRIDGE_FOOD = new Set(['eat', 'snack', 'cook']);
 export const PANTRY_MAX = 40;
@@ -46,7 +83,7 @@ export function moodScore(a: Agent): number {
   const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
   // Los optimistas lo ven todo un poco mejor; los gruñones, un poco peor.
   const temper = hasTrait(a, 'optimista') ? 6 : hasTrait(a, 'grunon') ? -4 : 0;
-  return avg - vals.filter((v) => v < 20).length * 12 + temper;
+  return avg - vals.filter((v) => v < 20).length * 12 + temper + emotionMood(a);
 }
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
@@ -80,6 +117,8 @@ export class World {
     this.rebuildGrid();
     for (const a of state.agents) traitsOf(a);
     topUpWishes(this);
+    for (const m of this.members) if (canAspire(this, m) && !m.aspiration) m.aspiration = { id: suggestAspiration(m), stage: 0 };
+    for (const a of state.agents) if (a.kind === 'pet' && !a.petTrait) a.petTrait = randomPetTrait(a);
   }
 
   /** Algo que pasa en el barrio y de lo que la gente habla. */
@@ -93,6 +132,21 @@ export class World {
   gossipFor(a: Agent, t: Agent): string | undefined {
     const recent = (this.state.news ?? []).filter((n) => this.day - n.day <= 7 && !n.about.includes(a.id) && !n.about.includes(t.id));
     return recent.length ? recent[Math.floor(Math.random() * Math.min(recent.length, 5))].text : undefined;
+  }
+
+  /** `a` siente algo (emoción con causa). Si es nuevo y es de la familia, lo piensa en voz alta. */
+  feel(a: Agent | undefined, id: string, about?: string, hours?: number) {
+    if (!a) return;
+    if (feelEmotion(a, id, this.state.minutes, about, hours) && this.isPlayerMember(a) && !a.travel) {
+      const th = EMOTIONS[id]?.thoughts;
+      if (th?.length && Math.random() < 0.7) this.say(a.id, th[Math.floor(Math.random() * th.length)], 'think');
+    }
+  }
+
+  /** Lleva la cuenta de lo que hace cada uno. */
+  bump(a: Agent, key: string, n = 1) {
+    a.stats = a.stats ?? {};
+    a.stats[key] = (a.stats[key] ?? 0) + n;
   }
 
   /** Un personaje dice (o piensa) algo: lo pinta la escena en un bocadillo. */
@@ -116,6 +170,8 @@ export class World {
     a.needs.social = clamp(a.needs.social + 5);
     this.toast(`¡Deseo cumplido! ${a.name}: ${w.label} (+§${w.reward})`, '⭐');
     this.say(a.id, '¡Sí! ¡Lo he conseguido!', 'say');
+    this.feel(a, 'deseo');
+    this.bump(a, 'wishes_done');
     const next = newWish(this, a);
     if (next) a.wishes.push(next);
   }
@@ -262,6 +318,43 @@ export class World {
     return (this.day - 1) % 7;
   }
 
+  /** Estación (0 primavera … 3 invierno): cada semana, una. */
+  get season(): number {
+    return Math.floor((this.day - 1) / 7) % 4;
+  }
+
+  get seasonDef() {
+    return SEASONS[this.season];
+  }
+
+  /** ¿Está en marcha este evento (en esa parcela, si se dice)? */
+  hasEvent(id: string, lotId?: string): boolean {
+    return !!this.state.events?.some((e) => e.id === id && e.until > this.state.minutes && (!lotId || !e.lotId || e.lotId === lotId));
+  }
+
+  activeEvents() {
+    return (this.state.events ?? []).filter((e) => e.until > this.state.minutes && EVENTS[e.id]);
+  }
+
+  private startEvent(id: string, minutes: number, lotId?: string) {
+    this.state.events = [...this.activeEvents().filter((e) => e.id !== id), { id, until: this.state.minutes + minutes, ...(lotId ? { lotId } : {}) }];
+  }
+
+  /** Lo que cuesta una acción ahora (con ofertas, más barato). */
+  costOf(actionId: string): number {
+    const c = ACTIONS[actionId]?.cost ?? 0;
+    if (this.hasEvent('ofertas') && (actionId === 'shop_small' || actionId === 'shop_big')) return Math.round(c * 0.7);
+    return c;
+  }
+
+  /** Por qué no se puede comprar lotería ahora (o nada si se puede). */
+  lotteryReason(a: Agent): string | undefined {
+    if (this.season !== 3) return 'Solo se vende en invierno, antes de Navidad';
+    if (this.weekday === 6) return 'El sorteo es hoy: ya no se venden';
+    if (this.state.lottery?.includes(a.id)) return 'Ya tiene su décimo';
+    return undefined;
+  }
+
   get hour(): number {
     return Math.floor((this.state.minutes % MINUTES_PER_DAY) / 60);
   }
@@ -276,7 +369,7 @@ export class World {
   }
 
   layoutOf(lotId: string): LotLayout {
-    return LAYOUTS[this.lotById(lotId)?.layout ?? 'house'];
+    return this.layoutFor(this.lotById(lotId));
   }
 
   gridOf(lotId: string): Grid {
@@ -369,9 +462,21 @@ export class World {
     return `${prefix}${this.state.nextId++}`;
   }
 
+  /** Plano de una parcela (las casas, según lo ampliadas que estén). */
+  layoutFor(lot: Lot | undefined): LotLayout {
+    if (!lot) return LAYOUTS.house;
+    if (lot.layout === 'house') return HOUSE_SIZES[Math.max(1, Math.min(3, lot.size ?? 1)) - 1];
+    return LAYOUTS[lot.layout];
+  }
+
+  /** Un sitio del jardín de esa parcela (para las mascotas de exterior). */
+  gardenOf(lotId: string): Vec {
+    return { ...(this.layoutOf(lotId).garden ?? { x: 11, y: 6 }) };
+  }
+
   rebuildGrid() {
     for (const lot of this.state.lots) {
-      const { w, h, tiles } = LAYOUTS[lot.layout];
+      const { w, h, tiles } = this.layoutFor(lot);
       const grid = Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => tiles[y][x] !== 'wall'));
       for (const o of this.objectsIn(lot.id)) {
         const d = this.objDef(o);
@@ -425,7 +530,8 @@ export class World {
     if (actionId === 'adopt' && this.members.length >= MAX_MEMBERS) return { def, ok: false, reason: 'La casa está llena' };
     if (actionId === 'find_job' && !isAdult(a)) return { def, ok: false, reason: 'Primero, el colegio' };
     const funds = this.householdOf(a)?.funds ?? 0;
-    if (def.cost && funds < def.cost) return { def, ok: false, reason: 'No hay dinero' };
+    if (def.cost && funds < this.costOf(actionId)) return { def, ok: false, reason: 'No hay dinero' };
+    if ((ELECTRIC.has(o.def) || POWERED_ACTIONS.has(actionId)) && this.hasEvent('apagon', o.lotId)) return { def, ok: false, reason: 'No hay luz' };
     // Comer de la nevera gasta raciones de la despensa de esa casa.
     if (FRIDGE_FOOD.has(actionId)) {
       const owner = this.pantryOwner(o.lotId);
@@ -435,6 +541,19 @@ export class World {
     const closed = this.closedReason(o.lotId);
     if (closed) return { def, ok: false, reason: closed };
     if (actionId === 'order_groceries' && this.householdOf(a)?.delivery) return { def, ok: false, reason: 'Ya hay un pedido en camino' };
+    if (actionId === 'throw_party') {
+      if (!this.isPlayerMember(a) || o.lotId !== this.household.lotId) return { def, ok: false };
+      if (this.state.party) return { def, ok: false, reason: 'Ya hay una fiesta montada' };
+      if (this.hour < 10 || this.hour >= 21) return { def, ok: false, reason: 'Las fiestas, de 10:00 a 21:00' };
+    }
+    if (actionId === 'day_off') {
+      if (!a.job || CAREERS[a.job.career]?.school) return { def, ok: false, reason: 'No tiene trabajo' };
+      if (a.job.dayOff === this.day + 1) return { def, ok: false, reason: 'Ya lo tiene pedido' };
+    }
+    if (actionId === 'buy_lottery') {
+      const why = this.lotteryReason(a);
+      if (why) return { def, ok: false, reason: why };
+    }
     return { def, ok: true };
   }
 
@@ -478,6 +597,16 @@ export class World {
         if (why) return { def, ok: false, reason: why };
       }
     }
+    const relX = getRel(this.state, a.id, t.id);
+    if (actionId === 'break_up' && relX.status !== 'partner') return { def, ok: false };
+    if (actionId === 'divorce' && relX.status !== 'married') return { def, ok: false };
+    if (actionId === 'apologize' && !this.grudge(t, a) && relX.f >= -10) return { def, ok: false };
+    if (actionId === 'argue' && (a.kind !== 'person' || ['baby'].includes(tStage))) return { def, ok: false };
+    if (actionId === 'train_pet') {
+      if (t.householdId !== a.householdId) return { def, ok: false };
+      if ((t.training ?? 0) >= 100) return { def, ok: false, reason: 'Ya se sabe todos los trucos' };
+    }
+    if (actionId === 'show_trick' && !t.tricks?.length) return { def, ok: false };
     if (a.home) return { def, ok: false, reason: 'No puede salir de su jaula' };
     if (t.home && def.offLot) return { def, ok: false };
     if (def.offLot && (t.householdId !== a.householdId || this.isGuest(a))) return { def, ok: false };
@@ -516,6 +645,7 @@ export class World {
     if (Math.floor(after) > Math.floor(before) && this.isPlayerMember(a)) {
       const s = SKILL_BY_ID[skill.id];
       this.toast(`${a.name} ha subido a ${s.label.toLowerCase()} nivel ${Math.floor(after)}`, s.icon);
+      this.feel(a, 'nivel', s.label.toLowerCase());
       this.wishEvent(a, { skill: skill.id, level: Math.floor(after) });
     }
   }
@@ -583,7 +713,7 @@ export class World {
       color: 0x999999,
       householdId: this.household.id,
       lotId,
-      ...(sp.outdoor ? { x: 11, y: 6 } : entrance),
+      ...(sp.outdoor ? this.gardenOf(this.household.lotId) : entrance),
     });
     if (sp.habitat) {
       const home = this.freeHabitat(sp.habitat)!;
@@ -648,6 +778,7 @@ export class World {
     if (to === this.householdOf(a)?.lotId) a.visitUntil = undefined;
     this.wishEvent(a, { lotKind: this.lotById(to).kind, layout: this.lotById(to).layout });
     this.onArriveShopping(a, to);
+    if (to === this.householdOf(a)?.lotId) this.petGreeting(a);
   }
 
   /** Una casilla libre (sin nadie encima) cerca de un punto, para no aparecer unos encima de otros. */
@@ -732,6 +863,10 @@ export class World {
 
   /** Cada hora: los vecinos salen al parque o vienen de visita. */
   private hourly() {
+    for (const a of this.state.agents) pruneEmotions(a, this.state.minutes);
+    this.partyHour();
+    this.eventsHour();
+    this.checkAspirations();
     if (this.wishesEnabled) topUpWishes(this);
     this.closingTime();
     this.groceryErrand();
@@ -762,8 +897,170 @@ export class World {
   setJob(a: Agent, careerId: string) {
     const c = CAREERS[careerId];
     if (!c || c.school || !isAdult(a)) return;
+    const h = this.householdOf(a);
+    if (c.startup) {
+      if (!h || h.funds < c.startup) {
+        this.toast(`Montar el negocio cuesta §${c.startup}: no hay dinero suficiente`, '💸');
+        return;
+      }
+      h.funds -= c.startup;
+      a.job = { career: careerId, level: 1, perf: 0 };
+      this.feel(a, 'jefe_propio');
+      this.toast(`¡${a.name} monta su propio negocio: ${c.levels[0].title}! (−§${c.startup}). Ojo: cada lunes, cuota de autónomos`, c.icon);
+      this.addNews(`${a.name} ha abierto un bar en el barrio. Dicen que las bravas pican de verdad`, [a.id]);
+      return;
+    }
     a.job = { career: careerId, level: 1, perf: 0 };
     this.toast(`¡${a.name} tiene trabajo! ${c.levels[0].title} (§${c.levels[0].pay} por jornada)`, c.icon);
+  }
+
+  /** Despido: tres jornadas seguidas rindiendo fatal. */
+  private fire(a: Agent) {
+    const c = a.job && CAREERS[a.job.career];
+    a.job = undefined;
+    this.feel(a, 'despedido');
+    if (this.isPlayerMember(a)) this.toast(c?.business ? `El negocio de ${a.name} ha tenido que cerrar` : `¡Han despedido a ${a.name}! Toca buscar otro trabajo`, '📦');
+    this.addNews(c?.business ? `ha cerrado el bar de ${a.name}` : `han despedido a ${a.name}`, [a.id]);
+  }
+
+  // --- Dilemas del trabajo ---------------------------------------------------
+
+  /** A veces, al empezar la jornada, surge algo que hay que decidir. */
+  private maybeDilemma(a: Agent) {
+    if (!this.wishesEnabled || !this.isPlayerMember(a) || this.state.dilemma || !a.job || CAREERS[a.job.career]?.school) return;
+    if (Math.random() > this.dilemmaChance) return;
+    const pool = DILEMMAS.filter((d) => !d.careers || d.careers.includes(a.job!.career));
+    const d = pool[Math.floor(Math.random() * pool.length)];
+    this.state.dilemma = { id: d.id, agentId: a.id, until: a.travel?.arrive ?? this.state.minutes + 240 };
+  }
+  /** Hace un calor de muerte (se actualiza cada hora). */
+  private heatNow = false;
+  /** Esta noche hay apagón (se decide al empezar el día). */
+  private blackoutTonight = false;
+  /** Probabilidad de apagón por día (los tests la cambian). */
+  blackoutChance = 0.04;
+
+  /** Lo que pasa cada día según la estación: olas de calor, ofertas, Navidad... */
+  private seasonalDay() {
+    const wd = this.weekday;
+    const se = this.season;
+    if (wd === 0) this.toast(this.seasonDef.intro, this.seasonDef.icon);
+    if (wd === 0 && se === 0) {
+      for (const m of this.members) if (m.kind === 'person' && partnerOf(this.state, m.id)) this.feel(m, 'enamorado', undefined, 8);
+    }
+    if (se === 1 && wd >= 1 && wd <= 4 && !this.hasEvent('calor') && Math.random() < 0.35) {
+      this.startEvent('calor', 2 * MINUTES_PER_DAY);
+      this.toast('¡Ola de calor! 40 grados a la sombra. Duchas, piscina y batidos', '🥵');
+      this.addNews('hace un calor que no se puede ni respirar', []);
+    }
+    if (se === 2 && wd === 1) {
+      this.startEvent('ofertas', 2 * MINUTES_PER_DAY);
+      this.toast('Días de la huerta en el Mercadona: la compra, un 30% más barata', '🥬');
+    }
+    if (se === 1 && wd === 5) this.toast('Esta noche hay verbena en el parque. ¡Que no falte nadie!', '🎆');
+    if (se === 3 && wd === 6) {
+      this.startEvent('navidad', MINUTES_PER_DAY);
+      for (const m of this.members) if (m.kind === 'person') this.feel(m, 'navidad');
+      const cunado = this.members.find((m) => hasTrait(m, 'cunado'));
+      this.toast(
+        cunado ? `¡Feliz Navidad! En la cena, ${cunado.name} ha explicado cómo arreglar el país. Dos veces` : '¡Feliz Navidad! Turrón, polvorones y villancicos a todo volumen',
+        '🎄',
+      );
+    }
+    this.blackoutTonight = this.wishesEnabled && Math.random() < this.blackoutChance;
+  }
+
+  /** Lo que pasa cada hora con los eventos. */
+  private eventsHour() {
+    const h = this.hour;
+    const se = this.season;
+    const now = this.state.minutes;
+    this.heatNow = this.hasEvent('calor') && h >= 11 && h < 20;
+    if (this.heatNow) for (const m of this.members) if (m.kind === 'person' && !m.travel && m.lotId !== SUPER_LOT) this.feel(m, 'calor', undefined, 2);
+    // Verbena: sábado de verano por la noche, en el parque.
+    if (se === 1 && this.weekday === 5 && h === 19 && !this.hasEvent('verbena')) {
+      const until = now + 6 * 60;
+      this.startEvent('verbena', 6 * 60, PARK_LOT);
+      for (const hh of this.state.households) {
+        if (hh.id === this.household.id || Math.random() < 0.25) continue;
+        for (const p of this.availableVisitors(hh)) {
+          if (p.kind !== 'person') continue;
+          this.startTravel(p, PARK_LOT);
+          p.visitUntil = until;
+        }
+      }
+      this.toast('¡Empieza la verbena en el parque! Música, churros y Paquito el Chocolatero', '🎆');
+    }
+    if (this.hasEvent('verbena')) for (const a of this.agentsIn(PARK_LOT)) if (a.kind === 'person' && !a.travel) this.feel(a, 'verbena');
+    // Apagón: un par de horas sin luz por la noche.
+    if (this.blackoutTonight && h === 21) {
+      this.blackoutTonight = false;
+      const home = this.household.lotId;
+      this.startEvent('apagon', 120, home);
+      for (const a of this.agentsIn(home)) {
+        if (a.kind === 'person' && !a.travel) this.feel(a, 'apagon');
+        const cur = a.current && this.object(a.current.targetObjectId);
+        if (cur && (ELECTRIC.has(cur.def) || POWERED_ACTIONS.has(a.current!.actionId))) this.endTask(a);
+      }
+      this.toast('¡Apagón! Se ha ido la luz en toda la calle. ¿Dónde están las velas?', '🕯️');
+    }
+    // Lotería de Navidad: el sorteo, el último día del invierno a mediodía.
+    if (se === 3 && this.weekday === 6 && h === 12 && this.state.lottery?.length) this.lotteryDraw();
+  }
+
+  private lotteryDraw() {
+    const tickets = this.state.lottery ?? [];
+    this.state.lottery = [];
+    this.toast('Los niños de San Ildefonso cantan el sorteo de la Lotería de Navidad...', '🎶');
+    for (const id of tickets) {
+      const a = this.agent(id);
+      const h = a && this.householdOf(a);
+      if (!a || !h) continue;
+      const r = Math.random();
+      if (r < 0.03) {
+        h.funds += 4000;
+        this.feel(a, 'loteria');
+        this.toast(`¡¡EL GORDO!! ¡A ${a.name} le han tocado §4.000!`, '🤑');
+        this.addNews(`a ${a.name} le ha tocado el Gordo de Navidad`, [a.id]);
+      } else if (r < 0.2) {
+        h.funds += 100;
+        this.toast(`Pedrea para ${a.name}: +§100. Algo es algo`, '🎫');
+      } else if (r < 0.32) {
+        h.funds += 20;
+        this.toast(`Reintegro para ${a.name}: recupera los §20`, '🎫');
+      } else {
+        this.toast(`A ${a.name} no le ha tocado nada. Lo importante es la salud`, '🙃');
+      }
+    }
+  }
+
+  /** Probabilidad de dilema por jornada (los tests la cambian). */
+  dilemmaChance = 0.35;
+
+  /** El jugador elige una opción del dilema (o se elige la última si no contesta a tiempo). */
+  resolveDilemma(index: number) {
+    const dl = this.state.dilemma;
+    if (!dl) return;
+    this.state.dilemma = undefined;
+    const d = DILEMMA_BY_ID[dl.id];
+    const a = this.agent(dl.agentId);
+    const opt = d?.options[Math.max(0, Math.min(index, d.options.length - 1))];
+    if (!d || !a || !opt) return;
+    const res = opt.chance === undefined || Math.random() < opt.chance || !opt.fail ? opt.ok : opt.fail;
+    const h = this.householdOf(a);
+    if (a.job && res.perf) a.job.perf = Math.max(0, Math.min(100, a.job.perf + res.perf));
+    if (h && res.money) h.funds += res.money;
+    if (res.energy) a.needs.energy = clamp(a.needs.energy + res.energy);
+    if (res.emotion) this.feel(a, res.emotion);
+    if (res.skill && a.job) {
+      const sk = CAREER_SKILL[a.job.career];
+      if (sk) {
+        a.skills = a.skills ?? {};
+        a.skills[sk] = Math.min(MAX_SKILL, (a.skills[sk] ?? 0) + res.skill);
+      }
+    }
+    if (res.extraHours && a.travel?.reason === 'work') a.travel.arrive += res.extraHours * 60;
+    this.toast(res.text.replace('{name}', a.name), opt.icon);
   }
 
   quitJob(a: Agent) {
@@ -785,6 +1082,12 @@ export class World {
       this.toastOnce(`${a.id}:shift`, `${a.name} entra ${c.school ? 'a clase' : 'a trabajar'} a las ${c.start}:00`, c.icon, 600);
     }
     if (m < start || m >= end) return;
+    if (job.dayOff === this.day) {
+      job.lastShiftDay = this.day;
+      job.perf = Math.max(0, job.perf - 2);
+      if (mine) this.toast(`${a.name} tiene hoy el día libre`, '🏖️');
+      return;
+    }
     const busy = a.travel || a.hidden || a.current?.actionId === 'pass_out';
     if (busy) {
       if (m >= start + 60) {
@@ -792,6 +1095,10 @@ export class World {
         job.lastShiftDay = this.day;
         job.perf = Math.max(0, job.perf - 15);
         if (mine) this.toast(`${a.name} ha faltado ${c.school ? 'a clase' : 'al trabajo'}`, '😬');
+        if (!c.school) {
+          job.badDays = (job.badDays ?? 0) + 1;
+          if (job.badDays >= 3 && job.perf <= 10) this.fire(a);
+        }
       }
       return;
     }
@@ -802,6 +1109,7 @@ export class World {
     a.travel = { ...a.travel!, arrive: dayStart + end, reason: c.school ? 'school' : 'work', mood: moodScore(a) };
     a.visitUntil = undefined;
     if (mine) this.toast(`${a.name} se va ${c.school ? 'al colegio' : 'a trabajar'}`, c.icon);
+    this.maybeDilemma(a);
   }
 
   /** Al volver: cansancio, sueldo y rendimiento (ascensos o notas). */
@@ -823,17 +1131,32 @@ export class World {
       if (mine && gradeLabel(before) !== gradeLabel(job.perf)) this.toast(`Notas de ${a.name}: ${gradeLabel(job.perf)}`, '📚');
       return;
     }
-    const pay = c.levels[job.level - 1].pay;
+    if (this.state.dilemma?.agentId === a.id) this.resolveDilemma(99);
+    let pay = c.levels[job.level - 1].pay;
+    if (c.business) {
+      // En el negocio propio unos días se gana mucho y otros, nada (o se pierde).
+      pay = Math.random() < 0.12 ? -Math.round(rand(20, 60)) : Math.round(pay * rand(0.3, 1.7) * (0.6 + Math.max(0, mood) / 125));
+    }
     const h = this.householdOf(a);
     if (h) h.funds += pay;
+    const delta = job.perf - before;
+    if (delta >= 12) this.feel(a, 'buen_dia_curro');
+    else if (delta <= -3) this.feel(a, 'mal_dia_curro');
+    job.badDays = job.perf <= 8 ? (job.badDays ?? 0) + 1 : 0;
+    if (job.badDays >= 3) {
+      this.fire(a);
+      return;
+    }
     if (job.perf >= 100 && job.level < c.levels.length) {
       job.level++;
       job.perf = 10;
       const lvl = c.levels[job.level - 1];
       this.addNews(`han ascendido a ${a.name} a ${lvl.title.toLowerCase()}`, [a.id]);
+      this.feel(a, 'ascenso');
       if (mine) this.toast(`¡Ascenso! ${a.name} ahora es ${lvl.title} (§${lvl.pay} por jornada)`, '🎉');
     } else if (mine) {
-      this.toast(`${a.name} vuelve del trabajo: +§${pay}`, '💰');
+      if (c.business && pay < 0) this.toast(`Hoy en el bar de ${a.name} no ha entrado ni el tato: −§${-pay} de gastos`, '🦗');
+      else this.toast(`${a.name} vuelve del ${c.business ? 'bar' : 'trabajo'}: +§${pay}`, '💰');
     }
   }
 
@@ -916,6 +1239,9 @@ export class World {
       const { name, color } = newbornLooks(this.state);
       const baby = makeAgent({ id: this.newId('a'), name, species: 'human', ageDays: 0, color, householdId: h.id, lotId: h.lotId, x: crib.x, y: crib.y });
       baby.home = crib.id;
+      baby.parents = parents.map((p) => p.id);
+      baby.traits = this.inheritTraits(parents);
+      for (const p of parents) this.bump(p, 'babies');
       baby.abstract = !this.detailedLots().has(h.lotId);
       this.state.agents.push(baby);
       h.memberIds.push(baby.id);
@@ -923,6 +1249,7 @@ export class World {
         if (m === baby) continue;
         const parent = parents.includes(m);
         if (m.kind === 'person') setRel(this.state, m.id, baby.id, { f: parent ? 70 : 40, r: 0, kin: true });
+        if (m.kind === 'person') this.feel(m, 'bebe', name);
         else setRel(this.state, m.id, baby.id, { f: 30, r: 0 });
       }
       if (mine) this.toast(`¡Ha nacido ${name}! Bienvenido/a al mundo${parents.length ? `, bebé de ${parents.map((p) => p.name).join(' y ')}` : ''}`, '👶');
@@ -964,6 +1291,10 @@ export class World {
     } else if (after === 'young' && a.job?.career === 'school') {
       a.job = undefined;
       if (mine) this.toast(`${a.name} ha terminado el colegio y ya puede buscar trabajo`, '🎓');
+      if (mine) {
+        a.traitPick = true;
+        this.toast(`${a.name} ya es adulto/a: en su perfil puedes elegir uno de sus rasgos`, '🧬');
+      }
     } else if (after === 'elder' && a.job && a.job.career !== 'school') {
       a.job = undefined;
       if (mine) this.toast(`${a.name} se jubila. ¡A disfrutar! (pensión de §30 al día)`, '🏖️');
@@ -1000,6 +1331,7 @@ export class World {
         if (o.householdId === a.householdId || rel.f >= 45 || rel.status) {
           o.needs.fun = clamp(o.needs.fun - 25);
           o.needs.social = clamp(o.needs.social - 15);
+          if (o.kind === 'person') this.feel(o, 'luto', a.name);
         }
       }
       if (h && mine) this.placeGrave(h.lotId, a);
@@ -1095,7 +1427,7 @@ export class World {
     const sp = SPECIES[species];
     const used = new Set(this.state.agents.map((a) => a.name));
     const name = sp.names.find((n) => !used.has(n)) ?? `${sp.label} ${this.state.nextId}`;
-    const pet = makeAgent({ id: this.newId('a'), name, species, ageDays: sp.stages[0].until, color: 0x999999, householdId: h.id, lotId: h.lotId, ...(sp.outdoor ? { x: 11, y: 6 } : randomIndoorTile()) });
+    const pet = makeAgent({ id: this.newId('a'), name, species, ageDays: sp.stages[0].until, color: 0x999999, householdId: h.id, lotId: h.lotId, ...(sp.outdoor ? this.gardenOf(h.lotId) : randomIndoorTile()) });
     if (sp.habitat) {
       const cage = this.objectsIn(h.lotId).find((o) => o.def === sp.habitat && !this.residentOf(o.id))!;
       pet.home = cage.id;
@@ -1285,10 +1617,11 @@ export class World {
     return { ok: true };
   }
 
-  buy(defId: string, x: number, y: number): boolean {
+  buy(defId: string, x: number, y: number, q: 1 | 2 | 3 = 2): boolean {
     const d = OBJECTS[defId];
     if (!d?.price || !this.canBuildHere()) return false;
-    if (this.household.funds < d.price) {
+    const price = priceOf(d, q);
+    if (this.household.funds < price) {
       this.toast('No hay dinero suficiente', '💸');
       return false;
     }
@@ -1297,17 +1630,53 @@ export class World {
       if (can.reason) this.toast(can.reason, '🚫');
       return false;
     }
-    this.household.funds -= d.price;
+    this.household.funds -= price;
     this.state.objects.push({
       id: this.newId('o'),
       def: defId,
       lotId: this.household.lotId,
       x,
       y,
+      ...(d.tiers && q !== 2 ? { q } : {}),
       ...(d.maxStock ? { stock: 0 } : {}),
       ...(d.maxDirt ? { dirt: 0 } : {}),
     });
     this.rebuildGrid();
+    return true;
+  }
+
+  /** La siguiente ampliación posible de la casa (si queda alguna). */
+  nextExpansion() {
+    const size = this.lotById(this.household.lotId)?.size ?? 1;
+    return EXPANSIONS.find((e) => e.size === size + 1);
+  }
+
+  /** Amplía la casa de la familia: el plano crece y lo del jardín se corre. */
+  expandHouse(): boolean {
+    const ex = this.nextExpansion();
+    const lot = this.lotById(this.household.lotId);
+    if (!ex || !lot || !this.canBuildHere()) return false;
+    if (this.household.funds < ex.price) {
+      this.toast('No hay dinero suficiente para la reforma', '💸');
+      return false;
+    }
+    const before = this.layoutFor(lot);
+    this.household.funds -= ex.price;
+    if (ex.shiftX) {
+      // Todo lo que estaba en el jardín de la derecha se corre para dejar sitio a la habitación.
+      const edge = before.w - 3;
+      for (const o of this.objectsIn(lot.id)) if (o.x >= edge) o.x += ex.shiftX;
+      for (const a of this.agentsIn(lot.id)) {
+        if (a.pos.x >= edge - 0.5) a.pos = { x: a.pos.x + ex.shiftX, y: a.pos.y };
+        a.path = [];
+        if (a.current && !a.home) this.endTask(a);
+      }
+    }
+    lot.size = ex.size;
+    this.rebuildGrid();
+    for (const m of this.members) if (m.kind === 'person') this.feel(m, 'casa_nueva');
+    this.toast(`¡Reforma terminada! ${ex.label}. Los albañiles se han dejado un bocadillo a medias`, '🏗️');
+    this.addNews(`la ${this.household.name} ha hecho obras en casa. Han estado tres semanas con el taladro`, []);
     return true;
   }
 
@@ -1343,7 +1712,7 @@ export class World {
       this.toast(why, '🚫');
       return false;
     }
-    const refund = Math.floor(d.price! * SELL_RATIO);
+    const refund = Math.floor(priceOf(d, o.q ?? 2) * SELL_RATIO);
     this.household.funds += refund;
     this.state.objects = this.state.objects.filter((x) => x !== o);
     this.rebuildGrid();
@@ -1356,7 +1725,7 @@ export class World {
     if (a.kind !== 'person' || a.hidden) return 0;
     let sum = 0;
     for (const o of this.objectsIn(a.lotId)) {
-      const d = this.objDef(o).decor;
+      const d = (this.objDef(o).decor ?? 0) + (o.q === 3 ? 1 : 0);
       if (d && Math.abs(o.x - a.pos.x) <= 2 && Math.abs(o.y - a.pos.y) <= 2) sum += d;
     }
     return Math.min(sum, 3);
@@ -1367,7 +1736,7 @@ export class World {
     const h = this.household;
     if (this.state.familyGone) return;
     for (const o of this.objectsIn(h.lotId)) {
-      if (this.objDef(o).breakable && !o.broken && Math.random() < 0.03) {
+      if (this.objDef(o).breakable && !o.broken && Math.random() < 0.03 * QUALITY[o.q ?? 2].breaks) {
         o.broken = true;
         this.toast(`Se ha estropeado: ${this.objDef(o).name.toLowerCase()}. Toca para repararlo`, '🔧');
       }
@@ -1494,7 +1863,7 @@ export class World {
       const h = this.object(a.home);
       if (h) a.pos = { x: h.x, y: h.y };
     } else if (SPECIES[a.species].outdoor) {
-      a.pos = { x: 11, y: 6 };
+      a.pos = this.gardenOf(a.lotId);
     } else if (this.lotById(a.lotId).kind === 'home' && a.lotId === this.householdOf(a)?.lotId) {
       a.pos = randomIndoorTile();
     } else {
@@ -1539,6 +1908,13 @@ export class World {
         const ms = h.memberIds.map((id) => this.agent(id)!).filter(Boolean);
         const bill = 60 + 20 * ms.filter((m) => m.kind === 'person').length + 10 * ms.filter((m) => m.kind === 'pet').length;
         h.funds -= bill;
+        for (const m of ms) {
+          if (m.job && CAREERS[m.job.career]?.business) {
+            h.funds -= 90;
+            this.feel(m, 'cuota');
+            if (h.id === this.household.id) this.toast(`Cuota de autónomos de ${m.name}: −§90`, '🧾');
+          }
+        }
         if (h.id === this.household.id) {
           this.toast(`Han llegado las facturas de la semana: §${bill}`, '🧾');
           if (h.funds < 0) this.toast('¡Estáis en números rojos!', '⚠️');
@@ -1546,6 +1922,8 @@ export class World {
       }
     }
     this.dailyEvents();
+    this.seasonalDay();
+    this.evolveTraits();
     // Cada día, el deseo más antiguo de cada uno cambia por otro.
     for (const m of this.members) {
       if (m.wishes && m.wishes.length >= 3) {
@@ -1571,12 +1949,27 @@ export class World {
         a.ageDays += step;
         const after = lifeStage(a.species, a.ageDays);
         if (before.id !== after.id) {
-          if (this.isPlayerMember(a)) this.toast(`¡${a.name} ha crecido! Ahora es ${after.label.toLowerCase()}`, '🎂');
+          if (this.isPlayerMember(a)) this.toast(`¡${a.name} ha crecido! Ahora es ${after.label.toLowerCase()}. ¡Feliz cumpleaños!`, '🎂');
+          if (a.kind === 'person' && after.id !== 'baby') this.feel(a, 'cumple');
           this.onStageChange(a, after.id);
         }
       }
       for (const a of [...this.state.agents]) {
         if (Math.random() < this.deathChance(a)) this.die(a, 'old');
+      }
+    }
+    // Dramas del barrio: alguna pareja de vecinos se separa (y hay que contarlo).
+    for (const [k, rel] of Object.entries(this.state.rels)) {
+      if (!rel.status) continue;
+      const [x, y] = k.split('|').map((id) => this.agent(id));
+      if (!x || !y || this.isPlayerMember(x) || this.isPlayerMember(y)) continue;
+      if (x.householdId === y.householdId) rel.r = Math.min(100, rel.r + 0.5);
+      if (Math.random() < 0.004) {
+        const married = rel.status === 'married';
+        rel.status = undefined;
+        rel.r = Math.min(rel.r, 15);
+        if (x.householdId === y.householdId) rel.ex = true;
+        this.addNews(married ? `${x.name} y ${y.name} se han divorciado. Dicen que por una herencia` : `${x.name} y ${y.name} lo han dejado`, [x.id, y.id]);
       }
     }
     // Los vecinos también tienen hijos.
@@ -1628,7 +2021,7 @@ export class World {
     const decay = SPECIES[a.species].decay;
     const homeDirt = a.home ? (this.object(a.home)?.dirt ?? 0) : 0;
     for (const k of NEED_KEYS) {
-      const extra = k === 'hygiene' ? 1 + homeDirt * 0.6 : 1;
+      const extra = k === 'hygiene' ? (1 + homeDirt * 0.6) * (a.kind === 'person' && this.heatNow ? 1.3 : 1) : 1;
       a.needs[k] = clamp(a.needs[k] - decay[k] * dt * mult * extra * traitDecay(a, k));
     }
 
@@ -1704,6 +2097,7 @@ export class World {
         a.needs.hygiene = clamp(a.needs.hygiene - 40);
         this.spawnPuddle(a.lotId, Math.round(a.pos.x), Math.round(a.pos.y));
         this.toastFor(a, a.kind === 'pet' ? `¡${a.name} se ha hecho pis en casa!` : `¡${a.name} se ha hecho pis encima!`, '💦');
+        if (a.kind === 'person') this.feel(a, 'verguenza');
       }
     }
     if (a.needs.energy <= 0 && a.current?.actionId !== 'pass_out' && !(a.current && (ACTIONS[a.current.actionId].effects.energy ?? 0) > 0 && a.current.phase === 'acting')) {
@@ -1834,6 +2228,29 @@ export class World {
       if (def.doneToast) this.toastOnce(`${a.id}:${def.id}`, def.doneToast.replace('{name}', a.name).replace('{obj}', od.name.toLowerCase()), def.icon);
     }
     if (task.actionId === 'adopt' && task.param) this.adopt(task.param as SpeciesId);
+    if (task.actionId === 'throw_party') this.startParty(a);
+    if (task.actionId === 'train_pet') {
+      const pet = this.agent(task.targetAgentId);
+      if (pet) this.trainPet(a, pet);
+    }
+    if (task.actionId === 'show_trick') {
+      const pet = this.agent(task.targetAgentId);
+      const tr = pet?.tricks?.[Math.floor(Math.random() * (pet.tricks?.length ?? 1))];
+      if (pet && tr) {
+        this.say(a.id, `¡${pet.name}, ${tr.toLowerCase()}!`);
+        for (const x of this.agentsIn(a.lotId)) if (x.kind === 'person' && x !== a && !x.hidden && Math.hypot(x.pos.x - pet.pos.x, x.pos.y - pet.pos.y) < 5) x.needs.fun = clamp(x.needs.fun + 10);
+      }
+    }
+    if (task.actionId === 'day_off' && a.job) {
+      a.job.dayOff = this.day + 1;
+      this.toast(`${a.name} tiene libre mañana. ¡A disfrutar!`, '🏖️');
+    }
+    if (task.actionId === 'buy_lottery') {
+      this.state.lottery = [...(this.state.lottery ?? []), a.id];
+      this.toast(`${a.name} ha comprado un décimo. ¡Que toque!`, '🎫');
+    }
+    this.bump(a, task.actionId);
+    this.taskFeelings(a, task, o);
     this.skillPayoff(a, task.actionId);
     this.shopping(a, task.actionId);
     if (task.actionId === 'find_job' && task.param) this.setJob(a, task.param);
@@ -1882,7 +2299,7 @@ export class World {
         return this.endTask(a);
       }
       const hh = this.householdOf(a);
-      if (def.cost && hh) hh.funds -= def.cost;
+      if (def.cost && hh) hh.funds -= this.costOf(task.actionId);
       if (def.consumes) o.stock = Math.max(0, (o.stock ?? 0) - 1);
       if (FRIDGE_FOOD.has(task.actionId)) {
         const owner = this.pantryOwner(o.lotId);
@@ -1904,7 +2321,8 @@ export class World {
       partner = this.agent(task.targetAgentId);
       if (!partner || partner.current?.passiveOf !== a.id) return this.endTask(a);
     }
-    this.applyEffects(a, def.effects, dt);
+    const tq = def.target === 'object' ? this.object(task.targetObjectId)?.q : undefined;
+    this.applyEffects(a, def.effects, dt, tq ? QUALITY[tq].mult : 1);
     if (def.skill) this.practice(a, def.skill, dt);
     if (partner && def.partnerEffects) this.applyEffects(partner, def.partnerEffects, dt);
     task.remaining -= dt;
@@ -1916,10 +2334,10 @@ export class World {
     }
   }
 
-  private applyEffects(a: Agent, effects: Partial<Needs>, dt: number) {
+  private applyEffects(a: Agent, effects: Partial<Needs>, dt: number, mult = 1) {
     for (const k of NEED_KEYS) {
       const e = effects[k];
-      if (e) a.needs[k] = clamp(a.needs[k] + e * dt);
+      if (e) a.needs[k] = clamp(a.needs[k] + e * dt * (e > 0 ? mult : 1));
     }
   }
 
@@ -2092,13 +2510,284 @@ export class World {
 
   /** ¿Acepta `t` la interacción? Si no, rechazo: baja la relación y avisa. */
   private accepts(a: Agent, t: Agent, actionId: string): boolean {
-    if (Math.random() < acceptChance(this.state, a, t, actionId)) return true;
+    let p = acceptChance(this.state, a, t, actionId);
+    const friendly = ['chat', 'joke', 'hug', 'flirt', 'kiss', 'talk', 'niqui', 'ask_partner', 'propose'].includes(actionId);
+    if (t.kind === 'person' && friendly) {
+      // De buen humor se acepta más; con rencor o enfadado, bastante menos.
+      if (p < 1) p *= 0.8 + Math.max(0, Math.min(100, moodScore(t))) / 250;
+      if (this.grudge(t, a)) p *= 0.55;
+      if (hasEmotion(t, 'enfadado')) p *= 0.7;
+    }
+    if (Math.random() < p) return true;
     changeRel(this.state, a.id, t.id, -3, ROMANTIC.has(actionId) ? -5 : 0);
     a.needs.social = clamp(a.needs.social - 10);
     a.needs.fun = clamp(a.needs.fun - 5);
     const text = REJECT_TEXT[actionId] ?? 'ha rechazado a';
+    if (actionId === 'ask_partner' || actionId === 'propose') this.feel(a, 'calabazas', t.name);
+    else if (ROMANTIC.has(actionId)) this.feel(a, 'cobra', t.name);
+    this.remember(a, t, actionId === 'kiss' ? 'cobra' : 'rechazo');
     if (this.isPlayerMember(a) || this.isPlayerMember(t)) this.toast(`${t.name} ${text} ${a.name}`, '😳');
     return false;
+  }
+
+  /** Guarda un recuerdo en la relación de los dos: `doer` hizo `k` (a `victim`). */
+  remember(victim: Agent, doer: Agent, k: string) {
+    const key = relKey(victim.id, doer.id);
+    const rel = this.state.rels[key] ?? (this.state.rels[key] = { f: 0, r: 0 });
+    rel.mem = rel.mem ?? [];
+    rel.mem.push({ k, d: this.day, by: doer.id });
+    if (rel.mem.length > 5) rel.mem.shift();
+  }
+
+  /** Lo que `t` le hizo a `a` y aún no le ha perdonado. */
+  grudge(a: Agent, t: Agent): string | undefined {
+    return grudgeOf(getRel(this.state, a.id, t.id), a.id, t.id, this.day);
+  }
+
+  /** Emociones al terminar algo: lo rico que estaba, lo bien que se ha dormido... */
+  private taskFeelings(a: Agent, task: Task, o?: PlacedObject) {
+    if (a.kind !== 'person') return;
+    const id = task.actionId;
+    if (id === 'acai_bowl' || id === 'smoothie') this.feel(a, 'acai');
+    else if (id === 'cook' && this.skillLevel(a, 'cocina') >= 2) this.feel(a, 'casero');
+    else if (id === 'selfie') this.feel(a, 'selfie');
+    else if (id === 'run' || id === 'pilates' || id === 'reformer') this.feel(a, 'endorfinas');
+    else if (['listen_music', 'read', 'swing', 'sit_bench'].includes(id) && Math.random() < 0.35) this.feel(a, 'inspirado');
+    if (!o) return;
+    const q = o.q ?? 2;
+    if (id === 'sleep' || id === 'nap_bed') {
+      if (q === 3) this.feel(a, 'descansado');
+      else if (q === 1 && Math.random() < 0.6) this.feel(a, 'espalda');
+    }
+    if ((id === 'shower' || id === 'bath') && q === 3) this.feel(a, 'ducha_spa');
+    if (id === 'nap_sofa' && q === 1 && Math.random() < 0.4) this.feel(a, 'espalda');
+  }
+
+  /** Emociones y recuerdos de las interacciones que salen bien. */
+  private socialFeelings(a: Agent, t: Agent, id: string) {
+    const rel = getRel(this.state, a.id, t.id);
+    if (id === 'hug') {
+      this.feel(a, 'abrazo');
+      this.feel(t, 'abrazo');
+    }
+    if (id === 'joke') this.feel(t, 'risas');
+    if (id === 'kiss' || id === 'ask_partner') {
+      this.feel(a, 'enamorado', t.name);
+      this.feel(t, 'enamorado', a.name);
+      if (id === 'kiss' && !(rel.mem ?? []).some((m) => m.k === 'primer_beso')) this.remember(t, a, 'primer_beso');
+    }
+    if (id === 'propose') {
+      this.feel(a, 'boda', t.name);
+      this.feel(t, 'boda', a.name);
+      this.remember(t, a, 'boda');
+    }
+    if (id === 'insult') {
+      this.feel(t, 'insultado', a.name);
+      this.remember(t, a, 'insulto');
+    }
+    if (['pet_animal', 'play_pet', 'cuddle_capy', 'beg_affection', 'play_with_person'].includes(id)) {
+      const person = a.kind === 'person' ? a : t;
+      const pet = a.kind === 'pet' ? a : t;
+      if (person.kind === 'person' && pet.kind === 'pet' && Math.random() < 0.5) this.feel(person, 'mimos', pet.name);
+    }
+  }
+
+  // --- Metas de vida ----------------------------------------------------------
+
+  setAspiration(a: Agent, id: string) {
+    if (!ASPIRATION_BY_ID[id] || !canAspire(this, a)) return;
+    a.aspiration = { id, stage: 0 };
+    this.toast(`${a.name} tiene una nueva meta de vida: ${ASPIRATION_BY_ID[id].label}`, ASPIRATION_BY_ID[id].icon);
+  }
+
+  /** Cada hora: ¿alguien de la familia ha cumplido una etapa de su meta? */
+  private checkAspirations() {
+    if (!this.wishesEnabled) return;
+    for (const m of this.members) {
+      if (!canAspire(this, m)) continue;
+      if (!m.aspiration) {
+        m.aspiration = { id: suggestAspiration(m), stage: 0 };
+        continue;
+      }
+      const def = ASPIRATION_BY_ID[m.aspiration.id];
+      const st = def?.stages[m.aspiration.stage];
+      if (!def || !st || !st.done(this, m)) continue;
+      m.aspiration.stage++;
+      const last = m.aspiration.stage >= def.stages.length;
+      const reward = last ? 1500 : 150 * m.aspiration.stage;
+      this.household.funds += reward;
+      if (last) {
+        this.feel(m, 'orgulloso', def.label, 72);
+        m.aspirationsDone = [...(m.aspirationsDone ?? []), def.id];
+        this.toast(`¡${m.name} ha cumplido su meta de vida: ${def.label}! +§${reward}`, '🏆');
+        this.addNews(`${m.name} ha cumplido su sueño: ${def.label.toLowerCase()}`, [m.id]);
+        this.say(m.id, '¡Lo he conseguido! ¡Mi sueño!', 'say');
+      } else {
+        this.feel(m, 'orgulloso', def.label);
+        this.toast(`Meta de ${m.name}: «${st.label}» ✓ (+§${reward})`, def.icon);
+      }
+    }
+  }
+
+  /** Los hijos sacan un rasgo de su padre o de su madre; el otro es suyo. */
+  private inheritTraits(parents: Agent[]): string[] {
+    const pool = parents.flatMap((p) => traitsOf(p).map((t) => t.id));
+    const any = () => TRAITS[Math.floor(Math.random() * TRAITS.length)].id;
+    const first = pool.length ? pool[Math.floor(Math.random() * pool.length)] : any();
+    let second = any();
+    for (let i = 0; i < 20 && (second === first || [first, second].sort().join() === 'grunon,optimista'); i++) second = any();
+    if (second === first) second = first === 'bromista' ? 'optimista' : 'bromista';
+    return [first, second];
+  }
+
+  /** Los hábitos cambian a la gente: quien corre mucho acaba siendo deportista. */
+  private evolveTraits() {
+    for (const m of this.members) {
+      if (m.kind !== 'person' || !['teen', 'young', 'adult', 'elder'].includes(this.stageOf(m))) continue;
+      if (m.traitChangedDay !== undefined && this.day - m.traitChangedDay < 7) continue;
+      const ts = traitsOf(m).map((t) => t.id);
+      let best: { trait: string; ratio: number; sum: number } | undefined;
+      for (const h of HABITS) {
+        if (ts.includes(h.trait)) continue;
+        const sum = h.actions.reduce((acc, k) => acc + (m.stats?.[k] ?? 0), 0) - (m.stats?.[`base_${h.trait}`] ?? 0);
+        const ratio = sum / h.min;
+        if (ratio >= 1 && (!best || ratio > best.ratio)) best = { trait: h.trait, ratio, sum };
+      }
+      if (!best) continue;
+      // Se pierde el rasgo que menos encaja con lo que hace ahora (y nunca gruñón y optimista a la vez).
+      const habitRatio = (t: string) => {
+        const h = HABITS.find((x) => x.trait === t);
+        return h ? h.actions.reduce((acc, k) => acc + (m.stats?.[k] ?? 0), 0) / h.min : 0;
+      };
+      const clash = best.trait === 'grunon' ? 'optimista' : best.trait === 'optimista' ? 'grunon' : '';
+      const out = ts.includes(clash) ? clash : [...ts].sort((x, y) => habitRatio(x) - habitRatio(y))[0];
+      m.traits = ts.map((t) => (t === out ? best!.trait : t));
+      m.traitChangedDay = this.day;
+      m.stats = m.stats ?? {};
+      m.stats[`base_${best.trait}`] = (m.stats[`base_${best.trait}`] ?? 0) + best.sum;
+      const nt = TRAIT_BY_ID[best.trait];
+      const ot = TRAIT_BY_ID[out];
+      this.toast(`${HABIT_TEXT[best.trait] ?? 'Con el tiempo...'} ¡${m.name} se ha vuelto ${nt.label.toLowerCase()}!${ot ? ` (ya no es ${ot.label.toLowerCase()})` : ''}`, nt.icon);
+      this.addNews(`${m.name} ha cambiado mucho: ahora es ${nt.label.toLowerCase()}`, [m.id]);
+    }
+  }
+
+  /** Cambia un rasgo (al hacerse adulto se puede elegir uno). */
+  pickTrait(a: Agent, oldId: string, newId: string) {
+    const ts = traitsOf(a).map((t) => t.id);
+    if (!a.traitPick || !ts.includes(oldId) || ts.includes(newId)) return;
+    if ((newId === 'grunon' && ts.includes('optimista') && oldId !== 'optimista') || (newId === 'optimista' && ts.includes('grunon') && oldId !== 'grunon')) return;
+    a.traits = ts.map((t) => (t === oldId ? newId : t));
+    a.traitPick = false;
+    this.toast(`${a.name} ahora es ${TRAIT_BY_ID[newId].label.toLowerCase()}`, TRAIT_BY_ID[newId].icon);
+  }
+
+  // --- Mascotas: trucos y persona favorita ------------------------------------
+
+  /** La persona de la familia a la que más quiere (si quiere a alguien de verdad). */
+  favoriteOf(pet: Agent): Agent | undefined {
+    if (pet.kind !== 'pet') return undefined;
+    let best: Agent | undefined;
+    let bf = 25;
+    for (const id of this.householdOf(pet)?.memberIds ?? []) {
+      const p = this.agent(id);
+      if (!p || p.kind !== 'person') continue;
+      const f = getRel(this.state, pet.id, p.id).f;
+      if (f > bf) {
+        bf = f;
+        best = p;
+      }
+    }
+    return best;
+  }
+
+  /** Una sesión de adiestramiento: más rápido si es listo, si está contento y con su persona favorita. */
+  private trainPet(person: Agent, pet: Agent) {
+    const learn = PET_TRAIT_BY_ID[pet.petTrait ?? '']?.learn ?? 1;
+    const fav = this.favoriteOf(pet) === person ? 1.3 : 1;
+    const mood = moodScore(pet);
+    if (mood < 25) {
+      this.toastFor(person, `${pet.name} no está por la labor hoy`, SPECIES[pet.species].icon);
+      return;
+    }
+    const before = pet.training ?? 0;
+    pet.training = Math.min(100, before + 11 * learn * fav * (0.7 + mood / 160));
+    const list = TRICKS[pet.species] ?? [];
+    const known = Math.min(list.length, Math.floor(pet.training / 20));
+    pet.tricks = pet.tricks ?? [];
+    while (pet.tricks.length < known) {
+      const trick = list[pet.tricks.length];
+      pet.tricks.push(trick);
+      this.feel(person, 'truco', pet.name);
+      this.bump(person, 'tricks');
+      if (this.isPlayerMember(person)) this.toast(`¡${pet.name} ha aprendido un truco: ${trick}!`, '🎪');
+      this.addNews(`${pet.name}, la mascota de la ${this.householdOf(pet)?.name ?? 'familia'}, sabe ${trick.toLowerCase()}`, [pet.id]);
+    }
+  }
+
+  /** Al llegar a casa, la mascota recibe a su persona favorita. */
+  private petGreeting(a: Agent) {
+    if (a.kind !== 'person' || !this.isPlayerMember(a)) return;
+    for (const pet of this.members) {
+      if (pet.kind !== 'pet' || pet.lotId !== a.lotId || pet.travel || pet.hidden || pet.home) continue;
+      if (this.favoriteOf(pet) !== a) continue;
+      pet.needs.social = clamp(pet.needs.social + 20);
+      a.needs.social = clamp(a.needs.social + 8);
+      this.feel(a, 'mimos', pet.name);
+      const how: Partial<Record<SpeciesId, string>> = { dog: 'moviendo el rabo como loco', cat: 'restregándose por sus piernas', ferret: 'dando saltitos', capybara: 'con toda la calma del mundo' };
+      this.toastOnce(`${pet.id}:greet`, `¡${pet.name} recibe a ${a.name} ${how[pet.species] ?? 'muy contento'}!`, SPECIES[pet.species].icon, 360);
+    }
+  }
+
+  // --- Fiestas ---------------------------------------------------------------
+
+  /** La familia monta una fiesta en casa: vienen vecinos de varias familias. */
+  startParty(host: Agent) {
+    const lotId = this.household.lotId;
+    const until = Math.min(this.state.minutes + 240, this.endOfVisits() + 60);
+    const birthday = this.members.find((m) => hasEmotion(m, 'cumple'))?.name;
+    this.state.party = { lotId, host: host.id, until, ...(birthday ? { birthday } : {}) };
+    // Se invita a gente de varias familias (primero a los amigos).
+    const guests: Agent[] = [];
+    const others = this.state.households.filter((h) => h.id !== this.household.id).sort(() => Math.random() - 0.5);
+    for (const h of others) {
+      const ppl = this.availableVisitors(h).filter((x) => x.kind === 'person' && this.stageOf(x) !== 'child');
+      ppl.sort((x, y) => getRel(this.state, host.id, y.id).f - getRel(this.state, host.id, x.id).f);
+      for (const p of ppl.slice(0, 2)) guests.push(p);
+      if (guests.length >= 6) break;
+    }
+    for (const g of guests) {
+      this.startTravel(g, lotId);
+      g.visitUntil = until;
+    }
+    for (const m of this.members) if (m.kind === 'person' && m.lotId === lotId) this.feel(m, 'fiesta', undefined, 4);
+    this.noVisitsUntil = until;
+    this.toast(birthday ? `¡Fiesta de cumpleaños de ${birthday}! Vienen ${guests.length} invitados` : `¡Fiesta en casa! Vienen ${guests.length} invitados`, '🥳');
+  }
+
+  private partyHour() {
+    const p = this.state.party;
+    if (!p) return;
+    const here = this.agentsIn(p.lotId).filter((x) => x.kind === 'person' && !x.travel);
+    for (const x of here) this.feel(x, 'fiesta', undefined, 4);
+    if (this.state.minutes < p.until) return;
+    // Fin de fiesta: buen recuerdo, nuevos amigos y alguna resaca.
+    const host = this.agent(p.host);
+    for (const x of here) {
+      this.feel(x, 'fiesta');
+      if (host && x !== host) {
+        changeRel(this.state, host.id, x.id, 8);
+        this.remember(x, host, 'fiesta');
+      }
+      if (isAdult(x) && !hasTrait(x, 'fiestero') && Math.random() < 0.3) this.feel(x, 'resaca', undefined, 10);
+    }
+    for (let i = 0; i < here.length; i++) for (let j = i + 1; j < here.length; j++) changeRel(this.state, here[i].id, here[j].id, 3);
+    if (host) this.bump(host, 'parties');
+    const guests = here.filter((x) => x.householdId !== this.household.id).length;
+    const good = guests >= 3;
+    this.toast(good ? '¡La fiesta ha sido todo un éxito!' : 'La fiesta ha estado... tranquila', good ? '🎉' : '😅');
+    this.addNews(p.birthday ? `la fiesta de cumpleaños de ${p.birthday} fue la comidilla del barrio` : `la fiesta de la ${this.household.name} ${good ? 'fue un fiestón' : 'fue un poco sosa'}`, host ? [host.id] : []);
+    this.state.party = undefined;
   }
 
   /** Coquetear delante de la pareja tiene consecuencias. */
@@ -2109,6 +2798,8 @@ export class World {
       const p = this.agent(pid);
       if (!p || p.lotId !== who.lotId || p.travel || p.hidden) continue;
       changeRel(this.state, who.id, p.id, -12, -15);
+      this.feel(p, 'celos', who.name);
+      this.remember(p, who, 'celos');
       changeRel(this.state, other.id, p.id, -10, 0);
       if (this.isPlayerMember(who) || this.isPlayerMember(p)) this.toast(`¡${p.name} ha pillado a ${who.name} coqueteando con ${other.name}!`, '😠');
     }
@@ -2140,6 +2831,7 @@ export class World {
       this.addNews(`${a.name} y ${t.name} se casan`, [a.id, t.id]);
     }
     if (actionId === 'move_in') this.moveIn(t);
+    this.socialFeelings(a, t, actionId);
     if (actionId === 'try_baby') {
       const h = this.householdOf(a);
       if (h && !h.expecting && Math.random() < 0.7) {
@@ -2152,6 +2844,34 @@ export class World {
       if (crib) crib.dirt = 0;
     }
     if (actionId === 'insult' && loud) this.toastOnce(`${key}:insult`, `${a.name} y ${t.name} han discutido`, '🤬', 120);
+    if (actionId === 'argue') {
+      this.feel(a, 'enfadado', t.name);
+      this.feel(t, 'enfadado', a.name);
+      this.remember(t, a, 'pelea');
+      if (loud) this.toastOnce(`${key}:argue`, `¡Bronca entre ${a.name} y ${t.name}!`, '💢', 120);
+    }
+    if (actionId === 'apologize') {
+      forget(t, 'enfadado');
+      forget(t, 'insultado');
+      forget(a, 'enfadado');
+      this.remember(t, a, 'perdon');
+      this.feel(a, 'reconciliados', t.name);
+      this.feel(t, 'reconciliados', a.name);
+      if (loud) this.toast(`${t.name} acepta las disculpas de ${a.name}. ¡Hacen las paces!`, '🕊️');
+    }
+    if ((actionId === 'break_up' || actionId === 'divorce') && rel) {
+      const divorce = actionId === 'divorce';
+      rel.status = undefined;
+      if (a.householdId === t.householdId) rel.ex = true;
+      this.remember(t, a, divorce ? 'divorcio' : 'ruptura');
+      this.feel(t, 'corazon_roto', a.name);
+      this.feel(a, 'corazon_roto', t.name, 24);
+      if (loud) {
+        this.toast(divorce ? `${a.name} y ${t.name} se divorcian` : `${a.name} ha cortado con ${t.name}`, '💔');
+        if (rel.ex) this.toast('...pero siguen viviendo juntos. La hipoteca no entiende de sentimientos', '🏠');
+      }
+      this.addNews(divorce ? `${a.name} y ${t.name} se han divorciado` : `${a.name} y ${t.name} lo han dejado`, [a.id, t.id]);
+    }
     if (actionId === 'insult' && (rel?.f ?? 0) <= -50) this.addNews(`${a.name} y ${t.name} no se pueden ni ver`, [a.id, t.id]);
   }
 

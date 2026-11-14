@@ -1,5 +1,6 @@
 import { HOUSE_OBJECTS, START_OBJECTS } from '../data/lot';
 import { OBJECTS } from '../data/objects';
+import { PET_TRAITS } from '../data/pets';
 import { SAVE_VERSION } from '../sim/world';
 import { PLAYER_LOT, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
 import { setRel } from '../sim/social';
@@ -54,6 +55,13 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
         if (people.length >= 2) setRel(s, people[0].id, people[1].id, { f: 70, r: 75, status: 'partner' });
       }
       setupFamilyLife(s, members, { jobs: !player });
+    }
+  },
+  // v8 → v9: emociones, metas de vida, mascotas con carácter, estaciones (todo son campos nuevos opcionales).
+  8: (s) => {
+    s.events = s.events ?? [];
+    for (const a of s.agents) {
+      if (a.kind === 'pet' && !a.petTrait) a.petTrait = PET_TRAITS[Math.floor(Math.random() * PET_TRAITS.length)].id;
     }
   },
   // v7 → v8: el Mercadona, los locales de açaí y la despensa.
