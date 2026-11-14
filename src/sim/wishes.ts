@@ -56,7 +56,10 @@ export function newWish(world: World, a: Agent): Wish | null {
   if (stage !== 'child') {
     options.push({ id: wid(), kind: 'action', label: 'Conversar con un vecino', icon: '💬', action: 'talk', target: 'vecino', reward: reward() + 10 });
     options.push({ id: wid(), kind: 'place', label: 'Ir al parque', icon: '🌳', lot: 'park', reward: reward() });
-    options.push({ id: wid(), kind: 'place', label: 'Ir al estudio de pilates', icon: '🧘', lot: 'venue', reward: reward() });
+    options.push({ id: wid(), kind: 'place', label: 'Ir al estudio de pilates', icon: '🧘', lot: 'studio', reward: reward() });
+    options.push({ id: wid(), kind: 'place', label: 'Tomarse algo en un local de açaí', icon: '🫐', lot: 'acai', reward: reward() });
+    options.push({ id: wid(), kind: 'action', label: 'Hacer la compra en el Mercadona', icon: '🛒', action: 'shop_small', reward: reward() });
+    options.push({ id: wid(), kind: 'action', label: 'Comerse un açaí bowl', icon: '🫐', action: 'acai_bowl', reward: reward() });
     const sk = pick(SKILLS);
     const lvl = Math.floor(a.skills?.[sk.id] ?? 0) + 1;
     if (lvl <= 10) options.push({ id: wid(), kind: 'skill', label: `Llegar a ${sk.label.toLowerCase()} nivel ${lvl}`, icon: sk.icon, skill: sk.id, level: lvl, reward: 40 + lvl * 10 });
@@ -80,14 +83,16 @@ export function topUpWishes(world: World) {
 }
 
 /** ¿Lo que acaba de pasar cumple algún deseo? */
-export function matchWish(a: Agent, ev: { action?: string; target?: string; targetHousehold?: string; lotKind?: string; skill?: string; level?: number }, playerHousehold: string): Wish | undefined {
+export function matchWish(a: Agent, ev: { action?: string; target?: string; targetHousehold?: string; lotKind?: string; layout?: string; skill?: string; level?: number }, playerHousehold: string): Wish | undefined {
   return (a.wishes ?? []).find((w) => {
-    if (w.kind === 'action' && ev.action === w.action) {
+    // La compra grande también vale para el deseo de hacer la compra.
+    const sameAction = ev.action === w.action || (w.action === 'shop_small' && ev.action === 'shop_big');
+    if (w.kind === 'action' && sameAction) {
       if (!w.target) return true;
       if (w.target === 'vecino') return !!ev.targetHousehold && ev.targetHousehold !== playerHousehold;
       return w.target === ev.target;
     }
-    if (w.kind === 'place') return ev.lotKind === w.lot;
+    if (w.kind === 'place') return ev.layout === (w.lot === 'venue' ? 'studio' : w.lot) || (w.lot === 'park' && ev.lotKind === 'park');
     if (w.kind === 'skill') return ev.skill === w.skill && (ev.level ?? 0) >= (w.level ?? 99);
     return false;
   });

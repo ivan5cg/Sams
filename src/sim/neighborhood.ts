@@ -1,6 +1,6 @@
 // Creación del barrio: las 9 familias vecinas, sus casas y el parque.
 
-import { HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, type ObjectPlacement } from '../data/lot';
+import { ACAI_OBJECTS, HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, SUPER_OBJECTS, type ObjectPlacement } from '../data/lot';
 import { CAREER_SKILL } from '../data/skills';
 import { OBJECTS } from '../data/objects';
 import { JOB_CAREERS } from '../data/careers';
@@ -11,6 +11,8 @@ import { NEED_KEYS, type Agent, type Lot, type Needs, type SpeciesId, type World
 export const PLAYER_LOT = 'L0';
 export const PARK_LOT = 'P';
 export const STUDIO_LOT = 'G';
+export const SUPER_LOT = 'M';
+export const ACAI_LOTS = ['A1', 'A2'];
 export const NEIGHBOUR_COUNT = 9;
 
 const SURNAMES = ['López', 'Martín', 'Sánchez', 'Romero', 'Navarro', 'Torres', 'Díaz', 'Moreno', 'Gil', 'Ruiz', 'Ortega', 'Molina'];
@@ -96,6 +98,23 @@ export function addStudio(state: WorldState) {
   placeObjects(state, STUDIO_LOT, STUDIO_OBJECTS);
 }
 
+/** El Mercadona y los locales de açaí. */
+export function addShops(state: WorldState) {
+  if (!state.lots.some((l) => l.id === SUPER_LOT)) {
+    state.lots.push({ id: SUPER_LOT, name: 'Mercadona', kind: 'venue', layout: 'super', style: { wall: 0xf4f4ef, floor: 0xe3eaee } });
+    placeObjects(state, SUPER_LOT, SUPER_OBJECTS);
+  }
+  const acais = [
+    { id: ACAI_LOTS[0], name: 'Açaí Bowl & Co', style: { wall: 0xe6d4f2, floor: 0xead9c6 } },
+    { id: ACAI_LOTS[1], name: 'Açaí Tropical', style: { wall: 0xcfeee3, floor: 0xe2cfb0 } },
+  ];
+  for (const a of acais) {
+    if (state.lots.some((l) => l.id === a.id)) continue;
+    state.lots.push({ id: a.id, name: a.name, kind: 'venue', layout: 'acai', style: a.style });
+    placeObjects(state, a.id, ACAI_OBJECTS);
+  }
+}
+
 /** Nombre y color de ropa para un recién nacido. */
 export function newbornLooks(state: WorldState): { name: string; color: number } {
   const used = new Set(state.agents.map((a) => a.name));
@@ -108,6 +127,7 @@ export function generateNeighborhood(state: WorldState) {
   state.lots.push({ id: PARK_LOT, name: 'Parque del barrio', kind: 'park', layout: 'park' });
   placeObjects(state, PARK_LOT, PARK_OBJECTS);
   addStudio(state);
+  addShops(state);
 
   // Al menos una mascota de cada especie en el barrio.
   const petPool: SpeciesId[] = shuffle(['dog', 'cat', 'guineapig', 'ferret', 'capybara']);
@@ -175,7 +195,7 @@ export function generateFamily(state: WorldState, lotId: string, petPool: Specie
   const members = [...adults, ...kids, ...pets];
   for (const m of members) m.abstract = true;
   state.agents.push(...members);
-  const household = { id: hid, name: `Familia ${surname}`, funds: Math.round(rand(800, 4000)), memberIds: members.map((m) => m.id), lotId };
+  const household = { id: hid, name: `Familia ${surname}`, funds: Math.round(rand(800, 4000)), memberIds: members.map((m) => m.id), lotId, pantry: 15 };
   state.households.push(household);
   setupFamilyLife(state, members, { jobs: true });
   return household;

@@ -49,6 +49,21 @@ export function contextPairs(world: World, a: Agent, t: Agent): [string, string]
   if (rel.status) pairs.push(['Te quiero, ¿lo sabías?', 'Y yo a ti, tontorrón/a']);
   if (rel.f <= -20) pairs.push(['¿Qué miras?', 'Nada, nada...']);
 
+  // Según dónde estén
+  const layout = world.lotById(a.lotId)?.layout;
+  if (layout === 'super') {
+    pairs.push(['¡Hombre, vecino! ¿Tú también por aquí?', 'Aquí, a por cuatro cosas... y salgo con cuarenta']);
+    pairs.push(['¿Has visto cómo ha subido el aceite?', 'Ni lo mires, que duele']);
+    pairs.push(['¿Sabes dónde está el tomate frito?', 'Lo han cambiado de sitio otra vez']);
+  }
+  if (layout === 'acai') {
+    pairs.push(['¿Has probado el bowl con mantequilla de cacahuete?', '¡Está buenísimo!']);
+    pairs.push(['Esto es lo más sano que he comido en mi vida', 'Y lo más caro, también']);
+    if (hasTrait(a, 'cunado')) pairs.push(['Esto del açaí es una moda, te lo digo yo', 'Pero bien que te lo estás comiendo']);
+  }
+  const hh2 = world.householdOf(a);
+  if (hh2 && (hh2.pantry ?? 0) <= 2 && hh2.id === t.householdId) pairs.push(['La nevera está vacía', 'Pues habrá que ir al Mercadona']);
+
   const news = world.gossipFor(a, t);
   if (news) pairs.push([`¿Te has enterado de que ${news}?`, pick(hasTrait(t, 'cunado') ? CUNADO_NEWS_REPLIES : NEWS_REPLIES)]);
 

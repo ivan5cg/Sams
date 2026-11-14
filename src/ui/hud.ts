@@ -618,11 +618,14 @@ export class Hud {
         const coming = w.state.agents.filter((x) => x.travel?.to === lotId && w.isPlayerMember(x));
         const mine = lot.householdId === w.household.id;
         const hh = lot.householdId ? w.state.households.find((h) => h.id === lot.householdId) : undefined;
-        const title = mine ? `🏡 Vuestra casa` : lot.kind === 'park' ? '🌳 Parque del barrio' : lot.kind === 'venue' ? `🧘 ${esc(lot.name)}` : `🏠 ${esc(hh?.name ?? lot.name)}`;
+        const venueIcon = lot.layout === 'super' ? '🛒' : lot.layout === 'acai' ? '🫐' : '🧘';
+        const closed = lot.kind === 'venue' ? w.closedReason(lotId) : undefined;
+        const title = mine ? `🏡 Vuestra casa` : lot.kind === 'park' ? '🌳 Parque del barrio' : lot.kind === 'venue' ? `${venueIcon} ${esc(lot.name)}${closed ? ' <span class="muted small">· cerrado</span>' : ''}` : `🏠 ${esc(hh?.name ?? lot.name)}`;
         // Quién vive ahí y no está
         const awayResidents = hh && !mine ? hh.memberIds.map((id) => w.agent(id)!).filter((x) => x.lotId !== lotId || x.travel) : [];
         const go = w.canTravel(a, lotId);
-        const goLabel = mine ? 'Volver a casa' : lot.kind === 'park' ? 'Ir al parque' : lot.kind === 'venue' ? 'Ir a clase' : 'Ir de visita';
+        const venueGo = lot.layout === 'super' ? 'Ir a hacer la compra' : lot.layout === 'acai' ? 'Ir a por un açaí' : 'Ir a clase';
+        const goLabel = mine ? 'Volver a casa' : lot.kind === 'park' ? 'Ir al parque' : lot.kind === 'venue' ? venueGo : 'Ir de visita';
         const btns: string[] = [];
         if (a.lotId === lotId && !a.travel) btns.push(`<span class="here">📍 ${esc(a.name)} está aquí</span>`);
         else if (leaderOk) btns.push(`<button class="map-btn" data-go="${lotId}" ${go.ok ? '' : 'disabled'}>🚶 ${goLabel}</button>`);
@@ -712,6 +715,12 @@ export class Hud {
       const parts: string[] = [];
       if (d.maxStock) parts.push(`Comida: ${o.stock ?? 0}/${d.maxStock}`);
       if (d.maxDirt) parts.push((o.dirt ?? 0) === 0 ? 'Limpio' : `Suciedad: ${o.dirt}/${d.maxDirt}`);
+      if (o.def === 'fridge') {
+        const owner = w.pantryOwner(o.lotId);
+        if (owner) parts.push(`Raciones: ${owner.pantry ?? 0}${owner.delivery ? ' · pedido en camino' : ''}`);
+      }
+      const shut = w.closedReason(o.lotId);
+      if (shut) parts.push(shut);
       const resident = w.residentOf(o.id);
       if (resident) parts.push(`Aquí vive ${resident.name}`);
       subtitle = parts.join(' · ');

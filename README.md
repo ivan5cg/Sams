@@ -22,7 +22,8 @@ Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
 
 ## El barrio
 
-Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus niños y mascotas) y un **parque**.
+Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus niños y mascotas), un **parque**,
+un estudio de pilates, un **Mercadona** y dos locales de **açaí**.
 
 - Con el botón 🗺️ abres el mapa: el personaje activo puede ir al parque o de visita a otra casa,
   y llevarse a quien quiera de los que están con él (por ejemplo, al perro).
@@ -46,7 +47,7 @@ Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus n
 - **Trabajo**: búscalo en el ordenador (cocina, oficina, veterinaria, música o ciencia). Cada uno se va solo a su
   hora y vuelve al salir, cansado y con el sueldo. Si va de buen humor rinde más y asciende (5 niveles por carrera).
 - Los niños y adolescentes van al **colegio** por la mañana; su ánimo se nota en las notas.
-- **Dinero**: comer de la nevera cuesta (§6, o §2 picar algo) y cada lunes llegan las **facturas**
+- **Dinero**: la comida se compra en el Mercadona (ver más abajo) y cada lunes llegan las **facturas**
   (§60 + §20 por persona + §10 por mascota).
 
 ## Ciclo de vida y generaciones
@@ -103,6 +104,18 @@ Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus n
 
 En el mapa del barrio hay un **estudio de pilates**: esterillas gratis y clases de reformer (§12) que dan más
 forma física. Los vecinos también van. Las esterillas también se pueden comprar para casa.
+
+## Mercadona, açaí y la compra
+
+- La nevera de casa tiene **raciones** (se ven al tocarla). Comer, picar o cocinar gasta una. Si se vacía,
+  no se puede comer en casa: toca ir al **Mercadona** (abre de 9:00 a 21:30).
+- En la caja: **compra pequeña** (§45, 8 raciones) o **compra grande** (§95, 20 raciones). La compra va en la bolsa
+  y llena la nevera al llegar a casa. También hay fruta suelta (§3) y se puede pasear por los pasillos a cotillear.
+- Si la nevera se queda casi vacía, alguien libre de la familia va solo a hacer la compra. Y desde el ordenador
+  se puede **pedir la compra a domicilio** (§70, llega en 4 horas, 8 raciones).
+- Dos locales de **açaí** (de 10:00 a 22:00): açaí bowls (§9), batidos (§6) y un neón para hacerse selfies.
+  Los vecinos también se dejan caer, y a los deportistas y a los tragones les encanta.
+- A la hora de cerrar echan a todo el mundo a casa. Y el cuñado tiene opiniones sobre pagar 9 euros por un yogur morado.
 
 ## Ñiqui ñiqui
 

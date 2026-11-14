@@ -68,6 +68,10 @@ export interface Agent {
   wishes?: Wish[];
   /** Rasgos de personalidad (personas). */
   traits?: string[];
+  /** Raciones de compra que lleva a casa. */
+  carrying?: number;
+  /** Recado que está haciendo por su cuenta (ir a hacer la compra). */
+  errand?: 'compra';
   /** Está de visita (o en el parque) hasta este minuto; después vuelve a casa. Solo vecinos. */
   visitUntil?: number;
   /** Simulado de forma resumida (vecinos en parcelas donde no está el jugador). */
@@ -82,7 +86,8 @@ export interface Wish {
   action?: string;
   /** Con quién (id), o 'vecino' para cualquiera de otra familia. */
   target?: string;
-  lot?: 'park' | 'venue';
+  /** Plano del sitio al que ir ('venue' = estudio, en partidas antiguas). */
+  lot?: 'park' | 'venue' | 'studio' | 'super' | 'acai';
   skill?: string;
   level?: number;
   money?: number;
@@ -135,6 +140,10 @@ export interface Household {
   lotId: string;
   /** Bebé en camino. */
   expecting?: { parents: string[]; due: number };
+  /** Raciones de comida en la nevera de casa. */
+  pantry?: number;
+  /** Compra a domicilio en camino. */
+  delivery?: { at: number; amount: number };
 }
 
 export interface Lot {
@@ -142,7 +151,7 @@ export interface Lot {
   name: string;
   /** home = casa de una familia; park/venue = sitios públicos (parque, estudio de pilates). */
   kind: 'home' | 'park' | 'venue';
-  layout: 'house' | 'park' | 'studio';
+  layout: 'house' | 'park' | 'studio' | 'super' | 'acai';
   householdId?: string;
   /** Colores propios de cada casa. */
   style?: { wall: number; floor: number };

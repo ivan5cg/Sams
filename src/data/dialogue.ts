@@ -132,6 +132,13 @@ export const ACTION_QUIPS: Record<string, string[]> = {
   clean_litter: ['Qué asco...', 'Misión cumplida'],
   swing: ['¡Más alto!', '¡Wiii!'],
   sit_bench: ['Aquí se está de lujo', 'Qué bien se está a la fresca'],
+  shop_small: ['¿Quiere bolsa? —No, traigo la mía', 'Vengo a por pan y me llevo media tienda', 'Esto la semana pasada estaba más barato'],
+  shop_big: ['¡Ciento veinte euros! ¿Pero qué he comprado?', 'Necesito otro carro', 'Que no se me olvide el papel higiénico'],
+  browse_aisles: ['¿Dónde estará el tomate frito?', '¡Han cambiado todo de sitio otra vez!', 'Uy, esto es nuevo... al carro', 'La pizza de jamón y queso, la mejor', '¿Y la leche? ¿Dónde han puesto la leche?'],
+  buy_fruit: ['Qué buena pinta tienen estas fresas', 'Una manzana al día...'],
+  acai_bowl: ['Esto es superfood, ¿eh?', 'Lleva granola, plátano, fresas... y lo morado', 'Qué rico y qué sano', 'Esto me da energía para todo el día'],
+  smoothie: ['Mmm, de mango', 'Esto es puro antioxidante'],
+  selfie: ['#açaí #healthy #barrio', 'Esta para Instagram', 'Que se vea el bowl, que se vea', 'Una más, que he salido con los ojos cerrados'],
   buy_hotdog: ['¡Con mostaza, por favor!', 'Esto es alta cocina'],
 };
 

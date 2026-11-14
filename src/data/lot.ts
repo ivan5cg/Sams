@@ -4,7 +4,7 @@
 
 export type TileType = 'wall' | 'wood' | 'tile' | 'grass' | 'door' | 'path';
 
-export type LayoutId = 'house' | 'park' | 'studio';
+export type LayoutId = 'house' | 'park' | 'studio' | 'super' | 'acai';
 
 const HOUSE_MAP = [
   'WWWWWWWWWWWggg',
@@ -51,6 +51,32 @@ const STUDIO_MAP = [
   'pppppppppppp',
 ];
 
+const SUPER_MAP = [
+  'WWWWWWWWWWWWWW',
+  'Wtttttttttttt' + 'W',
+  'Wtttttttttttt' + 'W',
+  'Wtttttttttttt' + 'W',
+  'Wtttttttttttt' + 'W',
+  'Wtttttttttttt' + 'W',
+  'Wtttttttttttt' + 'W',
+  'Wtttttttttttt' + 'W',
+  'Wtttttttttttt' + 'W',
+  'WWWWWddWWWWWWW',
+  'pppppppppppppp',
+];
+
+const ACAI_MAP = [
+  'WWWWWWWWWWWW',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'W..........W',
+  'WWWWdWWWWWWW',
+  'pppppppppppp',
+];
+
 const CHAR: Record<string, TileType> = { W: 'wall', '.': 'wood', t: 'tile', g: 'grass', d: 'door', p: 'path' };
 
 export interface LotLayout {
@@ -71,6 +97,8 @@ export const LAYOUTS: Record<LayoutId, LotLayout> = {
   house: parseLot(HOUSE_MAP, { x: 5, y: 11 }),
   park: parseLot(PARK_MAP, { x: 8, y: 13 }),
   studio: parseLot(STUDIO_MAP, { x: 5, y: 9 }),
+  super: parseLot(SUPER_MAP, { x: 5, y: 10 }),
+  acai: parseLot(ACAI_MAP, { x: 4, y: 8 }),
 };
 
 /** Entrada de la casa (todas las casas comparten plano). */
@@ -125,6 +153,35 @@ export const STUDIO_OBJECTS: ObjectPlacement[] = [
   { def: 'desk', x: 9, y: 7 },
   { def: 'plant', x: 10, y: 4 },
   { def: 'plant', x: 1, y: 7 },
+];
+
+export const SUPER_OBJECTS: ObjectPlacement[] = [
+  { def: 'super_fridge', x: 1, y: 1 },
+  { def: 'super_fridge', x: 4, y: 1 },
+  { def: 'super_fridge', x: 7, y: 1 },
+  { def: 'super_fridge', x: 10, y: 1 },
+  { def: 'super_shelf', x: 2, y: 4 },
+  { def: 'super_shelf', x: 6, y: 4 },
+  { def: 'super_shelf', x: 2, y: 6 },
+  { def: 'super_shelf', x: 6, y: 6 },
+  { def: 'fruit_stand', x: 11, y: 4 },
+  { def: 'fruit_stand', x: 11, y: 6 },
+  { def: 'checkout', x: 2, y: 8 },
+  { def: 'checkout', x: 9, y: 8 },
+  { def: 'carts', x: 12, y: 8 },
+  { def: 'plant', x: 12, y: 1 },
+];
+
+export const ACAI_OBJECTS: ObjectPlacement[] = [
+  { def: 'acai_counter', x: 6, y: 1 },
+  { def: 'neon_sign', x: 2, y: 1 },
+  { def: 'cafe_table', x: 2, y: 4 },
+  { def: 'cafe_table', x: 5, y: 4 },
+  { def: 'cafe_table', x: 8, y: 4 },
+  { def: 'cafe_table', x: 7, y: 6 },
+  { def: 'plant', x: 10, y: 1 },
+  { def: 'plant', x: 1, y: 6 },
+  { def: 'plant', x: 10, y: 6 },
 ];
 
 export const PARK_OBJECTS: ObjectPlacement[] = [

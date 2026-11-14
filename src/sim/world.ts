@@ -8,11 +8,11 @@ import { chooseAutonomous } from './ai';
 import { matchWish, newWish, topUpWishes } from './wishes';
 import { hasTrait, traitDecay, traitsOf } from './traits';
 import { REJECT_TEXT, REL_EFFECTS, ROMANTIC, acceptChance, canRomance, changeRel, getRel, isAdult, partnerOf, relKey, setRel } from './social';
-import { PARK_LOT, PLAYER_LOT, STUDIO_LOT, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
+import { ACAI_LOTS, PARK_LOT, PLAYER_LOT, STUDIO_LOT, SUPER_LOT, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { findPath, isWalkable, pathLength, reachable, type Grid } from './pathfinding';
 import { NEED_KEYS, type Agent, type Household, type Lot, type NeedKey, type Needs, type PlacedObject, type SpeciesId, type Task, type Vec, type WorldState } from './types';
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_MEMBERS = 8;
 /** Minutos de juego que se tarda en ir de una parcela a otra del barrio. */
@@ -36,6 +36,9 @@ export interface Toast {
 }
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
+/** Lo que se come de la nevera (gasta raciones de la despensa). */
+const FRIDGE_FOOD = new Set(['eat', 'snack', 'cook']);
+export const PANTRY_MAX = 40;
 
 /** Ánimo general (0-100) a partir de las necesidades. */
 export function moodScore(a: Agent): number {
@@ -103,7 +106,7 @@ export class World {
   // ---------------------------------------------------------------------------
 
   /** Algo ha pasado: si cumple un deseo de la familia, recompensa. */
-  wishEvent(a: Agent, ev: { action?: string; target?: string; targetHousehold?: string; lotKind?: string; skill?: string; level?: number }) {
+  wishEvent(a: Agent, ev: { action?: string; target?: string; targetHousehold?: string; lotKind?: string; layout?: string; skill?: string; level?: number }) {
     if (!this.wishesEnabled || !this.isPlayerMember(a) || !a.wishes?.length) return;
     const w = matchWish(a, ev, this.household.id);
     if (!w) return;
@@ -123,7 +126,8 @@ export class World {
     const w = a?.wishes?.find((x) => x.id === wishId);
     if (!a || !w) return false;
     if (w.kind === 'place') {
-      const lot = this.state.lots.find((l) => l.kind === w.lot);
+      const want = w.lot === 'venue' ? 'studio' : w.lot;
+      const lot = this.state.lots.find((l) => l.layout === want);
       if (lot) return this.travel([a.id], lot.id);
       return false;
     }
@@ -151,6 +155,15 @@ export class World {
         return this.command(a.id, w.action, { kind: 'agent', id: t.id });
       }
       const o = this.objectsIn(a.lotId).find((x) => this.objDef(x).actions.includes(w.action!) && this.checkObjectAction(a, x, w.action!).ok);
+      // Cosas que se hacen fuera de casa: primero, ir allí.
+      const away: Record<string, string> = { shop_small: 'super', shop_big: 'super', acai_bowl: 'acai', smoothie: 'acai', selfie: 'acai' };
+      if (!o && away[w.action]) {
+        const lot = this.state.lots.find((l) => l.layout === away[w.action!]);
+        if (lot && lot.id !== a.lotId) {
+          this.toast(`${a.name} va a ${lot.name}. Allí, toca la caja o la barra`, '💡');
+          return this.travel([a.id], lot.id);
+        }
+      }
       if (!o) {
         this.toast('Aquí no se puede: hace falta estar en casa (o comprar el mueble)', '💡');
         return false;
@@ -205,7 +218,7 @@ export class World {
     );
     state.agents[0].traits = ['deportista', 'romantico'];
     state.agents[1].traits = ['cunado', 'gloton'];
-    state.households.push({ id: 'h1', name: 'Familia García', funds: 2000, memberIds: state.agents.map((a) => a.id), lotId: PLAYER_LOT });
+    state.households.push({ id: 'h1', name: 'Familia García', funds: 2000, memberIds: state.agents.map((a) => a.id), lotId: PLAYER_LOT, pantry: 15 });
     // Lucía y Mateo son pareja; los dos están sin trabajo (lo eliges tú).
     setRel(state, 'a1', 'a2', { f: 70, r: 75, status: 'partner' });
     setupFamilyLife(state, state.agents, { jobs: false });
@@ -413,6 +426,15 @@ export class World {
     if (actionId === 'find_job' && !isAdult(a)) return { def, ok: false, reason: 'Primero, el colegio' };
     const funds = this.householdOf(a)?.funds ?? 0;
     if (def.cost && funds < def.cost) return { def, ok: false, reason: 'No hay dinero' };
+    // Comer de la nevera gasta raciones de la despensa de esa casa.
+    if (FRIDGE_FOOD.has(actionId)) {
+      const owner = this.pantryOwner(o.lotId);
+      if (owner && (owner.pantry ?? 0) <= 0) return { def, ok: false, reason: 'La nevera está vacía: toca ir al Mercadona' };
+    }
+    // Horarios de las tiendas
+    const closed = this.closedReason(o.lotId);
+    if (closed) return { def, ok: false, reason: closed };
+    if (actionId === 'order_groceries' && this.householdOf(a)?.delivery) return { def, ok: false, reason: 'Ya hay un pedido en camino' };
     return { def, ok: true };
   }
 
@@ -586,6 +608,8 @@ export class World {
     if (a.home) return { ok: false, reason: 'Vive en su jaula' };
     if (a.hidden) return { ok: false, reason: 'Está fuera' };
     if (a.current && ACTIONS[a.current.actionId].forced) return { ok: false, reason: 'No puede moverse ahora' };
+    const closed = this.closedReason(lotId);
+    if (closed) return { ok: false, reason: closed };
     return { ok: true };
   }
 
@@ -622,7 +646,8 @@ export class World {
       if (!a.visitUntil) a.visitUntil = this.state.minutes + rand(90, 180);
     }
     if (to === this.householdOf(a)?.lotId) a.visitUntil = undefined;
-    this.wishEvent(a, { lotKind: this.lotById(to).kind });
+    this.wishEvent(a, { lotKind: this.lotById(to).kind, layout: this.lotById(to).layout });
+    this.onArriveShopping(a, to);
   }
 
   /** Una casilla libre (sin nadie encima) cerca de un punto, para no aparecer unos encima de otros. */
@@ -689,7 +714,7 @@ export class World {
     const group = people.sort(() => Math.random() - 0.5).slice(0, n);
     const dog = h.memberIds.map((id) => this.agent(id)!).find((a) => a.species === 'dog' && a.lotId === h.lotId && !a.travel);
     // El perro va al parque o de visita, pero no a clase de pilates.
-    if (dog && lotId !== STUDIO_LOT && Math.random() < 0.6) group.push(dog);
+    if (dog && (lotId === PARK_LOT || this.lotById(lotId)?.kind === 'home') && Math.random() < 0.6) group.push(dog);
     const until = Math.min(this.state.minutes + TRAVEL_MINUTES + rand(120, 240), this.endOfVisits());
     for (const a of group) {
       this.startTravel(a, lotId);
@@ -708,6 +733,8 @@ export class World {
   /** Cada hora: los vecinos salen al parque o vienen de visita. */
   private hourly() {
     if (this.wishesEnabled) topUpWishes(this);
+    this.closingTime();
+    this.groceryErrand();
     const h = this.hour;
     const neighbours = this.state.households.filter((x) => x.id !== this.household.id);
     // Visitas a la familia del jugador
@@ -722,6 +749,8 @@ export class World {
       for (const nh of neighbours) {
         if (Math.random() < 0.08) this.sendVisit(nh, PARK_LOT, false);
         else if (Math.random() < 0.04) this.sendVisit(nh, STUDIO_LOT, false);
+        else if (Math.random() < 0.05 && !this.closedReason(SUPER_LOT)) this.sendVisit(nh, SUPER_LOT, false);
+        else if (Math.random() < 0.05 && !this.closedReason(ACAI_LOTS[0])) this.sendVisit(nh, ACAI_LOTS[Math.floor(Math.random() * ACAI_LOTS.length)], false);
       }
     }
   }
@@ -1081,6 +1110,114 @@ export class World {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // La compra: despensa, Mercadona y pedidos a domicilio
+  // ---------------------------------------------------------------------------
+
+  /** La familia dueña de la nevera de esa parcela (si es una casa). */
+  pantryOwner(lotId: string): Household | undefined {
+    const lot = this.lotById(lotId);
+    if (lot?.kind !== 'home') return undefined;
+    return this.state.households.find((h) => h.id === lot.householdId);
+  }
+
+  /** Si la tienda de esa parcela está cerrada a esta hora, el motivo. */
+  closedReason(lotId: string): string | undefined {
+    const layout = this.lotById(lotId)?.layout;
+    const m = this.state.minutes % MINUTES_PER_DAY;
+    if (layout === 'super' && (m < 9 * 60 || m >= 21 * 60 + 30)) return 'Está cerrado (abre de 9:00 a 21:30)';
+    if (layout === 'acai' && (m < 10 * 60 || m >= 22 * 60)) return 'Está cerrado (abre de 10:00 a 22:00)';
+    return undefined;
+  }
+
+  /** A la hora de cerrar, todo el mundo a la calle (y a casa). */
+  private closingTime() {
+    for (const lot of this.state.lots) {
+      if (lot.kind !== 'venue' || !this.closedReason(lot.id)) continue;
+      const inside = this.agentsIn(lot.id).filter((a) => !a.travel);
+      if (inside.some((a) => this.isPlayerMember(a))) this.toast(`${lot.name} cierra: ¡a casa!`, '🔒');
+      for (const a of inside) {
+        a.errand = undefined;
+        this.goHome(a);
+      }
+    }
+  }
+
+  /** Lo que se compra: a la bolsa (y a casa) o pedido a domicilio. */
+  private shopping(a: Agent, actionId: string) {
+    const h = this.householdOf(a);
+    if (!h) return;
+    const mine = this.isPlayerMember(a);
+    if (actionId === 'shop_small' || actionId === 'shop_big') {
+      const n = actionId === 'shop_big' ? 20 : 8;
+      a.carrying = (a.carrying ?? 0) + n;
+      if (mine) this.toast(`${a.name} ha hecho la compra: ${n} raciones para casa`, '🛒');
+      if (a.errand === 'compra') {
+        a.errand = undefined;
+        if (a.lotId !== h.lotId) this.startTravel(a, h.lotId);
+      }
+    }
+    if (actionId === 'order_groceries') {
+      h.delivery = { at: this.state.minutes + 4 * 60, amount: 8 };
+      if (mine) this.toast('Pedido hecho: la compra llegará en unas 4 horas', '📦');
+    }
+  }
+
+  private checkDelivery() {
+    for (const h of this.state.households) {
+      if (!h.delivery || this.state.minutes < h.delivery.at) continue;
+      h.pantry = Math.min(PANTRY_MAX, (h.pantry ?? 0) + h.delivery.amount);
+      if (h.id === this.household.id) this.toast(`¡Ha llegado la compra a domicilio! (+${h.delivery.amount} raciones)`, '📦');
+      h.delivery = undefined;
+    }
+  }
+
+  /** Al llegar a casa con la compra se llena la nevera; al llegar al súper a hacer un recado, a la caja. */
+  private onArriveShopping(a: Agent, to: string) {
+    const h = this.householdOf(a);
+    if (!h) return;
+    if (a.carrying && to === h.lotId) {
+      h.pantry = Math.min(PANTRY_MAX, (h.pantry ?? 0) + a.carrying);
+      if (this.isPlayerMember(a)) this.toast(`${a.name} ha llenado la nevera (${h.pantry} raciones)`, '🧊');
+      a.carrying = 0;
+    }
+    if (a.errand === 'compra' && this.lotById(to)?.layout === 'super') {
+      const action = h.funds >= 300 ? 'shop_big' : 'shop_small';
+      const checkout = this.objectsIn(to).find((o) => o.def === 'checkout' && this.checkObjectAction(a, o, action).ok);
+      if (!checkout || !this.command(a.id, action, { kind: 'object', id: checkout.id })) {
+        a.errand = undefined;
+        this.toast(`${a.name} no ha podido hacer la compra`, '🛒');
+        this.startTravel(a, h.lotId);
+      }
+    }
+  }
+
+  /** Si la nevera se queda casi vacía, alguien libre de la familia va solo al Mercadona. */
+  private noMoneyWarned = -1;
+  private groceryErrand() {
+    const h = this.household;
+    if ((h.pantry ?? 0) > 3 || h.delivery || this.closedReason(SUPER_LOT) || this.state.familyGone) return;
+    if (this.members.some((m) => m.errand || m.carrying || m.travel?.to === SUPER_LOT)) return;
+    if (h.funds < (ACTIONS.shop_small.cost ?? 0)) {
+      // Sin dinero no hay compra: se avisa una vez al día, no cada hora.
+      if ((h.pantry ?? 0) <= 0 && this.noMoneyWarned !== this.day) {
+        this.noMoneyWarned = this.day;
+        this.toast('La nevera está vacía y no hay dinero para la compra. ¡A buscar curro!', '💸');
+      }
+      return;
+    }
+    const who = this.members.find(
+      (m) => m.kind === 'person' && ['teen', 'young', 'adult', 'elder'].includes(this.stageOf(m)) && !this.isActive(m) && m.lotId === h.lotId && !m.travel && !m.hidden && !this.busySoon(m, 2) && !(m.current && ACTIONS[m.current.actionId].forced),
+    );
+    if (!who) {
+      this.toastOnce('pantry-empty', 'La nevera está casi vacía: id al Mercadona o pedid la compra por el ordenador', '🧊', 360);
+      return;
+    }
+    who.errand = 'compra';
+    this.travel([who.id], SUPER_LOT);
+    this.toast(`${who.name} se va al Mercadona a hacer la compra`, '🛒');
+  }
+
   setAging(mode: 'off' | 'normal' | 'fast') {
     this.state.aging = mode;
   }
@@ -1330,6 +1467,7 @@ export class World {
     }
 
     this.births();
+    this.checkDelivery();
     for (const a of this.state.agents) if (!a.travel) this.checkShift(a);
 
     const detailed = this.detailedLots();
@@ -1416,6 +1554,8 @@ export class World {
         if (w) m.wishes.push(w);
       }
     }
+    // Los vecinos hacen su compra sin que lo veamos.
+    for (const h of this.state.households) if (h.id !== this.household.id) h.pantry = Math.max(h.pantry ?? 0, 12);
     // Pensiones
     for (const h of this.state.households) {
       for (const id of h.memberIds) {
@@ -1695,6 +1835,7 @@ export class World {
     }
     if (task.actionId === 'adopt' && task.param) this.adopt(task.param as SpeciesId);
     this.skillPayoff(a, task.actionId);
+    this.shopping(a, task.actionId);
     if (task.actionId === 'find_job' && task.param) this.setJob(a, task.param);
     if (ACTIONS[task.actionId].target === 'agent' && task.actionId !== 'say_goodbye') {
       const t = this.agent(task.targetAgentId);
@@ -1743,6 +1884,10 @@ export class World {
       const hh = this.householdOf(a);
       if (def.cost && hh) hh.funds -= def.cost;
       if (def.consumes) o.stock = Math.max(0, (o.stock ?? 0) - 1);
+      if (FRIDGE_FOOD.has(task.actionId)) {
+        const owner = this.pantryOwner(o.lotId);
+        if (owner) owner.pantry = Math.max(0, (owner.pantry ?? 0) - 1);
+      }
       task.phase = 'acting';
       task.remaining = def.duration;
       this.face(a, objectCenter(o));

@@ -68,8 +68,8 @@ const PETS_INDOOR: SpeciesId[] = ['dog', 'cat', 'ferret'];
 const A: ActionDef[] = [
   // --- Personas: objetos ---
   { id: 'sleep', label: 'Dormir', verb: 'Durmiendo', icon: '💤', target: 'object', actors: ['person'], duration: 540, effects: { energy: 0.22 }, until: 'full', decayMult: 0.4 },
-  { id: 'eat', label: 'Comer (§6)', verb: 'Comiendo', icon: '🍝', target: 'object', actors: ['person'], cost: 6, duration: 25, effects: { hunger: 3, fun: 0.05 }, until: 'full' },
-  { id: 'snack', guestOk: true, label: 'Picar algo (§2)', verb: 'Picando algo', icon: '🍪', target: 'object', actors: ['person'], cost: 2, duration: 8, effects: { hunger: 2 } },
+  { id: 'eat', label: 'Comer', verb: 'Comiendo', icon: '🍝', target: 'object', actors: ['person'], duration: 25, effects: { hunger: 3, fun: 0.05 }, until: 'full' },
+  { id: 'snack', guestOk: true, label: 'Picar algo', verb: 'Picando algo', icon: '🍪', target: 'object', actors: ['person'], duration: 8, effects: { hunger: 2 } },
   { id: 'toilet', guestOk: true, label: 'Usar el váter', verb: 'En el baño', icon: '🚽', target: 'object', actors: ['person'], duration: 8, effects: { bladder: 14 }, until: 'full' },
   { id: 'shower', label: 'Ducharse', verb: 'Duchándose', icon: '🚿', target: 'object', actors: ['person'], duration: 15, effects: { hygiene: 7, fun: 0.05 }, until: 'full' },
   { id: 'watch_tv', guestOk: true, label: 'Ver la tele', verb: 'Viendo la tele', icon: '📺', target: 'object', actors: ['person'], duration: 120, effects: { fun: 0.35 }, until: 'full', interruptible: true },
@@ -124,7 +124,7 @@ const A: ActionDef[] = [
   { id: 'repair', label: 'Reparar', verb: 'Reparando', icon: '🔧', target: 'object', actors: ['person'], duration: 40, effects: { fun: -0.15, hygiene: -0.1 }, baseScore: 12 },
 
   // Habilidades
-  { id: 'cook', label: 'Cocinar (§8)', verb: 'Cocinando', icon: '🍳', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], cost: 8, duration: 45, effects: { hunger: 2.2, fun: 0.15 }, until: 'full', skill: { id: 'cocina', rate: 0.02 } },
+  { id: 'cook', label: 'Cocinar', verb: 'Cocinando', icon: '🍳', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], duration: 45, effects: { hunger: 2.2, fun: 0.15 }, until: 'full', skill: { id: 'cocina', rate: 0.02 } },
   { id: 'play_guitar', label: 'Tocar la guitarra', verb: 'Tocando la guitarra', icon: '🎸', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { fun: 0.4 }, until: 'full', interruptible: true, skill: { id: 'musica', rate: 0.02 }, baseScore: 2 },
   { id: 'paint', label: 'Pintar un cuadro', verb: 'Pintando', icon: '🎨', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.35 }, interruptible: true, skill: { id: 'arte', rate: 0.02 }, baseScore: 2 },
   { id: 'run', label: 'Correr', verb: 'Corriendo', icon: '🏃', target: 'object', actors: ['person'], duration: 40, effects: { fun: 0.2, energy: -0.3, hygiene: -0.3 }, skill: { id: 'forma', rate: 0.025 }, baseScore: 2 },
@@ -135,6 +135,17 @@ const A: ActionDef[] = [
   { id: 'busk', label: 'Tocar a cambio de propinas', verb: 'Tocando en la calle', icon: '🪕', target: 'self', actors: ['person'], duration: 45, effects: { fun: 0.3, social: 0.2 }, skill: { id: 'musica', rate: 0.01 }, playerOnly: true },
   { id: 'pilates', label: 'Hacer pilates', verb: 'Haciendo pilates', icon: '🧘', target: 'object', actors: ['person'], guestOk: true, duration: 45, effects: { fun: 0.3, energy: -0.12, hygiene: -0.15 }, skill: { id: 'forma', rate: 0.025 }, interruptible: true, baseScore: 3 },
   { id: 'reformer', label: 'Clase de reformer (§12)', verb: 'En clase de reformer', icon: '🧘', target: 'object', actors: ['person'], guestOk: true, cost: 12, duration: 50, effects: { fun: 0.45, energy: -0.15, hygiene: -0.2, social: 0.1 }, skill: { id: 'forma', rate: 0.045 }, baseScore: 3 },
+
+  // Mercadona
+  { id: 'shop_small', label: 'Compra pequeña (§45 · 8 raciones)', verb: 'Haciendo la compra', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 45, duration: 20, effects: { social: 0.1 }, playerOnly: true },
+  { id: 'shop_big', label: 'Compra grande (§95 · 20 raciones)', verb: 'Haciendo la compra grande', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 95, duration: 35, effects: { social: 0.1, energy: -0.05 }, playerOnly: true },
+  { id: 'browse_aisles', label: 'Pasear por los pasillos', verb: 'Mirando ofertas', icon: '🧐', target: 'object', actors: ['person'], guestOk: true, duration: 25, effects: { fun: 0.15, social: 0.05 }, until: 'full', interruptible: true, baseScore: 1 },
+  { id: 'buy_fruit', label: 'Comprar fruta (§3)', verb: 'Comiendo fruta', icon: '🍎', target: 'object', actors: ['person'], guestOk: true, cost: 3, duration: 8, effects: { hunger: 2.5 }, until: 'full' },
+  { id: 'order_groceries', label: 'Pedir la compra a domicilio (§70 · 8 raciones)', verb: 'Haciendo el pedido', icon: '📦', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], cost: 70, duration: 10, effects: {}, playerOnly: true },
+  // Açaí
+  { id: 'acai_bowl', label: 'Pedir un açaí bowl (§9)', verb: 'Comiendo un açaí bowl', icon: '🫐', target: 'object', actors: ['person'], guestOk: true, cost: 9, duration: 20, effects: { hunger: 3.5, fun: 0.35, energy: 0.1 }, until: 'full', baseScore: 2 },
+  { id: 'smoothie', label: 'Pedir un smoothie (§6)', verb: 'Tomando un smoothie', icon: '🥤', target: 'object', actors: ['person'], guestOk: true, cost: 6, duration: 10, effects: { hunger: 1.5, fun: 0.3 }, baseScore: 1 },
+  { id: 'selfie', label: 'Hacerse una selfie para Instagram', verb: 'Haciéndose una selfie', icon: '🤳', target: 'object', actors: ['person'], guestOk: true, duration: 6, effects: { fun: 0.6, social: 0.3 }, baseScore: 2 },
 
   // Parque
   { id: 'sit_bench', label: 'Sentarse en el banco', verb: 'Sentado en el banco', icon: '🪑', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { energy: 0.08, fun: 0.15, social: 0.05 }, until: 'full', interruptible: true },

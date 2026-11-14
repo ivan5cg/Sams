@@ -109,7 +109,15 @@ const ZOOM_MIN = 0.4 * DPR;
 const ZOOM_MAX = 2.5 * DPR;
 
 /** Ventanas y espejos de las paredes del fondo, según el plano. */
-function wallDeco(layout: string, x: number, y: number): { face: 'L' | 'R'; kind: 'window' | 'mirror' } | undefined {
+function wallDeco(layout: string, x: number, y: number): { face: 'L' | 'R'; kind: 'window' | 'mirror' | 'stripe'; color?: number } | undefined {
+  if (layout === 'super') {
+    if (y === 0) return { face: 'L', kind: 'stripe', color: 0x2e8b57 };
+    if (x === 0) return y % 3 === 1 ? { face: 'R', kind: 'window' } : { face: 'R', kind: 'stripe', color: 0x2e8b57 };
+  }
+  if (layout === 'acai') {
+    if (y === 0) return x % 3 === 0 ? { face: 'L', kind: 'window' } : { face: 'L', kind: 'stripe', color: 0x7b4fd0 };
+    if (x === 0) return { face: 'R', kind: 'stripe', color: 0x7b4fd0 };
+  }
   if (layout === 'house') {
     if (y === 0 && (x === 2 || x === 7)) return { face: 'L', kind: 'window' };
     if (x === 0 && y === 7) return { face: 'R', kind: 'window' };
@@ -194,10 +202,16 @@ export class HouseScene extends Phaser.Scene {
     const { width, height } = this.scale;
     // En casa se centra en el edificio; en el parque, en el centro.
     const layout = this.world.lotById(this.shownLot || this.world.viewLotId)?.layout;
-    const c = layout === 'park' ? isoToScreen(8, 7) : layout === 'studio' ? isoToScreen(6, 4.5) : isoToScreen(5.5, 5.5);
+    const lay = this.world.layoutOf(this.shownLot || this.world.viewLotId);
+    // Las tiendas y el estudio: centrados y que quepan casi enteros a lo ancho.
+    const venue = layout !== 'park' && layout !== 'house';
+    const c = layout === 'park' ? isoToScreen(8, 7) : layout === 'house' ? isoToScreen(5.5, 5.5) : isoToScreen(lay.w / 2, lay.h / 2);
     const cssW = width / DPR, cssH = height / DPR;
-    cam.setZoom(Phaser.Math.Clamp(Math.min(cssW / 640, cssH / 520), 0.45, 1.6) * DPR);
-    cam.centerOn(c.x, c.y + 10);
+    const fitW = venue ? Math.max(640, ((lay.w + lay.h) * TILE_W) / 2 * 0.9) : 640;
+    const zoom = Phaser.Math.Clamp(Math.min(cssW / fitW, cssH / 520), 0.45, 1.6);
+    cam.setZoom(zoom * DPR);
+    // El panel de abajo tapa parte de la pantalla: en las tiendas se sube un poco el dibujo.
+    cam.centerOn(c.x, c.y + (venue ? Math.min(110, (cssH * 0.14) / zoom) : 10));
     this.night.setSize(width, height);
   }
 
@@ -281,11 +295,12 @@ export class HouseScene extends Phaser.Scene {
         .setDepth(1e5);
     }
     let glow: Phaser.GameObjects.Graphics | undefined;
-    if (o.def === 'lamp') {
+    if (o.def === 'lamp' || o.def === 'neon_sign') {
       glow = this.add.graphics().setDepth(1e6 + 1).setBlendMode(Phaser.BlendModes.ADD).setAlpha(this.nightLevel);
-      const top = P(o.x + 0.5, o.y + 0.5, 38);
+      const top = P(o.x + 0.5, o.y + 0.5, o.def === 'lamp' ? 38 : 30);
+      const tone = o.def === 'lamp' ? 0xffc56b : 0xff5dc8;
       for (const [r, a] of [[46, 0.06], [30, 0.1], [16, 0.18]] as const) {
-        glow.fillStyle(0xffc56b, a);
+        glow.fillStyle(tone, a);
         glow.fillCircle(top.x, top.y, r);
       }
       const base = P(o.x + 0.5, o.y + 0.5);

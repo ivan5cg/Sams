@@ -1,7 +1,7 @@
 import { HOUSE_OBJECTS, START_OBJECTS } from '../data/lot';
 import { OBJECTS } from '../data/objects';
 import { SAVE_VERSION } from '../sim/world';
-import { PLAYER_LOT, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
+import { PLAYER_LOT, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
 import { setRel } from '../sim/social';
 import type { PlacedObject, WorldState } from '../sim/types';
 
@@ -55,6 +55,11 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       }
       setupFamilyLife(s, members, { jobs: !player });
     }
+  },
+  // v7 → v8: el Mercadona, los locales de açaí y la despensa.
+  7: (s) => {
+    addShops(s);
+    for (const h of s.households) h.pantry = h.pantry ?? 15;
   },
   // v6 → v7: habilidades y estudio de pilates.
   6: (s) => {

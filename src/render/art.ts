@@ -175,7 +175,7 @@ export function drawTile(g: G, t: TileType, x: number, y: number, style: LotStyl
 }
 
 /** Pared de una casilla, con zócalo, remate y (si toca) ventana o espejo en la cara que da al interior. */
-export function drawWall(g: G, x: number, y: number, height: number, color: number, deco?: { face: 'L' | 'R'; kind: 'window' | 'mirror' }) {
+export function drawWall(g: G, x: number, y: number, height: number, color: number, deco?: { face: 'L' | 'R'; kind: 'window' | 'mirror' | 'stripe'; color?: number }) {
   const r = R(x, y, 1, 1);
   prism(g, r, 0, height, color, { top: shade(color, 1.08) });
   // Zócalo
@@ -188,6 +188,9 @@ export function drawWall(g: G, x: number, y: number, height: number, color: numb
       faceQuad(g, r, deco.face, 0.24, 0.5, 31, 41, 0xc9ecfa, 0.7);
       faceQuad(g, r, deco.face, 0.48, 0.52, 21, 41, 0xffffff, 0.9);
       faceQuad(g, r, deco.face, 0.24, 0.76, 30, 32, 0xffffff, 0.9);
+    } else if (deco.kind === 'stripe') {
+      faceQuad(g, r, deco.face, 0, 1, 40, 48, deco.color ?? 0x2e8b57);
+      faceQuad(g, r, deco.face, 0, 1, 37, 38.5, 0xf28c28);
     } else {
       faceQuad(g, r, deco.face, 0.08, 0.92, 8, 46, 0xbfa76a);
       faceQuad(g, r, deco.face, 0.12, 0.88, 10, 44, 0xd6e8f2);
@@ -723,6 +726,167 @@ const ART: Record<string, Art> = {
     for (const [px, py] of [[0.14, 0.26], [0.86, 0.26], [0.14, 0.74], [0.86, 0.74]]) poleAt(g, X + px, Y + py, 26, 42, 0xdddddd, 1.5);
     for (let i = 0; i < 6; i++) flat(g, R(X + 0.04 + i * 0.153, Y + 0.16, 0.153, 0.68), 42, i % 2 ? 0xffffff : 0xe74c3c);
   },
+  // --- Mercadona ---
+  super_fridge: (g, _f, X, Y) => {
+    const r = R(X + 0.05, Y + 0.12, 1.9, 0.72);
+    shadowUnder(g, X + 1, Y + 0.5, 60, 0.12);
+    prism(g, r, 0, 46, 0xe8eef1, { top: 0xd4dde3 });
+    const prods = [0xffffff, 0xf2c14e, 0x4f8fd9, 0xe76f51, 0xfaf3e6, 0x52b788];
+    for (const [z0, z1] of [[6, 16], [19, 29], [32, 41]]) {
+      faceQuad(g, r, 'L', 0.03, 0.97, z0 - 2, z1 + 1, 0xcfd8de);
+      for (let i = 0; i < 9; i++) faceQuad(g, r, 'L', 0.05 + i * 0.1, 0.13 + i * 0.1, z0, z1 - ((i * 3) % 4), prods[(i + z0) % prods.length]);
+    }
+    faceQuad(g, r, 'L', 0, 1, 2, 44, 0xbfe6f5, 0.22);
+    faceQuad(g, r, 'L', 0, 1, 44, 46, 0x6fb6e8);
+  },
+  super_shelf: (g, _f, X, Y) => {
+    const r = R(X + 0.05, Y + 0.25, 2.9, 0.5);
+    shadowUnder(g, X + 1.5, Y + 0.5, 90, 0.1);
+    prism(g, r, 0, 34, 0xc7cfd6, { top: 0xb0b9c1 });
+    const cols = [0xd9534f, 0xf2c14e, 0x52b788, 0x4f8fd9, 0xe76f51, 0x9b5de5, 0xffffff, 0x8b5a2b];
+    let k = 1;
+    for (const z of [3, 13, 23]) {
+      faceQuad(g, r, 'L', 0.01, 0.99, z - 1, z, 0x8a939b);
+      let u = 0.02;
+      while (u < 0.96) {
+        const w = 0.035 + ((k * 7) % 4) * 0.008;
+        faceQuad(g, r, 'L', u, Math.min(0.98, u + w), z, z + 6 + ((k * 5) % 3), cols[k % cols.length]);
+        u += w + 0.006;
+        k++;
+      }
+    }
+    for (const z of [3, 13, 23]) {
+      let u = 0.05;
+      while (u < 0.95) {
+        faceQuad(g, r, 'R', u, u + 0.2, z, z + 7, cols[(k++) % cols.length]);
+        u += 0.25;
+      }
+    }
+    // Cartel de oferta
+    faceQuad(g, r, 'L', 0.42, 0.58, 30, 34, 0xf2c14e);
+  },
+  fruit_stand: (g, _f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 34, 0.14);
+    prism(g, R(X + 0.1, Y + 0.12, 0.8, 0.76), 0, 14, 0x9c6b3f, { top: 0x7a5230 });
+    const fruits: [number, number, number][] = [[0.3, 0.3, 0xf28c28], [0.5, 0.3, 0xf28c28], [0.7, 0.3, 0xf28c28], [0.3, 0.55, 0xd62828], [0.5, 0.55, 0xd62828], [0.7, 0.55, 0x8ac926], [0.35, 0.78, 0xffd23f], [0.6, 0.78, 0xffd23f]];
+    for (const [fx, fy, col] of fruits) {
+      const p = P(X + fx, Y + fy, 15);
+      g.fillStyle(col, 1);
+      g.fillCircle(p.x, p.y - 2, 3.2);
+      g.fillStyle(0xffffff, 0.4);
+      g.fillCircle(p.x - 1, p.y - 3, 1);
+    }
+  },
+  checkout: (g, f, X, Y) => {
+    const r = R(X + 0.06, Y + 0.28, 1.88, 0.44);
+    shadowUnder(g, X + 1, Y + 0.5, 64, 0.12);
+    // Cajera, detrás del mostrador
+    const c = P(X + 1.45, Y + 0.18);
+    g.fillStyle(0x2e8b57, 1);
+    g.fillRoundedRect(c.x - 7, c.y - 30, 14, 18, 5);
+    g.fillStyle(0xf1c27d, 1);
+    g.fillCircle(c.x, c.y - 37, 7);
+    g.fillStyle(0x3b2314, 1);
+    g.slice(c.x, c.y - 38, 7.6, Math.PI, 0, false);
+    g.fillPath();
+    g.fillStyle(0x222222, 1);
+    g.fillCircle(c.x + 3, c.y - 37.5, 1);
+    prism(f, r, 0, 18, 0xdedede, { top: 0xc4c4c4 });
+    flat(f, R(X + 0.1, Y + 0.34, 1.1, 0.32), 18.2, 0x2c2c2c);
+    prism(f, R(X + 1.3, Y + 0.34, 0.3, 0.3), 18, 28, 0x3a3f4a);
+    faceQuad(f, R(X + 1.3, Y + 0.34, 0.3, 0.3), 'L', 0.1, 0.9, 21, 27, 0x6fe0a0);
+  },
+  carts: (g, _f, X, Y) => {
+    const base = P(X + 0.5, Y + 0.5);
+    g.fillStyle(0x000000, 0.14);
+    g.fillEllipse(base.x, base.y, 30, 12);
+    for (let i = 0; i < 3; i++) {
+      const ox = base.x - 6 + i * 5, oy = base.y - i * 2;
+      g.lineStyle(1.4, 0x8a939b, 1);
+      g.strokeRect(ox - 9, oy - 18, 16, 10);
+      for (let j = 1; j < 4; j++) g.lineBetween(ox - 9 + j * 4, oy - 18, ox - 9 + j * 4, oy - 8);
+      g.lineBetween(ox + 7, oy - 18, ox + 11, oy - 22);
+      g.fillStyle(0x333333, 1);
+      g.fillCircle(ox - 6, oy - 2, 1.6);
+      g.fillCircle(ox + 4, oy - 2, 1.6);
+      g.lineBetween(ox - 6, oy - 8, ox - 6, oy - 3);
+      g.lineBetween(ox + 4, oy - 8, ox + 4, oy - 3);
+    }
+  },
+  // --- Açaí ---
+  acai_counter: (g, f, X, Y) => {
+    const r = R(X + 0.05, Y + 0.3, 2.9, 0.6);
+    shadowUnder(g, X + 1.5, Y + 0.6, 90, 0.12);
+    // Dependiente con gorra morada, detrás de la barra
+    const c = P(X + 1.1, Y + 0.12);
+    g.fillStyle(0x7b4fd0, 1);
+    g.fillRoundedRect(c.x - 7, c.y - 30, 14, 18, 5);
+    g.fillStyle(0xd9a066, 1);
+    g.fillCircle(c.x, c.y - 37, 7);
+    g.fillStyle(0x5b2a86, 1);
+    g.slice(c.x, c.y - 39, 7.6, Math.PI, 0, false);
+    g.fillPath();
+    g.fillRect(c.x - 2, c.y - 41, 11, 2.5);
+    g.fillStyle(0x222222, 1);
+    g.fillCircle(c.x - 3, c.y - 36.5, 1);
+    g = f;
+    prism(g, r, 0, 24, 0xf4f2ee, { top: 0xc9a27a });
+    faceQuad(g, r, 'L', 0, 1, 6, 9, 0x7b4fd0);
+    for (let i = 0; i < 4; i++) {
+      const p = P(X + 0.45 + i * 0.6, Y + 0.45, 24);
+      g.fillStyle(0xffffff, 1);
+      g.fillEllipse(p.x, p.y - 2, 13, 6);
+      g.fillStyle(0x5b2a86, 1);
+      g.fillEllipse(p.x, p.y - 3, 10, 4);
+      for (const [dx, col] of [[-2.5, 0xffd23f], [1, 0xd62828], [3.5, 0xf2e1c0]] as const) {
+        g.fillStyle(col, 1);
+        g.fillCircle(p.x + dx, p.y - 3.5, 1.3);
+      }
+    }
+    // Batidora
+    const b = P(X + 2.6, Y + 0.3, 24);
+    g.fillStyle(0x3a3f4a, 1);
+    g.fillRect(b.x - 3, b.y - 4, 6, 4);
+    g.fillStyle(0xd3c2ef, 0.85);
+    g.fillRect(b.x - 2.5, b.y - 14, 5, 10);
+  },
+  cafe_table: (g, f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 34, 0.12);
+    // Silla de atrás (detrás de la mesa) y silla de delante (en la capa de delante)
+    const chair = (gg: G, cx: number, cy: number, back: 'n' | 's') => {
+      prism(gg, R(cx - 0.14, cy - 0.14, 0.28, 0.28), 9, 12, 0xc9a27a, { top: 0xdcb88f });
+      for (const [lx, ly] of [[-0.11, -0.11], [0.09, 0.09], [-0.11, 0.09], [0.09, -0.11]]) prism(gg, R(cx + lx, cy + ly, 0.03, 0.03), 0, 9, 0x8a939b);
+      if (back === 'n') prism(gg, R(cx - 0.14, cy - 0.16, 0.28, 0.05), 12, 24, 0xc9a27a);
+      else prism(gg, R(cx - 0.14, cy + 0.11, 0.28, 0.05), 12, 24, 0xc9a27a);
+    };
+    chair(g, X + 0.5, Y + 0.16, 'n');
+    const p = P(X + 0.5, Y + 0.5);
+    g.lineStyle(2, 0x8a939b, 1);
+    g.lineBetween(p.x, p.y, p.x, p.y - 14);
+    g.fillStyle(0xd9c3a5, 1);
+    g.fillEllipse(p.x, p.y - 15, 26, 12);
+    g.fillStyle(0xe8d6bd, 1);
+    g.fillEllipse(p.x, p.y - 16, 24, 10);
+    g.fillStyle(0x6b8e4e, 1);
+    g.fillCircle(p.x, p.y - 19, 2.2);
+    chair(f, X + 0.5, Y + 0.86, 's');
+  },
+  neon_sign: (g, _f, X, Y) => {
+    const r = R(X + 0.1, Y + 0.42, 0.8, 0.12);
+    shadowUnder(g, X + 0.5, Y + 0.5, 30, 0.1);
+    prism(g, r, 0, 46, 0x2d2540);
+    const c = facePoint(r, 'L', 0.5, 28);
+    g.lineStyle(2.5, 0xff5dc8, 1);
+    g.beginPath();
+    g.arc(c.x, c.y, 8, 0, Math.PI, false);
+    g.strokePath();
+    g.lineBetween(c.x - 9, c.y, c.x + 9, c.y);
+    g.lineStyle(2, 0x9b8cff, 1);
+    for (const [dx, dy] of [[-4, -4], [0, -6], [4, -4]]) g.strokeCircle(c.x + dx, c.y + dy, 2);
+    g.lineStyle(2, 0x5df2ff, 1);
+    const t = facePoint(r, 'L', 0.5, 40);
+    g.lineBetween(t.x - 10, t.y + 2, t.x + 10, t.y - 3);
+  },
   flowers: (g, _f, X, Y) => {
     const c = P(X + 0.5, Y + 0.5);
     const h = hash(`${X},${Y}`);
@@ -747,6 +911,7 @@ export function drawObjectArt(g: G, f: G, o: ObjLike): boolean {
 
 /** Objetos que se pintan bajo los personajes (a ras de suelo). */
 export const GROUND_ART = new Set(['pond', 'rug', 'pilates_mat', 'puddle', 'strawbed']);
+
 
 /** Brillo de pantalla (tele, consola, ordenador, equipo de música) cuando alguien la usa. */
 export const SCREEN_GLOW: Record<string, (g: G, X: number, Y: number) => void> = {

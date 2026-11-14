@@ -56,7 +56,7 @@ const D: ObjectDef[] = [
   { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true },
 
   { id: 'tv', name: 'Televisión', icon: '📺', w: 1, h: 1, height: 30, color: 0x333a44, capacity: 0, actions: ['repair'], price: 220, category: 'ocio', breakable: true },
-  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'find_job', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
+  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'find_job', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
   { id: 'bookshelf', name: 'Estantería', icon: '📚', w: 1, h: 1, height: 44, color: 0x8b5a2b, capacity: 1, actions: ['read'], price: 90, category: 'ocio' },
   { id: 'stereo', name: 'Equipo de música', icon: '📻', w: 1, h: 1, height: 24, color: 0x2d2d3a, capacity: 3, actions: ['dance', 'listen_music', 'repair'], price: 150, category: 'ocio', breakable: true },
   { id: 'gamebox', name: 'Videoconsola', icon: '🎮', w: 1, h: 1, height: 18, color: 0x3a3f55, capacity: 2, actions: ['play_games', 'repair'], price: 280, category: 'ocio', breakable: true },
@@ -92,6 +92,17 @@ const D: ObjectDef[] = [
 
   // Ciclo de vida
   { id: 'grave', name: 'Lápida', icon: '🪦', w: 1, h: 1, height: 0, color: 0x888888, shape: 'none', capacity: 1, walkable: true, actions: ['remember'] },
+
+  // Mercadona
+  { id: 'super_fridge', name: 'Nevera de lácteos', icon: '', w: 2, h: 1, height: 46, color: 0xe8eef1, capacity: 1, actions: ['browse_aisles'] },
+  { id: 'super_shelf', name: 'Estantería', icon: '', w: 3, h: 1, height: 34, color: 0xb9c2c9, capacity: 2, actions: ['browse_aisles'] },
+  { id: 'fruit_stand', name: 'Frutería', icon: '', w: 1, h: 1, height: 18, color: 0x9c6b3f, capacity: 1, actions: ['buy_fruit'] },
+  { id: 'checkout', name: 'Caja', icon: '', w: 2, h: 1, height: 20, color: 0xdedede, capacity: 1, actions: ['shop_small', 'shop_big'] },
+  { id: 'carts', name: 'Carros', icon: '', w: 1, h: 1, height: 16, color: 0x9aa0a6, capacity: 0, actions: [] },
+  // Açaí
+  { id: 'acai_counter', name: 'Barra de açaí', icon: '', w: 3, h: 1, height: 24, color: 0xf4f2ee, capacity: 2, actions: ['acai_bowl', 'smoothie'] },
+  { id: 'cafe_table', name: 'Mesa', icon: '', w: 1, h: 1, height: 16, color: 0xd9c3a5, capacity: 2, snap: true, actions: ['sit'] },
+  { id: 'neon_sign', name: 'Neón', icon: '', w: 1, h: 1, height: 44, color: 0x2d2540, capacity: 1, actions: ['selfie'] },
 
   // Parque (algunas cosas también se pueden comprar)
   { id: 'bench', name: 'Banco', icon: '', w: 1, h: 1, height: 12, color: 0x8b5a2b, shape: 'bench', capacity: 2, snap: true, actions: ['sit_bench'], price: 70, category: 'deco' },
