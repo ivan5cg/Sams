@@ -1309,3 +1309,76 @@ body.building #hud-bottom {
   font-size: 15px;
   margin: 12px 2px 4px;
 }
+
+/* --- Avisos más discretos --- */
+.toast {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 12px;
+}
+
+/* --- Mapa ilustrado --- */
+.mini-map {
+  position: relative;
+  height: 210px;
+  margin: 8px 0 12px;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #c7d9a8, #a9c48a);
+  overflow: hidden;
+}
+.mm-zone {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  border-radius: 12px;
+  border: 2px dashed rgba(40, 50, 30, 0.25);
+}
+.mm-zone span {
+  position: absolute;
+  left: 8px;
+  top: 3px;
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(30, 40, 20, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.mm-madrid { left: 1%; width: 61%; background: rgba(240, 226, 200, 0.45); }
+.mm-alcorcon { left: 72%; width: 27%; background: rgba(181, 106, 67, 0.22); }
+.mm-line {
+  position: absolute;
+  left: 58%;
+  width: 18%;
+  top: calc(56% - 3px);
+  height: 6px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(90deg, #0074c8 0 10px, #9b5de5 10px 20px);
+}
+.pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #2b2f45;
+  font-size: 17px;
+  line-height: 1;
+  padding: 0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+.pin:disabled { opacity: 1; filter: saturate(0.8); }
+.pin.here {
+  border-color: #4cd964;
+  box-shadow: 0 0 0 4px rgba(76, 217, 100, 0.45);
+}
+.pin i {
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4cd964;
+  border: 2px solid #fff;
+}

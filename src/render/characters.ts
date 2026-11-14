@@ -19,6 +19,11 @@ export interface PersonLook {
   hairStyle: 'short' | 'long' | 'bun' | 'curly' | 'ponytail';
   pants: number;
   shirt: number;
+  /** Complexión (ancho del cuerpo). */
+  build: number;
+  /** Gafas, barba o bigote. */
+  extra: 'none' | 'glasses' | 'beard' | 'mustache';
+  elder: boolean;
 }
 
 export function personLook(a: Agent, elder: boolean): PersonLook {
@@ -30,6 +35,9 @@ export function personLook(a: Agent, elder: boolean): PersonLook {
     hairStyle: styles[(h >>> 6) % styles.length],
     pants: PANTS[(h >>> 9) % PANTS.length],
     shirt: a.color,
+    build: [0.88, 1, 1, 1.15][(h >>> 12) % 4],
+    extra: (['none', 'none', 'glasses', 'beard', 'mustache', 'none'] as const)[(h >>> 15) % 6],
+    elder,
   };
 }
 
@@ -52,23 +60,32 @@ export function drawLeg(g: G, look: PersonLook, x: number) {
 
 /** Cuerpo de una persona (sin piernas). Devuelve la altura de la cabeza. */
 export function drawPersonBody(g: G, look: PersonLook): number {
+  const b = look.build ?? 1;
+  // Bastón de los mayores
+  if (look.elder) {
+    g.lineStyle(2, 0x5a3a1c, 1);
+    g.lineBetween(9, -17, 11, 0);
+  }
   // Brazo de atrás
   g.fillStyle(shade(look.shirt, 0.75), 1);
-  g.fillRoundedRect(-10.5, -32, 4.5, 14, 2);
+  g.fillRoundedRect(-10.5 * b, -32, 4.5, 14, 2);
   g.fillStyle(shade(look.skin, 0.9), 1);
-  g.fillCircle(-8.3, -17.5, 2.3);
+  g.fillCircle(-8.3 * b, -17.5, 2.3);
   // Tronco
   g.fillStyle(look.shirt, 1);
-  g.fillRoundedRect(-8, -34, 16, 20, 6);
+  g.fillRoundedRect(-8 * b, -34, 16 * b, 20, 6);
   g.fillStyle(0x000000, 0.12);
-  g.fillRoundedRect(2, -33, 6, 18, { tl: 0, tr: 5, bl: 0, br: 5 });
+  g.fillRoundedRect(2 * b, -33, 6 * b, 18, { tl: 0, tr: 5, bl: 0, br: 5 });
+  // Cuello de la camiseta y bolsillo
+  g.fillStyle(shade(look.shirt, 0.8), 1);
+  g.fillRoundedRect(-3, -34.5, 6, 2.5, 1);
   g.fillStyle(look.pants, 1);
-  g.fillRect(-8, -17, 16, 3);
+  g.fillRect(-8 * b, -17, 16 * b, 3);
   // Brazo de delante
   g.fillStyle(shade(look.shirt, 0.9), 1);
-  g.fillRoundedRect(3.5, -32, 4.5, 14, 2);
+  g.fillRoundedRect(3.5 * b, -32, 4.5, 14, 2);
   g.fillStyle(look.skin, 1);
-  g.fillCircle(5.8, -17.5, 2.3);
+  g.fillCircle(5.8 * b, -17.5, 2.3);
   // Cuello y cabeza
   g.fillStyle(shade(look.skin, 0.9), 1);
   g.fillRect(-2, -37, 4, 4);
@@ -85,14 +102,14 @@ export function drawPersonBody(g: G, look: PersonLook): number {
   g.fillCircle(0, hy, 8.5);
   g.fillStyle(shade(look.skin, 0.88), 1);
   g.fillCircle(-2.5, hy + 0.5, 2);
-  // Ojos y mejilla
-  g.fillStyle(0x222222, 1);
-  g.fillEllipse(3.6, hy - 0.5, 2, 2.6);
-  g.fillEllipse(6.9, hy - 0.5, 1.6, 2.4);
-  g.fillStyle(0xf28d8d, 0.45);
-  g.fillCircle(5.2, hy + 3.2, 1.8);
-  g.lineStyle(1, 0x7a3b2e, 0.8);
-  g.lineBetween(4.6, hy + 4.4, 6.6, hy + 4.2);
+  // Oreja
+  g.fillStyle(shade(look.skin, 0.85), 1);
+  g.fillEllipse(-1.5, hy + 0.5, 3, 4);
+  if (look.extra === 'beard') {
+    g.fillStyle(look.hair, 1);
+    g.slice(2, hy + 2, 7.5, 0, Math.PI, false);
+    g.fillPath();
+  }
   // Pelo
   g.fillStyle(look.hair, 1);
   g.slice(0, hy - 0.5, 9.2, Math.PI, 0, false);
@@ -301,6 +318,138 @@ export function drawAccessory(g: G, kind: string) {
       g.fillRect(2, hy - 4, 10, 2.2);
       g.fillStyle(0xffffff, 0.35);
       for (let i = -6; i <= 6; i += 4) g.fillRect(i, hy - 10, 1.4, 6);
+      break;
+  }
+}
+
+export type Expression = 'normal' | 'feliz' | 'triste' | 'enfadado' | 'enamorado' | 'borracho' | 'dormido' | 'parpadeo' | 'sorpresa';
+
+/** Ojos, cejas y boca (en su propia capa para cambiar la expresión sin redibujar a la persona). */
+export function drawFace(g: G, look: PersonLook, e: Expression) {
+  const hy = -45;
+  const eye = 0x222222;
+  if (e === 'dormido' || e === 'parpadeo' || e === 'borracho') {
+    g.lineStyle(1.3, eye, 1);
+    g.lineBetween(2.6, hy - 0.3, 4.6, hy - 0.3);
+    g.lineBetween(6, hy - 0.3, 7.8, hy - 0.3);
+  } else if (e === 'enamorado') {
+    g.fillStyle(0xe63946, 1);
+    for (const x of [3.6, 6.9]) {
+      g.fillCircle(x - 0.6, hy - 1, 1);
+      g.fillCircle(x + 0.6, hy - 1, 1);
+      g.fillTriangle(x - 1.5, hy - 0.7, x + 1.5, hy - 0.7, x, hy + 1.2);
+    }
+  } else {
+    const big = e === 'sorpresa' ? 1.3 : 1;
+    g.fillStyle(eye, 1);
+    g.fillEllipse(3.6, hy - 0.5, 2 * big, 2.6 * big);
+    g.fillEllipse(6.9, hy - 0.5, 1.6 * big, 2.4 * big);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(3.9, hy - 1.2, 0.5);
+  }
+  // Cejas
+  g.lineStyle(1.1, shade(look.hair, 0.8), 0.9);
+  if (e === 'enfadado') {
+    g.lineBetween(2.4, hy - 4.2, 4.8, hy - 2.8);
+    g.lineBetween(8.2, hy - 4.2, 6, hy - 2.8);
+  } else if (e === 'triste') {
+    g.lineBetween(2.4, hy - 2.8, 4.8, hy - 4);
+    g.lineBetween(8.2, hy - 2.8, 6, hy - 4);
+  }
+  // Mofletes
+  g.fillStyle(e === 'borracho' || e === 'enamorado' ? 0xe63946 : 0xf28d8d, e === 'borracho' ? 0.6 : 0.45);
+  g.fillCircle(5.2, hy + 3.2, e === 'borracho' ? 2.4 : 1.8);
+  // Boca
+  g.lineStyle(1.1, 0x7a3b2e, 0.9);
+  if (e === 'feliz' || e === 'enamorado') {
+    g.beginPath();
+    g.arc(5.6, hy + 3.2, 2.2, 0.2, Math.PI - 0.2, false);
+    g.strokePath();
+  } else if (e === 'triste' || e === 'enfadado') {
+    g.beginPath();
+    g.arc(5.6, hy + 6.2, 2, Math.PI + 0.3, -0.3, false);
+    g.strokePath();
+  } else if (e === 'sorpresa') {
+    g.fillStyle(0x7a3b2e, 1);
+    g.fillCircle(5.6, hy + 4.6, 1.3);
+  } else if (e === 'borracho') {
+    g.lineBetween(4.2, hy + 4.6, 7, hy + 3.6);
+  } else {
+    g.lineBetween(4.6, hy + 4.4, 6.6, hy + 4.2);
+  }
+  if (look.extra === 'mustache') {
+    g.fillStyle(look.hair, 1);
+    g.fillRoundedRect(3.2, hy + 2.3, 5, 1.6, 0.8);
+  }
+  if (look.extra === 'glasses') {
+    g.lineStyle(1, 0x222222, 1);
+    g.strokeCircle(3.6, hy - 0.5, 2.2);
+    g.strokeCircle(7.1, hy - 0.5, 2);
+    g.lineBetween(5.8, hy - 0.6, 5.1, hy - 0.6);
+  }
+}
+
+/** Cabeza vista de espaldas (cuando camina hacia el fondo): se ve el pelo, no la cara. */
+export function drawBackHead(g: G, look: PersonLook) {
+  const hy = -45;
+  g.fillStyle(look.hair, 1);
+  g.fillCircle(0.5, hy - 0.5, 8.8);
+  g.fillStyle(shade(look.hair, 1.15), 0.5);
+  g.fillCircle(-1.5, hy - 3, 3);
+}
+
+/** Lo que lleva en la mano según lo que hace (sartén, móvil, libro, caña...). */
+export function drawProp(g: G, kind: string) {
+  const hx = 6.5, hy = -18;
+  switch (kind) {
+    case 'pan':
+      g.fillStyle(0x333333, 1);
+      g.fillEllipse(hx + 6, hy - 1, 10, 4);
+      g.fillRect(hx, hy - 1.5, 4, 1.5);
+      g.fillStyle(0xf2c14e, 1);
+      g.fillCircle(hx + 6, hy - 2, 1.6);
+      break;
+    case 'phone':
+      g.fillStyle(0x222222, 1);
+      g.fillRoundedRect(hx - 1, hy - 8, 4, 7, 1);
+      g.fillStyle(0x7cc6f0, 1);
+      g.fillRect(hx - 0.3, hy - 7.2, 2.6, 5);
+      break;
+    case 'book':
+      g.fillStyle(0x8b2e3c, 1);
+      g.fillRect(hx - 1, hy - 7, 7, 6);
+      g.fillStyle(0xffffff, 1);
+      g.fillRect(hx + 2.3, hy - 6.5, 0.6, 5);
+      break;
+    case 'beer':
+      g.fillStyle(0xf2b134, 0.95);
+      g.fillRect(hx - 0.5, hy - 7, 4, 6);
+      g.fillStyle(0xffffff, 1);
+      g.fillRect(hx - 0.5, hy - 8.3, 4, 1.6);
+      break;
+    case 'cup':
+      g.fillStyle(0xffffff, 1);
+      g.fillRect(hx - 0.5, hy - 5, 4, 4);
+      g.fillStyle(0x5a3825, 1);
+      g.fillRect(hx - 0.5, hy - 5, 4, 1);
+      break;
+    case 'brush':
+      g.lineStyle(1.4, 0x8b5a2b, 1);
+      g.lineBetween(hx, hy, hx + 6, hy - 8);
+      g.fillStyle(0xe63946, 1);
+      g.fillCircle(hx + 6.5, hy - 8.5, 1.4);
+      break;
+    case 'cards':
+      g.fillStyle(0xffffff, 1);
+      g.fillRect(hx - 1, hy - 6, 3, 4.5);
+      g.fillRect(hx + 1, hy - 6.5, 3, 4.5);
+      g.fillStyle(0xe63946, 1);
+      g.fillRect(hx + 2, hy - 5.5, 1, 1);
+      break;
+    case 'mic':
+      g.fillStyle(0x333333, 1);
+      g.fillRect(hx, hy - 6, 1.6, 6);
+      g.fillCircle(hx + 0.8, hy - 7, 2);
       break;
   }
 }

@@ -11,7 +11,7 @@ interface Bubble {
   kind: 'say' | 'think';
 }
 
-export type FxKind = 'zzz' | 'notes' | 'hearts' | 'drops' | 'sparks' | 'angry' | 'stars' | 'paint' | 'sweat' | 'gas';
+export type FxKind = 'zzz' | 'notes' | 'hearts' | 'drops' | 'sparks' | 'angry' | 'stars' | 'paint' | 'sweat' | 'gas' | 'steam' | 'confetti' | 'firework';
 
 const NOTE_COLORS = ['#7b4fd0', '#e76f51', '#2a9d8f', '#3d8fcf'];
 const PAINT_COLORS = [0xe76f51, 0x4f8fd9, 0xf2c14e, 0x52b788, 0x9b5de5];
@@ -94,9 +94,24 @@ export class SceneFx {
 
   /** Mueve los bocadillos con sus personajes y quita los que caducan o cuyo personaje ya no se ve. */
   update(now: number, visible: Set<string>) {
-    for (const [id, b] of this.bubbles) {
-      if (b.until <= now || !visible.has(id)) this.clear(id);
-      else this.place(id);
+    for (const [id, b] of this.bubbles) if (b.until <= now || !visible.has(id)) this.clear(id);
+    // Que los bocadillos no se pisen: de abajo arriba, cada uno se sube si choca con otro.
+    const placed: { l: number; r: number; t: number; b: number }[] = [];
+    const ids = [...this.bubbles.keys()].filter((id) => this.anchors.has(id));
+    ids.sort((a, b) => this.anchors.get(b)!.y - this.anchors.get(a)!.y);
+    for (const id of ids) {
+      const bb = this.bubbles.get(id)!;
+      const at = this.anchors.get(id)!;
+      const w = bb.text.width, h = bb.text.height;
+      let y = at.y - 10;
+      for (let k = 0; k < 6; k++) {
+        const hit = placed.find((p) => at.x - w / 2 < p.r && at.x + w / 2 > p.l && y - h < p.b && y > p.t);
+        if (!hit) break;
+        y = hit.t - 4;
+      }
+      placed.push({ l: at.x - w / 2, r: at.x + w / 2, t: y - h, b: y });
+      bb.text.setPosition(at.x, y);
+      bb.bg.setPosition(at.x, y);
     }
   }
 
@@ -110,7 +125,7 @@ export class SceneFx {
   // ---------------------------------------------------------------------------
 
   emit(kind: FxKind, x: number, y: number) {
-    if (this.particles > 60) return;
+    if (this.particles > 90) return;
     const rnd = (a: number, b: number) => a + Math.random() * (b - a);
     switch (kind) {
       case 'zzz': {
@@ -139,6 +154,23 @@ export class SceneFx {
       case 'sweat':
         this.drop(x + rnd(-4, 8), y + 2, 0xbfe6ff, 1.4, 10);
         break;
+      case 'steam':
+        this.floatText('~', x + rnd(-6, 10), y + rnd(10, 18), '#d6dde6', rnd(12, 16), rnd(-4, 4), -22, 1300);
+        break;
+      case 'confetti': {
+        const cols = ['#e63946', '#f2c14e', '#52b788', '#4f8fd9', '#ff5dc8'];
+        for (let i = 0; i < 4; i++) this.floatText('▪', x + rnd(-30, 30), y - rnd(10, 40), cols[i % cols.length], rnd(8, 12), rnd(-12, 12), 38, 1600);
+        break;
+      }
+      case 'firework': {
+        const cols = ['#ff5d5d', '#ffd23f', '#5df2ff', '#8ac926', '#ff5dc8'];
+        const c = cols[Math.floor(Math.random() * cols.length)];
+        for (let i = 0; i < 12; i++) {
+          const ang = (i / 12) * Math.PI * 2;
+          this.floatText('•', x, y, c, 10, Math.cos(ang) * 34, Math.sin(ang) * 34, 1100);
+        }
+        break;
+      }
       case 'gas':
         this.floatText('☁', x + rnd(-14, 4), y + rnd(20, 34), '#9acd32', rnd(12, 18), rnd(-14, -4), -10, 1400);
         break;

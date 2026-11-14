@@ -55,6 +55,7 @@ const E: EmotionDef[] = [
   { id: 'premio', label: '¡Premio en la tragaperras!', icon: '🎰', value: 12, hours: 6, likes: { tragaperras: 2 }, thoughts: ['¡Lo sabía! ¡Esta máquina me debía una!'] },
   { id: 'gol', label: '¡Ha ganado su equipo!', icon: '⚽', value: 10, hours: 12, thoughts: ['¡Campeones, campeones!'] },
   { id: 'derrota', label: 'Ha perdido su equipo', icon: '😤', value: -6, hours: 12, thoughts: ['El árbitro, que estaba comprado'] },
+  { id: 'mojado', label: 'Calado/a hasta los huesos', icon: '☔', value: -4, hours: 3, likes: { shower: 1.4, bath: 1.5, watch_tv: 1.3 }, thoughts: ['¿Quién se ha dejado el paraguas?'] },
   { id: 'deseo_fuente', label: 'Ha pedido un deseo', icon: '⛲', value: 4, hours: 6 },
   // --- Malas ---
   { id: 'cobra', label: 'Le han hecho la cobra', icon: '😳', value: -10, hours: 6, likes: { flirt: 0.3, kiss: 0.3 }, thoughts: ['Tierra, trágame', 'Qué vergüenza...'] },

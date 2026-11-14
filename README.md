@@ -156,6 +156,21 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
   Nochevieja (y el cuñado atragantándose con la quinta), además de la verbena, la lotería de Navidad...
 - Las charlas tiran de castizo: "¡Esto mola mazo!", "De Madrid al cielo", "Me piro, vampiro", el Alcorconazo...
 
+## Gráficos
+
+- Cada parcela está rodeada de su barrio: edificios madrileños con balcones de forja y tejado rojo, o bloques de
+  ladrillo de Alcorcón con toldos verdes y tendederos; árboles, farolas que se encienden de noche y coches aparcados.
+- Cielo y luz según la hora: amanecer rosado, día limpio, atardecer naranja y noche azul. Sombras junto a las paredes.
+- Personajes más variados (complexión, gafas, barba, bigote, bastón de los mayores), con cara que cambia según cómo
+  se sienten (enfadados, tristes, enamorados con ojos de corazón, borrachos con los mofletes rojos), que parpadean,
+  se ven de espaldas al ir hacia el fondo, se sientan de verdad y llevan cosas en la mano (sartén, móvil, libro,
+  caña, cartas, pincel, micro).
+- Clima y efectos: lluvia, nieve, hojas en otoño, confeti en las fiestas, fuegos artificiales en la verbena y las
+  uvas, vapor al cocinar y un fundido al cambiar de sitio.
+- Interfaz: avisos más discretos, bocadillos que no se pisan, panel de necesidades plegable (se recuerda), la
+  cámara sigue al personaje activo y un mapa ilustrado con Madrid, la línea de metro y Alcorcón.
+- El decorado fijo se pinta una sola vez como imagen, para que el móvil vaya fluido.
+
 ## Diálogos, conversaciones y deseos
 
 - Los personajes **hablan**: en las interacciones salen bocadillos con frases (charlas, chistes, coqueteos,

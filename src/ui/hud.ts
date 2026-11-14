@@ -83,9 +83,9 @@ export class Hud {
     el.className = 'toast';
     el.innerHTML = `<span>${icon}</span><span>${esc(text)}</span>`;
     box.prepend(el);
-    while (box.children.length > 3) box.lastElementChild?.remove();
-    setTimeout(() => el.classList.add('out'), 3200);
-    setTimeout(() => el.remove(), 3700);
+    while (box.children.length > 2) box.lastElementChild?.remove();
+    setTimeout(() => el.classList.add('out'), 2800);
+    setTimeout(() => el.remove(), 3300);
   }
 
   // ---------------------------------------------------------------------------
@@ -111,8 +111,19 @@ export class Hud {
       this.render();
     });
 
+    // El panel de necesidades va plegado por defecto (para ver más escena); se recuerda la elección.
+    try {
+      if (localStorage.getItem('sams:needsOpen') !== '1') $('#panel').classList.add('collapsed');
+    } catch {
+      $('#panel').classList.add('collapsed');
+    }
     $('#needs-toggle').addEventListener('click', () => {
-      $('#panel').classList.toggle('collapsed');
+      const collapsed = $('#panel').classList.toggle('collapsed');
+      try {
+        localStorage.setItem('sams:needsOpen', collapsed ? '0' : '1');
+      } catch {
+        /* sin almacenamiento: da igual */
+      }
     });
 
     $('#sheet').addEventListener('click', (e) => {
@@ -748,8 +759,45 @@ export class Hud {
         <div><div class="sheet-title">🗺️ El barrio</div><div class="sheet-sub">Andando, ${TRAVEL_MINUTES} minutos. Entre Madrid y Alcorcón se va en metro (Línea 10 + MetroSur)</div></div>
         <button class="icon-btn" data-close>✕</button>
       </div>
+      ${this.miniMap()}
       ${compRow}
       <div class="places">${cards}</div>
+    </div>`;
+  }
+
+  /** Mapa ilustrado: Madrid, la línea de metro y Alcorcón, con un botón por sitio. */
+  private miniMap(): string {
+    const w = this.world;
+    const a = w.activeAgent;
+    const pos: Record<string, [number, number]> = {
+      L0: [7, 28], L1: [19, 28], L2: [31, 28], L3: [43, 28], L4: [55, 28],
+      G: [7, 56], P: [19, 56], M: [31, 56], A1: [43, 56], A2: [55, 56],
+      L5: [7, 84], L6: [19, 84], L7: [31, 84], L8: [43, 84], L9: [55, 84],
+      MT: [66.5, 56], PL: [79, 28], BR: [93, 28], AL1: [79, 56], AL2: [93, 56], AL3: [86, 84],
+    };
+    const icon = (id: string) => {
+      const lot = w.lotById(id);
+      if (!lot) return '';
+      if (lot.householdId === w.household.id) return '🏡';
+      if (w.state.households.find((h) => h.id === lot.householdId)?.okupa) return '🏚️';
+      return ({ park: '🌳', studio: '🧘', super: '🛒', acai: '🫐', metro: '🚇', plaza: '⛲', bar: '🍺' } as Record<string, string>)[lot.layout] ?? '🏠';
+    };
+    const pins = Object.entries(pos)
+      .filter(([id]) => w.lotById(id))
+      .map(([id, [x, y]]) => {
+        const lot = w.lotById(id);
+        const here = a.lotId === id && !a.travel;
+        const fam = w.members.some((m) => m.lotId === id && !m.travel && !m.hidden);
+        const can = a.kind === 'person' && !a.travel && w.canTravel(a, id).ok;
+        const name = lot.householdId === w.household.id ? 'Vuestra casa' : lot.name || 'Casa';
+        return `<button class="pin ${here ? 'here' : ''}" style="left:${x}%;top:${y}%" ${can ? `data-go="${id}"` : 'disabled'} title="${esc(name)}" aria-label="${esc(name)}">${icon(id)}${fam ? '<i></i>' : ''}</button>`;
+      })
+      .join('');
+    return `<div class="mini-map">
+      <div class="mm-zone mm-madrid"><span>Madrid</span></div>
+      <div class="mm-zone mm-alcorcon"><span>Alcorcón</span></div>
+      <div class="mm-line"></div>
+      ${pins}
     </div>`;
   }
 

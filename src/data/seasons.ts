@@ -30,6 +30,8 @@ export const EVENTS: Record<string, EventDef> = {
   apagon: { id: 'apagon', label: 'Apagón', icon: '🕯️' },
   navidad: { id: 'navidad', label: 'Navidad', icon: '🎄' },
   campana: { id: 'campana', label: 'Campaña electoral', icon: '🗳️' },
+  lluvia: { id: 'lluvia', label: 'Llueve', icon: '🌧️' },
+  nevada: { id: 'nevada', label: 'Nieva', icon: '🌨️' },
   sanisidro: { id: 'sanisidro', label: 'San Isidro', icon: '🎩' },
 };
 

@@ -7,9 +7,12 @@ import type { Target, World } from '../sim/world';
 import { ACTION_LINES, ACTION_QUIPS, NEED_THOUGHTS, PET_SOUNDS } from '../data/dialogue';
 import { chatPair, traitQuip } from '../sim/chatter';
 import { NEED_KEYS } from '../sim/types';
+import { drawSurroundings, skyAt } from './scenery';
 import { P, SCREEN_GLOW, drawObjectArt, drawTile, drawWall, faceQuad, flat, prism, type LotStyle } from './art';
 import { SceneFx, type FxKind } from './fx';
-import { PET_ART, drawAccessory, drawBaby, drawLeg, drawPersonBody, personLook, petColor } from './characters';
+import { PET_ART, drawAccessory, drawBackHead, drawBaby, drawFace, drawLeg, drawPersonBody, drawProp, personLook, petColor, type Expression, type PersonLook } from './characters';
+import { hasEmotion } from '../sim/emotions';
+import { moodScore } from '../sim/world';
 import { TILE_H, TILE_W, isoToScreen, screenToTile, shade, tileCenter } from './iso';
 
 /** Minutos de juego por segundo real para cada velocidad. */
@@ -22,6 +25,7 @@ const NIGHT_MAX = 0.42;
 
 /** Partículas que acompañan a cada acción (y cada cuántos ms sale una). */
 const ACTION_FX: Record<string, { kind: FxKind; every: number }> = {
+  cook: { kind: 'steam', every: 500 },
   fart: { kind: 'gas', every: 200 },
   sing: { kind: 'notes', every: 350 },
   rap: { kind: 'notes', every: 300 },
@@ -87,7 +91,25 @@ interface AgentView {
   headY: number;
   /** Si cambia (crece, cambia de etapa), se vuelve a dibujar. */
   key: string;
+  /** Personas: cara (expresión), cabeza de espaldas y lo que lleva en la mano. */
+  look?: PersonLook;
+  face?: Phaser.GameObjects.Graphics;
+  backHead?: Phaser.GameObjects.Graphics;
+  prop?: Phaser.GameObjects.Graphics;
+  faceKey?: string;
+  propKey?: string;
+  lastY?: number;
+  back?: boolean;
 }
+
+/** Lo que lleva en la mano mientras hace cada cosa. */
+const PROPS: Record<string, string> = {
+  cook: 'pan', browse: 'phone', whatsapp: 'phone', order_glovo: 'phone', order_groceries: 'phone', selfie: 'phone', find_job: 'phone',
+  read: 'book', homework: 'book', cana: 'beer', vermut: 'beer', drink_beer: 'beer', chupito: 'beer', smoothie: 'cup', churros: 'cup',
+  paint: 'brush', play_mus: 'cards', sing: 'mic', rap: 'mic',
+};
+/** Acciones en las que se está sentado. */
+const SITTING = new Set(['sit', 'sit_bench', 'watch_tv', 'play_games', 'toilet', 'play_mus', 'watch_football']);
 
 interface ObjectView {
   gfx: Phaser.GameObjects.Graphics;
@@ -156,6 +178,7 @@ export class HouseScene extends Phaser.Scene {
   /** Luces que se encienden de noche (ventanas, lámparas). */
   private glows: Phaser.GameObjects.Graphics[] = [];
   private nightLevel = 0;
+  private skyHex = '';
   private fx!: SceneFx;
   /** Conversaciones automáticas en curso (por quien la empezó). */
   private convo = new Map<string, { pair: [string, string]; step: number; next: number }>();
@@ -166,7 +189,7 @@ export class HouseScene extends Phaser.Scene {
   private pendingSpeech: { agentId: string; text: string; kind: 'say' | 'think'; at: number }[] = [];
   /** Parcela dibujada ahora mismo y sus gráficos fijos (suelo y paredes). */
   private shownLot = '';
-  private lotGraphics: Phaser.GameObjects.Graphics[] = [];
+  private lotGraphics: (Phaser.GameObjects.Graphics | Phaser.GameObjects.RenderTexture)[] = [];
   private pointers = new Map<number, { x: number; y: number }>();
   private dragStart: { x: number; y: number; scrollX: number; scrollY: number } | null = null;
   private dragged = false;
@@ -185,6 +208,27 @@ export class HouseScene extends Phaser.Scene {
   setWorld(world: World) {
     this.world = world;
     this.shownLot = '';
+  }
+
+  /** Convierte gráficos fijos en una sola imagen. Si algo falla, se quedan como gráficos. */
+  private bake(gs: Phaser.GameObjects.Graphics[], b: { minX: number; maxX: number; minY: number; maxY: number }, depth: number) {
+    try {
+      const res = Phaser.Math.Clamp(this.cameras.main.zoom, 1, 1.5);
+      const W = Math.ceil((b.maxX - b.minX) * res), H = Math.ceil((b.maxY - b.minY) * res);
+      if (W > 4096 || H > 4096) return;
+      const rt = this.add.renderTexture(b.minX, b.minY, W, H).setOrigin(0, 0).setScale(1 / res).setDepth(depth);
+      for (const g of gs) {
+        g.setScale(res);
+        rt.draw(g, -b.minX * res, -b.minY * res);
+      }
+      for (const g of gs) {
+        g.destroy();
+        this.lotGraphics = this.lotGraphics.filter((x) => x !== g);
+      }
+      this.lotGraphics.push(rt);
+    } catch {
+      for (const g of gs) g.setScale(1);
+    }
   }
 
   /** Lo que obliga a redibujar la parcela: la estación y el tamaño de la casa. */
@@ -249,8 +293,9 @@ export class HouseScene extends Phaser.Scene {
     this.convo.clear();
     this.pendingSpeech = [];
     this.shownLot = lotId;
-    this.drawLot();
     this.fitCamera();
+    this.drawLot();
+    this.cameras.main.fadeIn(280, 20, 24, 36);
   }
 
   create() {
@@ -293,16 +338,23 @@ export class HouseScene extends Phaser.Scene {
     const style: LotStyle = { wall: lot.style?.wall ?? DEFAULT_STYLE.wall, floor: lot.style?.floor ?? DEFAULT_STYLE.floor, grass: season.grass, snow: season.id === 'invierno' };
     this.shownKey = this.lotKey();
 
-    // Alrededores: césped y, delante de las casas y el estudio, acera y calle.
-    const around = this.add.graphics().setDepth(-2e5);
-    this.lotGraphics.push(around);
-    flat(around, { x: -10, y: -10, w: w + 20, h: h + 20 }, 0, shade(season.grass, 0.78));
-    if (lot.layout !== 'park') {
-      flat(around, { x: -10, y: h, w: w + 20, h: 0.55 }, 0, 0xcfc9bc);
-      flat(around, { x: -10, y: h + 0.55, w: w + 20, h: 1.9 }, 0, 0x4d525b);
-      for (let x = -10; x < w + 10; x += 1.4) flat(around, { x, y: h + 1.45, w: 0.7, h: 0.1 }, 0, 0xf2e6a6);
-      flat(around, { x: -10, y: h + 2.45, w: w + 20, h: 0.55 }, 0, 0xcfc9bc);
+    // Suelo de alrededor y, delante de las casas y el estudio, acera y calle (barato: no se hornea).
+    const ground = this.add.graphics().setDepth(-3e5);
+    this.lotGraphics.push(ground);
+    // Detrás de los edificios se ve el cielo (el suelo empieza justo detrás de ellos).
+    flat(ground, { x: -7.5, y: -7.5, w: w + 40, h: h + 40 }, 0, lot.layout === 'metro' ? 0x2b2f38 : shade(season.grass, 0.78));
+    if (lot.layout !== 'park' && lot.layout !== 'metro') {
+      flat(ground, { x: -7.5, y: h, w: w + 40, h: 0.55 }, 0, 0xcfc9bc);
+      flat(ground, { x: -7.5, y: h + 0.55, w: w + 40, h: 1.9 }, 0, 0x4d525b);
+      for (let x = -7.5; x < w + 32; x += 1.4) flat(ground, { x, y: h + 1.45, w: 0.7, h: 0.1 }, 0, 0xf2e6a6);
+      flat(ground, { x: -7.5, y: h + 2.45, w: w + 40, h: 0.55 }, 0, 0xcfc9bc);
     }
+    // Decorado: edificios, árboles, farolas y coches (se hornea con el suelo de la parcela).
+    const around = this.add.graphics().setDepth(-2e5);
+    const lampGlow = this.add.graphics().setDepth(1e6 + 1).setBlendMode(Phaser.BlendModes.ADD).setAlpha(this.nightLevel);
+    this.lotGraphics.push(around, lampGlow);
+    this.glows.push(lampGlow);
+    drawSurroundings(around, lampGlow, lot, layout, season.id);
     // Sombra suave alrededor de la parcela
     around.fillStyle(0x000000, 0.08);
     around.fillPoints([P(-0.3, -0.3), P(w + 0.3, -0.3), P(w + 0.3, h + 0.3), P(-0.3, h + 0.3)], true);
@@ -310,6 +362,24 @@ export class HouseScene extends Phaser.Scene {
     const floor = this.add.graphics().setDepth(-1e5);
     this.lotGraphics.push(floor);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (tiles[y][x] !== 'wall') drawTile(floor, tiles[y][x], x, y, style);
+    // Sombra suave junto a las paredes (da sensación de volumen)
+    for (let y = 1; y < h; y++) {
+      for (let x = 1; x < w; x++) {
+        const t = tiles[y][x];
+        if (t === 'wall' || t === 'grass' || t === 'path') continue;
+        if (tiles[y - 1][x] === 'wall') {
+          flat(floor, { x, y, w: 1, h: 0.3 }, 0, 0x000000, 0.1);
+          flat(floor, { x, y, w: 1, h: 0.12 }, 0, 0x000000, 0.08);
+        }
+        if (tiles[y][x - 1] === 'wall') {
+          flat(floor, { x, y, w: 0.3, h: 1 }, 0, 0x000000, 0.1);
+          flat(floor, { x, y, w: 0.12, h: 1 }, 0, 0x000000, 0.08);
+        }
+      }
+    }
+    // Todo lo fijo de abajo, a una imagen (así el móvil no lo repinta en cada fotograma).
+    const a0 = P(-9, h + 5), a1 = P(w + 9, -9), top = P(-9, -9), bot = P(w + 9, h + 5);
+    this.bake([around, floor], { minX: a0.x, maxX: a1.x, minY: top.y - 240, maxY: bot.y + 20 }, -1e5);
 
     // Paredes: altas al fondo, bajas delante (vista recortada para ver el interior).
     const windowsGlow = this.add.graphics().setDepth(1e6 + 1).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
@@ -476,6 +546,7 @@ export class HouseScene extends Phaser.Scene {
     let headY = -32;
     let legs: AgentView['legs'];
     let shadowW = 24;
+    let extra: Partial<AgentView> = {};
 
     if (a.kind === 'person') {
       const look = personLook(a, stage === 'elder');
@@ -490,9 +561,16 @@ export class HouseScene extends Phaser.Scene {
         drawLeg(fore, look, 0.5);
         const torso = this.add.graphics();
         headY = drawPersonBody(torso, look);
-        const acc = a.role ?? (this.chulapo(a) ? 'chulapo' : '');
-        if (acc) drawAccessory(torso, acc);
-        body.add([back, fore, torso]);
+        const face = this.add.graphics();
+        drawFace(face, look, 'normal');
+        const backHead = this.add.graphics().setVisible(false);
+        drawBackHead(backHead, look);
+        const acc = this.add.graphics();
+        const accKind = a.role ?? (this.chulapo(a) ? 'chulapo' : '');
+        if (accKind) drawAccessory(acc, accKind);
+        const prop = this.add.graphics();
+        body.add([back, fore, torso, face, backHead, acc, prop]);
+        extra = { look, face, backHead, prop, faceKey: 'normal', propKey: '' };
         legs = [back, fore];
       }
     } else {
@@ -524,7 +602,7 @@ export class HouseScene extends Phaser.Scene {
     plumbob.fillPoints([{ x: 0, y: -10 }, { x: 2.5, y: -4 }, { x: 0, y: -3 }], true);
 
     root.add([ring, shadow, body, label, bubbleBg, bubble, plumbob]);
-    return { root, body, legs, bubble, bubbleBg, label, plumbob, ring, headY, key: this.agentKey(a) };
+    return { root, body, legs, bubble, bubbleBg, label, plumbob, ring, headY, key: this.agentKey(a), ...extra };
   }
 
   private agentScreenPos(a: Agent): { x: number; y: number; depth: number; lying: boolean } {
@@ -587,6 +665,7 @@ export class HouseScene extends Phaser.Scene {
       const acting = a.current?.phase === 'acting' ? a.current.actionId : '';
       const speaking = this.fx.isSpeaking(a.id, time);
       this.animateBody(v, a, acting, walking, p.lying, speaking, time);
+      this.personDetails(v, a, acting, walking, p.y, p.lying, speaking, time);
       const size = STAGE_SCALE[lifeStage(a.species, a.ageDays).id] ?? 1;
       v.body.scaleY = size * (acting === 'pilates' || acting === 'reformer' ? 1 + Math.sin(time / 500) * 0.06 : 1);
       v.body.scaleX = a.facing * size;
@@ -688,6 +767,50 @@ export class HouseScene extends Phaser.Scene {
     }
   }
 
+  /** Cara según cómo se siente, de espaldas al ir hacia el fondo, sentado y lo que lleva en la mano. */
+  private personDetails(v: AgentView, a: Agent, acting: string, walking: boolean, y: number, lying: boolean, speaking: boolean, t: number) {
+    if (!v.face || !v.look || !v.backHead || !v.prop) return;
+    // De espaldas: al caminar hacia arriba de la pantalla.
+    if (walking && v.lastY !== undefined) {
+      if (y < v.lastY - 0.02) v.back = true;
+      else if (y > v.lastY + 0.02) v.back = false;
+    } else if (!walking) v.back = false;
+    v.lastY = y;
+    v.face.setVisible(!v.back);
+    v.backHead.setVisible(!!v.back);
+    // Expresión
+    let e: Expression = 'normal';
+    const sleeping = lying && acting !== 'pilates' && acting !== 'reformer' && acting !== 'bath' && acting !== 'niqui';
+    if (sleeping) e = 'dormido';
+    else if ((a.alcohol ?? 0) >= 50) e = 'borracho';
+    else if (hasEmotion(a, 'enamorado') || hasEmotion(a, 'boda') || acting === 'kiss' || acting === 'flirt') e = 'enamorado';
+    else if (['enfadado', 'insultado', 'celos', 'traicionado'].some((x) => hasEmotion(a, x)) || acting === 'argue' || acting === 'insult') e = 'enfadado';
+    else if (['luto', 'corazon_roto', 'calabazas', 'despedido'].some((x) => hasEmotion(a, x))) e = 'triste';
+    else if (hasEmotion(a, 'premio') || hasEmotion(a, 'loteria')) e = 'sorpresa';
+    else {
+      const m = moodScore(a);
+      e = m > 62 || speaking || acting === 'joke' || acting === 'dance' ? 'feliz' : m < 30 ? 'triste' : 'normal';
+    }
+    // Parpadeo cada pocos segundos
+    if (e !== 'dormido' && (t + (a.id.length * 997)) % 3800 < 130) e = 'parpadeo';
+    if (e !== v.faceKey) {
+      v.faceKey = e;
+      v.face.clear();
+      drawFace(v.face, v.look, e);
+    }
+    // Objeto en la mano
+    const prop = PROPS[acting] ?? '';
+    if (prop !== v.propKey) {
+      v.propKey = prop;
+      v.prop.clear();
+      if (prop) drawProp(v.prop, prop);
+    }
+    // Sentado: piernas recogidas
+    const sitting = SITTING.has(acting) && !lying;
+    if (v.legs) for (const l of v.legs) l.scaleY = sitting ? 0.45 : 1;
+    if (sitting) v.body.y += 5;
+  }
+
   /** Diálogos automáticos, pensamientos y comentarios. */
   private chatter(a: Agent, acting: string, time: number) {
     const cur = a.current;
@@ -765,6 +888,99 @@ export class HouseScene extends Phaser.Scene {
     this.syncAgents(time);
     this.syncGhost();
     this.updateNight();
+    this.updateWeather(delta);
+    this.festiveFx(time);
+    this.followActive(time);
+  }
+
+  // --- Clima, fiestas y cámara ----------------------------------------------
+
+  private weatherGfx?: Phaser.GameObjects.Graphics;
+  private weatherParts: { x: number; y: number; v: number; s: number }[] = [];
+  private weatherKind = '';
+
+  /** Lluvia, nieve u hojas cayendo (en pantalla, por encima de todo). */
+  private updateWeather(delta: number) {
+    const w = this.world;
+    const kind = w.lotById(this.shownLot)?.layout === 'metro' ? '' : w.hasEvent('lluvia') ? 'rain' : w.hasEvent('nevada') ? 'snow' : w.seasonDef.id === 'otono' ? 'leaves' : '';
+    const { width, height } = this.scale;
+    if (kind !== this.weatherKind) {
+      this.weatherKind = kind;
+      this.weatherGfx?.destroy();
+      this.weatherGfx = kind ? this.add.graphics().setScrollFactor(0).setDepth(1e6 + 3) : undefined;
+      const n = kind === 'rain' ? 110 : kind === 'snow' ? 80 : 14;
+      this.weatherParts = Array.from({ length: kind ? n : 0 }, () => ({ x: Math.random() * width, y: Math.random() * height, v: 0.6 + Math.random() * 0.6, s: Math.random() * 6.28 }));
+    }
+    const g = this.weatherGfx;
+    if (!g) return;
+    g.clear();
+    const dt = Math.min(delta, 60) / 16;
+    for (const p of this.weatherParts) {
+      if (kind === 'rain') {
+        p.y += 14 * DPR * p.v * dt;
+        p.x -= 3 * DPR * dt;
+        g.lineStyle(1 * DPR, 0xc7dcf0, 0.55);
+        g.lineBetween(p.x, p.y, p.x + 3 * DPR, p.y - 12 * DPR);
+      } else if (kind === 'snow') {
+        p.y += 1.4 * DPR * p.v * dt;
+        p.s += 0.03 * dt;
+        p.x += Math.sin(p.s) * 0.6 * DPR;
+        g.fillStyle(0xffffff, 0.9);
+        g.fillCircle(p.x, p.y, 2 * DPR * p.v);
+      } else {
+        p.y += 1.1 * DPR * p.v * dt;
+        p.s += 0.04 * dt;
+        p.x += Math.sin(p.s) * 1.2 * DPR;
+        g.fillStyle(p.v > 0.9 ? 0xd9822b : 0xc9a227, 0.9);
+        g.fillEllipse(p.x, p.y, 7 * DPR, 3.5 * DPR * Math.abs(Math.cos(p.s)) + DPR);
+      }
+      if (p.y > height + 10) {
+        p.y = -10;
+        p.x = Math.random() * (width + 60);
+      }
+      if (p.x < -20) p.x = width + 10;
+    }
+  }
+
+  private nextFestive = 0;
+
+  /** Confeti en las fiestas; fuegos artificiales en la verbena y en las uvas. */
+  private festiveFx(time: number) {
+    if (time < this.nextFestive) return;
+    this.nextFestive = time + 420;
+    const w = this.world;
+    const people = w.agentsIn(this.shownLot).filter((a) => a.kind === 'person' && !a.hidden && !a.travel);
+    if (w.state.party?.lotId === this.shownLot && people.length) {
+      const a = people[Math.floor(Math.random() * people.length)];
+      const p = this.agentScreenPos(a);
+      this.fx.emit('confetti', p.x, p.y - 40);
+    }
+    const night = w.hour >= 21 || w.hour < 1;
+    const fireworks = (w.hasEvent('verbena', this.shownLot) && night) || (w.seasonDef.id === 'invierno' && w.weekday === 6 && w.hour === 23 && (this.state_minute() % 60) >= 50);
+    if (fireworks && Math.random() < 0.7) {
+      const v = this.cameras.main.worldView;
+      this.fx.emit('firework', v.x + v.width * (0.2 + Math.random() * 0.6), v.y + v.height * (0.12 + Math.random() * 0.2));
+    }
+  }
+
+  private state_minute() {
+    return this.world.state.minutes % 1440;
+  }
+
+  private lastUserCam = 0;
+
+  /** La cámara sigue con suavidad al personaje activo si se sale de la vista. */
+  private followActive(time: number) {
+    if (this.dragStart || this.pointers.size || time - this.lastUserCam < 4000 || this.world.ui.building) return;
+    const a = this.world.activeAgent;
+    if (!a || a.lotId !== this.shownLot || a.hidden || a.travel) return;
+    const cam = this.cameras.main;
+    const p = this.agentScreenPos(a);
+    const v = cam.worldView;
+    const mx = v.width * 0.18, myTop = v.height * 0.18, myBot = v.height * 0.38;
+    if (p.x < v.x + mx || p.x > v.right - mx || p.y < v.y + myTop || p.y > v.bottom - myBot) {
+      if (!cam.panEffect.isRunning) cam.pan(p.x, p.y + v.height * 0.08, 700, 'Sine.easeInOut');
+    }
   }
 
   private updateNight() {
@@ -776,8 +992,16 @@ export class HouseScene extends Phaser.Scene {
     else if (h > 22) a = NIGHT_MAX;
     else if (h > 19) a = NIGHT_MAX * ((h - 19) / 3);
     const blackout = this.world.hasEvent('apagon', this.shownLot);
-    if (blackout) a = Math.min(0.75, a * 1.35 + 0.1);
-    this.night.setFillStyle(0x0b1640, a);
+    if (blackout) a = Math.min(0.75, a * 1.35 + 0.1 + Math.sin(this.time.now / 90) * 0.015);
+    // Color del cielo y tinte de la luz: amanecer rosa, día limpio, atardecer naranja, noche azul.
+    const sky = skyAt(h);
+    const tinted = !blackout && sky.alpha > 0 && h >= 6 && h < 21;
+    this.night.setFillStyle(tinted ? sky.tint : 0x0b1640, tinted ? Math.max(sky.alpha, a * 0.6) : a);
+    const skyHex = `#${sky.sky.toString(16).padStart(6, '0')}`;
+    if (skyHex !== this.skyHex) {
+      this.skyHex = skyHex;
+      this.cameras.main.setBackgroundColor(skyHex);
+    }
     const level = blackout ? 0 : a / NIGHT_MAX;
     if (Math.abs(level - this.nightLevel) > 0.01) {
       this.nightLevel = level;
@@ -828,6 +1052,7 @@ export class HouseScene extends Phaser.Scene {
       const wasTap = this.pointers.size === 1 && !this.dragged && this.dragStart;
       this.pointers.delete(p.id);
       if (this.pointers.size < 2) this.pinchStart = null;
+      if (!wasTap) this.lastUserCam = this.time.now;
       if (this.pointers.size === 0) this.dragStart = null;
       else if (this.pointers.size === 1) {
         // Al soltar un dedo del pellizco, seguir arrastrando con el otro sin saltos.

@@ -1057,6 +1057,9 @@ export class World {
       );
     }
     this.blackoutTonight = this.wishesEnabled && Math.random() < this.blackoutChance;
+    // El tiempo: lluvia en primavera y otoño, nieve en invierno.
+    if ((se === 0 || se === 2) && Math.random() < 0.25) this.startEvent('lluvia', Math.round(rand(10, 20)) * 60);
+    if (se === 3 && wd !== 6 && Math.random() < 0.4) this.startEvent('nevada', Math.round(rand(8, 16)) * 60);
   }
 
   /** Lo que pasa cada hora con los eventos. */
@@ -1066,6 +1069,13 @@ export class World {
     const now = this.state.minutes;
     this.heatNow = this.hasEvent('calor') && h >= 11 && h < 20;
     if (this.heatNow) for (const m of this.members) if (m.kind === 'person' && !m.travel && m.lotId !== SUPER_LOT) this.feel(m, 'calor', undefined, 2);
+    // Lluvia: quien esté en la calle (parque, plaza) acaba calado.
+    if (this.hasEvent('lluvia')) {
+      for (const a of this.state.agents) {
+        const lot = this.lotById(a.lotId);
+        if (a.kind === 'person' && !a.travel && !a.role && (lot?.kind === 'park')) this.feel(a, 'mojado');
+      }
+    }
     // Verbena: sábado de verano por la noche, en el parque.
     if (se === 1 && this.weekday === 5 && h === 19 && !this.hasEvent('verbena')) {
       const until = now + 6 * 60;
