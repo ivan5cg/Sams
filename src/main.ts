@@ -56,7 +56,11 @@ async function boot() {
     render: { antialias: true, roundPixels: false },
     input: { activePointers: 3 },
   });
-  game.scene.add('house', HouseScene, true, { world, onTap: (t: Parameters<Hud['handleTap']>[0]) => hud.handleTap(t) });
+  game.scene.add('house', HouseScene, true, {
+    world,
+    onTap: (t: Parameters<Hud['handleTap']>[0], tile: { x: number; y: number }) => hud.handleTap(t, tile),
+  });
+  hud.setScene(() => game.scene.getScene('house') as HouseScene);
 
   window.addEventListener('resize', () => game.scale.resize(window.innerWidth * DPR, window.innerHeight * DPR));
 
@@ -85,6 +89,7 @@ async function boot() {
   // Acceso para depurar desde la consola del navegador.
   Object.assign(window, { sams: { get world() { return world; }, game } });
 
+  hud.showTutorial();
   if (!saved) hud.toast('¡Bienvenidos a casa! Toca algo para dar órdenes', '🏡');
 }
 

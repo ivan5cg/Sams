@@ -58,6 +58,7 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
         }
         // ...y limpiar jaulas y areneros cuando empiezan a oler.
         if (def.cleans && (o.dirt ?? 0) >= 2) score += 6 * (o.dirt ?? 0);
+        // Averías: alguien se pone a arreglarlo (el baseScore ya lo hace atractivo).
       }
       if (score <= 0) continue;
       options.push({ choice: { actionId, targetObjectId: o.id }, score: score * distFactor(o.x, o.y) * jitter() });

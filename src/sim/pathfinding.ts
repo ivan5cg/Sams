@@ -76,6 +76,26 @@ export function findPath(grid: Grid, from: Vec, to: Vec): Vec[] | null {
   return null;
 }
 
+/** Casillas a las que se puede llegar desde `start` (8 direcciones, sin cortar esquinas). */
+export function reachable(grid: Grid, start: Vec): Set<string> {
+  const seen = new Set<string>();
+  if (!isWalkable(grid, start.x, start.y)) return seen;
+  const stack: Vec[] = [start];
+  seen.add(`${start.x},${start.y}`);
+  while (stack.length) {
+    const { x, y } = stack.pop()!;
+    for (const [dx, dy] of DIRS) {
+      const nx = x + dx, ny = y + dy;
+      const k = `${nx},${ny}`;
+      if (seen.has(k) || !isWalkable(grid, nx, ny)) continue;
+      if (dx !== 0 && dy !== 0 && (!isWalkable(grid, x + dx, y) || !isWalkable(grid, x, y + dy))) continue;
+      seen.add(k);
+      stack.push({ x: nx, y: ny });
+    }
+  }
+  return seen;
+}
+
 export function pathLength(path: Vec[], from: Vec): number {
   let len = 0;
   let prev = from;

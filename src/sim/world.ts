@@ -1,15 +1,15 @@
 import { ACTIONS, SELF_ACTIONS, type ActionDef } from '../data/actions';
 import { HOUSE_OBJECTS, LAYOUTS, isOutdoor, type LotLayout } from '../data/lot';
-import { OBJECTS, type ObjectDef } from '../data/objects';
+import { OBJECTS, SELL_RATIO, type ObjectDef } from '../data/objects';
 import { SPECIES, lifeStage } from '../data/species';
 import { CAREERS, gradeLabel } from '../data/careers';
 import { chooseAutonomous } from './ai';
 import { REJECT_TEXT, REL_EFFECTS, ROMANTIC, acceptChance, canRomance, changeRel, getRel, isAdult, partnerOf, relKey, setRel } from './social';
 import { PARK_LOT, PLAYER_LOT, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
-import { findPath, isWalkable, pathLength, type Grid } from './pathfinding';
+import { findPath, isWalkable, pathLength, reachable, type Grid } from './pathfinding';
 import { NEED_KEYS, type Agent, type Household, type Lot, type NeedKey, type Needs, type PlacedObject, type SpeciesId, type Task, type Vec, type WorldState } from './types';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_MEMBERS = 8;
 /** Minutos de juego que se tarda en ir de una parcela a otra del barrio. */
@@ -54,6 +54,8 @@ export class World {
   private toastListeners: ((t: Toast) => void)[] = [];
   private warned = new Set<string>();
   private lastToast = new Map<string, number>();
+  /** Estado de la interfaz que no se guarda (modo construcción y vista previa del mueble). */
+  ui: { building: boolean; ghost: { def: string; x: number; y: number; ok: boolean } | null } = { building: false, ghost: null };
   /** Tras despedir a unas visitas, no llegan otras espontáneas durante un rato. */
   private noVisitsUntil = 0;
 
@@ -276,6 +278,15 @@ export class World {
     if (o.lotId !== a.lotId || a.travel) return { def, ok: false, reason: 'No está aquí' };
     if (a.home && a.home !== o.id) return { def, ok: false, reason: 'No puede salir de su jaula' };
     if (!def.guestOk && this.isGuest(a)) return { def, ok: false, reason: 'Estás de visita' };
+    if (actionId === 'repair') {
+      if (!o.broken) return { def, ok: false };
+      if (!isAdult(a) && this.stageOf(a) !== 'teen') return { def, ok: false, reason: 'Es cosa de mayores' };
+    } else if (o.broken) return { def, ok: false, reason: 'Está roto' };
+    if (actionId === 'watch_tv') {
+      const tv = this.objectsIn(o.lotId).find((x) => x.def === 'tv');
+      if (!tv) return { def, ok: false, reason: 'No hay tele' };
+      if (tv.broken) return { def, ok: false, reason: 'La tele está rota' };
+    }
     const resident = this.residentOf(o.id);
     if (resident && def.actors.includes('pet') && resident !== a) return { def, ok: false, reason: `Es la casa de ${resident.name}` };
     if (this.usersOf(o.id, a).length >= od.capacity) return { def, ok: false, reason: 'Ocupado' };
@@ -345,7 +356,7 @@ export class World {
       const o = this.object(target.id);
       if (!o) return [];
       return this.objDef(o)
-        .actions.filter((id) => this.speciesOk(a, ACTIONS[id]))
+        .actions.filter((id) => this.speciesOk(a, ACTIONS[id]) && (id !== 'repair' || o.broken))
         .map((id) => this.checkObjectAction(a, o, id));
     }
     if (target.kind === 'agent') {
@@ -888,6 +899,166 @@ export class World {
   }
 
   // ---------------------------------------------------------------------------
+  // Modo construcción: comprar, mover y vender
+  // ---------------------------------------------------------------------------
+
+  /** Solo se construye en la casa de la familia, estando allí. */
+  canBuildHere(): boolean {
+    return this.viewLotId === this.household.lotId && !this.state.familyGone;
+  }
+
+  /** ¿Cabe `defId` en (x, y)? Comprueba paredes, otros objetos y que no bloquee el paso. */
+  canPlace(defId: string, x: number, y: number, ignoreId?: string): { ok: boolean; reason?: string } {
+    const lotId = this.household.lotId;
+    const d = OBJECTS[defId];
+    const layout = this.layoutOf(lotId);
+    if (!d) return { ok: false };
+    for (let ty = y; ty < y + d.h; ty++) {
+      for (let tx = x; tx < x + d.w; tx++) {
+        const t = layout.tiles[ty]?.[tx];
+        if (!t) return { ok: false, reason: 'Fuera de la parcela' };
+        if (t === 'wall' || t === 'door') return { ok: false, reason: t === 'door' ? 'Tapa una puerta' : 'Hay una pared' };
+        if (tx === layout.entrance.x && ty === layout.entrance.y) return { ok: false, reason: 'Tapa la entrada' };
+        const other = this.objectsIn(lotId).find((o) => o.id !== ignoreId && tx >= o.x && tx < o.x + this.objDef(o).w && ty >= o.y && ty < o.y + this.objDef(o).h);
+        if (other) return { ok: false, reason: `Ahí está: ${this.objDef(other).name.toLowerCase()}` };
+        if (!d.walkable && this.agentsIn(lotId).some((a) => !a.hidden && !a.home && Math.round(a.pos.x) === tx && Math.round(a.pos.y) === ty)) {
+          return { ok: false, reason: 'Hay alguien ahí' };
+        }
+      }
+    }
+    if (d.walkable) return { ok: true };
+    // Que no deje zonas o muebles inaccesibles.
+    const grid = this.gridOf(lotId).map((row) => [...row]);
+    const ignored = ignoreId ? this.object(ignoreId) : undefined;
+    if (ignored && !this.objDef(ignored).walkable) {
+      const od = this.objDef(ignored);
+      for (let ty = ignored.y; ty < ignored.y + od.h; ty++) for (let tx = ignored.x; tx < ignored.x + od.w; tx++) grid[ty][tx] = true;
+    }
+    for (let ty = y; ty < y + d.h; ty++) for (let tx = x; tx < x + d.w; tx++) grid[ty][tx] = false;
+    const reach = reachable(grid, layout.entrance);
+    for (let ty = 0; ty < layout.h; ty++) {
+      for (let tx = 0; tx < layout.w; tx++) {
+        if (grid[ty][tx] && !reach.has(`${tx},${ty}`)) return { ok: false, reason: 'Bloquearía el paso' };
+      }
+    }
+    const check = (o: { def: string; x: number; y: number }) => {
+      const od = OBJECTS[o.def];
+      if (!od.actions.length || od.walkable) return true;
+      for (let ty = o.y - 1; ty <= o.y + od.h; ty++) {
+        for (let tx = o.x - 1; tx <= o.x + od.w; tx++) {
+          const inside = tx >= o.x && tx < o.x + od.w && ty >= o.y && ty < o.y + od.h;
+          const diagonal = (tx < o.x || tx >= o.x + od.w) && (ty < o.y || ty >= o.y + od.h);
+          if (!inside && !diagonal && reach.has(`${tx},${ty}`)) return true;
+        }
+      }
+      return false;
+    };
+    if (!check({ def: defId, x, y })) return { ok: false, reason: 'No se podría usar' };
+    for (const o of this.objectsIn(lotId)) {
+      if (o.id === ignoreId) continue;
+      if (!check(o)) return { ok: false, reason: `Dejaría sin acceso: ${this.objDef(o).name.toLowerCase()}` };
+    }
+    return { ok: true };
+  }
+
+  buy(defId: string, x: number, y: number): boolean {
+    const d = OBJECTS[defId];
+    if (!d?.price || !this.canBuildHere()) return false;
+    if (this.household.funds < d.price) {
+      this.toast('No hay dinero suficiente', '💸');
+      return false;
+    }
+    const can = this.canPlace(defId, x, y);
+    if (!can.ok) {
+      if (can.reason) this.toast(can.reason, '🚫');
+      return false;
+    }
+    this.household.funds -= d.price;
+    this.state.objects.push({
+      id: this.newId('o'),
+      def: defId,
+      lotId: this.household.lotId,
+      x,
+      y,
+      ...(d.maxStock ? { stock: 0 } : {}),
+      ...(d.maxDirt ? { dirt: 0 } : {}),
+    });
+    this.rebuildGrid();
+    return true;
+  }
+
+  /** Motivo por el que no se puede mover o vender un objeto (o undefined si se puede). */
+  cantTouch(o: PlacedObject): string | undefined {
+    if (o.lotId !== this.household.lotId) return 'No es vuestro';
+    if (this.usersOf(o.id).length) return 'Alguien lo está usando';
+    if (this.residentOf(o.id)) return `Aquí vive ${this.residentOf(o.id)!.name}`;
+    return undefined;
+  }
+
+  moveObject(id: string, x: number, y: number): boolean {
+    const o = this.object(id);
+    if (!o || !this.canBuildHere()) return false;
+    const why = this.cantTouch(o);
+    const can = why ? { ok: false, reason: why } : this.canPlace(o.def, x, y, id);
+    if (!can.ok) {
+      if (can.reason) this.toast(can.reason, '🚫');
+      return false;
+    }
+    o.x = x;
+    o.y = y;
+    this.rebuildGrid();
+    return true;
+  }
+
+  sellObject(id: string): boolean {
+    const o = this.object(id);
+    if (!o || !this.canBuildHere()) return false;
+    const d = this.objDef(o);
+    const why = !d.price ? 'Esto no se puede vender' : this.cantTouch(o);
+    if (why) {
+      this.toast(why, '🚫');
+      return false;
+    }
+    const refund = Math.floor(d.price! * SELL_RATIO);
+    this.household.funds += refund;
+    this.state.objects = this.state.objects.filter((x) => x !== o);
+    this.rebuildGrid();
+    this.toast(`Vendido: ${d.name.toLowerCase()} (+§${refund})`, '🏷️');
+    return true;
+  }
+
+  /** Decoración bonita alrededor (plantas, lámparas, alfombras...). */
+  private decorAround(a: Agent): number {
+    if (a.kind !== 'person' || a.hidden) return 0;
+    let sum = 0;
+    for (const o of this.objectsIn(a.lotId)) {
+      const d = this.objDef(o).decor;
+      if (d && Math.abs(o.x - a.pos.x) <= 2 && Math.abs(o.y - a.pos.y) <= 2) sum += d;
+    }
+    return Math.min(sum, 3);
+  }
+
+  /** Cosas que pasan: averías, dinero encontrado, la lotería... */
+  private dailyEvents() {
+    const h = this.household;
+    if (this.state.familyGone) return;
+    for (const o of this.objectsIn(h.lotId)) {
+      if (this.objDef(o).breakable && !o.broken && Math.random() < 0.03) {
+        o.broken = true;
+        this.toast(`Se ha estropeado: ${this.objDef(o).name.toLowerCase()}. Toca para repararlo`, '🔧');
+      }
+    }
+    const r = Math.random();
+    if (r < 0.01) {
+      h.funds += 500;
+      this.toast('¡Os ha tocado la lotería! +§500', '🎟️');
+    } else if (r < 0.08) {
+      h.funds += 50;
+      this.toast('Habéis encontrado §50 en el bolsillo de un abrigo viejo', '🧥');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Órdenes del jugador
   // ---------------------------------------------------------------------------
 
@@ -1048,6 +1219,7 @@ export class World {
         }
       }
     }
+    this.dailyEvents();
     // Pensiones
     for (const h of this.state.households) {
       for (const id of h.memberIds) {
@@ -1126,6 +1298,8 @@ export class World {
 
     this.checkFailures(a);
     if (this.checkStarving(a, dt)) return;
+    const decor = this.decorAround(a);
+    if (decor) a.needs.fun = clamp(a.needs.fun + 0.02 * decor * dt);
 
     // Fin de la visita: ir hacia la salida y volver a casa.
     if (a.visitUntil && this.state.minutes >= a.visitUntil && a.current?.param !== 'leave') {
@@ -1316,6 +1490,10 @@ export class World {
         if (resident) resident.needs.hygiene = Math.max(resident.needs.hygiene, 90);
       }
       if (def.removes) this.state.objects = this.state.objects.filter((x) => x.id !== o.id);
+      if (task.actionId === 'repair') {
+        o.broken = false;
+        if (this.isPlayerMember(a)) this.toast(`${a.name} ha arreglado: ${od.name.toLowerCase()}`, '🔧');
+      }
       if (task.actionId === 'steal') this.hideObject(a, o);
       if (def.doneToast) this.toastOnce(`${a.id}:${def.id}`, def.doneToast.replace('{name}', a.name).replace('{obj}', od.name.toLowerCase()), def.icon);
     }

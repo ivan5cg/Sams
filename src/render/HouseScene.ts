@@ -37,7 +37,7 @@ interface ObjectView {
 
 export interface SceneHooks {
   world: World;
-  onTap: (target: Target) => void;
+  onTap: (target: Target, tile: { x: number; y: number }) => void;
 }
 
 /**
@@ -103,7 +103,10 @@ const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >
 
 export class HouseScene extends Phaser.Scene {
   private world!: World;
-  private onTap!: (t: Target) => void;
+  private onTap!: (t: Target, tile: { x: number; y: number }) => void;
+  private ghostGfx?: Phaser.GameObjects.Graphics;
+  private ghostIcon?: Phaser.GameObjects.Text;
+  private ghostKey = '';
   private agentViews = new Map<string, AgentView>();
   private objectViews = new Map<string, ObjectView>();
   private night!: Phaser.GameObjects.Rectangle;
@@ -350,7 +353,7 @@ export class HouseScene extends Phaser.Scene {
       .setOrigin(0.5, big ? 0.95 : 0.8)
       .setDepth(depth + 0.5);
     let badge: Phaser.GameObjects.Text | undefined;
-    if (d.maxStock || d.maxDirt) {
+    if (d.maxStock || d.maxDirt || d.breakable) {
       badge = this.add
         .text(c.x, c.y - Math.max(d.height, 10) - 30, '', { resolution: TEXT_RES, fontSize: '13px', fontFamily: 'system-ui, sans-serif', color: '#fff', backgroundColor: '#c0392b', padding: { x: 4, y: 1 } })
         .setOrigin(0.5)
@@ -384,8 +387,9 @@ export class HouseScene extends Phaser.Scene {
         const d = OBJECTS[o.def];
         const empty = d.maxStock !== undefined && !o.stock;
         const dirty = d.maxDirt !== undefined && (o.dirt ?? 0) >= Math.ceil(d.maxDirt / 2);
-        v.badge.setVisible(empty || dirty).setText(dirty ? (empty ? 'Sucio y vacío' : '¡Sucio! 🪰') : '¡Vacío!');
-        v.badge.setBackgroundColor(dirty ? '#7a5230' : '#c0392b');
+        const broken = !!o.broken;
+        v.badge.setVisible(empty || dirty || broken).setText(broken ? '🔧 Roto' : dirty ? (empty ? 'Sucio y vacío' : '¡Sucio! 🪰') : '¡Vacío!');
+        v.badge.setBackgroundColor(broken ? '#5b6475' : dirty ? '#7a5230' : '#c0392b');
       }
     }
     for (const [id, v] of this.objectViews) {
@@ -548,6 +552,7 @@ export class HouseScene extends Phaser.Scene {
     if (this.world.viewLotId !== this.shownLot) this.showLot(this.world.viewLotId);
     this.syncObjects();
     this.syncAgents(time);
+    this.syncGhost();
     this.updateNight();
   }
 
@@ -622,6 +627,10 @@ export class HouseScene extends Phaser.Scene {
   }
 
   private handleTap(wx: number, wy: number) {
+    const tile = screenToTile(wx, wy);
+    const tap = (t: Target) => this.onTap(t, tile);
+    // En modo construcción con un mueble elegido, lo que importa es la casilla.
+    if (this.world.ui.building && this.selectingTile) return tap({ kind: 'tile', x: tile.x, y: tile.y });
     // 1) Agentes (lo más cercano al dedo)
     let bestAgent: { a: Agent; d: number } | null = null;
     for (const a of this.world.agentsIn(this.shownLot)) {
@@ -631,7 +640,7 @@ export class HouseScene extends Phaser.Scene {
       const d = Math.hypot(wx - p.x, (wy - (p.y - h / 2)) * 0.8);
       if (d < 26 && (!bestAgent || d < bestAgent.d)) bestAgent = { a, d };
     }
-    if (bestAgent) return this.onTap({ kind: 'agent', id: bestAgent.a.id });
+    if (bestAgent && !this.world.ui.building) return tap({ kind: 'agent', id: bestAgent.a.id });
 
     // 2) Objetos (por su caja en pantalla, el de delante gana)
     let bestObj: { o: PlacedObject; depth: number } | null = null;
@@ -649,15 +658,43 @@ export class HouseScene extends Phaser.Scene {
         if (!bestObj || depth > bestObj.depth) bestObj = { o, depth };
       }
     }
-    if (bestObj) return this.onTap({ kind: 'object', id: bestObj.o.id });
+    if (bestObj) return tap({ kind: 'object', id: bestObj.o.id });
 
     // 3) Suelo
     const t = screenToTile(wx, wy);
     const layout = this.world.layoutOf(this.shownLot);
     if (t.x >= 0 && t.y >= 0 && t.x < layout.w && t.y < layout.h) {
-      this.showMarker(t.x, t.y);
-      this.onTap({ kind: 'tile', x: t.x, y: t.y });
+      if (!this.world.ui.building) this.showMarker(t.x, t.y);
+      tap({ kind: 'tile', x: t.x, y: t.y });
     }
+  }
+
+  /** Lo pone la interfaz: hay un mueble elegido y el siguiente toque es para colocarlo. */
+  selectingTile = false;
+
+  /** Vista previa del mueble que se va a colocar (verde si cabe, rojo si no). */
+  private syncGhost() {
+    const g = this.world.ui.building ? this.world.ui.ghost : null;
+    const key = g ? `${g.def}:${g.x}:${g.y}:${g.ok}:${this.shownLot}` : '';
+    if (key === this.ghostKey) return;
+    this.ghostKey = key;
+    this.ghostGfx?.destroy();
+    this.ghostIcon?.destroy();
+    this.ghostGfx = this.ghostIcon = undefined;
+    if (!g) return;
+    const d = OBJECTS[g.def];
+    const color = g.ok ? 0x3ddc4a : 0xff4d3d;
+    const gfx = this.add.graphics().setDepth(1e5 - 1);
+    for (let y = g.y; y < g.y + d.h; y++) for (let x = g.x; x < g.x + d.w; x++) {
+      const a = isoToScreen(x, y), b = isoToScreen(x + 1, y), c = isoToScreen(x + 1, y + 1), e = isoToScreen(x, y + 1);
+      gfx.fillStyle(color, 0.45);
+      gfx.fillPoints([a, b, c, e], true);
+      gfx.lineStyle(2, color, 0.95);
+      gfx.strokePoints([a, b, c, e], true);
+    }
+    const top = isoToScreen(g.x + d.w / 2, g.y + d.h / 2);
+    this.ghostIcon = this.add.text(top.x, top.y - 6, d.icon || '📦', { resolution: TEXT_RES, fontSize: '26px' }).setOrigin(0.5, 0.8).setAlpha(0.85).setDepth(1e5);
+    this.ghostGfx = gfx;
   }
 
   private showMarker(x: number, y: number) {

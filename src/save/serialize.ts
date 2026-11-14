@@ -56,6 +56,8 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v5 → v6: modo construcción (sin cambios de formato: solo campos nuevos opcionales).
+  5: () => {},
   // v4 → v5: ciclo de vida. Cada casa recibe sus cunas.
   4: (s) => {
     s.aging = s.aging ?? 'normal';

@@ -99,6 +99,8 @@ export interface PlacedObject {
   dirt?: number;
   /** Texto propio (el nombre en una lápida). */
   label?: string;
+  /** Estropeado: hay que repararlo antes de usarlo. */
+  broken?: boolean;
 }
 
 export interface Household {

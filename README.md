@@ -64,6 +64,18 @@ Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus n
 - Los vecinos también tienen hijos y adoptan mascotas; cuando una casa se queda vacía, llega una familia nueva.
 - **La partida no termina nunca**: si tu familia se queda sin nadie, eliges con qué familia del barrio continuar.
 
+## Construir y decorar
+
+- Con 🔨 (en el panel de abajo, estando en casa) entras en el **modo construcción**: el tiempo se para.
+- Elige un mueble del catálogo (descanso, cocina y baño, ocio, mascotas, jardín y deco) y toca el suelo:
+  verás en verde dónde cabe y en rojo dónde no (paredes, puertas, otros muebles o si bloquearía el paso).
+- Toca un mueble de la casa para **moverlo** o **venderlo** (recuperas el 70%).
+- Novedades en la tienda: equipo de música (bailar o escuchar), bañera, videoconsola, sillón, lámpara y alfombra.
+- La **decoración** (plantas, flores, lámparas, alfombras, árboles) alegra a quien está cerca.
+- Los electrodomésticos a veces **se estropean** (🔧): no se pueden usar hasta que alguien los repare.
+- A veces pasan cosas: encontrar dinero en un abrigo viejo... o que os toque la lotería.
+- En el menú ☰: **📜 Diario** con todo lo que ha pasado y **❓ Cómo se juega**.
+
 ## Mascotas
 
 Se adoptan en la protectora desde el **ordenador** de casa (máximo 8 miembros en la familia).
@@ -121,4 +133,4 @@ acciones en `src/data/actions.ts`: la IA lo usará automáticamente.
 3. ✅ Barrio con 10 unidades domésticas (las otras 9 controladas por la IA con simulación resumida), visitas y parque.
 4. ✅ Relaciones, trabajo y economía.
 5. ✅ Ciclo de vida completo: etapas, parejas, nacimientos, muertes y herencias.
-6. Modo construcción, tienda de muebles y pulido.
+6. ✅ Modo construcción, tienda de muebles y pulido.

@@ -2,11 +2,12 @@
 // familia, necesidades del personaje activo, cola de acciones y menú contextual.
 
 import { ACTIONS } from '../data/actions';
-import { OBJECTS } from '../data/objects';
 import { NEED_INFO, SPECIES, lifeStage, needLabel } from '../data/species';
 import { CAREERS, JOB_CAREERS, WEEKDAY_LONG, WEEKDAY_NAMES, gradeLabel, scheduleText } from '../data/careers';
 import { getRel, isAdult, relLabel } from '../sim/social';
 import { NEED_KEYS, type Agent, type Rel, type SpeciesId } from '../sim/types';
+import { CATALOG, CATEGORIES, OBJECTS, SELL_RATIO, type CatalogCategory } from '../data/objects';
+import type { HouseScene } from '../render/HouseScene';
 import { MAX_MEMBERS, TRAVEL_MINUTES, moodScore, type Target, type World } from '../sim/world';
 
 export interface HudCallbacks {
@@ -60,7 +61,13 @@ export class Hud {
     this.render();
   }
 
+  /** Diario: todo lo que ha pasado (solo en esta sesión). */
+  private log: { when: string; icon: string; text: string }[] = [];
+
   toast(text: string, icon = 'ℹ️') {
+    const w = this.world;
+    this.log.unshift({ when: `${WEEKDAY_NAMES[w.weekday]} ${w.day} · ${w.clock}`, icon, text });
+    if (this.log.length > 100) this.log.pop();
     const box = $('#toasts');
     const el = document.createElement('div');
     el.className = 'toast';
@@ -104,6 +111,16 @@ export class Hud {
       const b = el.closest('button');
       if (!b || !this.sheetTarget) return;
       if (b.dataset.close !== undefined) return this.closeSheet();
+      if (b.dataset.bmove) {
+        const o = this.world.object(b.dataset.bmove);
+        if (o) this.selectForBuild({ kind: 'move', id: o.id, def: o.def });
+        return this.closeSheet();
+      }
+      if (b.dataset.bsell) {
+        this.world.sellObject(b.dataset.bsell);
+        this.renderBuild();
+        return this.closeSheet();
+      }
       if (b.dataset.career) {
         this.world.command(this.world.activeAgent.id, 'find_job', this.sheetTarget, b.dataset.career);
         this.closeSheet();
@@ -137,6 +154,48 @@ export class Hud {
       this.render();
     });
     $('#profile-btn').addEventListener('click', () => this.openProfile());
+    $('#build-btn').addEventListener('click', () => this.enterBuild());
+    $('#build-exit').addEventListener('click', () => this.exitBuild());
+    $('#build-tabs').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b?.dataset.cat) return;
+      this.buildCat = b.dataset.cat as CatalogCategory;
+      this.renderBuild();
+    });
+    $('#build-items').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b?.dataset.item) return;
+      const sel = this.buildSel;
+      if (sel?.kind === 'buy' && sel.def === b.dataset.item) this.selectForBuild(null);
+      else this.selectForBuild({ kind: 'buy', def: b.dataset.item });
+    });
+    $('#placebar').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b) return;
+      if (b.dataset.cancel !== undefined) return this.selectForBuild(null);
+      if (b.dataset.place !== undefined) this.confirmPlace();
+    });
+    $('#log').addEventListener('click', (e) => {
+      const el = e.target as HTMLElement;
+      if (el.id === 'log' || el.closest('[data-close]')) $('#log').hidden = true;
+    });
+    $('#tutorial').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b) return;
+      if (b.dataset.next !== undefined) {
+        this.tutorialStep++;
+        this.renderTutorial();
+      } else if (b.dataset.done !== undefined) {
+        $('#tutorial').hidden = true;
+        this.world.state.speed = this.speedBeforeTutorial || 1;
+        this.render();
+        try {
+          localStorage.setItem('sams:tutorial', '1');
+        } catch {
+          /* sin almacenamiento */
+        }
+      }
+    });
     $('#who').addEventListener('click', () => this.openProfile());
     $('#profile').addEventListener('click', (e) => {
       const el = e.target as HTMLElement;
@@ -179,6 +238,8 @@ export class Hud {
       switch (b?.dataset.menu) {
         case 'close': this.toggleMenu(false); break;
         case 'save': this.cb.onSave(); this.toggleMenu(false); break;
+        case 'log': this.toggleMenu(false); this.showLog(); break;
+        case 'tutorial': this.toggleMenu(false); this.showTutorial(true); break;
         case 'export': this.cb.onExport(); break;
         case 'import': $<HTMLInputElement>('#import-file').click(); break;
         case undefined:
@@ -202,6 +263,173 @@ export class Hud {
       input.value = '';
       this.toggleMenu(false);
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Modo construcción
+  // ---------------------------------------------------------------------------
+
+  private sceneRef?: () => HouseScene;
+  private buildCat: CatalogCategory = 'descanso';
+  private buildSel: { kind: 'buy'; def: string } | { kind: 'move'; id: string; def: string } | null = null;
+  private speedBeforeBuild = 1;
+
+  setScene(get: () => HouseScene) {
+    this.sceneRef = get;
+  }
+
+  private enterBuild() {
+    const w = this.world;
+    if (!w.canBuildHere()) {
+      this.toast('Solo se puede construir en vuestra casa (y estando en ella)', '🏡');
+      return;
+    }
+    this.closeSheet();
+    this.speedBeforeBuild = w.state.speed || 1;
+    w.state.speed = 0;
+    w.ui.building = true;
+    document.body.classList.add('building');
+    $('#build').hidden = false;
+    this.renderBuild();
+  }
+
+  private exitBuild() {
+    const w = this.world;
+    this.selectForBuild(null);
+    w.ui.building = false;
+    w.state.speed = this.speedBeforeBuild;
+    document.body.classList.remove('building');
+    $('#build').hidden = true;
+    this.closeSheet();
+    this.render();
+  }
+
+  private selectForBuild(sel: Hud['buildSel']) {
+    this.buildSel = sel;
+    this.world.ui.ghost = null;
+    const scene = this.sceneRef?.();
+    if (scene) scene.selectingTile = !!sel;
+    $('#placebar').hidden = !sel;
+    if (sel) {
+      const d = OBJECTS[sel.def];
+      $('#placebar').innerHTML = `<span>${sel.kind === 'move' ? 'Mover' : 'Colocar'}: <b>${esc(d.name)}</b> · toca el suelo</span><button class="icon-btn" data-cancel>✕</button>`;
+    }
+    this.renderBuild();
+  }
+
+  private buildTap(target: Target, tile?: { x: number; y: number }) {
+    const w = this.world;
+    const sel = this.buildSel;
+    if (sel && tile) {
+      const can = sel.kind === 'move' ? w.canPlace(sel.def, tile.x, tile.y, sel.id) : w.canPlace(sel.def, tile.x, tile.y);
+      w.ui.ghost = { def: sel.def, x: tile.x, y: tile.y, ok: can.ok };
+      const d = OBJECTS[sel.def];
+      const price = sel.kind === 'buy' ? ` (§${d.price})` : '';
+      const poor = sel.kind === 'buy' && w.household.funds < (d.price ?? 0);
+      const label = !can.ok ? `🚫 ${esc(can.reason ?? 'No cabe')}` : poor ? '💸 No hay dinero' : `✓ ${sel.kind === 'move' ? 'Mover aquí' : `Colocar aquí${price}`}`;
+      $('#placebar').innerHTML = `<button class="map-btn" data-place ${can.ok && !poor ? '' : 'disabled'}>${label}</button><button class="icon-btn" data-cancel>✕</button>`;
+      return;
+    }
+    if (target.kind !== 'object') return;
+    const o = w.object(target.id);
+    if (!o || o.lotId !== w.household.lotId) return;
+    const d = OBJECTS[o.def];
+    const why = w.cantTouch(o);
+    const refund = d.price ? Math.floor(d.price * SELL_RATIO) : 0;
+    $('#sheet').innerHTML = `<div class="sheet-card">
+      <div class="sheet-head"><div><div class="sheet-title">${d.icon || '📦'} ${esc(d.name)}</div><div class="sheet-sub">${why ? esc(why) : d.price ? `Costó §${d.price}` : 'No se puede vender'}</div></div>
+      <button class="icon-btn" data-close>✕</button></div>
+      <div class="sheet-actions">
+        <button class="act" data-bmove="${o.id}" ${why ? 'disabled' : ''}><span class="act-icon">↔️</span><span class="act-label">Mover</span></button>
+        <button class="act" data-bsell="${o.id}" ${why || !d.price ? 'disabled' : ''}><span class="act-icon">🏷️</span><span class="act-label">Vender<small class="info">+§${refund}</small></span></button>
+      </div></div>`;
+    this.sheetTarget = target;
+    $('#sheet').hidden = false;
+  }
+
+  private confirmPlace() {
+    const w = this.world;
+    const sel = this.buildSel;
+    const g = w.ui.ghost;
+    if (!sel || !g) return;
+    const ok = sel.kind === 'move' ? w.moveObject(sel.id, g.x, g.y) : w.buy(sel.def, g.x, g.y);
+    if (!ok) return;
+    if (sel.kind === 'move') this.selectForBuild(null);
+    else {
+      // Se puede seguir colocando más del mismo.
+      w.ui.ghost = null;
+      $('#placebar').innerHTML = `<span>Colocado. Toca otro sitio para poner otro, o ✕ para terminar</span><button class="icon-btn" data-cancel>✕</button>`;
+    }
+    this.renderBuild();
+  }
+
+  private renderBuild() {
+    if ($('#build').hidden) return;
+    const w = this.world;
+    $('#build-funds').textContent = `§ ${w.household.funds.toLocaleString('es-ES')}`;
+    $('#build-tabs').innerHTML = CATEGORIES.map((c) => `<button class="comp ${c.id === this.buildCat ? 'on' : ''}" data-cat="${c.id}">${c.icon} ${esc(c.label)}</button>`).join('');
+    const sel = this.buildSel;
+    $('#build-items').innerHTML = CATALOG.filter((d) => d.category === this.buildCat)
+      .map((d) => {
+        const poor = w.household.funds < (d.price ?? 0);
+        const chosen = sel?.kind === 'buy' && sel.def === d.id;
+        const face = d.icon || `<span class="swatch" style="background:#${d.color.toString(16).padStart(6, '0')}"></span>`;
+        return `<button class="item ${chosen ? 'on' : ''}" data-item="${d.id}" ${poor ? 'disabled' : ''}><span class="item-icon">${face}</span><span class="item-name">${esc(d.name)}</span><span class="item-price">§${d.price}</span></button>`;
+      })
+      .join('');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Diario y tutorial
+  // ---------------------------------------------------------------------------
+
+  private showLog() {
+    const rows = this.log.length
+      ? this.log.map((l) => `<div class="log-row"><span class="log-icon">${l.icon}</span><div><div class="muted small">${esc(l.when)}</div><div>${esc(l.text)}</div></div></div>`).join('')
+      : '<p class="muted small">Todavía no ha pasado nada en esta sesión.</p>';
+    $('#log').innerHTML = `<div class="map-card"><div class="sheet-head"><div class="sheet-title">📜 Diario</div><button class="icon-btn" data-close>✕</button></div><div class="places">${rows}</div></div>`;
+    $('#log').hidden = false;
+  }
+
+  private tutorialStep = 0;
+  private speedBeforeTutorial = 1;
+
+  /** Explicación rápida la primera vez (o desde el menú). */
+  showTutorial(force = false) {
+    if (!force) {
+      try {
+        if (localStorage.getItem('sams:tutorial')) return;
+      } catch {
+        /* sin almacenamiento: se muestra */
+      }
+    }
+    this.tutorialStep = 0;
+    this.speedBeforeTutorial = this.world.state.speed;
+    this.world.state.speed = 0;
+    $('#tutorial').hidden = false;
+    this.renderTutorial();
+  }
+
+  private renderTutorial() {
+    const steps = [
+      { icon: '🏡', title: '¡Bienvenidos a Sams!', text: 'Cuidas de la familia García: Lucía, Mateo, el perro Toby y la gata Misi. La partida no termina nunca.' },
+      { icon: '👆', title: 'Dar órdenes', text: 'Toca algo de la casa (la nevera, la cama, a otra persona...) para ver qué puede hacer el personaje activo. Toca el suelo para que camine.' },
+      { icon: '🟢', title: 'Uno cada vez', text: 'Controlas a un miembro de la familia cada vez (mascotas incluidas): toca su retrato abajo para cambiar. Los demás se cuidan solos.' },
+      { icon: '🗺️', title: 'El barrio', text: 'Con 🗺️ vas al parque o de visita, e invitas a los vecinos. Con 👥 ves el trabajo y las relaciones. Con 🔨 compras y colocas muebles.' },
+      { icon: '⏯️', title: 'El tiempo', text: 'Arriba pausas o aceleras. Busca trabajo en el ordenador, enamórate, ten hijos... y que la familia siga generación tras generación.' },
+    ];
+    const s = steps[Math.min(this.tutorialStep, steps.length - 1)];
+    const last = this.tutorialStep >= steps.length - 1;
+    $('#tutorial').innerHTML = `<div class="tuto-card">
+      <div class="tuto-icon">${s.icon}</div>
+      <div class="sheet-title">${esc(s.title)}</div>
+      <p>${esc(s.text)}</p>
+      <div class="tuto-dots">${steps.map((_, i) => `<span class="${i === this.tutorialStep ? 'on' : ''}"></span>`).join('')}</div>
+      <div class="tuto-actions">
+        ${last ? '' : '<button class="map-btn ghost" data-done>Saltar</button>'}
+        <button class="map-btn" ${last ? 'data-done' : 'data-next'}>${last ? '¡A jugar!' : 'Siguiente'}</button>
+      </div>
+    </div>`;
   }
 
   // ---------------------------------------------------------------------------
@@ -329,7 +557,8 @@ export class Hud {
   // Menú contextual (al tocar algo en la casa)
   // ---------------------------------------------------------------------------
 
-  handleTap(target: Target) {
+  handleTap(target: Target, tile?: { x: number; y: number }) {
+    if (this.world.ui.building) return this.buildTap(target, tile);
     const w = this.world;
     const active = w.activeAgent;
 
@@ -539,6 +768,11 @@ export class Hud {
     const a = w.activeAgent;
 
     this.renderGone();
+    $('#build-btn').classList.toggle('dim', !this.world.canBuildHere());
+    if (!$('#build').hidden) {
+      if (!this.world.canBuildHere()) this.exitBuild();
+      else $('#build-funds').textContent = `§ ${this.world.household.funds.toLocaleString('es-ES')}`;
+    }
     $('#clock').textContent = `${WEEKDAY_NAMES[w.weekday]} ${w.day} · ${w.clock}`;
     $('#funds').textContent = `§ ${w.household.funds.toLocaleString('es-ES')}`;
     $('#funds').classList.toggle('neg', w.household.funds < 0);

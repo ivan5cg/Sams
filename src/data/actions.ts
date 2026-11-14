@@ -113,6 +113,14 @@ const A: ActionDef[] = [
   { id: 'swim', guestOk: true, label: 'Bañarse en el estanque', verb: 'En remojo', icon: '💦', target: 'object', actors: ['pet'], species: ['capybara', 'dog'], duration: 60, effects: { hygiene: 2, fun: 0.3 }, until: 'full', interruptible: true },
   { id: 'capy_sleep', label: 'Dormir en la paja', verb: 'Durmiendo', icon: '💤', target: 'object', actors: ['pet'], species: ['capybara'], duration: 420, effects: { energy: 0.3 }, until: 'full', decayMult: 0.4 },
 
+  // Muebles de la tienda
+  { id: 'sit', label: 'Sentarse', verb: 'Sentado', icon: '💺', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { energy: 0.08, fun: 0.12 }, until: 'full', interruptible: true },
+  { id: 'bath', label: 'Darse un baño', verb: 'En la bañera', icon: '🛁', target: 'object', actors: ['person'], duration: 40, effects: { hygiene: 4, fun: 0.3, energy: 0.05 }, until: 'full' },
+  { id: 'dance', label: 'Bailar', verb: 'Bailando', icon: '💃', target: 'object', actors: ['person'], guestOk: true, duration: 30, effects: { fun: 0.9, energy: -0.15, social: 0.05 }, until: 'full', interruptible: true },
+  { id: 'listen_music', label: 'Escuchar música', verb: 'Escuchando música', icon: '🎶', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { fun: 0.35 }, until: 'full', interruptible: true },
+  { id: 'play_games', label: 'Jugar a la consola', verb: 'Jugando a la consola', icon: '🎮', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { fun: 0.65, social: 0.05 }, until: 'full', interruptible: true },
+  { id: 'repair', label: 'Reparar', verb: 'Reparando', icon: '🔧', target: 'object', actors: ['person'], duration: 40, effects: { fun: -0.15, hygiene: -0.1 }, baseScore: 12 },
+
   // Parque
   { id: 'sit_bench', label: 'Sentarse en el banco', verb: 'Sentado en el banco', icon: '🪑', target: 'object', actors: ['person'], guestOk: true, duration: 60, effects: { energy: 0.08, fun: 0.15, social: 0.05 }, until: 'full', interruptible: true },
   { id: 'swing', label: 'Columpiarse', verb: 'Columpiándose', icon: '🎠', target: 'object', actors: ['person'], guestOk: true, duration: 30, effects: { fun: 0.7, energy: -0.05 }, until: 'full', interruptible: true },

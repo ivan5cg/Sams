@@ -40,6 +40,7 @@
         <div class="panel-head">
           <button id="who" aria-label="Ver perfil y relaciones"></button>
           <button id="profile-btn" class="icon-btn" aria-label="Perfil y relaciones">👥</button>
+          <button id="build-btn" class="icon-btn" aria-label="Modo construcción">🔨</button>
           <button id="needs-toggle" class="icon-btn" aria-label="Mostrar u ocultar necesidades">▾</button>
         </div>
         <div id="queue"></div>
@@ -56,9 +57,24 @@
 
     <div id="gone" hidden></div>
 
+    <section id="build" hidden>
+      <div class="build-head">
+        <div><b>🔨 Construir</b> <span id="build-funds" class="muted small"></span></div>
+        <button id="build-exit" class="map-btn">✓ Listo</button>
+      </div>
+      <div id="build-tabs"></div>
+      <div id="build-items"></div>
+      <p class="build-hint muted small">Elige un mueble y toca el suelo para colocarlo. Toca un mueble de la casa para moverlo o venderlo.</p>
+    </section>
+    <div id="placebar" hidden></div>
+    <div id="log" hidden></div>
+    <div id="tutorial" hidden></div>
+
     <div id="menu" hidden>
       <div class="menu-card">
         <h2>Sams</h2>
+        <button data-menu="log">📜 Diario</button>
+        <button data-menu="tutorial">❓ Cómo se juega</button>
         <button data-menu="save">💾 Guardar ahora</button>
         <button data-menu="export">📤 Exportar partida</button>
         <button data-menu="import">📥 Importar partida</button>
