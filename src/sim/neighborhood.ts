@@ -2,7 +2,9 @@
 
 import { HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, type ObjectPlacement } from '../data/lot';
 import { OBJECTS } from '../data/objects';
-import { SPECIES } from '../data/species';
+import { JOB_CAREERS } from '../data/careers';
+import { SPECIES, lifeStage } from '../data/species';
+import { isAdult, relKey, setRel } from './social';
 import { NEED_KEYS, type Agent, type Lot, type Needs, type SpeciesId, type WorldState } from './types';
 
 export const PLAYER_LOT = 'L0';
@@ -77,6 +79,27 @@ export function randomIndoorTile(): { x: number; y: number } {
 
 /** Añade al estado el parque y las 9 familias vecinas con sus casas. */
 export function generateNeighborhood(state: WorldState) {
+  state.lots.push({ id: PARK_LOT, name: 'Parque del barrio', kind: 'park', layout: 'park' });
+  placeObjects(state, PARK_LOT, PARK_OBJECTS);
+
+  // Al menos una mascota de cada especie en el barrio.
+  const petPool: SpeciesId[] = shuffle(['dog', 'cat', 'guineapig', 'ferret', 'capybara']);
+  for (let i = 1; i <= NEIGHBOUR_COUNT; i++) {
+    const lotId = `L${i}`;
+    state.lots.push({
+      id: lotId,
+      name: '',
+      kind: 'home',
+      layout: 'house',
+      style: { wall: WALLS[(i - 1) % WALLS.length], floor: FLOORS[(i - 1) % FLOORS.length] },
+    });
+    placeObjects(state, lotId, HOUSE_OBJECTS);
+    generateFamily(state, lotId, petPool);
+  }
+}
+
+/** Crea una familia nueva y la instala en una casa (vacía) del barrio. */
+export function generateFamily(state: WorldState, lotId: string, petPool: SpeciesId[] = []) {
   const usedNames = new Set(state.agents.map((a) => a.name));
   const takeName = (pool: string[]) => {
     const free = pool.filter((n) => !usedNames.has(n));
@@ -84,61 +107,77 @@ export function generateNeighborhood(state: WorldState) {
     usedNames.add(n);
     return n;
   };
+  const usedSurnames = new Set(state.households.map((h) => h.name.replace('Familia ', '')));
+  const freeSurnames = SURNAMES.filter((x) => !usedSurnames.has(x));
+  const surname = freeSurnames.length ? pick(freeSurnames) : `${pick(SURNAMES)}-${pick(SURNAMES)}`;
+  const hid = `h${state.nextId++}`;
+  const lot = state.lots.find((l) => l.id === lotId)!;
+  lot.name = `Casa de los ${surname}`;
+  lot.householdId = hid;
 
-  state.lots.push({ id: PARK_LOT, name: 'Parque del barrio', kind: 'park', layout: 'park' });
-  placeObjects(state, PARK_LOT, PARK_OBJECTS);
-
-  // Al menos una mascota de cada especie en el barrio.
-  const petPool: SpeciesId[] = shuffle(['dog', 'cat', 'guineapig', 'ferret', 'capybara']);
-  const surnames = shuffle(SURNAMES.filter((s) => !state.households.some((h) => h.name.includes(s))));
-
-  for (let i = 1; i <= NEIGHBOUR_COUNT; i++) {
-    const lotId = `L${i}`;
-    const hid = `h${i + 1}`;
-    const surname = surnames[i - 1];
-    const lot: Lot = {
-      id: lotId,
-      name: `Casa de los ${surname}`,
-      kind: 'home',
-      layout: 'house',
-      householdId: hid,
-      style: { wall: WALLS[(i - 1) % WALLS.length], floor: FLOORS[(i - 1) % FLOORS.length] },
-    };
-    state.lots.push(lot);
-    placeObjects(state, lotId, HOUSE_OBJECTS);
-
-    const members: Agent[] = [];
-    // 1 a 4 personas: uno o dos adultos y quizá hijos.
-    const adults = Math.random() < 0.7 ? 2 : 1;
-    const kids = Math.floor(rand(0, adults === 2 ? 3 : 2));
-    const adultAge = Math.round(rand(22, 70));
-    for (let k = 0; k < adults; k++) {
-      const pos = randomIndoorTile();
-      members.push(makeAgent({ id: `a${state.nextId++}`, name: takeName(FIRST_NAMES), species: 'human', ageDays: adultAge + Math.round(rand(-4, 4)), color: pick(CLOTHES), householdId: hid, lotId, ...pos }));
+  const adults: Agent[] = [];
+  const kids: Agent[] = [];
+  const pets: Agent[] = [];
+  // 1 a 4 personas: uno o dos adultos y quizá hijos.
+  const nAdults = Math.random() < 0.7 ? 2 : 1;
+  const nKids = Math.floor(rand(0, nAdults === 2 ? 3 : 2));
+  const adultAge = Math.round(rand(22, 70));
+  for (let k = 0; k < nAdults; k++) {
+    adults.push(makeAgent({ id: `a${state.nextId++}`, name: takeName(FIRST_NAMES), species: 'human', ageDays: adultAge + Math.round(rand(-4, 4)), color: pick(CLOTHES), householdId: hid, lotId, ...randomIndoorTile() }));
+  }
+  for (let k = 0; k < nKids; k++) {
+    kids.push(makeAgent({ id: `a${state.nextId++}`, name: takeName(FIRST_NAMES), species: 'human', ageDays: Math.round(rand(4, 19)), color: pick(CLOTHES), householdId: hid, lotId, ...randomIndoorTile() }));
+  }
+  // 0 a 2 mascotas (al menos una mientras queden especies por repartir).
+  const nPets = petPool.length ? Math.max(1, Math.floor(rand(0, 2.5))) : Math.floor(rand(0, 2.5));
+  // Si la jaula de esa casa ya está ocupada (mascotas que se quedaron), no hay sitio para otra cobaya.
+  let hasCage = state.agents.some((a) => a.home && state.objects.some((o) => o.id === a.home && o.lotId === lotId));
+  for (let k = 0; k < nPets; k++) {
+    let species: SpeciesId = petPool.shift() ?? pick<SpeciesId>(['dog', 'cat', 'cat', 'dog', 'guineapig', 'ferret', 'capybara']);
+    if (species === 'guineapig' && hasCage) species = 'cat';
+    const sp = SPECIES[species];
+    const pet = makeAgent({ id: `a${state.nextId++}`, name: takeName(sp.names), species, ageDays: Math.round(rand(sp.stages[0].until, sp.stages[1].until)), color: 0x999999, householdId: hid, lotId, ...(sp.outdoor ? { x: 11, y: 6 } : randomIndoorTile()) });
+    if (sp.habitat) {
+      const cage = state.objects.find((o) => o.lotId === lotId && o.def === sp.habitat)!;
+      pet.home = cage.id;
+      pet.pos = { x: cage.x, y: cage.y };
+      hasCage = true;
     }
-    for (let k = 0; k < kids; k++) {
-      const pos = randomIndoorTile();
-      members.push(makeAgent({ id: `a${state.nextId++}`, name: takeName(FIRST_NAMES), species: 'human', ageDays: Math.round(rand(4, 19)), color: pick(CLOTHES), householdId: hid, lotId, ...pos }));
+    pets.push(pet);
+  }
+  const members = [...adults, ...kids, ...pets];
+  for (const m of members) m.abstract = true;
+  state.agents.push(...members);
+  const household = { id: hid, name: `Familia ${surname}`, funds: Math.round(rand(800, 4000)), memberIds: members.map((m) => m.id), lotId };
+  state.households.push(household);
+  setupFamilyLife(state, members, { jobs: true });
+  return household;
+}
+
+/**
+ * Relaciones iniciales dentro de una familia (pareja, padres e hijos, mascotas)
+ * y trabajos/colegio.
+ */
+export function setupFamilyLife(state: WorldState, members: Agent[], opts: { jobs: boolean }) {
+  const people = members.filter((m) => m.kind === 'person');
+  const adults = people.filter((p) => isAdult(p));
+  const young = people.filter((p) => !isAdult(p));
+  const set = (a: Agent, b: Agent, rel: { f: number; r?: number; status?: 'partner' | 'married'; kin?: boolean }) => {
+    if (state.rels[relKey(a.id, b.id)]) return;
+    setRel(state, a.id, b.id, { r: 0, ...rel });
+  };
+  if (adults.length >= 2) set(adults[0], adults[1], { f: Math.round(rand(55, 85)), r: Math.round(rand(60, 90)), status: Math.random() < 0.6 ? 'married' : 'partner' });
+  for (const k of young) for (const p of adults) set(k, p, { f: Math.round(rand(40, 80)), kin: true });
+  for (let i = 0; i < young.length; i++) for (let j = i + 1; j < young.length; j++) set(young[i], young[j], { f: Math.round(rand(10, 60)), kin: true });
+  for (const pet of members.filter((m) => m.kind === 'pet')) for (const p of people) set(pet, p, { f: Math.round(rand(35, 70)) });
+
+  if (!opts.jobs) return;
+  for (const p of people) {
+    const stage = lifeStage(p.species, p.ageDays).id;
+    if (stage === 'child' || stage === 'teen') p.job = { career: 'school', level: 1, perf: Math.round(rand(30, 70)) };
+    else if (stage !== 'elder' && stage !== 'baby' && Math.random() < 0.85) {
+      p.job = { career: pick(JOB_CAREERS).id, level: 1 + Math.floor(Math.random() * Math.random() * 4), perf: Math.round(rand(0, 60)) };
     }
-    // 0 a 2 mascotas.
-    const pets = petPool.length ? Math.max(1, Math.floor(rand(0, 2.5))) : Math.floor(rand(0, 2.5));
-    let hasCage = false;
-    for (let k = 0; k < pets; k++) {
-      let species: SpeciesId = petPool.shift() ?? pick<SpeciesId>(['dog', 'cat', 'cat', 'dog', 'guineapig', 'ferret', 'capybara']);
-      if (species === 'guineapig' && hasCage) species = 'cat';
-      const sp = SPECIES[species];
-      const pet = makeAgent({ id: `a${state.nextId++}`, name: takeName(sp.names), species, ageDays: Math.round(rand(sp.stages[0].until, sp.stages[1].until)), color: 0x999999, householdId: hid, lotId, ...(sp.outdoor ? { x: 11, y: 6 } : randomIndoorTile()) });
-      if (sp.habitat) {
-        const cage = state.objects.find((o) => o.lotId === lotId && o.def === sp.habitat)!;
-        pet.home = cage.id;
-        pet.pos = { x: cage.x, y: cage.y };
-        hasCage = true;
-      }
-      members.push(pet);
-    }
-    for (const m of members) m.abstract = true;
-    state.agents.push(...members);
-    state.households.push({ id: hid, name: `Familia ${surname}`, funds: Math.round(rand(800, 4000)), memberIds: members.map((m) => m.id), lotId });
   }
 }
 

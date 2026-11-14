@@ -1,7 +1,8 @@
 import { START_OBJECTS } from '../data/lot';
 import { OBJECTS } from '../data/objects';
 import { SAVE_VERSION } from '../sim/world';
-import { PLAYER_LOT, generateNeighborhood } from '../sim/neighborhood';
+import { PLAYER_LOT, generateNeighborhood, setupFamilyLife } from '../sim/neighborhood';
+import { setRel } from '../sim/social';
 import type { PlacedObject, WorldState } from '../sim/types';
 
 export function serialize(state: WorldState): string {
@@ -39,7 +40,21 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
     for (const o of s.objects) o.lotId = PLAYER_LOT;
     for (const h of s.households) h.lotId = PLAYER_LOT;
     s.lots = [{ id: PLAYER_LOT, name: 'Vuestra casa', kind: 'home', layout: 'house', householdId: s.playerHouseholdId }];
+    s.rels = {};
     generateNeighborhood(s);
+  },
+  // v3 → v4: relaciones, trabajos y colegio.
+  3: (s) => {
+    s.rels = s.rels ?? {};
+    for (const h of s.households) {
+      const members = h.memberIds.map((id) => s.agents.find((a) => a.id === id)!).filter(Boolean);
+      const player = h.id === s.playerHouseholdId;
+      if (player) {
+        const people = members.filter((m) => m.kind === 'person');
+        if (people.length >= 2) setRel(s, people[0].id, people[1].id, { f: 70, r: 75, status: 'partner' });
+      }
+      setupFamilyLife(s, members, { jobs: !player });
+    }
   },
 };
 

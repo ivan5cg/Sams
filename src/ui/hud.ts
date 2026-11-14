@@ -4,8 +4,10 @@
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { NEED_INFO, SPECIES, lifeStage, needLabel } from '../data/species';
-import { NEED_KEYS, type Agent, type SpeciesId } from '../sim/types';
-import { MAX_MEMBERS, TRAVEL_MINUTES, type Target, type World } from '../sim/world';
+import { CAREERS, JOB_CAREERS, WEEKDAY_NAMES, gradeLabel, scheduleText } from '../data/careers';
+import { getRel, isAdult, relLabel } from '../sim/social';
+import { NEED_KEYS, type Agent, type Rel, type SpeciesId } from '../sim/types';
+import { MAX_MEMBERS, TRAVEL_MINUTES, moodScore, type Target, type World } from '../sim/world';
 
 export interface HudCallbacks {
   onSave: () => void;
@@ -19,9 +21,7 @@ const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 export function mood(a: Agent): { score: number; icon: string; label: string; color: string } {
-  const vals = NEED_KEYS.map((k) => a.needs[k]);
-  const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
-  const score = avg - vals.filter((v) => v < 20).length * 12;
+  const score = moodScore(a);
   if (score > 70) return { score, icon: '😄', label: 'Muy feliz', color: '#3ddc4a' };
   if (score > 50) return { score, icon: '🙂', label: 'Bien', color: '#9bd84a' };
   if (score > 30) return { score, icon: '😐', label: 'Regular', color: '#f0c43c' };
@@ -104,6 +104,12 @@ export class Hud {
       const b = el.closest('button');
       if (!b || !this.sheetTarget) return;
       if (b.dataset.close !== undefined) return this.closeSheet();
+      if (b.dataset.career) {
+        this.world.command(this.world.activeAgent.id, 'find_job', this.sheetTarget, b.dataset.career);
+        this.closeSheet();
+        this.render();
+        return;
+      }
       if (b.dataset.adopt) {
         this.world.command(this.world.activeAgent.id, 'adopt', this.sheetTarget, b.dataset.adopt);
         this.closeSheet();
@@ -112,6 +118,7 @@ export class Hud {
       }
       const action = b.dataset.action;
       if (action === 'adopt') return this.showAdoption();
+      if (action === 'find_job') return this.showJobs();
       if (action) {
         this.world.command(this.world.activeAgent.id, action, this.sheetTarget);
         this.closeSheet();
@@ -120,6 +127,19 @@ export class Hud {
     });
 
     $('#menu-btn').addEventListener('click', () => this.toggleMenu(true));
+    $('#profile-btn').addEventListener('click', () => this.openProfile());
+    $('#who').addEventListener('click', () => this.openProfile());
+    $('#profile').addEventListener('click', (e) => {
+      const el = e.target as HTMLElement;
+      if (el.id === 'profile') return this.closeProfile();
+      const b = el.closest('button');
+      if (!b) return;
+      if (b.dataset.close !== undefined) return this.closeProfile();
+      if (b.dataset.quit !== undefined && confirm('¿Seguro que quieres dejar el trabajo?')) {
+        this.world.quitJob(this.world.activeAgent);
+        this.renderProfile();
+      }
+    });
     $('#map-btn').addEventListener('click', () => this.openMap());
     $('#map').addEventListener('click', (e) => {
       const el = e.target as HTMLElement;
@@ -294,7 +314,11 @@ export class Hud {
     } else {
       const t = w.agent(target.id)!;
       title = `${SPECIES[t.species].icon} ${t.name}`;
-      subtitle = `${SPECIES[t.species].label} · ${lifeStage(t.species, t.ageDays).label} · ${mood(t).icon} ${mood(t).label}`;
+      const rel = getRel(w.state, active.id, t.id);
+      const relText = t.id === active.id ? '' : ` · ${relLabel(rel, active.kind, t.kind)}${rel.r > 0 && !rel.kin ? ` · 💕 ${Math.round(rel.r)}` : ''}`;
+      const hh = w.householdOf(t);
+      const from = hh && hh.id !== w.household.id ? ` · ${hh.name}` : '';
+      subtitle = `${SPECIES[t.species].label} · ${lifeStage(t.species, t.ageDays).label}${from}${relText}`;
     }
 
     const opts = w.optionsFor(active.id, target);
@@ -334,6 +358,98 @@ export class Hud {
     $('#sheet').hidden = false;
   }
 
+  /** Buscar trabajo: elegir carrera. */
+  private showJobs() {
+    const a = this.world.activeAgent;
+    const items = JOB_CAREERS.map((c) => {
+      const current = a.job?.career === c.id;
+      return `<button class="act" data-career="${c.id}" ${current ? 'disabled' : ''}>
+        <span class="act-icon">${c.icon}</span>
+        <span class="act-label">${esc(c.name)} · ${esc(c.levels[0].title)}<small class="info">§${c.levels[0].pay}/jornada · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
+      </button>`;
+    }).join('');
+    $('#sheet').querySelector('.sheet-card')!.innerHTML = `
+      <div class="sheet-head">
+        <div><div class="sheet-title">📰 Ofertas de trabajo</div><div class="sheet-sub">${a.job && !CAREERS[a.job.career].school ? `Ahora: ${esc(CAREERS[a.job.career].levels[a.job.level - 1].title)} (si cambias, empiezas desde abajo)` : `${esc(a.name)} no tiene trabajo`}</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      <p class="sheet-note">Se va solo a su hora y vuelve al salir. Si va de buen humor, rinde más y asciende antes.</p>
+      <div class="sheet-actions one-col">${items}</div>`;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Perfil: trabajo y relaciones
+  // ---------------------------------------------------------------------------
+
+  private openProfile() {
+    this.closeSheet();
+    $('#profile').hidden = false;
+    this.renderProfile();
+  }
+
+  private closeProfile() {
+    $('#profile').hidden = true;
+  }
+
+  private renderProfile() {
+    const w = this.world;
+    const a = w.activeAgent;
+    const stage = lifeStage(a.species, a.ageDays);
+    let jobHtml = '';
+    if (a.kind === 'person') {
+      if (a.job) {
+        const c = CAREERS[a.job.career];
+        const lvl = c.levels[a.job.level - 1];
+        const perfLabel = c.school ? `Notas: ${gradeLabel(a.job.perf)}` : `Rendimiento (al 100%, ascenso)`;
+        jobHtml = `<div class="prof-sec">
+          <div class="prof-h">${c.icon} ${c.school ? 'Colegio' : esc(lvl.title)}</div>
+          <div class="muted small">${c.school ? '' : `${esc(c.name)} · nivel ${a.job.level}/${c.levels.length} · §${lvl.pay} por jornada · `}${esc(scheduleText(c))}</div>
+          <div class="perf"><span class="small">${perfLabel}</span><div class="bar"><div class="fill" style="width:${Math.round(a.job.perf)}%;background:#4f8fd9"></div></div></div>
+          ${c.school ? '' : '<button class="map-btn ghost small-btn" data-quit>Dejar el trabajo</button>'}
+        </div>`;
+      } else if (isAdult(a)) {
+        jobHtml = `<div class="prof-sec"><div class="prof-h">💼 Sin trabajo</div><div class="muted small">Busca trabajo en el ordenador de casa.</div></div>`;
+      }
+    }
+    // Relaciones con quien conoce
+    const rows = Object.entries(w.state.rels)
+      .map(([k, rel]) => {
+        const [x, y] = k.split('|');
+        const otherId = x === a.id ? y : y === a.id ? x : null;
+        return otherId ? { o: w.agent(otherId), rel } : null;
+      })
+      .filter((r): r is { o: Agent; rel: Rel } => !!r && !!r.o && (Math.abs(r.rel.f) >= 1 || !!r.rel.status || !!r.rel.kin))
+      .sort((p, q) => Number(!!q.rel.status) - Number(!!p.rel.status) || q.rel.f - p.rel.f);
+    const relHtml = rows.length
+      ? rows
+          .map(({ o, rel }) => {
+            const pct = Math.round((rel.f + 100) / 2);
+            const color = rel.f >= 15 ? '#4cd964' : rel.f <= -15 ? '#ff4d3d' : '#a3a9bf';
+            const hh = w.householdOf(o);
+            const where = hh && hh.id !== w.household.id ? hh.name : 'Vuestra familia';
+            return `<div class="rel-row">
+              <span class="rel-face">${o.kind === 'person' ? '🧑' : SPECIES[o.species].icon}</span>
+              <div class="rel-main">
+                <div><b>${esc(o.name)}</b> <span class="muted small">${esc(where)}</span></div>
+                <div class="small">${esc(relLabel(rel, a.kind, o.kind))}${rel.r > 0 && !rel.kin ? ` · 💕 ${Math.round(rel.r)}` : ''}</div>
+                <div class="bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
+              </div>
+            </div>`;
+          })
+          .join('')
+      : `<div class="muted small">${esc(a.name)} aún no conoce a nadie. ¡A socializar!</div>`;
+
+    $('#profile').innerHTML = `<div class="map-card">
+      <div class="sheet-head">
+        <div><div class="sheet-title">${a.kind === 'person' ? '🧑' : SPECIES[a.species].icon} ${esc(a.name)}</div>
+        <div class="sheet-sub">${esc(SPECIES[a.species].label)} · ${esc(stage.label)} · ${a.ageDays} días</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      ${jobHtml}
+      <div class="prof-sec"><div class="prof-h">👥 Relaciones</div>${relHtml}</div>
+    </div>`;
+  }
+
   /** Protectora: elegir qué mascota adoptar. */
   private showAdoption() {
     const w = this.world;
@@ -371,8 +487,9 @@ export class Hud {
     const w = this.world;
     const a = w.activeAgent;
 
-    $('#clock').textContent = `Día ${w.day} · ${w.clock}`;
+    $('#clock').textContent = `${WEEKDAY_NAMES[w.weekday]} ${w.day} · ${w.clock}`;
     $('#funds').textContent = `§ ${w.household.funds.toLocaleString('es-ES')}`;
+    $('#funds').classList.toggle('neg', w.household.funds < 0);
     $('#family').textContent = `📍 ${this.placeName(w.viewLotId)} · ${w.household.name}`;
     for (const b of $('#speed').querySelectorAll<HTMLButtonElement>('button')) {
       b.classList.toggle('on', Number(b.dataset.speed) === w.state.speed);
@@ -401,7 +518,14 @@ export class Hud {
 
     // Cola de acciones
     const tasks = [a.current, ...a.queue].filter((t) => t && t.actionId !== 'idle');
-    const travelChip = a.travel ? `<div class="chip now"><span>🚶</span><span class="chip-l">De camino a: ${esc(this.placeName(a.travel.to))}</span></div>` : '';
+    const until = a.travel ? `${String(Math.floor((a.travel.arrive % 1440) / 60)).padStart(2, '0')}:${String(Math.floor(a.travel.arrive % 60)).padStart(2, '0')}` : '';
+    const travelChip = !a.travel
+      ? ''
+      : a.travel.reason === 'work'
+        ? `<div class="chip now"><span>💼</span><span class="chip-l">En el trabajo hasta las ${until}</span></div>`
+        : a.travel.reason === 'school'
+          ? `<div class="chip now"><span>🎒</span><span class="chip-l">En clase hasta las ${until}</span></div>`
+          : `<div class="chip now"><span>🚶</span><span class="chip-l">De camino a: ${esc(this.placeName(a.travel.to))}</span></div>`;
     let queueHtml = travelChip + tasks
       .map((t, i) => {
         const def = ACTIONS[t!.actionId];

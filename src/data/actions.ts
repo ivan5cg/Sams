@@ -62,14 +62,15 @@ const PETS_INDOOR: SpeciesId[] = ['dog', 'cat', 'ferret'];
 const A: ActionDef[] = [
   // --- Personas: objetos ---
   { id: 'sleep', label: 'Dormir', verb: 'Durmiendo', icon: '💤', target: 'object', actors: ['person'], duration: 540, effects: { energy: 0.22 }, until: 'full', decayMult: 0.4 },
-  { id: 'eat', label: 'Comer', verb: 'Comiendo', icon: '🍝', target: 'object', actors: ['person'], duration: 25, effects: { hunger: 3, fun: 0.05 }, until: 'full' },
-  { id: 'snack', guestOk: true, label: 'Picar algo', verb: 'Picando algo', icon: '🍪', target: 'object', actors: ['person'], duration: 8, effects: { hunger: 2 } },
+  { id: 'eat', label: 'Comer (§6)', verb: 'Comiendo', icon: '🍝', target: 'object', actors: ['person'], cost: 6, duration: 25, effects: { hunger: 3, fun: 0.05 }, until: 'full' },
+  { id: 'snack', guestOk: true, label: 'Picar algo (§2)', verb: 'Picando algo', icon: '🍪', target: 'object', actors: ['person'], cost: 2, duration: 8, effects: { hunger: 2 } },
   { id: 'toilet', guestOk: true, label: 'Usar el váter', verb: 'En el baño', icon: '🚽', target: 'object', actors: ['person'], duration: 8, effects: { bladder: 14 }, until: 'full' },
   { id: 'shower', label: 'Ducharse', verb: 'Duchándose', icon: '🚿', target: 'object', actors: ['person'], duration: 15, effects: { hygiene: 7, fun: 0.05 }, until: 'full' },
   { id: 'watch_tv', guestOk: true, label: 'Ver la tele', verb: 'Viendo la tele', icon: '📺', target: 'object', actors: ['person'], duration: 120, effects: { fun: 0.35 }, until: 'full', interruptible: true },
   { id: 'nap_sofa', label: 'Echar una siesta', verb: 'Echando la siesta', icon: '😴', target: 'object', actors: ['person'], duration: 60, effects: { energy: 0.15 }, decayMult: 0.6, until: 'full' },
   { id: 'read', guestOk: true, label: 'Leer un libro', verb: 'Leyendo', icon: '📖', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.25 }, until: 'full', interruptible: true },
   { id: 'browse', label: 'Navegar por internet', verb: 'En el ordenador', icon: '💻', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.3, social: 0.1 }, until: 'full', interruptible: true },
+  { id: 'find_job', label: 'Buscar trabajo', verb: 'Buscando trabajo', icon: '📰', target: 'object', actors: ['person'], duration: 20, effects: { fun: -0.05 }, playerOnly: true },
   { id: 'adopt', label: 'Adoptar una mascota', verb: 'Mirando la protectora', icon: '🏠', target: 'object', actors: ['person'], duration: 15, effects: { fun: 0.1 }, playerOnly: true },
   { id: 'fill_bowl', label: 'Llenar el comedero (§10)', verb: 'Llenando el comedero', icon: '🥣', target: 'object', actors: ['person'], duration: 2, effects: {}, cost: 10, refill: true },
   { id: 'refill_hay', label: 'Poner heno (§5)', verb: 'Poniendo heno', icon: '🌾', target: 'object', actors: ['person'], duration: 3, effects: {}, cost: 5, refill: true },
@@ -116,6 +117,12 @@ const A: ActionDef[] = [
   // --- Social: persona → persona ---
   { id: 'chat', label: 'Charlar', verb: 'Charlando', icon: '💬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 30, effects: { social: 0.7, fun: 0.1 }, partnerEffects: { social: 0.7, fun: 0.1 }, until: 'full', interruptible: true },
   { id: 'joke', label: 'Contar un chiste', verb: 'Contando un chiste', icon: '😂', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: 0.6, social: 0.3 }, partnerEffects: { fun: 0.6, social: 0.3 } },
+  { id: 'insult', label: 'Insultar', verb: 'Discutiendo', icon: '🤬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { fun: 0.3 }, partnerEffects: { social: -2, fun: -1 } },
+  { id: 'flirt', label: 'Coquetear', verb: 'Coqueteando', icon: '😏', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { social: 0.8, fun: 0.4 }, partnerEffects: { social: 0.8, fun: 0.3 } },
+  { id: 'kiss', label: 'Besar', verb: 'Besando', icon: '💋', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 4, effects: { social: 2, fun: 0.5 }, partnerEffects: { social: 2, fun: 0.5 } },
+  { id: 'ask_partner', label: 'Pedir salir', verb: 'Declarándose', icon: '💘', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 5, effects: { social: 1 }, partnerEffects: { social: 1 }, playerOnly: true },
+  { id: 'propose', label: 'Pedir matrimonio', verb: 'Pidiendo matrimonio', icon: '💍', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: 2, fun: 1 }, partnerEffects: { social: 2, fun: 1 }, playerOnly: true },
+  { id: 'move_in', label: 'Proponer vivir juntos', verb: 'Hablando de mudarse', icon: '🏡', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { social: 1 }, partnerEffects: { social: 1 }, playerOnly: true },
   { id: 'say_goodbye', label: 'Despedirse', verb: 'Despidiéndose', icon: '👋', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 3, effects: { social: 0.5 }, partnerEffects: { social: 0.5 }, playerOnly: true },
   { id: 'hug', label: 'Abrazar', verb: 'Abrazando', icon: '🤗', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 4, effects: { social: 2 }, partnerEffects: { social: 2 } },
 

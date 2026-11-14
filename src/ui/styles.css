@@ -379,6 +379,7 @@ button {
 
 #sheet[hidden],
 #map[hidden],
+#profile[hidden],
 #menu[hidden] {
   display: none;
 }
@@ -721,4 +722,89 @@ button {
   font-size: 13px;
   color: #9ff59a;
   align-self: center;
+}
+
+/* --- Perfil y relaciones --------------------------------------------------- */
+
+#profile {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+#who {
+  text-align: left;
+  padding: 4px 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.panel-head .icon-btn#profile-btn {
+  min-width: 34px;
+  min-height: 30px;
+  font-size: 16px;
+}
+
+.prof-sec {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prof-h {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.perf {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.small-btn {
+  align-self: flex-start;
+  min-height: 34px;
+  font-size: 13px;
+}
+
+.rel-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rel-face {
+  font-size: 22px;
+}
+
+.rel-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.sheet-actions.one-col {
+  grid-template-columns: 1fr;
+}
+
+#funds.neg {
+  color: var(--danger);
+}
+
+.sheet-note {
+  margin: 10px 0;
+  font-size: 13px;
+  color: var(--muted);
 }

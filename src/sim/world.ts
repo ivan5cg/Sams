@@ -2,12 +2,14 @@ import { ACTIONS, SELF_ACTIONS, type ActionDef } from '../data/actions';
 import { HOUSE_OBJECTS, LAYOUTS, isOutdoor, type LotLayout } from '../data/lot';
 import { OBJECTS, type ObjectDef } from '../data/objects';
 import { SPECIES, lifeStage } from '../data/species';
+import { CAREERS, gradeLabel } from '../data/careers';
 import { chooseAutonomous } from './ai';
-import { PARK_LOT, PLAYER_LOT, generateNeighborhood, makeAgent, placeObjects, randomIndoorTile } from './neighborhood';
+import { REJECT_TEXT, REL_EFFECTS, ROMANTIC, acceptChance, canRomance, changeRel, getRel, isAdult, partnerOf, relKey, setRel } from './social';
+import { PARK_LOT, PLAYER_LOT, generateFamily, generateNeighborhood, makeAgent, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { findPath, isWalkable, pathLength, type Grid } from './pathfinding';
 import { NEED_KEYS, type Agent, type Household, type Lot, type NeedKey, type Needs, type PlacedObject, type SpeciesId, type Task, type Vec, type WorldState } from './types';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_MEMBERS = 8;
 /** Minutos de juego que se tarda en ir de una parcela a otra del barrio. */
@@ -31,6 +33,13 @@ export interface Toast {
 }
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
+
+/** Ánimo general (0-100) a partir de las necesidades. */
+export function moodScore(a: Agent): number {
+  const vals = NEED_KEYS.map((k) => a.needs[k]);
+  const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
+  return avg - vals.filter((v) => v < 20).length * 12;
+}
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 /** Centro de un objeto en coordenadas de casilla. */
@@ -69,6 +78,7 @@ export class World {
       lots: [{ id: PLAYER_LOT, name: 'Vuestra casa', kind: 'home', layout: 'house', householdId: 'h1' }],
       agents: [],
       objects: [],
+      rels: {},
     };
     const mk = (id: string, name: string, species: SpeciesId, ageDays: number, color: number, x: number, y: number) =>
       makeAgent({ id, name, species, ageDays, color, householdId: 'h1', lotId: PLAYER_LOT, x, y });
@@ -79,6 +89,9 @@ export class World {
       mk('a4', 'Misi', 'cat', 12, 0x9a9a9a, 4, 5),
     );
     state.households.push({ id: 'h1', name: 'Familia García', funds: 2000, memberIds: state.agents.map((a) => a.id), lotId: PLAYER_LOT });
+    // Lucía y Mateo son pareja; los dos están sin trabajo (lo eliges tú).
+    setRel(state, 'a1', 'a2', { f: 70, r: 75, status: 'partner' });
+    setupFamilyLife(state, state.agents, { jobs: false });
     placeObjects(state, PLAYER_LOT, HOUSE_OBJECTS);
     generateNeighborhood(state);
     return new World(state);
@@ -112,6 +125,11 @@ export class World {
 
   get day(): number {
     return Math.floor(this.state.minutes / MINUTES_PER_DAY) + 1;
+  }
+
+  /** 0 = lunes … 6 = domingo. */
+  get weekday(): number {
+    return (this.day - 1) % 7;
   }
 
   get hour(): number {
@@ -258,6 +276,7 @@ export class World {
     if (def.cleans && !o.dirt) return { def, ok: false, reason: 'Ya está limpio' };
     if (actionId === 'steal' && this.nearHammock(o)) return { def, ok: false, reason: 'Ya está escondido' };
     if (actionId === 'adopt' && this.members.length >= MAX_MEMBERS) return { def, ok: false, reason: 'La casa está llena' };
+    if (actionId === 'find_job' && !isAdult(a)) return { def, ok: false, reason: 'Primero, el colegio' };
     const funds = this.householdOf(a)?.funds ?? 0;
     if (def.cost && funds < def.cost) return { def, ok: false, reason: 'No hay dinero' };
     return { def, ok: true };
@@ -269,6 +288,22 @@ export class World {
     if (def.targetSpecies && !def.targetSpecies.includes(t.species)) return { def, ok: false };
     // Despedir solo a invitados de otra familia que están en tu casa.
     if (actionId === 'say_goodbye' && (t.householdId === a.householdId || !t.visitUntil || this.isGuest(a))) return { def, ok: false };
+    if (ROMANTIC.has(actionId)) {
+      if (!canRomance(this.state, a, t)) return { def, ok: false };
+      const rel = getRel(this.state, a.id, t.id);
+      const mine = partnerOf(this.state, a.id);
+      if (actionId === 'ask_partner') {
+        if (rel.status) return { def, ok: false };
+        if (mine) return { def, ok: false, reason: 'Ya tienes pareja' };
+      }
+      if (actionId === 'propose' && rel.status !== 'partner') return { def, ok: false };
+      if (actionId === 'move_in') {
+        if (!rel.status || t.householdId === a.householdId || !this.isPlayerMember(a)) return { def, ok: false };
+        if (this.members.length >= MAX_MEMBERS) return { def, ok: false, reason: 'La casa está llena' };
+        const why = this.cantMoveOut(t);
+        if (why) return { def, ok: false, reason: why };
+      }
+    }
     if (a.home) return { def, ok: false, reason: 'No puede salir de su jaula' };
     if (t.home && def.offLot) return { def, ok: false };
     if (def.offLot && (t.householdId !== a.householdId || this.isGuest(a))) return { def, ok: false };
@@ -390,8 +425,9 @@ export class World {
   }
 
   private arrive(a: Agent) {
-    const to = a.travel!.to;
+    const { to, reason, mood } = a.travel!;
     a.travel = undefined;
+    if (reason) this.finishShift(a, reason, mood ?? 50);
     a.lotId = to;
     a.pos = this.freeSpotNear(to, this.layoutOf(to).entrance);
     a.path = [];
@@ -446,7 +482,17 @@ export class World {
   private availableVisitors(h: Household): Agent[] {
     return h.memberIds
       .map((id) => this.agent(id)!)
-      .filter((a) => a && a.kind === 'person' && a.lotId === h.lotId && !a.travel && lifeStage(a.species, a.ageDays).id !== 'baby');
+      .filter((a) => a && a.kind === 'person' && a.lotId === h.lotId && !a.travel && lifeStage(a.species, a.ageDays).id !== 'baby' && !this.busySoon(a, 3));
+  }
+
+  /** Tiene que ir a trabajar o a clase ahora o en las próximas `hours` horas. */
+  busySoon(a: Agent, hours: number): boolean {
+    const job = a.job;
+    if (!job || job.lastShiftDay === this.day) return false;
+    const c = CAREERS[job.career];
+    if (!c?.days.includes(this.weekday)) return false;
+    const m = this.state.minutes % MINUTES_PER_DAY;
+    return m < c.end * 60 && m + hours * 60 >= c.start * 60;
   }
 
   /** Algunos miembros de una familia vecina van a otra parcela (y quizá su perro). */
@@ -488,6 +534,137 @@ export class World {
       for (const nh of neighbours) {
         if (Math.random() < 0.08) this.sendVisit(nh, PARK_LOT, false);
       }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Trabajo y colegio
+  // ---------------------------------------------------------------------------
+
+  setJob(a: Agent, careerId: string) {
+    const c = CAREERS[careerId];
+    if (!c || c.school || !isAdult(a)) return;
+    a.job = { career: careerId, level: 1, perf: 0 };
+    this.toast(`¡${a.name} tiene trabajo! ${c.levels[0].title} (§${c.levels[0].pay} por jornada)`, c.icon);
+  }
+
+  quitJob(a: Agent) {
+    if (!a.job || CAREERS[a.job.career].school) return;
+    a.job = undefined;
+    this.toast(`${a.name} ha dejado el trabajo`, '📦');
+  }
+
+  /** A su hora, cada uno se va al trabajo o al colegio (y vuelve a casa al salir). */
+  private checkShift(a: Agent) {
+    const job = a.job;
+    if (!job || job.lastShiftDay === this.day) return;
+    const c = CAREERS[job.career];
+    if (!c || !c.days.includes(this.weekday)) return;
+    const m = this.state.minutes % MINUTES_PER_DAY;
+    const start = c.start * 60, end = c.end * 60;
+    const mine = this.isPlayerMember(a);
+    if (mine && m >= start - 60 && m < start) {
+      this.toastOnce(`${a.id}:shift`, `${a.name} entra ${c.school ? 'a clase' : 'a trabajar'} a las ${c.start}:00`, c.icon, 600);
+    }
+    if (m < start || m >= end) return;
+    const busy = a.travel || a.hidden || a.current?.actionId === 'pass_out';
+    if (busy) {
+      if (m >= start + 60) {
+        // Una hora tarde: ya no va.
+        job.lastShiftDay = this.day;
+        job.perf = Math.max(0, job.perf - 15);
+        if (mine) this.toast(`${a.name} ha faltado ${c.school ? 'a clase' : 'al trabajo'}`, '😬');
+      }
+      return;
+    }
+    job.lastShiftDay = this.day;
+    const home = this.householdOf(a)?.lotId ?? a.lotId;
+    const dayStart = Math.floor(this.state.minutes / MINUTES_PER_DAY) * MINUTES_PER_DAY;
+    this.startTravel(a, home);
+    a.travel = { ...a.travel!, arrive: dayStart + end, reason: c.school ? 'school' : 'work', mood: moodScore(a) };
+    a.visitUntil = undefined;
+    if (mine) this.toast(`${a.name} se va ${c.school ? 'al colegio' : 'a trabajar'}`, c.icon);
+  }
+
+  /** Al volver: cansancio, sueldo y rendimiento (ascensos o notas). */
+  private finishShift(a: Agent, reason: 'work' | 'school', mood: number) {
+    const job = a.job;
+    if (!job) return;
+    const c = CAREERS[job.career];
+    a.needs.hunger = clamp(a.needs.hunger - 30);
+    a.needs.energy = clamp(a.needs.energy - (reason === 'school' ? 20 : 30));
+    a.needs.fun = clamp(a.needs.fun - 20);
+    a.needs.hygiene = clamp(a.needs.hygiene - 15);
+    a.needs.social = clamp(a.needs.social + 15);
+    a.needs.bladder = 80;
+    const mine = this.isPlayerMember(a);
+    const before = job.perf;
+    job.perf = Math.max(0, Math.min(100, job.perf + (mood - 45) / 4 + rand(-3, 5)));
+    if (reason === 'school') {
+      if (mine && gradeLabel(before) !== gradeLabel(job.perf)) this.toast(`Notas de ${a.name}: ${gradeLabel(job.perf)}`, '📚');
+      return;
+    }
+    const pay = c.levels[job.level - 1].pay;
+    const h = this.householdOf(a);
+    if (h) h.funds += pay;
+    if (job.perf >= 100 && job.level < c.levels.length) {
+      job.level++;
+      job.perf = 10;
+      const lvl = c.levels[job.level - 1];
+      if (mine) this.toast(`¡Ascenso! ${a.name} ahora es ${lvl.title} (§${lvl.pay} por jornada)`, '🎉');
+    } else if (mine) {
+      this.toast(`${a.name} vuelve del trabajo: +§${pay}`, '💰');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mudanzas
+  // ---------------------------------------------------------------------------
+
+  /** Si alguien no puede dejar su casa (p. ej. no dejaría solos a sus hijos), el motivo. */
+  cantMoveOut(t: Agent): string | undefined {
+    const h = this.householdOf(t);
+    if (!h) return undefined;
+    const others = h.memberIds.map((id) => this.agent(id)!).filter((x) => x && x.id !== t.id && x.kind === 'person');
+    if (others.length && !others.some((x) => isAdult(x))) return 'Tiene hijos a su cargo';
+    return undefined;
+  }
+
+  /** `t` deja su familia y se viene a vivir con la del jugador. */
+  moveIn(t: Agent) {
+    const old = this.householdOf(t);
+    const mine = this.household;
+    if (!old || old.id === mine.id) return;
+    old.memberIds = old.memberIds.filter((id) => id !== t.id);
+    t.householdId = mine.id;
+    mine.memberIds.push(t.id);
+    t.visitUntil = undefined;
+    t.abstract = false;
+    // Su nueva familia
+    for (const m of this.members) if (m.id !== t.id && m.kind === 'person' && !getRel(this.state, m.id, t.id).f) changeRel(this.state, m.id, t.id, 30);
+    this.toast(`¡${t.name} se viene a vivir con la ${mine.name}!`, '🏡');
+    if (t.lotId !== mine.lotId) this.startTravel(t, mine.lotId);
+
+    // Si se ha quedado sin personas, sus mascotas se vienen (si caben) y llega una familia nueva a esa casa.
+    const left = old.memberIds.map((id) => this.agent(id)!).filter(Boolean);
+    if (!left.some((x) => x.kind === 'person')) {
+      const stay: Agent[] = [];
+      for (const pet of left) {
+        if (this.members.length < MAX_MEMBERS && !pet.home) {
+          pet.householdId = mine.id;
+          mine.memberIds.push(pet.id);
+          pet.visitUntil = undefined;
+          if (pet.lotId !== mine.lotId && !pet.travel) this.startTravel(pet, mine.lotId);
+          this.toast(`${pet.name} también se viene`, SPECIES[pet.species].icon);
+        } else stay.push(pet);
+      }
+      this.state.households = this.state.households.filter((x) => x.id !== old.id);
+      const fresh = generateFamily(this.state, old.lotId);
+      for (const pet of stay) {
+        pet.householdId = fresh.id;
+        fresh.memberIds.push(pet.id);
+      }
+      this.toast(`La ${fresh.name} se muda a ${this.lotById(old.lotId).name.replace('Casa de los ', 'la casa de los ')}`, '🚚');
     }
   }
 
@@ -574,6 +751,8 @@ export class World {
       if (a.travel && this.state.minutes >= a.travel.arrive) this.arrive(a);
     }
 
+    for (const a of this.state.agents) if (!a.travel) this.checkShift(a);
+
     const detailed = this.detailedLots();
     for (const a of this.state.agents) {
       if (a.travel) continue;
@@ -632,6 +811,23 @@ export class World {
 
   private newDay() {
     this.toast(`Empieza el día ${this.day}`, '🌅');
+    // Las relaciones se enfrían un poco si no se cuidan.
+    for (const rel of Object.values(this.state.rels)) {
+      if (!rel.kin && Math.abs(rel.f) > 5) rel.f -= Math.sign(rel.f) * 0.5;
+      rel.r = Math.max(0, rel.r - (rel.status ? 0.5 : 1));
+    }
+    // Facturas, cada lunes.
+    if (this.weekday === 0 && this.day > 1) {
+      for (const h of this.state.households) {
+        const ms = h.memberIds.map((id) => this.agent(id)!).filter(Boolean);
+        const bill = 60 + 20 * ms.filter((m) => m.kind === 'person').length + 10 * ms.filter((m) => m.kind === 'pet').length;
+        h.funds -= bill;
+        if (h.id === this.household.id) {
+          this.toast(`Han llegado las facturas de la semana: §${bill}`, '🧾');
+          if (h.funds < 0) this.toast('¡Estáis en números rojos!', '⚠️');
+        }
+      }
+    }
     for (const a of this.state.agents) {
       const before = lifeStage(a.species, a.ageDays);
       a.ageDays += 1;
@@ -849,6 +1045,11 @@ export class World {
       if (def.doneToast) this.toastOnce(`${a.id}:${def.id}`, def.doneToast.replace('{name}', a.name).replace('{obj}', od.name.toLowerCase()), def.icon);
     }
     if (task.actionId === 'adopt' && task.param) this.adopt(task.param as SpeciesId);
+    if (task.actionId === 'find_job' && task.param) this.setJob(a, task.param);
+    if (ACTIONS[task.actionId].target === 'agent' && task.actionId !== 'say_goodbye') {
+      const t = this.agent(task.targetAgentId);
+      if (t) this.socialOutcome(a, t, task.actionId);
+    }
     if (task.actionId === 'squeak') this.callForAttention(a);
     if (task.actionId === 'say_goodbye') {
       const t = this.agent(task.targetAgentId);
@@ -1019,6 +1220,8 @@ export class World {
           if (task.byPlayer) this.toast(`${t.name} no está de humor 😾`, '🐈');
           return this.endTask(a);
         }
+        if (!this.accepts(a, t, task.actionId)) return this.endTask(a);
+        if (task.actionId === 'flirt' || task.actionId === 'kiss') this.jealousy(a, t);
         this.endTask(t);
         t.current = { id: this.newId('t'), actionId: task.actionId, byPlayer: false, phase: 'acting', remaining: def.duration + 5, passiveOf: a.id };
         t.path = [];
@@ -1065,6 +1268,57 @@ export class World {
       task.goal = best.goal;
     }
     this.moveAlong(a, dt);
+  }
+
+  /** ¿Acepta `t` la interacción? Si no, rechazo: baja la relación y avisa. */
+  private accepts(a: Agent, t: Agent, actionId: string): boolean {
+    if (Math.random() < acceptChance(this.state, a, t, actionId)) return true;
+    changeRel(this.state, a.id, t.id, -3, ROMANTIC.has(actionId) ? -5 : 0);
+    a.needs.social = clamp(a.needs.social - 10);
+    a.needs.fun = clamp(a.needs.fun - 5);
+    const text = REJECT_TEXT[actionId] ?? 'ha rechazado a';
+    if (this.isPlayerMember(a) || this.isPlayerMember(t)) this.toast(`${t.name} ${text} ${a.name}`, '😳');
+    return false;
+  }
+
+  /** Coquetear delante de la pareja tiene consecuencias. */
+  private jealousy(a: Agent, t: Agent) {
+    for (const [who, other] of [[a, t], [t, a]] as const) {
+      const pid = partnerOf(this.state, who.id);
+      if (!pid || pid === other.id) continue;
+      const p = this.agent(pid);
+      if (!p || p.lotId !== who.lotId || p.travel || p.hidden) continue;
+      changeRel(this.state, who.id, p.id, -12, -15);
+      changeRel(this.state, other.id, p.id, -10, 0);
+      if (this.isPlayerMember(who) || this.isPlayerMember(p)) this.toast(`¡${p.name} ha pillado a ${who.name} coqueteando con ${other.name}!`, '😠');
+    }
+  }
+
+  /** Efectos de las interacciones sociales en la relación (y parejas, bodas, mudanzas). */
+  private socialOutcome(a: Agent, t: Agent, actionId: string) {
+    const eff = REL_EFFECTS[actionId];
+    if (eff) changeRel(this.state, a.id, t.id, eff[0], eff[1]);
+    const key = relKey(a.id, t.id);
+    const rel = this.state.rels[key];
+    const loud = this.isPlayerMember(a) || this.isPlayerMember(t);
+    if (actionId === 'ask_partner' && rel) {
+      // Si `t` tenía pareja, la deja.
+      const ex = partnerOf(this.state, t.id);
+      if (ex && ex !== a.id) {
+        const exRel = this.state.rels[relKey(t.id, ex)];
+        if (exRel) exRel.status = undefined;
+        changeRel(this.state, t.id, ex, -30, -40);
+        if (loud) this.toast(`${t.name} ha roto con ${this.agent(ex)?.name ?? 'su pareja'}`, '💔');
+      }
+      rel.status = 'partner';
+      if (loud) this.toast(`¡${a.name} y ${t.name} ahora son pareja!`, '💘');
+    }
+    if (actionId === 'propose' && rel) {
+      rel.status = 'married';
+      if (loud) this.toast(`¡${a.name} y ${t.name} se casan!`, '💍');
+    }
+    if (actionId === 'move_in') this.moveIn(t);
+    if (actionId === 'insult' && loud) this.toastOnce(`${key}:insult`, `${a.name} y ${t.name} han discutido`, '🤬', 120);
   }
 
   // --- Movimiento ------------------------------------------------------------

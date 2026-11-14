@@ -34,7 +34,7 @@ const D: ObjectDef[] = [
   { id: 'sofa', name: 'Sofá', icon: '🛋️', w: 1, h: 2, height: 16, color: 0xb5651d, capacity: 2, snap: true, actions: ['watch_tv', 'nap_sofa', 'sniff_sofa', 'scratch_sofa'] },
   { id: 'tv', name: 'Televisión', icon: '📺', w: 1, h: 1, height: 30, color: 0x333a44, capacity: 0, actions: [] },
   { id: 'bookshelf', name: 'Estantería', icon: '📚', w: 1, h: 1, height: 44, color: 0x8b5a2b, capacity: 1, actions: ['read'] },
-  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'adopt'] },
+  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'find_job', 'adopt'] },
   { id: 'plant', name: 'Planta', icon: '🪴', w: 1, h: 1, height: 10, color: 0x6b8e4e, shape: 'none', capacity: 0, actions: [] },
   { id: 'slippers', name: 'Zapatillas', icon: '🩴', w: 1, h: 1, height: 0, color: 0x5577aa, shape: 'none', capacity: 1, walkable: true, small: true, actions: ['steal'] },
   { id: 'puddle', name: 'Charco', icon: '💧', w: 1, h: 1, height: 0, color: 0xe8d55a, shape: 'flat', capacity: 1, walkable: true, actions: ['clean'] },

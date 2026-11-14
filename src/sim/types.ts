@@ -54,12 +54,35 @@ export interface Agent {
   home?: string;
   /** Parcela en la que está. */
   lotId: string;
-  /** De camino a otra parcela. */
-  travel?: { from: string; to: string; arrive: number };
+  /** De camino a otra parcela (o en el trabajo / el colegio, que no se ven). */
+  travel?: { from: string; to: string; arrive: number; reason?: 'work' | 'school'; mood?: number };
+  /** Trabajo o colegio. */
+  job?: Job;
   /** Está de visita (o en el parque) hasta este minuto; después vuelve a casa. Solo vecinos. */
   visitUntil?: number;
   /** Simulado de forma resumida (vecinos en parcelas donde no está el jugador). */
   abstract?: boolean;
+}
+
+export interface Job {
+  career: string;
+  /** Nivel en la carrera, desde 1. */
+  level: number;
+  /** Rendimiento: al llegar a 100, ascenso. En el colegio, las notas. */
+  perf: number;
+  /** Último día (número de día) en que fue o faltó. */
+  lastShiftDay?: number;
+}
+
+/** Relación entre dos personajes. */
+export interface Rel {
+  /** Amistad, de -100 (enemigos) a 100 (mejores amigos). */
+  f: number;
+  /** Romance, de 0 a 100. */
+  r: number;
+  status?: 'partner' | 'married';
+  /** Son familia (padres, hijos, hermanos): sin romance. */
+  kin?: boolean;
 }
 
 export interface PlacedObject {
@@ -104,5 +127,7 @@ export interface WorldState {
   households: Household[];
   lots: Lot[];
   agents: Agent[];
+  /** Relaciones, por pareja de ids ordenados "a|b". */
+  rels: Record<string, Rel>;
   objects: PlacedObject[];
 }

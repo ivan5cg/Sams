@@ -35,6 +35,21 @@ Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus n
 - Solo se simula al detalle donde hay alguien de tu familia; el resto del barrio se simula de forma resumida
   cada hora, para que el móvil no se caliente ni gaste batería.
 
+## Relaciones, trabajo y dinero
+
+- Cada pareja de personajes tiene **amistad** (de enemigos a mejores amigos) y **romance**. Toca a alguien para ver
+  vuestra relación; el botón 👥 (o tocar el nombre en el panel) abre el perfil con todas las relaciones.
+- Charlar, contar chistes o abrazar sube la amistad; insultar la hunde. Con los vecinos se empieza de cero.
+- Romance (solo entre adultos que no sean familia): coquetear → besar → pedir salir → pedir matrimonio.
+  Si la relación no está madura, te pueden rechazar (y hacerte la cobra). Coquetear delante de tu pareja da celos.
+- Con tu pareja de otra familia podéis **vivir juntos**: se muda a tu casa y pasa a ser controlable.
+  Si su casa se queda vacía, llega una familia nueva al barrio.
+- **Trabajo**: búscalo en el ordenador (cocina, oficina, veterinaria, música o ciencia). Cada uno se va solo a su
+  hora y vuelve al salir, cansado y con el sueldo. Si va de buen humor rinde más y asciende (5 niveles por carrera).
+- Los niños y adolescentes van al **colegio** por la mañana; su ánimo se nota en las notas.
+- **Dinero**: comer de la nevera cuesta (§6, o §2 picar algo) y cada lunes llegan las **facturas**
+  (§60 + §20 por persona + §10 por mascota).
+
 ## Mascotas
 
 Se adoptan en la protectora desde el **ordenador** de casa (máximo 8 miembros en la familia).
@@ -90,6 +105,6 @@ acciones en `src/data/actions.ts`: la IA lo usará automáticamente.
 1. ✅ **MVP**: casa con 2 personas y un perro, 6 necesidades, autonomía, control de un personaje cada vez, guardado.
 2. ✅ Gatos, cobayas, hurones y capibaras, con sus objetos (rascador, jaula, estanque…) y la protectora.
 3. ✅ Barrio con 10 unidades domésticas (las otras 9 controladas por la IA con simulación resumida), visitas y parque.
-4. Relaciones, trabajo y economía.
+4. ✅ Relaciones, trabajo y economía.
 5. Ciclo de vida completo: etapas, parejas, nacimientos, muertes y herencias.
 6. Modo construcción, tienda de muebles y pulido.

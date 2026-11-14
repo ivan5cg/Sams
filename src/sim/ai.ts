@@ -2,6 +2,7 @@
 // y el agente elige lo que más le compensa según sus necesidades y la distancia.
 
 import { ACTIONS, SELF_ACTIONS, SOCIAL_ACTIONS } from '../data/actions';
+import { getRel } from './social';
 import type { World } from './world';
 import { NEED_KEYS, type Agent, type Needs } from './types';
 
@@ -75,9 +76,19 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
     if (t === a || t.hidden) continue;
     const tc = t.current;
     if (tc && (tc.byPlayer || tc.passiveOf || !ACTIONS[tc.actionId].interruptible)) continue;
+    const rel = getRel(world.state, a.id, t.id);
+    // Se busca más a los amigos y se evita a quien cae mal.
+    const relFactor = rel.f >= 0 ? 1 + rel.f / 100 : Math.max(0.15, 1 + rel.f / 60);
     for (const def of SOCIAL_ACTIONS) {
       if (def.playerOnly || !world.checkSocialAction(a, t, def.id).ok) continue;
-      let score = benefit(a.needs, def.effects, def.duration, urgentOnly);
+      // Por su cuenta solo se coquetea o se besa con la pareja, y solo se insulta a los enemigos.
+      if ((def.id === 'flirt' || def.id === 'kiss') && !rel.status) continue;
+      if (def.id === 'insult') {
+        if (rel.f > -40 || urgentOnly) continue;
+        options.push({ choice: { actionId: def.id, targetAgentId: t.id }, score: 3 * jitter() });
+        continue;
+      }
+      let score = benefit(a.needs, def.effects, def.duration, urgentOnly) * relFactor;
       // Las personas también cuidan de las mascotas de casa (pasear, bañar...).
       if (!urgentOnly && a.kind === 'person' && t.kind === 'pet' && t.householdId === a.householdId && def.partnerEffects) {
         score += 0.6 * benefit(t.needs, def.partnerEffects, def.duration);
