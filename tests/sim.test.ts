@@ -983,7 +983,7 @@ describe('habilidades, ñiqui ñiqui y pilates', () => {
     // El barrio es al azar: si no hay ningún niño, se rejuvenece a un vecino.
     const kid =
       w.state.agents.find((a) => a.kind === 'person' && !a.role && w.stageOf(a) === 'child') ??
-      Object.assign(w.state.agents.find((a) => a.kind === 'person' && !a.role && a.householdId !== 'h1')!, { ageDays: 6 });
+      Object.assign(w.state.agents.find((a) => a.kind === 'person' && !a.role && a.householdId !== 'h1')!, { ageDays: 6, job: { career: 'school', level: 1, perf: 50 } });
     expect(w.optionsFor(kid.id, { kind: 'agent', id: kid.id }).map((o) => o.def.id)).toContain('homework');
     const lucia = w.agent('a1')!;
     expect(w.optionsFor('a1', { kind: 'agent', id: 'a1' }).map((o) => o.def.id)).not.toContain('homework');
