@@ -136,7 +136,7 @@ export function drawTile(g: G, t: TileType, x: number, y: number, style: LotStyl
         const a = P(x, y + f), b = P(x + 1, y + f);
         g.lineBetween(a.x, a.y, b.x, b.y);
       }
-      const k = ((h >> 4) % 3) / 3 + 0.15;
+      const k = ((h >>> 4) % 3) / 3 + 0.15;
       const c0 = P(x + k, y, 0), c1 = P(x + k, y + 0.34, 0);
       g.lineBetween(c0.x, c0.y, c1.x, c1.y);
       break;
@@ -160,7 +160,7 @@ export function drawTile(g: G, t: TileType, x: number, y: number, style: LotStyl
       flat(g, r, 0, shade(GRASS, 0.93 + ((h % 12) / 100)));
       g.lineStyle(1, shade(GRASS, 0.7), 0.7);
       for (let i = 0; i < 3; i++) {
-        const fx = (((h >> (i * 5)) % 80) + 10) / 100, fy = (((h >> (i * 5 + 3)) % 80) + 10) / 100;
+        const fx = (((h >>> (i * 5)) % 80) + 10) / 100, fy = (((h >>> (i * 5 + 3)) % 80) + 10) / 100;
         const c = P(x + fx, y + fy);
         g.lineBetween(c.x - 2, c.y, c.x - 1, c.y - 3);
         g.lineBetween(c.x + 1, c.y, c.x + 2, c.y - 3);
@@ -728,7 +728,7 @@ const ART: Record<string, Art> = {
     const h = hash(`${X},${Y}`);
     const cols = [0xf28db2, 0xf7d84a, 0x9b5de5, 0xe74c3c, 0xffffff];
     for (let i = 0; i < 7; i++) {
-      const dx = (((h >> (i * 3)) % 22) - 11), dy = (((h >> (i * 2)) % 10) - 5);
+      const dx = (((h >>> (i * 3)) % 22) - 11), dy = (((h >>> (i * 2)) % 10) - 5);
       g.lineStyle(1, 0x3f7a35, 1);
       g.lineBetween(c.x + dx, c.y + dy, c.x + dx, c.y + dy - 7);
       g.fillStyle(cols[(h + i) % cols.length], 1);
@@ -747,3 +747,11 @@ export function drawObjectArt(g: G, f: G, o: ObjLike): boolean {
 
 /** Objetos que se pintan bajo los personajes (a ras de suelo). */
 export const GROUND_ART = new Set(['pond', 'rug', 'pilates_mat', 'puddle', 'strawbed']);
+
+/** Brillo de pantalla (tele, consola, ordenador, equipo de música) cuando alguien la usa. */
+export const SCREEN_GLOW: Record<string, (g: G, X: number, Y: number) => void> = {
+  tv: (g, X, Y) => faceQuad(g, R(X + 0.12, Y + 0.44, 0.76, 0.1), 'L', 0.06, 0.94, 14.5, 35, 0xbfe6ff),
+  gamebox: (g, X, Y) => faceQuad(g, R(X + 0.16, Y + 0.48, 0.68, 0.08), 'L', 0.07, 0.93, 14, 30, 0xe3c8ff),
+  computer: (g, X, Y) => faceQuad(g, R(X + 0.3, Y + 0.26, 0.42, 0.08), 'L', 0.07, 0.93, 27.5, 38.5, 0xdff3ff),
+  stereo: (g, X, Y) => faceQuad(g, R(X + 0.22, Y + 0.32, 0.56, 0.38), 'L', 0.32, 0.68, 16, 19.5, 0xb8fff0),
+};

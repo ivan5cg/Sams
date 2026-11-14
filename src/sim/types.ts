@@ -62,10 +62,29 @@ export interface Agent {
   starving?: number;
   /** Habilidades (0 a 10, con decimales). */
   skills?: Record<string, number>;
+  /** Gustos que ha descubierto de otros (id → gustos; con '-' delante, lo que no soportan). */
+  known?: Record<string, string[]>;
+  /** Deseos (solo la familia del jugador). */
+  wishes?: Wish[];
   /** Está de visita (o en el parque) hasta este minuto; después vuelve a casa. Solo vecinos. */
   visitUntil?: number;
   /** Simulado de forma resumida (vecinos en parcelas donde no está el jugador). */
   abstract?: boolean;
+}
+
+export interface Wish {
+  id: string;
+  kind: 'action' | 'place' | 'skill' | 'money';
+  label: string;
+  icon: string;
+  action?: string;
+  /** Con quién (id), o 'vecino' para cualquiera de otra familia. */
+  target?: string;
+  lot?: 'park' | 'venue';
+  skill?: string;
+  level?: number;
+  money?: number;
+  reward: number;
 }
 
 export interface Job {

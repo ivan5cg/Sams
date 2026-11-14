@@ -147,6 +147,7 @@ const A: ActionDef[] = [
   { id: 'remember', label: 'Recordar', verb: 'Recordando', icon: '🕯️', target: 'object', actors: ['person'], guestOk: true, duration: 20, effects: { social: 0.2, fun: -0.1 } },
 
   // --- Social: persona → persona ---
+  { id: 'talk', label: 'Conversar…', verb: 'Conversando', icon: '🗨️', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 90, effects: { social: 0.15 }, partnerEffects: { social: 0.15 }, playerOnly: true, interruptible: true },
   { id: 'chat', label: 'Charlar', verb: 'Charlando', icon: '💬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 30, effects: { social: 0.7, fun: 0.1 }, partnerEffects: { social: 0.7, fun: 0.1 }, until: 'full', interruptible: true, skill: { id: 'carisma', rate: 0.005 } },
   { id: 'joke', label: 'Contar un chiste', verb: 'Contando un chiste', icon: '😂', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: 0.6, social: 0.3 }, partnerEffects: { fun: 0.6, social: 0.3 } },
   { id: 'insult', label: 'Insultar', verb: 'Discutiendo', icon: '🤬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 6, effects: { fun: 0.3 }, partnerEffects: { social: -2, fun: -1 } },

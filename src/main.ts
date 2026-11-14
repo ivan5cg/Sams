@@ -11,6 +11,8 @@ const AUTOSAVE_MS = 30_000;
 async function boot() {
   const saved = await loadGame();
   let world = saved ? new World(saved) : World.createNew();
+  // Al abrir la app, el tiempo corre (las partidas guardadas en pausa por versiones anteriores, también).
+  if (world.state.speed === 0) world.state.speed = 1;
 
   const hud = new Hud(world, {
     onSave: async () => {
@@ -79,10 +81,11 @@ async function boot() {
   let speedBeforeHide = world.state.speed;
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
+      // Se guarda con la velocidad a la que se jugaba (si no, al volver a abrir la app arrancaría en pausa).
       speedBeforeHide = world.state.speed;
-      world.state.speed = 0;
       saveGameSync(world.state);
       saveGame(world.state);
+      world.state.speed = 0;
     } else if (world.state.speed === 0) {
       world.state.speed = speedBeforeHide;
     }

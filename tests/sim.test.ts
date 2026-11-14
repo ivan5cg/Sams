@@ -4,6 +4,7 @@ import { SAVE_VERSION, World } from '../src/sim/world';
 import { migrate, serialize } from '../src/save/serialize';
 import type { Agent } from '../src/sim/types';
 import { canRomance, getRel, isAdult, setRel } from '../src/sim/social';
+import { converse, interestsOf, knownText, topicsFor } from '../src/sim/conversation';
 
 /** Una partida con el formato de una versión anterior (sin barrio). */
 function oldSave(version: number) {
@@ -31,6 +32,9 @@ function isolate(w: World, keep: string[]) {
     a.travel = { from: a.lotId, to: a.lotId, arrive: Number.POSITIVE_INFINITY };
   }
   (w as unknown as { noVisitsUntil: number }).noVisitsUntil = Number.POSITIVE_INFINITY;
+  // Sin deseos: sus recompensas descuadrarían las cuentas de las pruebas.
+  for (const a of w.state.agents) a.wishes = [];
+  w.wishesEnabled = false;
 }
 
 function fullNeeds(a: Agent) {
@@ -621,7 +625,14 @@ describe('relaciones, trabajo y economía (fase 4)', () => {
     expect(w.household.funds).toBe(f0 - 6);
     const f1 = w.household.funds;
     w.state.minutes = 7 * 1440 - 1; // domingo 23:59 → lunes
-    w.tick(1);
+    // Sin sucesos al azar (dinero encontrado, lotería) ese día.
+    const orig = Math.random;
+    Math.random = () => 0.99;
+    try {
+      w.tick(1);
+    } finally {
+      Math.random = orig;
+    }
     expect(w.household.funds).toBe(f1 - (60 + 2 * 20 + 2 * 10));
   });
 
@@ -1027,5 +1038,102 @@ describe('habilidades, ñiqui ñiqui y pilates', () => {
     const m = migrate(st);
     expect(m.lots.some((l) => l.layout === 'studio')).toBe(true);
     expect(m.objects.filter((o) => o.lotId === 'G').length).toBeGreaterThan(5);
+  });
+});
+
+describe('diálogos, conversaciones y deseos', () => {
+  const withRandom = <T>(value: number, fn: () => T): T => {
+    const orig = Math.random;
+    Math.random = () => value;
+    try {
+      return fn();
+    } finally {
+      Math.random = orig;
+    }
+  };
+
+  it('cada persona tiene gustos fijos y un tema que no soporta', () => {
+    const w = World.createNew();
+    const a = w.agent('a1')!;
+    const g1 = interestsOf(a), g2 = interestsOf(a);
+    expect(g1).toEqual(g2);
+    expect(g1.likes.length).toBeGreaterThanOrEqual(2);
+    expect(g1.likes).not.toContain(g1.dislike);
+  });
+
+  it('hablar de lo que le gusta sube la amistad y descubre el gusto; lo que odia, la baja', () => {
+    const w = World.createNew();
+    const a = w.agent('a1')!, t = w.agent('a2')!;
+    const { likes, dislike } = interestsOf(t);
+    const f0 = getRel(w.state, a.id, t.id).f;
+    const good = withRandom(0.3, () => converse(w, a, t, likes[0]));
+    expect(good.outcome).toBe('good');
+    expect(getRel(w.state, a.id, t.id).f).toBeGreaterThan(f0);
+    expect(knownText(a, t)).toContain('Le encanta');
+    const f1 = getRel(w.state, a.id, t.id).f;
+    const bad = withRandom(0.3, () => converse(w, a, t, dislike));
+    expect(bad.outcome).toBe('bad');
+    expect(getRel(w.state, a.id, t.id).f).toBeLessThan(f1);
+    expect(knownText(a, t)).toContain('No soporta');
+  });
+
+  it('los temas cambian en cada turno y siempre hay opciones', () => {
+    const w = World.createNew();
+    const a = w.agent('a1')!, t = w.agent('a2')!;
+    const t0 = topicsFor(w, a, t, 0).map((x) => x.id);
+    const t1 = topicsFor(w, a, t, 1).map((x) => x.id);
+    expect(t0.length).toBeGreaterThanOrEqual(3);
+    expect(t0).not.toEqual(t1);
+    // Con la pareja se puede coquetear
+    expect(t0).toContain('coquetear');
+  });
+
+  it('proponer ir al parque: si acepta, se van los dos', () => {
+    const w = World.createNew();
+    const a = w.agent('a1')!, t = w.agent('a2')!;
+    w.state.minutes = 6 * 1440 + 11 * 60; // domingo
+    const res = withRandom(0.1, () => converse(w, a, t, 'parque'));
+    expect(res.goPark).toBe(true);
+    w.onTalkTurn(a, t, res, true);
+    w.tick(20);
+    expect(a.lotId).toBe('P');
+    expect(t.lotId).toBe('P');
+  });
+
+  it('cada persona de la familia tiene 3 deseos; cumplir uno da dinero y sale otro', () => {
+    const w = World.createNew();
+    const lucia = w.agent('a1')!;
+    expect(lucia.wishes).toHaveLength(3);
+    expect(w.agent('a3')!.wishes).toBeUndefined(); // las mascotas no
+    isolate(w, ['a1']);
+    w.wishesEnabled = true;
+    lucia.wishes = [{ id: 'x', kind: 'place', label: 'Ir al parque', icon: '🌳', lot: 'park', reward: 40 }];
+    const f0 = w.household.funds;
+    w.travel(['a1'], 'P');
+    w.tick(20);
+    expect(w.household.funds).toBe(f0 + 40);
+    expect(lucia.wishes.find((x) => x.id === 'x')).toBeUndefined();
+    expect(lucia.wishes.length).toBeGreaterThan(0);
+  });
+
+  it('tocar un deseo pone al personaje a cumplirlo', () => {
+    const w = World.createNew();
+    isolate(w, ['a1', 'a3']);
+    const lucia = w.agent('a1')!;
+    w.wishesEnabled = true;
+    lucia.wishes = [{ id: 'y', kind: 'action', label: 'Jugar con Toby', icon: '🎾', action: 'play_pet', target: 'a3', reward: 30 }];
+    w.agent('a3')!.current = { id: 'q', actionId: 'idle', byPlayer: false, phase: 'acting', remaining: 999 };
+    const f0 = w.household.funds;
+    expect(w.pursueWish('a1', 'y')).toBe(true);
+    w.tick(40);
+    expect(w.household.funds).toBe(f0 + 30);
+  });
+
+  it('las frases de la conversación llegan a la escena', () => {
+    const w = World.createNew();
+    const a = w.agent('a1')!, t = w.agent('a2')!;
+    const res = converse(w, a, t, 'dia');
+    w.onTalkTurn(a, t, res, true);
+    expect(w.ui.speech.map((s) => s.agentId)).toEqual(['a1', 'a2']);
   });
 });

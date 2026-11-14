@@ -10,6 +10,7 @@ import { NEED_KEYS, type Agent, type Rel, type SpeciesId } from '../sim/types';
 import { CATALOG, CATEGORIES, OBJECTS, SELL_RATIO, type CatalogCategory } from '../data/objects';
 import type { HouseScene } from '../render/HouseScene';
 import { MAX_MEMBERS, TRAVEL_MINUTES, moodScore, type Target, type World } from '../sim/world';
+import { converse, knownText, topicsFor } from '../sim/conversation';
 
 export interface HudCallbacks {
   onSave: () => void;
@@ -155,6 +156,19 @@ export class Hud {
       this.render();
     });
     $('#profile-btn').addEventListener('click', () => this.openProfile());
+    $('#wishes').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (b?.dataset.wish) {
+        this.world.pursueWish(this.world.activeAgent.id, b.dataset.wish);
+        this.render();
+      }
+    });
+    $('#talk').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b) return;
+      if (b.dataset.topic) this.talkTurn(b.dataset.topic);
+      else if (b.dataset.endtalk !== undefined) this.endTalk();
+    });
     $('#build-btn').addEventListener('click', () => this.enterBuild());
     $('#build-exit').addEventListener('click', () => this.exitBuild());
     $('#build-tabs').addEventListener('click', (e) => {
@@ -378,6 +392,115 @@ export class Hud {
         return `<button class="item ${chosen ? 'on' : ''}" data-item="${d.id}" ${poor ? 'disabled' : ''}><span class="item-icon">${face}</span><span class="item-name">${esc(d.name)}</span><span class="item-price">§${d.price}</span></button>`;
       })
       .join('');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Conversación interactiva
+  // ---------------------------------------------------------------------------
+
+  private lastWishHtml = '';
+  private talking: { aId: string; tId: string; taskId: string; turn: number; log: { who: string; text: string; mood?: string }[]; speed: number } | null = null;
+
+  /** Abre el panel cuando empieza un "Conversar…" del jugador, y lo cierra si se acaba. */
+  private syncTalk() {
+    const w = this.world;
+    const a = w.activeAgent;
+    const cur = a.current;
+    const active = cur && cur.actionId === 'talk' && cur.byPlayer && cur.phase === 'acting' ? cur : null;
+    if (active && !this.talking) {
+      const t = w.agent(active.targetAgentId);
+      if (!t) return;
+      this.talking = { aId: a.id, tId: t.id, taskId: active.id, turn: 0, log: [{ who: t.name, text: this.greeting(t) }], speed: w.state.speed || 1 };
+      w.say(t.id, this.talking.log[0].text);
+      // Se pausa mientras se elige qué decir.
+      w.state.speed = 0;
+      this.renderTalk();
+      $('#talk').hidden = false;
+    } else if (this.talking && (!active || active.id !== this.talking.taskId)) {
+      this.closeTalk();
+    }
+  }
+
+  private greeting(t: Agent): string {
+    const rel = getRel(this.world.state, this.world.activeAgent.id, t.id);
+    if (rel.status) return '¡Hola, cariño!';
+    if (rel.f >= 45) return '¡Hombre! ¿Qué tal?';
+    if (rel.f <= -15) return '¿Qué quieres ahora?';
+    if (rel.f < 5) return 'Hola... ¿nos conocemos?';
+    return '¡Hola! ¿Qué tal?';
+  }
+
+  private talkTurn(topicId: string) {
+    const w = this.world;
+    const tk = this.talking;
+    if (!tk) return;
+    const a = w.agent(tk.aId), t = w.agent(tk.tId);
+    if (!a || !t) return this.endTalk();
+    const res = converse(w, a, t, topicId);
+    w.onTalkTurn(a, t, res, tk.turn === 0);
+    tk.turn++;
+    const mood = res.outcome === 'good' ? '😊' : res.outcome === 'bad' ? '😬' : '😐';
+    tk.log.push({ who: a.name, text: res.say }, { who: t.name, text: res.reply, mood });
+    if (res.learned) {
+      const what = ({ mascotas: 'n las mascotas', deporte: ' el deporte', musica: ' la música', arte: ' el arte', cocina: ' la cocina', ciencia: ' la ciencia', cotilleos: ' cotillear', viajes: ' viajar' } as Record<string, string>)[res.learned];
+      this.toast(`Has descubierto que a ${t.name} le encanta${what}`, '💡');
+    }
+    if (res.goPark) {
+      this.closeTalk(false);
+      return;
+    }
+    this.renderTalk();
+  }
+
+  private renderTalk() {
+    const w = this.world;
+    const tk = this.talking;
+    if (!tk) return;
+    const a = w.agent(tk.aId)!, t = w.agent(tk.tId)!;
+    const rel = getRel(w.state, a.id, t.id);
+    const pct = Math.round((rel.f + 100) / 2);
+    const known = knownText(a, t);
+    const log = tk.log
+      .slice(-6)
+      .map((l) => `<div class="talk-line ${l.who === a.name ? 'me' : 'them'}"><b>${esc(l.who)}</b> ${esc(l.text)} ${l.mood ?? ''}</div>`)
+      .join('');
+    const topics = topicsFor(w, a, t, tk.turn)
+      .map((tp) => `<button class="act" data-topic="${tp.id}"><span class="act-icon">${tp.icon}</span><span class="act-label">${esc(tp.label)}</span></button>`)
+      .join('');
+    $('#talk').innerHTML = `<div class="talk-card">
+      <div class="sheet-head">
+        <div><div class="sheet-title">🗨️ ${esc(a.name)} y ${esc(t.name)}</div>
+        <div class="sheet-sub">${esc(relLabel(rel, a.kind, t.kind))}${known ? ` · ${esc(known)}` : ''}</div></div>
+        <button class="icon-btn" data-endtalk>✕</button>
+      </div>
+      <div class="bar talk-bar"><div class="fill" style="width:${pct}%;background:${rel.f >= 15 ? '#4cd964' : rel.f <= -15 ? '#ff4d3d' : '#a3a9bf'}"></div></div>
+      <div class="talk-log">${log}</div>
+      <div class="sheet-who">¿De qué habláis?</div>
+      <div class="sheet-actions">${topics}</div>
+      <button class="map-btn ghost talk-end" data-endtalk>👋 Despedirse</button>
+    </div>`;
+    const box = $('#talk').querySelector('.talk-log');
+    if (box) box.scrollTop = box.scrollHeight;
+  }
+
+  private endTalk() {
+    const tk = this.talking;
+    if (tk) {
+      const a = this.world.agent(tk.aId), t = this.world.agent(tk.tId);
+      if (a && t) this.world.say(a.id, tk.turn ? '¡Hasta luego!' : 'Bueno, ya hablamos');
+      if (a && t) this.world.say(t.id, '¡Chao!');
+    }
+    this.closeTalk();
+  }
+
+  private closeTalk(cancelTask = true) {
+    const tk = this.talking;
+    this.talking = null;
+    $('#talk').hidden = true;
+    if (!tk) return;
+    if (cancelTask) this.world.cancel(tk.aId, tk.taskId);
+    if (this.world.state.speed === 0) this.world.state.speed = tk.speed;
+    this.render();
   }
 
   // ---------------------------------------------------------------------------
@@ -724,6 +847,7 @@ export class Hud {
               <div class="rel-main">
                 <div><b>${esc(o.name)}</b> <span class="muted small">${esc(where)}</span></div>
                 <div class="small">${esc(relLabel(rel, a.kind, o.kind))}${rel.r > 0 && !rel.kin ? ` · 💕 ${Math.round(rel.r)}` : ''}</div>
+                ${knownText(a, o) ? `<div class="small muted">💡 ${esc(knownText(a, o))}</div>` : ''}
                 <div class="bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
               </div>
             </div>`;
@@ -844,6 +968,18 @@ export class Hud {
       $('#queue').innerHTML = queueHtml;
       this.lastQueueHtml = queueHtml;
     }
+
+    // Deseos del personaje activo (tócalos para ponerte a cumplirlos)
+    const wishes = a.wishes ?? [];
+    const wishHtml = wishes.length
+      ? `<span class="wish-title">⭐ Deseos</span>${wishes.map((wi) => `<button class="wish" data-wish="${wi.id}"><span>${wi.icon}</span><span class="chip-l">${esc(wi.label)}</span><b>+§${wi.reward}</b></button>`).join('')}`
+      : '';
+    if (wishHtml !== this.lastWishHtml) {
+      $('#wishes').innerHTML = wishHtml;
+      this.lastWishHtml = wishHtml;
+    }
+
+    this.syncTalk();
 
     // Necesidades
     if (this.needsFor !== a.id) {

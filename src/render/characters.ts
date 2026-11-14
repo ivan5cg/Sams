@@ -26,9 +26,9 @@ export function personLook(a: Agent, elder: boolean): PersonLook {
   const styles: PersonLook['hairStyle'][] = ['short', 'long', 'bun', 'curly', 'ponytail'];
   return {
     skin: SKIN[h % SKIN.length],
-    hair: elder ? 0xd9d9d9 : HAIR[(h >> 3) % HAIR.length],
-    hairStyle: styles[(h >> 6) % styles.length],
-    pants: PANTS[(h >> 9) % PANTS.length],
+    hair: elder ? 0xd9d9d9 : HAIR[(h >>> 3) % HAIR.length],
+    hairStyle: styles[(h >>> 6) % styles.length],
+    pants: PANTS[(h >>> 9) % PANTS.length],
     shirt: a.color,
   };
 }

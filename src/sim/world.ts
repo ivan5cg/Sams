@@ -5,6 +5,7 @@ import { SPECIES, lifeStage } from '../data/species';
 import { CAREERS, gradeLabel } from '../data/careers';
 import { CAREER_SKILL, MAX_SKILL, SKILL_BY_ID } from '../data/skills';
 import { chooseAutonomous } from './ai';
+import { matchWish, newWish, topUpWishes } from './wishes';
 import { REJECT_TEXT, REL_EFFECTS, ROMANTIC, acceptChance, canRomance, changeRel, getRel, isAdult, partnerOf, relKey, setRel } from './social';
 import { PARK_LOT, PLAYER_LOT, STUDIO_LOT, generateFamily, generateNeighborhood, makeAgent, newbornLooks, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { findPath, isWalkable, pathLength, reachable, type Grid } from './pathfinding';
@@ -56,13 +57,106 @@ export class World {
   private warned = new Set<string>();
   private lastToast = new Map<string, number>();
   /** Estado de la interfaz que no se guarda (modo construcción y vista previa del mueble). */
-  ui: { building: boolean; ghost: { def: string; x: number; y: number; ok: boolean } | null } = { building: false, ghost: null };
+  ui: {
+    building: boolean;
+    ghost: { def: string; x: number; y: number; ok: boolean } | null;
+    /** Frases que la escena tiene que mostrar en bocadillos. */
+    speech: { agentId: string; text: string; kind: 'say' | 'think' }[];
+  } = { building: false, ghost: null, speech: [] };
   /** Tras despedir a unas visitas, no llegan otras espontáneas durante un rato. */
   private noVisitsUntil = 0;
+
+  /** Deseos activados (las pruebas los apagan para que las cuentas cuadren). */
+  wishesEnabled = true;
 
   constructor(state: WorldState) {
     this.state = state;
     this.rebuildGrid();
+    topUpWishes(this);
+  }
+
+  /** Un personaje dice (o piensa) algo: lo pinta la escena en un bocadillo. */
+  say(agentId: string, text: string, kind: 'say' | 'think' = 'say') {
+    this.ui.speech.push({ agentId, text, kind });
+    if (this.ui.speech.length > 30) this.ui.speech.shift();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Deseos
+  // ---------------------------------------------------------------------------
+
+  /** Algo ha pasado: si cumple un deseo de la familia, recompensa. */
+  wishEvent(a: Agent, ev: { action?: string; target?: string; targetHousehold?: string; lotKind?: string; skill?: string; level?: number }) {
+    if (!this.wishesEnabled || !this.isPlayerMember(a) || !a.wishes?.length) return;
+    const w = matchWish(a, ev, this.household.id);
+    if (!w) return;
+    a.wishes = a.wishes.filter((x) => x !== w);
+    this.household.funds += w.reward;
+    a.needs.fun = clamp(a.needs.fun + 15);
+    a.needs.social = clamp(a.needs.social + 5);
+    this.toast(`¡Deseo cumplido! ${a.name}: ${w.label} (+§${w.reward})`, '⭐');
+    this.say(a.id, '¡Sí! ¡Lo he conseguido!', 'say');
+    const next = newWish(this, a);
+    if (next) a.wishes.push(next);
+  }
+
+  /** Atajo: el personaje se pone a cumplir un deseo (si se puede desde donde está). */
+  pursueWish(agentId: string, wishId: string): boolean {
+    const a = this.agent(agentId);
+    const w = a?.wishes?.find((x) => x.id === wishId);
+    if (!a || !w) return false;
+    if (w.kind === 'place') {
+      const lot = this.state.lots.find((l) => l.kind === w.lot);
+      if (lot) return this.travel([a.id], lot.id);
+      return false;
+    }
+    if (w.kind === 'skill') {
+      this.toast(`Para subir habilidades: cocinar, tocar, pintar, hacer deporte, ajedrez, charlar...`, '💡');
+      return false;
+    }
+    if (w.kind === 'action' && w.action) {
+      const def = ACTIONS[w.action];
+      if (def.target === 'self') return this.command(a.id, w.action, { kind: 'agent', id: a.id });
+      if (def.target === 'agent') {
+        if (w.target === 'vecino') {
+          const n = this.agentsIn(a.lotId).find((x) => x.kind === 'person' && x.householdId !== a.householdId && this.stageOf(x) !== 'baby');
+          if (!n) {
+            this.toast('No hay vecinos por aquí: prueba en el parque o invítalos a casa', '💡');
+            return false;
+          }
+          return this.command(a.id, w.action, { kind: 'agent', id: n.id });
+        }
+        const t = this.agent(w.target);
+        if (!t || t.lotId !== a.lotId || t.travel) {
+          this.toast(`${t?.name ?? 'Esa persona'} no está aquí`, '💡');
+          return false;
+        }
+        return this.command(a.id, w.action, { kind: 'agent', id: t.id });
+      }
+      const o = this.objectsIn(a.lotId).find((x) => this.objDef(x).actions.includes(w.action!) && this.checkObjectAction(a, x, w.action!).ok);
+      if (!o) {
+        this.toast('Aquí no se puede: hace falta estar en casa (o comprar el mueble)', '💡');
+        return false;
+      }
+      return this.command(a.id, w.action, { kind: 'object', id: o.id });
+    }
+    return false;
+  }
+
+  /** Un turno de conversación interactiva (la lógica está en conversation.ts). */
+  onTalkTurn(a: Agent, t: Agent, res: { say: string; reply: string; goPark?: boolean }, firstTurn: boolean) {
+    this.say(a.id, res.say);
+    this.say(t.id, res.reply);
+    if (firstTurn) this.wishEvent(a, { action: 'talk', target: t.id, targetHousehold: t.householdId });
+    if (res.goPark) {
+      const park = this.state.lots.find((l) => l.kind === 'park');
+      if (park) {
+        this.endTask(a);
+        this.endTask(t);
+        this.travel([a.id, t.id], park.id);
+        if (!this.isPlayerMember(t)) t.visitUntil = this.state.minutes + 180;
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -381,6 +475,7 @@ export class World {
     if (Math.floor(after) > Math.floor(before) && this.isPlayerMember(a)) {
       const s = SKILL_BY_ID[skill.id];
       this.toast(`${a.name} ha subido a ${s.label.toLowerCase()} nivel ${Math.floor(after)}`, s.icon);
+      this.wishEvent(a, { skill: skill.id, level: Math.floor(after) });
     }
   }
 
@@ -507,6 +602,7 @@ export class World {
       if (!a.visitUntil) a.visitUntil = this.state.minutes + rand(90, 180);
     }
     if (to === this.householdOf(a)?.lotId) a.visitUntil = undefined;
+    this.wishEvent(a, { lotKind: this.lotById(to).kind });
   }
 
   /** Una casilla libre (sin nadie encima) cerca de un punto, para no aparecer unos encima de otros. */
@@ -591,6 +687,7 @@ export class World {
 
   /** Cada hora: los vecinos salen al parque o vienen de visita. */
   private hourly() {
+    if (this.wishesEnabled) topUpWishes(this);
     const h = this.hour;
     const neighbours = this.state.households.filter((x) => x.id !== this.household.id);
     // Visitas a la familia del jugador
@@ -1285,6 +1382,14 @@ export class World {
       }
     }
     this.dailyEvents();
+    // Cada día, el deseo más antiguo de cada uno cambia por otro.
+    for (const m of this.members) {
+      if (m.wishes && m.wishes.length >= 3) {
+        m.wishes.shift();
+        const w = newWish(this, m);
+        if (w) m.wishes.push(w);
+      }
+    }
     // Pensiones
     for (const h of this.state.households) {
       for (const id of h.memberIds) {
@@ -1568,6 +1673,10 @@ export class World {
     if (ACTIONS[task.actionId].target === 'agent' && task.actionId !== 'say_goodbye') {
       const t = this.agent(task.targetAgentId);
       if (t) this.socialOutcome(a, t, task.actionId);
+    }
+    if (task.actionId !== 'talk') {
+      const t = this.agent(task.targetAgentId);
+      this.wishEvent(a, { action: task.actionId, target: task.targetAgentId, targetHousehold: t?.householdId });
     }
     if (task.actionId === 'squeak' || task.actionId === 'cry') this.callForAttention(a);
     if (task.actionId === 'say_goodbye') {

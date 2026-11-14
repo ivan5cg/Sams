@@ -4,7 +4,10 @@ import { OBJECTS } from '../data/objects';
 import { lifeStage } from '../data/species';
 import type { Agent, PlacedObject } from '../sim/types';
 import type { Target, World } from '../sim/world';
-import { P, drawObjectArt, drawTile, drawWall, faceQuad, flat, prism, type LotStyle } from './art';
+import { ACTION_LINES, ACTION_QUIPS, NEED_THOUGHTS, PET_SOUNDS } from '../data/dialogue';
+import { NEED_KEYS } from '../sim/types';
+import { P, SCREEN_GLOW, drawObjectArt, drawTile, drawWall, faceQuad, flat, prism, type LotStyle } from './art';
+import { SceneFx, type FxKind } from './fx';
 import { PET_ART, drawBaby, drawLeg, drawPersonBody, personLook, petColor } from './characters';
 import { TILE_H, TILE_W, isoToScreen, screenToTile, shade, tileCenter } from './iso';
 
@@ -15,6 +18,53 @@ const DEFAULT_STYLE: LotStyle = { wall: 0xe9e1d4, floor: 0xc89f6e };
 /** Tamaño según la etapa de la vida. */
 const STAGE_SCALE: Record<string, number> = { baby: 0.5, child: 0.72, teen: 0.88 };
 const NIGHT_MAX = 0.42;
+
+/** Partículas que acompañan a cada acción (y cada cuántos ms sale una). */
+const ACTION_FX: Record<string, { kind: FxKind; every: number }> = {
+  sleep: { kind: 'zzz', every: 900 },
+  nap_sofa: { kind: 'zzz', every: 900 },
+  nap_bed: { kind: 'zzz', every: 900 },
+  pet_sleep: { kind: 'zzz', every: 900 },
+  cage_sleep: { kind: 'zzz', every: 1100 },
+  capy_sleep: { kind: 'zzz', every: 1000 },
+  ferret_sleep: { kind: 'zzz', every: 1000 },
+  sleep_post: { kind: 'zzz', every: 1000 },
+  cat_nap: { kind: 'zzz', every: 1000 },
+  baby_sleep: { kind: 'zzz', every: 1100 },
+  dance: { kind: 'notes', every: 550 },
+  listen_music: { kind: 'notes', every: 800 },
+  play_guitar: { kind: 'notes', every: 600 },
+  busk: { kind: 'notes', every: 600 },
+  flirt: { kind: 'hearts', every: 700 },
+  kiss: { kind: 'hearts', every: 300 },
+  niqui: { kind: 'hearts', every: 350 },
+  hug: { kind: 'hearts', every: 450 },
+  ask_partner: { kind: 'hearts', every: 400 },
+  propose: { kind: 'hearts', every: 300 },
+  move_in: { kind: 'hearts', every: 500 },
+  try_baby: { kind: 'hearts', every: 400 },
+  pet_animal: { kind: 'hearts', every: 800 },
+  beg_affection: { kind: 'hearts', every: 800 },
+  cuddle_capy: { kind: 'hearts', every: 900 },
+  rock_baby: { kind: 'hearts', every: 900 },
+  shower: { kind: 'drops', every: 120 },
+  bath: { kind: 'drops', every: 300 },
+  bathe_pet: { kind: 'drops', every: 200 },
+  swim: { kind: 'drops', every: 400 },
+  clean: { kind: 'drops', every: 300 },
+  clean_cage: { kind: 'drops', every: 350 },
+  clean_litter: { kind: 'drops', every: 350 },
+  repair: { kind: 'sparks', every: 250 },
+  insult: { kind: 'angry', every: 600 },
+  pass_out: { kind: 'stars', every: 400 },
+  run: { kind: 'sweat', every: 350 },
+  reformer: { kind: 'sweat', every: 700 },
+  pilates: { kind: 'sweat', every: 900 },
+  paint: { kind: 'paint', every: 450 },
+};
+const EATING = new Set(['eat', 'snack', 'cook', 'pet_eat', 'cage_eat', 'buy_hotdog']);
+const WAGGING = new Set(['beg_affection', 'play_with_person']);
+const pickOne = <T>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
 
 interface AgentView {
   root: Phaser.GameObjects.Container;
@@ -37,6 +87,8 @@ interface ObjectView {
   icon?: Phaser.GameObjects.Text;
   badge?: Phaser.GameObjects.Text;
   glow?: Phaser.GameObjects.Graphics;
+  /** Brillo de pantalla que parpadea cuando se usa. */
+  screen?: Phaser.GameObjects.Graphics;
   key: string;
 }
 
@@ -79,6 +131,14 @@ export class HouseScene extends Phaser.Scene {
   /** Luces que se encienden de noche (ventanas, lámparas). */
   private glows: Phaser.GameObjects.Graphics[] = [];
   private nightLevel = 0;
+  private fx!: SceneFx;
+  /** Conversaciones automáticas en curso (por quien la empezó). */
+  private convo = new Map<string, { pair: [string, string]; step: number; next: number }>();
+  /** Próximo momento en que cada personaje puede soltar un efecto, un pensamiento o un comentario. */
+  private nextFx = new Map<string, number>();
+  private nextTalk = new Map<string, number>();
+  /** Frases que llegan de la simulación, con la hora a la que mostrarlas. */
+  private pendingSpeech: { agentId: string; text: string; kind: 'say' | 'think'; at: number }[] = [];
   /** Parcela dibujada ahora mismo y sus gráficos fijos (suelo y paredes). */
   private shownLot = '';
   private lotGraphics: Phaser.GameObjects.Graphics[] = [];
@@ -111,6 +171,9 @@ export class HouseScene extends Phaser.Scene {
     for (const g of this.lotGraphics) g.destroy();
     this.lotGraphics = [];
     this.glows = [];
+    this.fx?.clearAll();
+    this.convo.clear();
+    this.pendingSpeech = [];
     this.shownLot = lotId;
     this.drawLot();
     this.fitCamera();
@@ -118,6 +181,7 @@ export class HouseScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor('#2f4a35');
+    this.fx = new SceneFx(this);
     this.night = this.add.rectangle(0, 0, 10, 10, 0x0b1640, 0).setOrigin(0).setScrollFactor(0).setDepth(1e6);
     this.fitCamera();
     this.scale.on('resize', () => this.fitCamera());
@@ -228,12 +292,18 @@ export class HouseScene extends Phaser.Scene {
       glow.fillEllipse(base.x, base.y, 80, 36);
       this.glows.push(glow);
     }
-    return { gfx, front, icon, badge, glow, key: this.objKey(o) };
+    let screen: Phaser.GameObjects.Graphics | undefined;
+    if (SCREEN_GLOW[o.def] && !o.broken) {
+      screen = this.add.graphics().setDepth(depth + 0.5).setAlpha(0);
+      SCREEN_GLOW[o.def](screen, o.x, o.y);
+    }
+    return { gfx, front, icon, badge, glow, screen, key: this.objKey(o) };
   }
 
   private destroyObjectView(v: ObjectView) {
     v.gfx.destroy();
     v.front.destroy();
+    v.screen?.destroy();
     v.icon?.destroy();
     v.badge?.destroy();
     if (v.glow) {
@@ -255,6 +325,13 @@ export class HouseScene extends Phaser.Scene {
       if (!v) {
         v = this.createObjectView(o);
         this.objectViews.set(o.id, v);
+      }
+      if (v.screen) {
+        const watching =
+          o.def === 'tv'
+            ? this.world.agentsIn(this.shownLot).some((a) => a.current?.actionId === 'watch_tv' && a.current.phase === 'acting')
+            : this.world.usersOf(o.id).some((a) => a.current?.phase === 'acting');
+        v.screen.setAlpha(watching ? 0.25 + 0.35 * Math.abs(Math.sin(this.time.now / 140 + o.x)) : 0);
       }
       if (v.badge) {
         const d = OBJECTS[o.def];
@@ -381,6 +458,7 @@ export class HouseScene extends Phaser.Scene {
 
   private syncAgents(time: number) {
     const seen = new Set<string>();
+    const visible = new Set<string>();
     const activeId = this.world.state.activeAgentId;
     for (const a of this.world.agentsIn(this.shownLot)) {
       seen.add(a.id);
@@ -395,26 +473,15 @@ export class HouseScene extends Phaser.Scene {
       }
       v.root.setVisible(!a.hidden);
       if (a.hidden) continue;
+      visible.add(a.id);
       const p = this.agentScreenPos(a);
       const walking = a.path.length > 0;
       v.root.setPosition(p.x, p.y).setDepth(p.depth);
       const acting = a.current?.phase === 'acting' ? a.current.actionId : '';
-      const dancing = acting === 'war_dance' || acting === 'dance';
-      // Ñiqui ñiqui: la cama se mueve un poco (y corazones). Nada más.
-      const wobble = acting === 'niqui' ? Math.sin(time / 55) * 2 : 0;
-      v.body.y = dancing ? -Math.abs(Math.sin(time / 70)) * (acting === 'dance' ? 5 : 10) : walking ? -Math.abs(Math.sin(time / 90)) * 1.5 : wobble;
-      v.body.setRotation(dancing ? Math.sin(time / 60) * (acting === 'dance' ? 0.25 : 0.5) : p.lying ? (a.kind === 'person' ? -1.3 : 0) : 0);
-      v.body.x = p.lying && a.kind === 'person' ? 14 : 0;
-      // Paso: las piernas se alternan al andar.
-      if (v.legs) {
-        const s = walking ? Math.sin(time / 75) : 0;
-        v.legs[0].x = -s * 2;
-        v.legs[1].x = s * 2;
-        v.legs[0].y = walking ? -Math.max(0, -s) * 2 : 0;
-        v.legs[1].y = walking ? -Math.max(0, s) * 2 : 0;
-      }
+      const speaking = this.fx.isSpeaking(a.id, time);
+      this.animateBody(v, a, acting, walking, p.lying, speaking, time);
       const size = STAGE_SCALE[lifeStage(a.species, a.ageDays).id] ?? 1;
-      v.body.scaleY = size;
+      v.body.scaleY = size * (acting === 'pilates' || acting === 'reformer' ? 1 + Math.sin(time / 500) * 0.06 : 1);
       v.body.scaleX = a.facing * size;
 
       const active = a.id === activeId;
@@ -430,12 +497,24 @@ export class HouseScene extends Phaser.Scene {
       let bubble = '';
       if (def && cur.phase === 'acting' && cur.actionId !== 'idle' && cur.actionId !== 'move') bubble = def.icon;
       else if (Math.min(a.needs.hunger, a.needs.bladder, a.needs.energy) < 15) bubble = '❗';
+      // Mientras habla, el icono deja sitio al bocadillo de diálogo.
+      if (this.fx.hasBubble(a.id, time)) bubble = '';
       if (v.bubble.text !== bubble) v.bubble.setText(bubble);
       const bx = 17, by = head - 4;
       v.bubble.setPosition(bx, by).setVisible(!!bubble);
       v.bubbleBg.setPosition(bx, by).setVisible(!!bubble);
       // Solo el nombre del personaje activo: así no se amontonan (los demás se ven al tocarlos).
       v.label.setVisible(active);
+
+      // Bocadillos y partículas encima de la cabeza
+      const topY = p.lying ? p.y - 24 : p.y + head - (active ? 26 : 8);
+      this.fx.anchor(a.id, p.x, topY);
+      const fxDef = acting ? ACTION_FX[acting] : undefined;
+      if (fxDef && time >= (this.nextFx.get(a.id) ?? 0)) {
+        this.nextFx.set(a.id, time + fxDef.every * (0.8 + Math.random() * 0.4));
+        this.fx.emit(fxDef.kind, p.x, p.lying ? p.y - 18 : p.y + head);
+      }
+      this.chatter(a, acting, time);
     }
     for (const [id, v] of this.agentViews) {
       if (!seen.has(id)) {
@@ -443,6 +522,116 @@ export class HouseScene extends Phaser.Scene {
         this.agentViews.delete(id);
       }
     }
+    this.drainSpeech(time);
+    this.fx.update(time, visible);
+  }
+
+  /** Movimientos de cada acción: masticar, bailar, columpiarse, mover la cola... */
+  private animateBody(v: AgentView, a: Agent, acting: string, walking: boolean, lying: boolean, speaking: boolean, t: number) {
+    let y = 0, rot = lying ? (a.kind === 'person' ? -1.3 : 0) : 0, x = lying && a.kind === 'person' ? 14 : 0;
+    const running = acting === 'run';
+    if (acting === 'war_dance') {
+      y = -Math.abs(Math.sin(t / 70)) * 10;
+      rot = Math.sin(t / 60) * 0.5;
+    } else if (acting === 'dance') {
+      y = -Math.abs(Math.sin(t / 70)) * 5;
+      rot = Math.sin(t / 60) * 0.25;
+    } else if (acting === 'niqui') {
+      // La cama se mueve un poco (y corazones). Nada más.
+      y = Math.sin(t / 55) * 2;
+    } else if (running) {
+      y = -Math.abs(Math.sin(t / 55)) * 3;
+    } else if (walking) {
+      y = -Math.abs(Math.sin(t / 90)) * 1.5;
+    } else if (EATING.has(acting)) {
+      y = -Math.abs(Math.sin(t / 160)) * 1.6;
+    } else if (acting === 'play_ball') {
+      y = -Math.abs(Math.sin(t / 190)) * 9;
+    } else if (acting === 'swing') {
+      x += Math.sin(t / 420) * 7;
+      rot = Math.sin(t / 420) * 0.18;
+    } else if (acting === 'swim') {
+      y = Math.sin(t / 300) * 1.5;
+    } else if (acting === 'cry') {
+      x += Math.sin(t / 35) * 0.9;
+    } else if (acting === 'hug' || acting === 'kiss') {
+      rot = 0.16 * a.facing;
+    } else if (acting === 'read' || acting === 'play_chess' || acting === 'homework' || acting === 'paint') {
+      rot = Math.sin(t / 700) * 0.04;
+    } else if (a.kind === 'pet' && (WAGGING.has(acting) || a.current?.passiveOf)) {
+      rot = Math.sin(t / 70) * 0.07;
+    } else if (speaking) {
+      y = -Math.abs(Math.sin(t / 110)) * 1.2;
+    }
+    v.body.y = y;
+    v.body.x = x;
+    v.body.setRotation(rot);
+    // Paso: las piernas se alternan al andar (y más rápido al correr).
+    if (v.legs) {
+      const moving = walking || running;
+      const s = moving ? Math.sin(t / (running ? 45 : 75)) : 0;
+      v.legs[0].x = -s * 2;
+      v.legs[1].x = s * 2;
+      v.legs[0].y = moving ? -Math.max(0, -s) * 2 : 0;
+      v.legs[1].y = moving ? -Math.max(0, s) * 2 : 0;
+    }
+  }
+
+  /** Diálogos automáticos, pensamientos y comentarios. */
+  private chatter(a: Agent, acting: string, time: number) {
+    const cur = a.current;
+    // Conversación por turnos en las interacciones (la que lleva quien la empezó).
+    const lines = acting && !cur?.passiveOf && acting !== 'talk' ? ACTION_LINES[acting] : undefined;
+    const partner = cur?.targetAgentId ? this.world.agent(cur.targetAgentId) : undefined;
+    if (lines && partner && cur?.phase === 'acting') {
+      let c = this.convo.get(a.id);
+      if (!c || time >= c.next + 6000) c = { pair: pickOne(lines), step: 0, next: time };
+      if (time >= c.next) {
+        const speaker = c.step === 0 ? a : partner;
+        let line = c.pair[c.step];
+        if (line === '*') line = pickOne(PET_SOUNDS[speaker.species] ?? ['...']);
+        this.fx.say(speaker.id, line, 'say', time);
+        if (c.step === 0) c = { ...c, step: 1, next: time + 1700 };
+        else c = { pair: pickOne(lines), step: 0, next: time + 3200 };
+      }
+      this.convo.set(a.id, c);
+      return;
+    }
+    this.convo.delete(a.id);
+    if (cur?.passiveOf || this.fx.hasBubble(a.id, time)) return;
+    const next = this.nextTalk.get(a.id) ?? time + 2000 + Math.random() * 6000;
+    if (time < next) {
+      if (!this.nextTalk.has(a.id)) this.nextTalk.set(a.id, next);
+      return;
+    }
+    this.nextTalk.set(a.id, time + 7000 + Math.random() * 9000);
+    // Pensamientos si algo urge (solo la familia)
+    if (this.world.isPlayerMember(a) && a.kind === 'person') {
+      const low = NEED_KEYS.filter((k) => a.needs[k] < 18).sort((x, y) => a.needs[x] - a.needs[y])[0];
+      if (low) return this.fx.say(a.id, pickOne(NEED_THOUGHTS[low]), 'think', time);
+    }
+    // Comentarios mientras hacen algo
+    const quips = ACTION_QUIPS[acting];
+    if (quips && Math.random() < 0.55) return this.fx.say(a.id, pickOne(quips), 'say', time);
+    // Las mascotas hacen sus ruidos de vez en cuando
+    if (a.kind === 'pet' && !acting.includes('sleep') && Math.random() < 0.3) this.fx.say(a.id, pickOne(PET_SOUNDS[a.species] ?? ['...']), 'say', time);
+  }
+
+  /** Frases que manda la simulación (conversaciones del jugador, deseos...). */
+  private drainSpeech(time: number) {
+    const q = this.world.ui.speech;
+    if (q.length) {
+      let at = Math.max(time, ...this.pendingSpeech.map((s) => s.at + 1500));
+      for (const s of q) {
+        this.pendingSpeech.push({ ...s, at });
+        at += 1500;
+      }
+      q.length = 0;
+    }
+    if (!this.pendingSpeech.length) return;
+    const due = this.pendingSpeech.filter((s) => s.at <= time);
+    this.pendingSpeech = this.pendingSpeech.filter((s) => s.at > time);
+    for (const s of due) this.fx.say(s.agentId, s.text, s.kind, time);
   }
 
   // ---------------------------------------------------------------------------

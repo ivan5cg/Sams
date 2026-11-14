@@ -64,6 +64,20 @@ Además de vuestra casa hay **9 familias vecinas** (generadas al azar, con sus n
 - Los vecinos también tienen hijos y adoptan mascotas; cuando una casa se queda vacía, llega una familia nueva.
 - **La partida no termina nunca**: si tu familia se queda sin nadie, eliges con qué familia del barrio continuar.
 
+## Diálogos, conversaciones y deseos
+
+- Los personajes **hablan**: en las interacciones salen bocadillos con frases (charlas, chistes, coqueteos,
+  discusiones...), las mascotas hacen sus ruidos ("¡Guau!", "Miau", "¡Uic, uic!", "¡Dook, dook!") y, cuando algo
+  urge, se les ve pensarlo ("¡Qué hambre!").
+- **Conversar…**: al tocar a alguien, eliges de qué hablar (su día, mascotas, deporte, música, cotilleos, un
+  cumplido, un chiste, quejarte, coquetear o ir juntos al parque). Cada uno tiene sus gustos y algo que no soporta:
+  acertar sube mucho la amistad y descubres lo que le gusta (sale en su ficha). El tiempo se para mientras eliges.
+- **Deseos**: cada persona de la familia tiene 3 (ir al parque, jugar con Toby, cocinar, subir una habilidad...).
+  Cumplirlos da dinero y ánimo. Toca un deseo y el personaje se pone a ello.
+- **Animaciones**: Zzz al dormir, notas al bailar o tocar, corazones en el romance, gotas en la ducha, chispas al
+  reparar, sudor al correr; se mastica al comer, el perro salta con la pelota, se columpia en el columpio y la tele
+  parpadea cuando alguien la ve.
+
 ## Habilidades y actividades
 
 - Seis **habilidades** (cocina, música, forma física, lógica, carisma y arte), del 0 al 10. Suben practicando:
