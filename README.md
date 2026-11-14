@@ -1,6 +1,8 @@
 # Sams
 
 Simulador de vida al estilo de Los Sims, pensado para jugarse en el móvil.
+
+▶️ **Jugar:** https://ivan5cg.github.io/Sams/
 Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
 ("Añadir a pantalla de inicio") y funciona sin conexión.
 
@@ -44,7 +46,10 @@ npm run preview   # sirve dist/ para probar la PWA
 npm run icons     # regenera los PNG del icono desde public/icon.svg
 ```
 
-La carpeta `dist/` se puede subir a cualquier hosting estático (GitHub Pages, Netlify…).
+Cada vez que se sube algo a `main`, GitHub Actions pasa las pruebas, compila y lo publica en
+GitHub Pages: **https://ivan5cg.github.io/Sams/**
+
+La carpeta `dist/` también se puede subir a cualquier otro hosting estático.
 Para instalarla como app hace falta HTTPS.
 
 ## Estructura
