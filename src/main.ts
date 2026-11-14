@@ -48,7 +48,10 @@ async function boot() {
   bindToasts(world);
 
   const game = new Phaser.Game({
-    type: Phaser.AUTO,
+    // Canvas 2D en vez de WebGL: en algunos móviles Android, WebGL dejaba los textos
+    // y emojis invisibles. El juego es ligero y en canvas 2D se ve igual en todas partes.
+    type: Phaser.CANVAS,
+    fps: { limit: 45 },
     parent: 'game',
     backgroundColor: '#3d5a40',
     // Canvas a resolución nativa (nítido en pantallas retina) y reducido por CSS.
