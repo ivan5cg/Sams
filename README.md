@@ -16,6 +16,8 @@ Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
 - Si alguien no va al baño a tiempo, habrá un charco que limpiar; si no duerme, se desplomará.
 - Tócate a ti mismo (al personaje activo) para ver lo que puede hacer por su cuenta: la siesta del gato,
   la danza de guerra del hurón, el chillido de la cobaya…
+- Todos envejecen un día por cada día de juego.
+- La partida se guarda sola. Desde el menú ☰ puedes exportarla o importarla como archivo.
 
 ## Mascotas
 
@@ -30,8 +32,6 @@ Se adoptan en la protectora desde el **ordenador** de casa (máximo 8 miembros e
 | 🦫 Capibara | §300 | Vive en el jardín, necesita bañarse en el estanque y es tan tranquila que relaja a todos los que están cerca |
 
 (No hay emojis de cobaya, hurón ni capibara: en el juego están dibujados a mano.)
-- Todos envejecen un día por cada día de juego.
-- La partida se guarda sola. Desde el menú ☰ puedes exportarla o importarla como archivo.
 
 ## Desarrollo
 
