@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#1d2233" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Sams" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <title>Sams</title>
+    <link rel="stylesheet" href="/src/ui/styles.css" />
+  </head>
+  <body>
+    <div id="game"></div>
+
+    <header id="hud-top">
+      <div class="top-left">
+        <div id="family"></div>
+        <div id="clock"></div>
+      </div>
+      <div id="speed" role="group" aria-label="Velocidad">
+        <button data-speed="0" aria-label="Pausa">⏸</button>
+        <button data-speed="1" aria-label="Normal">▶</button>
+        <button data-speed="2" aria-label="Rápido">⏩</button>
+        <button data-speed="3" aria-label="Muy rápido">⏭</button>
+      </div>
+      <div class="top-right">
+        <div id="funds"></div>
+        <button id="menu-btn" class="icon-btn" aria-label="Menú">☰</button>
+      </div>
+    </header>
+
+    <div id="toasts"></div>
+
+    <footer id="hud-bottom">
+      <section id="panel">
+        <div class="panel-head">
+          <div id="who"></div>
+          <button id="needs-toggle" class="icon-btn" aria-label="Mostrar u ocultar necesidades">▾</button>
+        </div>
+        <div id="queue"></div>
+        <div id="needs"></div>
+      </section>
+      <nav id="portraits" aria-label="Familia"></nav>
+    </footer>
+
+    <div id="sheet" hidden></div>
+
+    <div id="menu" hidden>
+      <div class="menu-card">
+        <h2>Sams</h2>
+        <button data-menu="save">💾 Guardar ahora</button>
+        <button data-menu="export">📤 Exportar partida</button>
+        <button data-menu="import">📥 Importar partida</button>
+        <button data-menu="new" class="danger">🆕 Nueva partida</button>
+        <button data-menu="close" class="ghost">Volver al juego</button>
+        <p class="muted small">La partida se guarda sola cada 30 segundos y al salir. El tiempo se para cuando cierras la app.</p>
+      </div>
+      <input id="import-file" type="file" accept="application/json,.json" hidden />
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

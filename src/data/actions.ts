@@ -1,0 +1,87 @@
+import type { AgentKind, Needs, SpeciesId } from '../sim/types';
+
+export type ActionTarget = 'object' | 'agent' | 'self' | 'tile';
+
+export interface ActionDef {
+  id: string;
+  label: string;
+  /** Gerundio que se muestra mientras se hace ("Durmiendo"). */
+  verb: string;
+  icon: string;
+  target: ActionTarget;
+  /** Quién puede hacerla. */
+  actors: AgentKind[];
+  /** Para acciones sociales: a quién se puede dirigir. */
+  targetKinds?: AgentKind[];
+  /** Limita la acción a ciertas especies de destino (pasear → solo perros). */
+  targetSpecies?: SpeciesId[];
+  /** Duración máxima en minutos de juego. */
+  duration: number;
+  /** Cambio de necesidades por minuto de juego para quien la hace. */
+  effects: Partial<Needs>;
+  /** Cambio para el compañero en acciones sociales. */
+  partnerEffects?: Partial<Needs>;
+  /** Termina cuando las necesidades que sube están llenas, o al alcanzar estos valores. */
+  until?: 'full' | Partial<Needs>;
+  /** Multiplica la bajada de necesidades mientras se hace (dormir = más lento). */
+  decayMult?: number;
+  /** Otro agente puede interrumpirla para interactuar. */
+  interruptible?: boolean;
+  /** La hacen fuera de la parcela (pasear). */
+  offLot?: boolean;
+  /** El jugador no puede cancelarla. */
+  forced?: boolean;
+  /** Coste en simoleones. */
+  cost?: number;
+  /** Puntuación fija para la autonomía (tareas sin necesidad asociada). */
+  baseScore?: number;
+  /** La IA no la elige nunca por sí sola. */
+  playerOnly?: boolean;
+}
+
+const A: ActionDef[] = [
+  // --- Personas: objetos ---
+  { id: 'sleep', label: 'Dormir', verb: 'Durmiendo', icon: '💤', target: 'object', actors: ['person'], duration: 540, effects: { energy: 0.22 }, until: 'full', decayMult: 0.4 },
+  { id: 'eat', label: 'Comer', verb: 'Comiendo', icon: '🍝', target: 'object', actors: ['person'], duration: 25, effects: { hunger: 3, fun: 0.05 }, until: 'full' },
+  { id: 'snack', label: 'Picar algo', verb: 'Picando algo', icon: '🍪', target: 'object', actors: ['person'], duration: 8, effects: { hunger: 2 } },
+  { id: 'toilet', label: 'Usar el váter', verb: 'En el baño', icon: '🚽', target: 'object', actors: ['person'], duration: 8, effects: { bladder: 14 }, until: 'full' },
+  { id: 'shower', label: 'Ducharse', verb: 'Duchándose', icon: '🚿', target: 'object', actors: ['person'], duration: 15, effects: { hygiene: 7, fun: 0.05 }, until: 'full' },
+  { id: 'watch_tv', label: 'Ver la tele', verb: 'Viendo la tele', icon: '📺', target: 'object', actors: ['person'], duration: 120, effects: { fun: 0.35 }, until: 'full', interruptible: true },
+  { id: 'nap_sofa', label: 'Echar una siesta', verb: 'Echando la siesta', icon: '😴', target: 'object', actors: ['person'], duration: 60, effects: { energy: 0.15 }, decayMult: 0.6, until: 'full' },
+  { id: 'read', label: 'Leer un libro', verb: 'Leyendo', icon: '📖', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.25 }, until: 'full', interruptible: true },
+  { id: 'fill_bowl', label: 'Llenar el comedero (§10)', verb: 'Llenando el comedero', icon: '🥣', target: 'object', actors: ['person'], duration: 2, effects: {}, cost: 10, baseScore: 0 },
+  { id: 'clean', label: 'Limpiar', verb: 'Limpiando', icon: '🧽', target: 'object', actors: ['person'], duration: 4, effects: { fun: -0.2 }, baseScore: 6 },
+
+  // --- Mascotas: objetos ---
+  { id: 'pet_eat', label: 'Comer del comedero', verb: 'Comiendo', icon: '🦴', target: 'object', actors: ['pet'], duration: 15, effects: { hunger: 5 }, until: 'full' },
+  { id: 'pet_sleep', label: 'Dormir en su cama', verb: 'Durmiendo', icon: '💤', target: 'object', actors: ['pet'], duration: 480, effects: { energy: 0.3 }, until: 'full', decayMult: 0.4 },
+  { id: 'nap_bed', label: 'Subirse a la cama', verb: 'Dormitando en la cama', icon: '😴', target: 'object', actors: ['pet'], duration: 120, effects: { energy: 0.25, social: 0.05 }, until: 'full', decayMult: 0.5 },
+  { id: 'play_ball', label: 'Jugar con la pelota', verb: 'Jugando con la pelota', icon: '🎾', target: 'object', actors: ['pet'], duration: 30, effects: { fun: 0.7, energy: -0.05 }, until: 'full', interruptible: true },
+  { id: 'pee_outside', label: 'Hacer pis', verb: 'Haciendo pis', icon: '🌳', target: 'object', actors: ['pet'], duration: 4, effects: { bladder: 25 }, until: 'full' },
+  { id: 'sniff_sofa', label: 'Tumbarse en el sofá', verb: 'Tumbado en el sofá', icon: '🛋️', target: 'object', actors: ['pet'], duration: 60, effects: { energy: 0.12, fun: 0.05 }, until: 'full', interruptible: true },
+
+  // --- Social: persona → persona ---
+  { id: 'chat', label: 'Charlar', verb: 'Charlando', icon: '💬', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 30, effects: { social: 0.7, fun: 0.1 }, partnerEffects: { social: 0.7, fun: 0.1 }, until: 'full', interruptible: true },
+  { id: 'joke', label: 'Contar un chiste', verb: 'Contando un chiste', icon: '😂', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 10, effects: { fun: 0.6, social: 0.3 }, partnerEffects: { fun: 0.6, social: 0.3 } },
+  { id: 'hug', label: 'Abrazar', verb: 'Abrazando', icon: '🤗', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 4, effects: { social: 2 }, partnerEffects: { social: 2 } },
+
+  // --- Social: persona → mascota ---
+  { id: 'pet_animal', label: 'Acariciar', verb: 'Acariciando', icon: '🤚', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 8, effects: { social: 0.4, fun: 0.1 }, partnerEffects: { social: 1.6 } },
+  { id: 'play_pet', label: 'Jugar', verb: 'Jugando', icon: '🎾', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 20, effects: { fun: 0.6, energy: -0.1 }, partnerEffects: { fun: 1, energy: -0.1 } },
+  { id: 'walk_dog', label: 'Sacar a pasear', verb: 'De paseo', icon: '🦮', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 45, effects: { fun: 0.3, social: 0.2, energy: -0.1 }, partnerEffects: { fun: 0.8, bladder: 4, social: 0.5, energy: -0.15 }, offLot: true, targetSpecies: ['dog'] },
+  { id: 'bathe_pet', label: 'Bañar', verb: 'Bañando', icon: '🫧', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 15, effects: { hygiene: -0.3 }, partnerEffects: { hygiene: 6, fun: -0.2 } },
+
+  // --- Social: mascota → persona ---
+  { id: 'beg_affection', label: 'Pedir mimos', verb: 'Pidiendo mimos', icon: '🥺', target: 'agent', actors: ['pet'], targetKinds: ['person'], duration: 8, effects: { social: 1.6 }, partnerEffects: { social: 0.3, fun: 0.2 } },
+  { id: 'play_with_person', label: 'Invitar a jugar', verb: 'Jugando', icon: '🐾', target: 'agent', actors: ['pet'], targetKinds: ['person'], duration: 15, effects: { fun: 1 }, partnerEffects: { fun: 0.6, energy: -0.1 } },
+  { id: 'sniff', label: 'Olfatear', verb: 'Olfateando', icon: '👃', target: 'agent', actors: ['pet'], targetKinds: ['pet'], duration: 5, effects: { social: 1, fun: 0.3 }, partnerEffects: { social: 1, fun: 0.3 } },
+
+  // --- Propias ---
+  { id: 'move', label: 'Ir aquí', verb: 'Caminando', icon: '👣', target: 'tile', actors: ['person', 'pet'], duration: 0, effects: {}, playerOnly: true },
+  { id: 'idle', label: 'Esperar', verb: 'Pensando', icon: '💭', target: 'self', actors: ['person', 'pet'], duration: 15, effects: {}, interruptible: true, playerOnly: true },
+  { id: 'pass_out', label: 'Desmayarse', verb: 'Agotado en el suelo', icon: '😵', target: 'self', actors: ['person', 'pet'], duration: 300, effects: { energy: 0.5 }, until: { energy: 40 }, forced: true, playerOnly: true },
+];
+
+export const ACTIONS: Record<string, ActionDef> = Object.fromEntries(A.map((a) => [a.id, a]));
+
+export const SOCIAL_ACTIONS = A.filter((a) => a.target === 'agent');
