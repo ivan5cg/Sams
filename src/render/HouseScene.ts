@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { SPECIES } from '../data/species';
-import type { Agent, PlacedObject } from '../sim/types';
+import type { Agent, PlacedObject, SpeciesId } from '../sim/types';
 import type { Target, World } from '../sim/world';
 import { TILE_H, TILE_W, isoToScreen, screenToTile, shade, tileCenter } from './iso';
 
@@ -27,6 +27,10 @@ interface ObjectView {
   gfx: Phaser.GameObjects.Graphics;
   icon: Phaser.GameObjects.Text;
   badge?: Phaser.GameObjects.Text;
+  /** Lo que va delante del animal (barrotes de la jaula). */
+  front?: Phaser.GameObjects.Graphics;
+  x: number;
+  y: number;
 }
 
 export interface SceneHooks {
@@ -43,6 +47,55 @@ export const DPR = Math.min(window.devicePixelRatio || 1, 2.5);
 const TEXT_RES = Math.min(4, DPR * 1.5);
 const ZOOM_MIN = 0.4 * DPR;
 const ZOOM_MAX = 2.5 * DPR;
+
+/** Dibuja la mascota con los pies en (0,0) mirando a la derecha. Devuelve la altura de la cabeza. */
+const PET_DRAWINGS: Partial<Record<SpeciesId, (g: Phaser.GameObjects.Graphics) => number>> = {
+  capybara: (g) => {
+    g.fillStyle(0x6b4423, 1);
+    for (const x of [-14, -6, 6, 13]) g.fillRoundedRect(x, -7, 5, 7, 2);
+    g.fillStyle(0xa0703c, 1);
+    g.fillEllipse(-2, -15, 42, 22);
+    g.fillRoundedRect(9, -30, 18, 16, 6);
+    g.fillStyle(0x8a5e30, 1);
+    g.fillRoundedRect(21, -25, 9, 10, 4);
+    g.fillCircle(12, -30, 3);
+    g.fillStyle(0x1b1209, 1);
+    g.fillCircle(20, -24, 1.8);
+    g.fillCircle(28, -21, 1.3);
+    return -38;
+  },
+  guineapig: (g) => {
+    g.fillStyle(0xfaf3e6, 1);
+    g.fillEllipse(0, -7, 24, 14);
+    g.fillStyle(0xe08a3c, 1);
+    g.fillEllipse(-6, -9, 11, 10);
+    g.fillStyle(0x5a3a22, 1);
+    g.fillEllipse(6, -9, 9, 9);
+    g.fillStyle(0xf0b8a8, 1);
+    g.fillCircle(5, -14, 2.5);
+    g.fillStyle(0x111111, 1);
+    g.fillCircle(8, -9, 1.5);
+    g.fillStyle(0xf7a7b4, 1);
+    g.fillCircle(12, -6, 1.2);
+    return -18;
+  },
+  ferret: (g) => {
+    g.fillStyle(0x4a3424, 1);
+    g.fillEllipse(-19, -7, 14, 5);
+    for (const x of [-11, -4, 5, 11]) g.fillRoundedRect(x, -5, 3, 5, 1);
+    g.fillStyle(0xe8d8b0, 1);
+    g.fillEllipse(0, -8, 32, 10);
+    g.fillEllipse(17, -11, 13, 10);
+    g.fillStyle(0x6b4a33, 1);
+    g.fillEllipse(18, -12, 10, 4);
+    g.fillCircle(14, -16, 2.2);
+    g.fillStyle(0x111111, 1);
+    g.fillCircle(19, -12, 1.4);
+    g.fillStyle(0xf2a0a8, 1);
+    g.fillCircle(23, -10, 1.2);
+    return -22;
+  },
+};
 
 const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 
@@ -159,38 +212,105 @@ export class HouseScene extends Phaser.Scene {
 
   private createObjectView(o: PlacedObject): ObjectView {
     const d = OBJECTS[o.def];
-    const gfx = this.add.graphics().setDepth(this.objectDepth(o));
-    if (o.def === 'puddle') {
-      const c = tileCenter(o.x, o.y);
-      gfx.fillStyle(d.color, 0.75);
-      gfx.fillEllipse(c.x, c.y, 34, 14);
-    } else if (o.def !== 'ball' && o.def !== 'tree' && o.def !== 'plant') {
-      this.box(gfx, o.x + 0.1, o.y + 0.1, d.w - 0.2, d.h - 0.2, d.height, d.color);
-    } else {
-      const c = isoToScreen(o.x + d.w / 2, o.y + d.h / 2);
-      gfx.fillStyle(0x000000, 0.2);
-      gfx.fillEllipse(c.x, c.y, 26, 12);
+    const depth = this.objectDepth(o);
+    const gfx = this.add.graphics().setDepth(depth);
+    let front: Phaser.GameObjects.Graphics | undefined;
+    const c = isoToScreen(o.x + d.w / 2, o.y + d.h / 2);
+    const shape = d.shape ?? 'box';
+
+    switch (shape) {
+      case 'box':
+        this.box(gfx, o.x + 0.1, o.y + 0.1, d.w - 0.2, d.h - 0.2, d.height, d.color);
+        break;
+      case 'flat':
+        gfx.fillStyle(d.color, 0.8);
+        gfx.fillEllipse(c.x, c.y, 36, 16);
+        break;
+      case 'none':
+        gfx.fillStyle(0x000000, 0.2);
+        gfx.fillEllipse(c.x, c.y, 26, 12);
+        break;
+      case 'pond': {
+        const pts = [isoToScreen(o.x + 0.15, o.y + 0.15), isoToScreen(o.x + d.w - 0.15, o.y + 0.15), isoToScreen(o.x + d.w - 0.15, o.y + d.h - 0.15), isoToScreen(o.x + 0.15, o.y + d.h - 0.15)];
+        gfx.fillStyle(0x8a7a5a, 1);
+        gfx.fillPoints(pts.map((p) => ({ x: p.x, y: p.y + 3 })), true);
+        gfx.fillStyle(d.color, 1);
+        gfx.fillPoints(pts, true);
+        gfx.fillStyle(0xffffff, 0.25);
+        gfx.fillEllipse(c.x - 10, c.y - 4, 26, 8);
+        gfx.fillEllipse(c.x + 14, c.y + 6, 16, 5);
+        gfx.setDepth(-1e4); // el agua va a ras de suelo
+        break;
+      }
+      case 'post': {
+        this.box(gfx, o.x + 0.15, o.y + 0.15, 0.7, 0.7, 6, 0xb0a090);
+        this.box(gfx, o.x + 0.38, o.y + 0.38, 0.24, 0.24, d.height, d.color);
+        // plataforma arriba
+        const g2 = gfx;
+        const A = isoToScreen(o.x + 0.2, o.y + 0.2), B = isoToScreen(o.x + 0.8, o.y + 0.2), C = isoToScreen(o.x + 0.8, o.y + 0.8), D = isoToScreen(o.x + 0.2, o.y + 0.8);
+        const up = (p: { x: number; y: number }) => ({ x: p.x, y: p.y - d.height });
+        g2.fillStyle(0x9c6b3f, 1);
+        g2.fillPoints([up(A), up(B), up(C), up(D)], true);
+        break;
+      }
+      case 'hammock': {
+        const p1 = isoToScreen(o.x + 0.15, o.y + 0.5), p2 = isoToScreen(o.x + 0.85, o.y + 0.5);
+        gfx.lineStyle(3, 0x6b4a2b, 1);
+        gfx.lineBetween(p1.x, p1.y, p1.x, p1.y - d.height);
+        gfx.lineBetween(p2.x, p2.y, p2.x, p2.y - d.height);
+        gfx.fillStyle(d.color, 1);
+        gfx.beginPath();
+        gfx.moveTo(p1.x, p1.y - d.height);
+        gfx.lineTo(p2.x, p2.y - d.height);
+        gfx.lineTo((p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - d.height + 14);
+        gfx.closePath();
+        gfx.fillPath();
+        break;
+      }
+      case 'cage': {
+        // Bandeja con serrín; los barrotes se dibujan delante del animal.
+        this.box(gfx, o.x + 0.05, o.y + 0.05, d.w - 0.1, d.h - 0.1, 7, d.color);
+        this.box(gfx, o.x + 0.12, o.y + 0.12, d.w - 0.24, d.h - 0.24, 0, 0xe9d8a6);
+        // casita
+        this.box(gfx, o.x + d.w - 0.6, o.y + 0.25, 0.45, 0.5, 9, 0xd98c4a);
+        front = this.add.graphics().setDepth(depth + 3);
+        const A = isoToScreen(o.x + 0.05, o.y + 0.05), B = isoToScreen(o.x + d.w - 0.05, o.y + 0.05), C = isoToScreen(o.x + d.w - 0.05, o.y + d.h - 0.05), D = isoToScreen(o.x + 0.05, o.y + d.h - 0.05);
+        const H = d.height;
+        front.lineStyle(1.2, 0xdde3ea, 0.75);
+        const bars = (p: { x: number; y: number }, q: { x: number; y: number }, n: number) => {
+          for (let i = 0; i <= n; i++) {
+            const x = p.x + ((q.x - p.x) * i) / n, y = p.y + ((q.y - p.y) * i) / n;
+            front!.lineBetween(x, y - 7, x, y - 7 - (H - 7));
+          }
+        };
+        bars(D, C, 12);
+        bars(C, B, 5);
+        front.lineStyle(1.5, 0xdde3ea, 0.9);
+        front.strokePoints([A, B, C, D].map((p) => ({ x: p.x, y: p.y - H })), true);
+        break;
+      }
     }
-    const top = isoToScreen(o.x + d.w / 2, o.y + d.h / 2);
+
     const big = o.def === 'tree';
     const icon = this.add
-      .text(top.x, top.y - d.height - (big ? 4 : 2), d.icon, { resolution: TEXT_RES, fontSize: big ? '52px' : o.def === 'ball' ? '18px' : '26px' })
+      .text(c.x, c.y - d.height - (big ? 4 : 2), d.icon, { resolution: TEXT_RES, fontSize: big ? '52px' : d.small ? '18px' : '26px' })
       .setOrigin(0.5, big ? 0.95 : 0.8)
-      .setDepth(this.objectDepth(o) + 0.5);
+      .setDepth(depth + 0.5);
     let badge: Phaser.GameObjects.Text | undefined;
-    if (d.maxStock) {
+    if (d.maxStock || d.maxDirt) {
       badge = this.add
-        .text(top.x, top.y - d.height - 34, '', { resolution: TEXT_RES, fontSize: '13px', fontFamily: 'system-ui, sans-serif', color: '#fff', backgroundColor: '#c0392b', padding: { x: 4, y: 1 } })
+        .text(c.x, c.y - Math.max(d.height, 10) - 30, '', { resolution: TEXT_RES, fontSize: '13px', fontFamily: 'system-ui, sans-serif', color: '#fff', backgroundColor: '#c0392b', padding: { x: 4, y: 1 } })
         .setOrigin(0.5)
         .setDepth(1e5);
     }
-    return { gfx, icon, badge };
+    return { gfx, icon, badge, front, x: o.x, y: o.y };
   }
 
   private destroyObjectView(v: ObjectView) {
     v.gfx.destroy();
     v.icon.destroy();
     v.badge?.destroy();
+    v.front?.destroy();
   }
 
   private syncObjects() {
@@ -198,13 +318,21 @@ export class HouseScene extends Phaser.Scene {
     for (const o of this.world.state.objects) {
       seen.add(o.id);
       let v = this.objectViews.get(o.id);
+      // Los objetos pueden cambiar de sitio (el hurón los esconde).
+      if (v && (v.x !== o.x || v.y !== o.y)) {
+        this.destroyObjectView(v);
+        v = undefined;
+      }
       if (!v) {
         v = this.createObjectView(o);
         this.objectViews.set(o.id, v);
       }
       if (v.badge) {
-        const empty = !o.stock;
-        v.badge.setVisible(empty).setText('¡Vacío!');
+        const d = OBJECTS[o.def];
+        const empty = d.maxStock !== undefined && !o.stock;
+        const dirty = d.maxDirt !== undefined && (o.dirt ?? 0) >= Math.ceil(d.maxDirt / 2);
+        v.badge.setVisible(empty || dirty).setText(dirty ? (empty ? 'Sucio y vacío' : '¡Sucio! 🪰') : '¡Vacío!');
+        v.badge.setBackgroundColor(dirty ? '#7a5230' : '#c0392b');
       }
     }
     for (const [id, v] of this.objectViews) {
@@ -246,6 +374,11 @@ export class HouseScene extends Phaser.Scene {
       g.fillPath();
       body.add(g);
       headY = -52;
+    } else if (PET_DRAWINGS[a.species]) {
+      // Especies sin emoji: dibujadas a mano, mirando a la derecha.
+      const g = this.add.graphics();
+      headY = PET_DRAWINGS[a.species]!(g);
+      body.add(g);
     } else {
       sprite = this.add.text(0, 2, SPECIES[a.species].icon, { resolution: TEXT_RES, fontSize: '30px' }).setOrigin(0.5, 1);
       body.add(sprite);
@@ -269,6 +402,18 @@ export class HouseScene extends Phaser.Scene {
 
   private agentScreenPos(a: Agent): { x: number; y: number; depth: number; lying: boolean } {
     const t = a.current;
+    // Vive en una jaula: siempre dentro, en un sitio u otro según lo que haga.
+    const home = this.world.object(a.home);
+    if (home) {
+      const d = OBJECTS[home.def];
+      const act = t?.phase === 'acting' ? t.actionId : '';
+      let fx = 0.3;
+      if (act === 'cage_sleep') fx = 0.78;
+      else if (act === 'cage_run') fx = 0.5 + Math.sin(this.time.now / 400) * 0.3;
+      else if (act === 'cage_pee') fx = 0.55;
+      const p = isoToScreen(home.x + 0.15 + fx * (d.w - 0.3), home.y + d.h / 2);
+      return { x: p.x, y: p.y - 5, depth: this.objectDepth(home) + 2, lying: false };
+    }
     if (t && t.phase === 'acting' && t.targetObjectId) {
       const o = this.world.object(t.targetObjectId);
       const d = o && OBJECTS[o.def];
@@ -281,7 +426,9 @@ export class HouseScene extends Phaser.Scene {
         const cy = o.y + d.h / 2 + (along ? 0 : off);
         const p = isoToScreen(cx, cy);
         const lying = ['sleep', 'nap_sofa', 'nap_bed', 'pet_sleep'].includes(t.actionId);
-        return { x: p.x, y: p.y - d.height * 0.6, depth: this.objectDepth(o) + 2, lying };
+        const lift = d.shape === 'post' ? d.height : d.shape === 'hammock' ? d.height - 10 : d.shape === 'pond' ? -6 : d.height * 0.6;
+        const depth = d.shape === 'pond' ? (cx + cy) * 10 : this.objectDepth(o) + 2;
+        return { x: p.x, y: p.y - lift, depth, lying };
       }
     }
     const p = tileCenter(a.pos.x, a.pos.y);
@@ -303,8 +450,9 @@ export class HouseScene extends Phaser.Scene {
       const p = this.agentScreenPos(a);
       const walking = a.path.length > 0;
       v.root.setPosition(p.x, p.y).setDepth(p.depth);
-      v.body.y = walking ? -Math.abs(Math.sin(time / 90)) * 3 : 0;
-      v.body.setRotation(p.lying ? (a.kind === 'person' ? -1.25 : 0) : 0);
+      const dancing = a.current?.actionId === 'war_dance' && a.current.phase === 'acting';
+      v.body.y = dancing ? -Math.abs(Math.sin(time / 70)) * 10 : walking ? -Math.abs(Math.sin(time / 90)) * 3 : 0;
+      v.body.setRotation(dancing ? Math.sin(time / 60) * 0.5 : p.lying ? (a.kind === 'person' ? -1.25 : 0) : 0);
       v.body.x = p.lying && a.kind === 'person' ? 14 : 0;
       if (v.sprite) v.sprite.scaleX = a.facing > 0 ? -1 : 1;
       else v.body.scaleX = a.facing;

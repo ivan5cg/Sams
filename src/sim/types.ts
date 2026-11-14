@@ -29,6 +29,8 @@ export interface Task {
   passiveOf?: string;
   /** Casilla de destino hacia la que se planificó la ruta (para replanificar). */
   goal?: Vec;
+  /** Parámetro extra de la orden (p. ej. especie a adoptar). */
+  param?: string;
 }
 
 export interface Agent {
@@ -48,6 +50,8 @@ export interface Agent {
   facing: 1 | -1;
   /** Fuera de la parcela (p. ej. paseando al perro). */
   hidden: boolean;
+  /** Objeto en el que vive sin salir (la jaula de la cobaya). */
+  home?: string;
 }
 
 export interface PlacedObject {
@@ -55,8 +59,10 @@ export interface PlacedObject {
   def: string;
   x: number;
   y: number;
-  /** Raciones disponibles (comedero). */
+  /** Raciones disponibles (comedero, heno). */
   stock?: number;
+  /** Suciedad acumulada (arenero, jaula). */
+  dirt?: number;
 }
 
 export interface Household {

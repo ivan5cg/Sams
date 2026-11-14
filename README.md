@@ -14,6 +14,22 @@ Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
 - Los demás miembros de la familia actúan solos según sus necesidades.
 - El rombo verde marca al personaje activo. Un ❗ sobre la cabeza indica una necesidad urgente.
 - Si alguien no va al baño a tiempo, habrá un charco que limpiar; si no duerme, se desplomará.
+- Tócate a ti mismo (al personaje activo) para ver lo que puede hacer por su cuenta: la siesta del gato,
+  la danza de guerra del hurón, el chillido de la cobaya…
+
+## Mascotas
+
+Se adoptan en la protectora desde el **ordenador** de casa (máximo 8 miembros en la familia).
+
+| | Precio | Cómo es |
+|---|---|---|
+| 🐕 Perro | §150 | Hay que sacarlo a pasear y bañarlo; juega con la pelota y hace pis en el árbol del jardín |
+| 🐈 Gato | §120 | Usa el arenero (hay que limpiarlo), afila las uñas en el rascador… o en el sofá. A veces no quiere mimos |
+| 🐹 Cobaya | §40 | Vive en su jaula: hay que ponerle heno y limpiarla. Chilla para que alguien vaya a hacerle caso |
+| 🦦 Hurón | §90 | Duerme muchísimo en su hamaca, roba la pelota y las zapatillas y las esconde, y tiene ataques de "danza de guerra" |
+| 🦫 Capibara | §300 | Vive en el jardín, necesita bañarse en el estanque y es tan tranquila que relaja a todos los que están cerca |
+
+(No hay emojis de cobaya, hurón ni capibara: en el juego están dibujados a mano.)
 - Todos envejecen un día por cada día de juego.
 - La partida se guarda sola. Desde el menú ☰ puedes exportarla o importarla como archivo.
 
@@ -53,7 +69,7 @@ acciones en `src/data/actions.ts`: la IA lo usará automáticamente.
 ## Hoja de ruta
 
 1. ✅ **MVP**: casa con 2 personas y un perro, 6 necesidades, autonomía, control de un personaje cada vez, guardado.
-2. Gatos, cobayas, hurones y capibaras, con sus objetos (rascador, jaula, estanque…).
+2. ✅ Gatos, cobayas, hurones y capibaras, con sus objetos (rascador, jaula, estanque…) y la protectora.
 3. Barrio con 10 unidades domésticas (las otras 9 controladas por la IA con simulación resumida), visitas y parque.
 4. Relaciones, trabajo y economía.
 5. Ciclo de vida completo: etapas, parejas, nacimientos, muertes y herencias.

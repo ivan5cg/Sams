@@ -49,4 +49,14 @@ export const START_OBJECTS: { def: string; x: number; y: number }[] = [
   { def: 'dogbed', x: 1, y: 9 },
   { def: 'ball', x: 12, y: 3 },
   { def: 'tree', x: 12, y: 7 },
+  // Fase 2: cosas para todas las especies
+  { def: 'computer', x: 7, y: 1 },
+  { def: 'slippers', x: 6, y: 3 },
+  { def: 'litterbox', x: 1, y: 7 },
+  { def: 'scratcher', x: 9, y: 6 },
+  { def: 'cage', x: 7, y: 9 },
+  { def: 'hammock', x: 9, y: 4 },
+  { def: 'bowl', x: 13, y: 5 },
+  { def: 'pond', x: 12, y: 9 },
+  { def: 'strawbed', x: 12, y: 1 },
 ];

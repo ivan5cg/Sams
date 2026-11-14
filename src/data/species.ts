@@ -19,11 +19,25 @@ export interface SpeciesDef {
   /** Cómo se llama cada necesidad para esta especie. */
   needLabels?: Partial<Record<NeedKey, string>>;
   stages: LifeStage[];
+  /** Precio de adopción en la protectora. */
+  price: number;
+  /** Nombres para los animales adoptados. */
+  names: string[];
+  /** Vive dentro de este objeto y no sale (la cobaya en su jaula). */
+  habitat?: string;
+  /** Probabilidad de rechazar mimos de alguien a quien no le apetece (gatos). */
+  aloof?: number;
+  /** Radio de calma: quien esté cerca se relaja (capibaras). */
+  calmAura?: number;
+  /** Prefiere quedarse en el jardín. */
+  outdoor?: boolean;
 }
 
 export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   human: {
     id: 'human',
+    price: 0,
+    names: [],
     kind: 'person',
     label: 'Persona',
     icon: '🧑',
@@ -40,6 +54,8 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   },
   dog: {
     id: 'dog',
+    price: 150,
+    names: ['Toby', 'Luna', 'Rocky', 'Kira', 'Bruno', 'Nala', 'Thor', 'Lola'],
     kind: 'pet',
     label: 'Perro',
     icon: '🐕',
@@ -52,9 +68,11 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
       { id: 'elder', label: 'Mayor', until: 50 },
     ],
   },
-  // Especies preparadas para la fase 2 (comportamientos y objetos propios).
   cat: {
     id: 'cat',
+    price: 120,
+    names: ['Misi', 'Garfield', 'Nube', 'Simba', 'Pelusa', 'Salem', 'Mimi', 'Tigre'],
+    aloof: 0.3,
     kind: 'pet',
     label: 'Gato',
     icon: '🐈',
@@ -69,9 +87,12 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   },
   guineapig: {
     id: 'guineapig',
+    price: 40,
+    names: ['Coco', 'Galleta', 'Canela', 'Pipa', 'Bolita', 'Churro', 'Fresa'],
+    habitat: 'cage',
     kind: 'pet',
     label: 'Cobaya',
-    icon: '🐹',
+    icon: '🐹', // no hay emoji de cobaya
     speed: 1.0,
     decay: { hunger: 0.12, energy: 0.07, bladder: 0.1, hygiene: 0.05, fun: 0.08, social: 0.08 },
     needLabels: { social: 'Cariño', hygiene: 'Jaula' },
@@ -83,11 +104,13 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   },
   ferret: {
     id: 'ferret',
+    price: 90,
+    names: ['Pipo', 'Flash', 'Ninja', 'Chispa', 'Bandido', 'Fideo', 'Rayo'],
     kind: 'pet',
     label: 'Hurón',
-    icon: '🦦',
+    icon: '🦦', // no hay emoji de hurón
     speed: 2.2,
-    decay: { hunger: 0.11, energy: 0.06, bladder: 0.12, hygiene: 0.04, fun: 0.15, social: 0.07 },
+    decay: { hunger: 0.11, energy: 0.11, bladder: 0.12, hygiene: 0.04, fun: 0.15, social: 0.07 },
     needLabels: { social: 'Cariño' },
     stages: [
       { id: 'young', label: 'Cría', until: 4 },
@@ -97,9 +120,13 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   },
   capybara: {
     id: 'capybara',
+    price: 300,
+    names: ['Capi', 'Zen', 'Paco', 'Tranqui', 'Bombón', 'Moka', 'Dalai'],
+    calmAura: 3,
+    outdoor: true,
     kind: 'pet',
     label: 'Capibara',
-    icon: '🦫',
+    icon: '🦫', // no hay emoji de capibara
     speed: 1.2,
     decay: { hunger: 0.1, energy: 0.06, bladder: 0.1, hygiene: 0.06, fun: 0.05, social: 0.06 },
     needLabels: { social: 'Cariño', hygiene: 'Agua' },

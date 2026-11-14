@@ -4,8 +4,8 @@
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { NEED_INFO, SPECIES, lifeStage, needLabel } from '../data/species';
-import { NEED_KEYS, type Agent } from '../sim/types';
-import type { Target, World } from '../sim/world';
+import { NEED_KEYS, type Agent, type SpeciesId } from '../sim/types';
+import { MAX_MEMBERS, type Target, type World } from '../sim/world';
 
 export interface HudCallbacks {
   onSave: () => void;
@@ -66,7 +66,7 @@ export class Hud {
     el.className = 'toast';
     el.innerHTML = `<span>${icon}</span><span>${esc(text)}</span>`;
     box.prepend(el);
-    while (box.children.length > 4) box.lastElementChild?.remove();
+    while (box.children.length > 3) box.lastElementChild?.remove();
     setTimeout(() => el.classList.add('out'), 3200);
     setTimeout(() => el.remove(), 3700);
   }
@@ -104,7 +104,14 @@ export class Hud {
       const b = el.closest('button');
       if (!b || !this.sheetTarget) return;
       if (b.dataset.close !== undefined) return this.closeSheet();
+      if (b.dataset.adopt) {
+        this.world.command(this.world.activeAgent.id, 'adopt', this.sheetTarget, b.dataset.adopt);
+        this.closeSheet();
+        this.render();
+        return;
+      }
       const action = b.dataset.action;
+      if (action === 'adopt') return this.showAdoption();
       if (action) {
         this.world.command(this.world.activeAgent.id, action, this.sheetTarget);
         this.closeSheet();
@@ -157,7 +164,7 @@ export class Hud {
       return;
     }
 
-    if (target.kind === 'agent' && target.id === active.id) {
+    if (target.kind === 'agent' && target.id === active.id && !w.optionsFor(active.id, target).length) {
       this.closeSheet();
       return;
     }
@@ -168,11 +175,16 @@ export class Hud {
       const o = w.object(target.id)!;
       const d = OBJECTS[o.def];
       title = `${d.icon} ${d.name}`;
-      if (d.maxStock) subtitle = `Raciones: ${o.stock ?? 0}/${d.maxStock}`;
+      const parts: string[] = [];
+      if (d.maxStock) parts.push(`Comida: ${o.stock ?? 0}/${d.maxStock}`);
+      if (d.maxDirt) parts.push((o.dirt ?? 0) === 0 ? 'Limpio' : `Suciedad: ${o.dirt}/${d.maxDirt}`);
+      const resident = w.residentOf(o.id);
+      if (resident) parts.push(`Aquí vive ${resident.name}`);
+      subtitle = parts.join(' · ');
     } else {
       const t = w.agent(target.id)!;
       title = `${SPECIES[t.species].icon} ${t.name}`;
-      subtitle = `${lifeStage(t.species, t.ageDays).label} · ${mood(t).icon} ${mood(t).label}`;
+      subtitle = `${SPECIES[t.species].label} · ${lifeStage(t.species, t.ageDays).label} · ${mood(t).icon} ${mood(t).label}`;
     }
 
     const opts = w.optionsFor(active.id, target);
@@ -186,7 +198,7 @@ export class Hud {
       )
       .join('');
 
-    const isMember = target.kind === 'agent' && w.household.memberIds.includes(target.id);
+    const isMember = target.kind === 'agent' && target.id !== active.id && w.household.memberIds.includes(target.id);
     const switchBtn = isMember ? `<button class="act switch" data-switch="${target.id}"><span class="act-icon">🔁</span><span class="act-label">Controlar a ${esc(w.agent(target.id)!.name)}</span></button>` : '';
 
     $('#sheet').innerHTML = `
@@ -195,7 +207,7 @@ export class Hud {
           <div><div class="sheet-title">${esc(title)}</div><div class="sheet-sub">${esc(subtitle)}</div></div>
           <button class="icon-btn" data-close>✕</button>
         </div>
-        <div class="sheet-who">${esc(active.name)} puede…</div>
+        <div class="sheet-who">${target.kind === 'agent' && target.id === active.id ? 'Por su cuenta puede…' : `${esc(active.name)} puede…`}</div>
         <div class="sheet-actions">
           ${items || `<div class="empty">${esc(active.name)} no puede hacer nada con esto.</div>`}
           ${switchBtn}
@@ -210,6 +222,30 @@ export class Hud {
     });
     this.sheetTarget = target;
     $('#sheet').hidden = false;
+  }
+
+  /** Protectora: elegir qué mascota adoptar. */
+  private showAdoption() {
+    const w = this.world;
+    const pets = (Object.keys(SPECIES) as SpeciesId[]).filter((id) => SPECIES[id].kind === 'pet');
+    const items = pets
+      .map((id) => {
+        const sp = SPECIES[id];
+        const check = w.canAdopt(id);
+        const extra = sp.habitat ? 'Vive en su jaula' : sp.outdoor ? 'Le gusta el jardín y el agua' : sp.aloof ? 'Independiente' : '';
+        return `<button class="act" data-adopt="${id}" ${check.ok ? '' : 'disabled'}>
+          <span class="act-icon">${sp.icon}</span>
+          <span class="act-label">${esc(sp.label)} · §${sp.price}<small class="${check.ok ? 'info' : ''}">${esc(check.reason ?? extra)}</small></span>
+        </button>`;
+      })
+      .join('');
+    $('#sheet').querySelector('.sheet-card')!.innerHTML = `
+      <div class="sheet-head">
+        <div><div class="sheet-title">🏠 Protectora de animales</div><div class="sheet-sub">Tenéis § ${w.household.funds.toLocaleString('es-ES')} · ${w.members.length}/${MAX_MEMBERS} en casa</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      <div class="sheet-who">¿A quién adoptáis?</div>
+      <div class="sheet-actions">${items}</div>`;
   }
 
   private closeSheet() {
@@ -265,7 +301,9 @@ export class Hud {
       })
       .join('');
     if (!queueHtml) {
-      queueHtml = `<div class="hint">${a.kind === 'pet' ? '🐾' : '👆'} Toca algo de la casa para darle una orden a ${esc(a.name)}</div>`;
+      const own = w.optionsFor(a.id, { kind: 'agent', id: a.id }).length > 0;
+      const where = a.home ? 'Toca su jaula' : 'Toca algo de la casa';
+      queueHtml = `<div class="hint">${a.kind === 'pet' ? '🐾' : '👆'} ${where}${own ? ` o a ${esc(a.name)}` : ''} para darle una orden</div>`;
     }
     if (queueHtml !== this.lastQueueHtml) {
       $('#queue').innerHTML = queueHtml;

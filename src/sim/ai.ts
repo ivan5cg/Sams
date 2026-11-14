@@ -1,7 +1,7 @@
 // Autonomía por "utilidad": cada objeto y cada persona anuncian lo que ofrecen
 // y el agente elige lo que más le compensa según sus necesidades y la distancia.
 
-import { ACTIONS, SOCIAL_ACTIONS } from '../data/actions';
+import { ACTIONS, SELF_ACTIONS, SOCIAL_ACTIONS } from '../data/actions';
 import type { World } from './world';
 import { NEED_KEYS, type Agent, type Needs } from './types';
 
@@ -50,19 +50,28 @@ export function chooseAutonomous(world: World, a: Agent, urgentOnly: boolean): C
       let score = benefit(a.needs, def.effects, def.duration, urgentOnly);
       if (!urgentOnly) {
         if (def.baseScore) score += def.baseScore;
-        // Cuidar de las mascotas: llenar el comedero si alguna tiene hambre.
-        if (actionId === 'fill_bowl' && !o.stock) {
+        // Cuidar de las mascotas: rellenar comida si alguna tiene hambre...
+        if (def.refill && !o.stock) {
           const hungryPet = world.state.agents.some((p) => p.kind === 'pet' && p.householdId === a.householdId && p.needs.hunger < 70);
-          if (hungryPet) score += 25;
+          score += hungryPet ? 25 : 4;
         }
+        // ...y limpiar jaulas y areneros cuando empiezan a oler.
+        if (def.cleans && (o.dirt ?? 0) >= 2) score += 6 * (o.dirt ?? 0);
       }
       if (score <= 0) continue;
       options.push({ choice: { actionId, targetObjectId: o.id }, score: score * distFactor(o.x, o.y) * jitter() });
     }
   }
 
-  // Interacciones con otros
-  for (const t of world.state.agents) {
+  // Cosas que hace por sí mismo (siesta del gato, danza del hurón...)
+  for (const def of SELF_ACTIONS) {
+    if (!world.checkSelfAction(a, def.id).ok) continue;
+    const score = benefit(a.needs, def.effects, def.duration, urgentOnly) * 0.8;
+    if (score > 0) options.push({ choice: { actionId: def.id }, score: score * jitter() });
+  }
+
+  // Interacciones con otros (quien vive en una jaula no sale a buscarlas)
+  for (const t of a.home ? [] : world.state.agents) {
     if (t === a || t.hidden) continue;
     const tc = t.current;
     if (tc && (tc.byPlayer || tc.passiveOf || !ACTIONS[tc.actionId].interruptible)) continue;

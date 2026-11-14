@@ -319,13 +319,16 @@ button {
 #portraits {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
+  padding: 0 4px;
 }
 
+/* Se encogen para que quepan los 8 miembros en un móvil estrecho. */
 .portrait {
   position: relative;
-  width: 52px;
-  height: 52px;
+  flex: 0 1 52px;
+  min-width: 34px;
+  aspect-ratio: 1;
   border-radius: 50%;
   background: var(--bg);
   border: 3px solid var(--ring);
@@ -340,7 +343,7 @@ button {
   height: 100%;
   border-radius: 50%;
   background: var(--bg);
-  font-size: 22px;
+  font-size: clamp(16px, 5vw, 22px);
   font-weight: 800;
   color: #fff;
 }
@@ -470,6 +473,10 @@ button {
   font-size: 11px;
 }
 
+.act-label small.info {
+  color: var(--muted);
+}
+
 .empty {
   grid-column: 1 / -1;
   color: var(--muted);
@@ -528,7 +535,38 @@ button {
   .need .nl {
     display: none;
   }
+  #hud-top {
+    gap: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  #family {
+    display: none;
+  }
+  #clock {
+    font-size: 13px;
+  }
   #speed button {
-    width: 32px;
+    width: 30px;
+    height: 32px;
+    font-size: 13px;
+  }
+  #funds {
+    font-size: 14px;
+  }
+  .top-right .icon-btn {
+    min-width: 36px;
+    min-height: 36px;
+  }
+  #portraits {
+    gap: 4px;
+  }
+  .portrait {
+    min-width: 30px;
+    border-width: 2px;
+  }
+  .pmood {
+    font-size: 13px;
+    right: -4px;
   }
 }
