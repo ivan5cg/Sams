@@ -6,6 +6,7 @@ import type { Agent, PlacedObject } from '../sim/types';
 import type { Target, World } from '../sim/world';
 import { ACTION_LINES, ACTION_QUIPS, NEED_THOUGHTS, PET_SOUNDS } from '../data/dialogue';
 import { chatPair, traitQuip } from '../sim/chatter';
+import { fresh, vary } from '../sim/phrases';
 import { NEED_KEYS } from '../sim/types';
 import { drawSurroundings, skyAt } from './scenery';
 import { IS_WEBGL, glyph, webglWanted } from './gfx';
@@ -78,7 +79,6 @@ const ACTION_FX: Record<string, { kind: FxKind; every: number }> = {
 };
 const EATING = new Set(['eat', 'snack', 'cook', 'pet_eat', 'cage_eat', 'buy_hotdog']);
 const WAGGING = new Set(['beg_affection', 'play_with_person']);
-const pickOne = <T>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
 
 interface AgentView {
   root: Phaser.GameObjects.Container;
@@ -186,7 +186,7 @@ export class HouseScene extends Phaser.Scene {
   private skyHex = '';
   private fx!: SceneFx;
   /** Conversaciones automáticas en curso (por quien la empezó). */
-  private convo = new Map<string, { pair: [string, string]; step: number; next: number }>();
+  private convo = new Map<string, { pair: string[]; step: number; next: number }>();
   /** Próximo momento en que cada personaje puede soltar un efecto, un pensamiento o un comentario. */
   private nextFx = new Map<string, number>();
   private nextTalk = new Map<string, number>();
@@ -850,15 +850,17 @@ export class HouseScene extends Phaser.Scene {
     const partner = cur?.targetAgentId ? this.world.agent(cur.targetAgentId) : undefined;
     if (lines && partner && cur?.phase === 'acting') {
       let c = this.convo.get(a.id);
-      const newPair = (): [string, string] => (acting === 'chat' ? chatPair(this.world, a, partner) : pickOne(lines));
+      // Diálogo de 2 a 4 frases, alternando quién habla; sin repetir lo que se ha oído hace poco.
+      const newPair = (): string[] => (acting === 'chat' ? chatPair(this.world, a, partner) : [...fresh(lines, (p) => p[0])]);
       if (!c || time >= c.next + 6000) c = { pair: newPair(), step: 0, next: time };
       if (time >= c.next) {
-        const speaker = c.step === 0 ? a : partner;
+        const speaker = c.step % 2 === 0 ? a : partner;
         let line = c.pair[c.step];
-        if (line === '*') line = pickOne(PET_SOUNDS[speaker.species] ?? ['...']);
-        this.fx.say(speaker.id, line, 'say', time);
-        if (c.step === 0) c = { ...c, step: 1, next: time + 1700 };
-        else c = { pair: newPair(), step: 0, next: time + 3200 };
+        if (line === '*') line = fresh(PET_SOUNDS[speaker.species] ?? ['...']);
+        if (line) this.fx.say(speaker.id, line, 'say', time);
+        const len = Math.max(1, (line ?? '').length);
+        if (c.step + 1 < c.pair.length) c = { ...c, step: c.step + 1, next: time + 1300 + len * 22 };
+        else c = { pair: newPair(), step: 0, next: time + 2800 + len * 20 };
       }
       this.convo.set(a.id, c);
       return;
@@ -874,18 +876,18 @@ export class HouseScene extends Phaser.Scene {
     // Pensamientos si algo urge (solo la familia)
     if (this.world.isPlayerMember(a) && a.kind === 'person') {
       const low = NEED_KEYS.filter((k) => a.needs[k] < 18).sort((x, y) => a.needs[x] - a.needs[y])[0];
-      if (low) return this.fx.say(a.id, pickOne(NEED_THOUGHTS[low]), 'think', time);
+      if (low) return this.fx.say(a.id, fresh(NEED_THOUGHTS[low]), 'think', time);
     }
     // Comentarios mientras hacen algo
     const quips = ACTION_QUIPS[acting];
-    if (quips && Math.random() < 0.55) return this.fx.say(a.id, pickOne(quips), 'say', time);
+    if (quips && Math.random() < 0.55) return this.fx.say(a.id, vary(fresh(quips)), 'say', time);
     // Y lo que les sale por su forma de ser (el cuñado, el tragón, el gruñón...)
     if (a.kind === 'person' && !acting.includes('sleep') && Math.random() < 0.35) {
       const q = traitQuip(a);
       if (q) return this.fx.say(a.id, q, 'say', time);
     }
     // Las mascotas hacen sus ruidos de vez en cuando
-    if (a.kind === 'pet' && !acting.includes('sleep') && Math.random() < 0.3) this.fx.say(a.id, pickOne(PET_SOUNDS[a.species] ?? ['...']), 'say', time);
+    if (a.kind === 'pet' && !acting.includes('sleep') && Math.random() < 0.3) this.fx.say(a.id, fresh(PET_SOUNDS[a.species] ?? ['...']), 'say', time);
   }
 
   /** Frases que manda la simulación (conversaciones del jugador, deseos...). */

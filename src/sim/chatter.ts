@@ -9,6 +9,7 @@ import { hasTrait, traitsOf } from './traits';
 import { hasEmotion } from './emotions';
 import { ASPIRATION_BY_ID } from './aspirations';
 import { ALCORCON_PAIRS, MADRID_PAIRS, OKUPA_LINES } from '../data/street';
+import { fresh, smallTalk, vary, varyPair } from './phrases';
 import type { Agent } from './types';
 import type { World } from './world';
 
@@ -105,18 +106,21 @@ export function contextPairs(world: World, a: Agent, t: Agent): [string, string]
   return pairs;
 }
 
-/** Elige qué se dicen en una charla: según el contexto, su forma de ser o los clásicos. */
-export function chatPair(world: World, a: Agent, t: Agent): [string, string] {
+/** Elige qué se dicen en una charla (2 a 4 frases): diálogo generado, contexto, su forma de ser o los clásicos. */
+export function chatPair(world: World, a: Agent, t: Agent): string[] {
   const r = Math.random();
-  if (hasTrait(a, 'cunado') && r < 0.35) return pick(CUNADO_LINES);
+  // El cuñado tira más de sus frases de cuñado.
+  const cunado = hasTrait(a, 'cunado');
+  if (r < (cunado ? 0.55 : 0.7)) return smallTalk(world, a, t);
+  if (cunado && r < 0.78) return varyPair(world, a, t, fresh(CUNADO_LINES, (p) => p[0]));
   const ctx = contextPairs(world, a, t);
-  if (ctx.length && r < 0.7) return pick(ctx);
-  return pick(ACTION_LINES.chat);
+  if (ctx.length && r < 0.95) return varyPair(world, a, t, fresh(ctx, (p) => p[0]));
+  return varyPair(world, a, t, fresh(ACTION_LINES.chat, (p) => p[0]));
 }
 
 /** Algo que suelta por su forma de ser (o nada). */
 export function traitQuip(a: Agent): string | undefined {
   const ts = traitsOf(a);
   if (!ts.length) return undefined;
-  return pick(pick(ts).quips);
+  return vary(fresh(ts.flatMap((t) => t.quips)));
 }

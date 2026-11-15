@@ -1202,7 +1202,10 @@ describe('personalidad, noticias y charlas a la española', () => {
     expect(pairs.some((p) => p.includes('Toby') || p.includes('Misi'))).toBe(true);
     // El cuñado suelta sus cosas
     let cunado = 0;
-    for (let i = 0; i < 60; i++) if (CUNADO_LINES.some((c) => c[0] === chatPair(w, w.agent('a2')!, w.agent('a1')!)[0])) cunado++;
+    for (let i = 0; i < 60; i++) {
+      const first = chatPair(w, w.agent('a2')!, w.agent('a1')!)[0].toLowerCase();
+      if (CUNADO_LINES.some((c) => first.includes(c[0].toLowerCase().slice(1, 16)))) cunado++;
+    }
     expect(cunado).toBeGreaterThan(5);
   });
 });

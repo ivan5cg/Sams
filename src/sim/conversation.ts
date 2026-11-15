@@ -1,3 +1,4 @@
+import { fresh, vary } from './phrases';
 // Conversaciones interactivas: el jugador elige de qué hablar y el otro reacciona según sus gustos.
 
 import { INTERESTS, INTEREST_LABEL, TOPICS, TOPIC_BY_ID, type Interest, type TopicDef } from '../data/dialogue';
@@ -7,7 +8,6 @@ import type { Agent } from './types';
 import { moodScore, type World } from './world';
 
 const hashStr = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
-const pick = <T>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
 
 const SKILL_INTEREST: Record<string, Interest> = {
@@ -148,10 +148,10 @@ export function converse(world: World, a: Agent, t: Agent, topicId: string): Con
     }
   }
 
-  const say = fill(pick(topic.say), world, a, t);
-  let reply = fill(pick(topic[outcome]), world, a, t);
+  const say = vary(fill(fresh(topic.say), world, a, t));
+  let reply = fill(fresh(topic[outcome]), world, a, t);
   // El cuñado siempre tiene que añadir algo
-  if (hasTrait(t, 'cunado') && outcome !== 'bad' && Math.random() < 0.4) reply += pick([' Aunque yo lo haría de otra manera', ' Eso lo sé yo mejor que nadie', ' Te lo digo yo, que entiendo']) + '.';
+  if (hasTrait(t, 'cunado') && outcome !== 'bad' && Math.random() < 0.4) reply += fresh([' Aunque yo lo haría de otra manera', ' Eso lo sé yo mejor que nadie', ' Te lo digo yo, que entiendo', ' Un primo mío lo hace mejor', ' Yo ya lo dije hace tiempo']) + '.';
   return { say, reply, outcome, learned: discovered, goPark: topic.id === 'parque' && outcome === 'good' };
 }
 

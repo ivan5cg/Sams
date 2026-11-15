@@ -177,6 +177,13 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 
 ## Diálogos, conversaciones y deseos
 
+- **Charlas que casi no se repiten**: se montan por piezas (muletilla + tema + coletilla) con lo que pasa de verdad:
+  la estación y lo que ocurre en el barrio, la hora, el trabajo de cada uno (o el paro, o el cole), su mascota por
+  su nombre y sus trucos, su pareja, cómo se siente y por qué, recuerdos que comparten, otros vecinos con nombre y
+  cómo son, comida, dinero, su meta de vida, lo que se le da bien, sus hijos, refranes y lo que le gusta al otro.
+  Duran de 2 a 4 frases y la respuesta depende de cómo es y cómo está quien contesta (el gruñón pasa, el cuñado
+  añade lo suyo, la cotilla pide más). Y cada frase se recuerda para no volver a oírla en mucho tiempo.
+
 - Los personajes **hablan**: en las interacciones salen bocadillos con frases (charlas, chistes, coqueteos,
   discusiones...), las mascotas hacen sus ruidos ("¡Guau!", "Miau", "¡Uic, uic!", "¡Dook, dook!") y, cuando algo
   urge, se les ve pensarlo ("¡Qué hambre!").
