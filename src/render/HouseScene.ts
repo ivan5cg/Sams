@@ -8,6 +8,7 @@ import { ACTION_LINES, ACTION_QUIPS, NEED_THOUGHTS, PET_SOUNDS } from '../data/d
 import { chatPair, traitQuip } from '../sim/chatter';
 import { NEED_KEYS } from '../sim/types';
 import { drawSurroundings, skyAt } from './scenery';
+import { IS_WEBGL, glyph, webglWanted } from './gfx';
 import { P, SCREEN_GLOW, drawObjectArt, drawTile, drawWall, faceQuad, flat, prism, type LotStyle } from './art';
 import { SceneFx, type FxKind } from './fx';
 import { PET_ART, drawAccessory, drawBackHead, drawBaby, drawFace, drawLeg, drawPersonBody, drawProp, personLook, petColor, type Expression, type PersonLook } from './characters';
@@ -83,7 +84,8 @@ interface AgentView {
   root: Phaser.GameObjects.Container;
   body: Phaser.GameObjects.Container;
   legs?: [Phaser.GameObjects.Graphics, Phaser.GameObjects.Graphics];
-  bubble: Phaser.GameObjects.Text;
+  bubble: Phaser.GameObjects.Image;
+  bubbleKey?: string;
   bubbleBg: Phaser.GameObjects.Graphics;
   label: Phaser.GameObjects.Text;
   plumbob: Phaser.GameObjects.Graphics;
@@ -115,7 +117,7 @@ interface ObjectView {
   gfx: Phaser.GameObjects.Graphics;
   /** Lo que va por delante de quien lo usa (manta, barrotes, agua). */
   front: Phaser.GameObjects.Graphics;
-  icon?: Phaser.GameObjects.Text;
+  icon?: Phaser.GameObjects.Image;
   badge?: Phaser.GameObjects.Text;
   glow?: Phaser.GameObjects.Graphics;
   /** Brillo de pantalla que parpadea cuando se usa. */
@@ -134,7 +136,8 @@ export interface SceneHooks {
  */
 export const DPR = Math.min(window.devicePixelRatio || 1, 2.5);
 /** Los textos se rasterizan a más resolución para que no se vean borrosos con zoom. */
-const TEXT_RES = Math.min(4, DPR * 1.5);
+// En WebGL los textos van a menos resolución (texturas más pequeñas, más compatibles).
+const TEXT_RES = webglWanted() ? Math.min(2, DPR) : Math.min(4, DPR * 1.5);
 const ZOOM_MIN = 0.4 * DPR;
 const ZOOM_MAX = 2.5 * DPR;
 
@@ -166,6 +169,8 @@ function wallDeco(layout: string, x: number, y: number): { face: 'L' | 'R'; kind
   }
   return undefined;
 }
+
+type AdvancedScene = { grade?: { saturate: (v: number, multiply?: boolean) => unknown; reset: () => unknown } };
 
 export class HouseScene extends Phaser.Scene {
   private world!: World;
@@ -210,10 +215,33 @@ export class HouseScene extends Phaser.Scene {
     this.shownLot = '';
   }
 
+  /** Efectos que solo existen en modo avanzado (WebGL): resplandor de luces, viñeta y color. */
+  private bloom?: { strength: number };
+  private grade?: { saturate: (v: number, multiply?: boolean) => unknown; reset: () => unknown };
+  private setupWebglFx() {
+    if (!IS_WEBGL) return;
+    try {
+      const fx = this.cameras.main.postFX;
+      this.bloom = fx.addBloom(0xffffff, 1, 1, 0.7, 0) as unknown as { strength: number };
+      fx.addVignette(0.5, 0.5, 0.95, 0.22);
+      this.grade = fx.addColorMatrix() as unknown as AdvancedScene['grade'];
+      this.grade?.saturate(0.15);
+    } catch {
+      this.bloom = undefined;
+    }
+  }
+
+  /** Si el móvil pierde los gráficos (al volver a la app), se vuelve a dibujar todo. */
+  rebuildAfterContextLoss() {
+    const lot = this.shownLot;
+    this.shownLot = '';
+    if (lot) this.showLot(lot);
+  }
+
   /** Convierte gráficos fijos en una sola imagen. Si algo falla, se quedan como gráficos. */
   private bake(gs: Phaser.GameObjects.Graphics[], b: { minX: number; maxX: number; minY: number; maxY: number }, depth: number) {
     try {
-      const res = Phaser.Math.Clamp(this.cameras.main.zoom, 1, 1.5);
+      const res = Phaser.Math.Clamp(this.cameras.main.zoom, 1, IS_WEBGL ? 2.5 : 1.5);
       const W = Math.ceil((b.maxX - b.minX) * res), H = Math.ceil((b.maxY - b.minY) * res);
       if (W > 4096 || H > 4096) return;
       const rt = this.add.renderTexture(b.minX, b.minY, W, H).setOrigin(0, 0).setScale(1 / res).setDepth(depth);
@@ -304,6 +332,7 @@ export class HouseScene extends Phaser.Scene {
     this.night = this.add.rectangle(0, 0, 10, 10, 0x0b1640, 0).setOrigin(0).setScrollFactor(0).setDepth(1e6);
     this.fitCamera();
     this.scale.on('resize', () => this.fitCamera());
+    this.setupWebglFx();
     this.setupInput();
   }
 
@@ -417,12 +446,12 @@ export class HouseScene extends Phaser.Scene {
     const depth = this.objectDepth(o);
     const gfx = this.add.graphics().setDepth(o.def === 'pond' ? -1e4 : depth);
     const front = this.add.graphics().setDepth(depth + 3);
-    let icon: Phaser.GameObjects.Text | undefined;
+    let icon: Phaser.GameObjects.Image | undefined;
     if (!drawObjectArt(gfx, front, o)) {
       // Por si algún objeto no tiene dibujo propio: una caja con su icono.
       prism(gfx, { x: o.x + 0.1, y: o.y + 0.1, w: d.w - 0.2, h: d.h - 0.2 }, 0, d.height, d.color);
       const c = isoToScreen(o.x + d.w / 2, o.y + d.h / 2);
-      if (d.icon) icon = this.add.text(c.x, c.y - d.height, d.icon, { resolution: TEXT_RES, fontSize: '22px' }).setOrigin(0.5, 0.8).setDepth(depth + 0.5);
+      if (d.icon) icon = this.add.image(c.x, c.y - d.height, glyph(this, d.icon)).setDisplaySize(24, 24).setOrigin(0.5, 0.8).setDepth(depth + 0.5);
     }
     if (o.q === 3) {
       // Lo de lujo lleva un ribete dorado y brilla un poco.
@@ -592,7 +621,7 @@ export class HouseScene extends Phaser.Scene {
     bubbleBg.fillStyle(0xffffff, 1);
     bubbleBg.fillCircle(0, 0, 11);
     bubbleBg.fillTriangle(-8, 5, -3, 9, -14, 12);
-    const bubble = this.add.text(0, 0, '', { resolution: TEXT_RES, fontSize: '13px' }).setOrigin(0.5, 0.5);
+    const bubble = this.add.image(0, 0, glyph(this, '❗')).setDisplaySize(15, 15).setOrigin(0.5, 0.5);
     const plumbob = this.add.graphics();
     plumbob.fillStyle(0x2fbf3c, 1);
     plumbob.fillPoints([{ x: 0, y: -10 }, { x: 6.5, y: 0 }, { x: 0, y: 10 }, { x: -6.5, y: 0 }], true);
@@ -685,7 +714,10 @@ export class HouseScene extends Phaser.Scene {
       else if (Math.min(a.needs.hunger, a.needs.bladder, a.needs.energy) < 15) bubble = '❗';
       // Mientras habla, el icono deja sitio al bocadillo de diálogo.
       if (this.fx.hasBubble(a.id, time)) bubble = '';
-      if (v.bubble.text !== bubble) v.bubble.setText(bubble);
+      if (bubble && v.bubbleKey !== bubble) {
+        v.bubbleKey = bubble;
+        v.bubble.setTexture(glyph(this, bubble)).setDisplaySize(15, 15);
+      }
       const bx = 17, by = head - 4;
       v.bubble.setPosition(bx, by).setVisible(!!bubble);
       v.bubbleBg.setPosition(bx, by).setVisible(!!bubble);
@@ -908,7 +940,7 @@ export class HouseScene extends Phaser.Scene {
       this.weatherKind = kind;
       this.weatherGfx?.destroy();
       this.weatherGfx = kind ? this.add.graphics().setScrollFactor(0).setDepth(1e6 + 3) : undefined;
-      const n = kind === 'rain' ? 110 : kind === 'snow' ? 80 : 14;
+      const n = Math.round((kind === 'rain' ? 110 : kind === 'snow' ? 80 : 14) * (IS_WEBGL ? 1.6 : 1));
       this.weatherParts = Array.from({ length: kind ? n : 0 }, () => ({ x: Math.random() * width, y: Math.random() * height, v: 0.6 + Math.random() * 0.6, s: Math.random() * 6.28 }));
     }
     const g = this.weatherGfx;
@@ -1006,6 +1038,7 @@ export class HouseScene extends Phaser.Scene {
     if (Math.abs(level - this.nightLevel) > 0.01) {
       this.nightLevel = level;
       for (const g of this.glows) g.setAlpha(level);
+      if (this.bloom) this.bloom.strength = level * 0.22;
     }
   }
 

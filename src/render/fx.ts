@@ -1,8 +1,9 @@
 // Efectos de la escena: bocadillos con frases y partículas (Zzz, notas, corazones, gotas...).
 
 import Phaser from 'phaser';
+import { glyph, webglWanted } from './gfx';
 
-const TEXT_RES = Math.min(4, Math.min(window.devicePixelRatio || 1, 2.5) * 1.5);
+const TEXT_RES = webglWanted() ? Math.min(2, window.devicePixelRatio || 1) : Math.min(4, Math.min(window.devicePixelRatio || 1, 2.5) * 1.5);
 
 interface Bubble {
   text: Phaser.GameObjects.Text;
@@ -181,14 +182,16 @@ export class SceneFx {
   }
 
   private floatText(ch: string, x: number, y: number, color: string, size: number, dx: number, dy: number, dur: number) {
-    const t = this.scene.add.text(x, y, ch, { resolution: TEXT_RES, fontSize: `${size}px`, fontFamily: 'system-ui, sans-serif', fontStyle: 'bold', color, stroke: '#ffffff', strokeThickness: 2 }).setOrigin(0.5).setDepth(1e5 + 2);
+    // Imagen cacheada del símbolo (no un texto nuevo cada vez): más rápido y sin problemas en WebGL.
+    const t = this.scene.add.image(x, y, glyph(this.scene, ch, color)).setOrigin(0.5).setDepth(1e5 + 2);
+    const base = (size * 1.25) / 64;
     this.particles++;
     this.scene.tweens.add({
       targets: t,
       x: x + dx,
       y: y + dy,
       alpha: { from: 1, to: 0 },
-      scale: { from: 0.7, to: 1.25 },
+      scale: { from: base * 0.7, to: base * 1.25 },
       duration: dur,
       ease: 'Sine.easeOut',
       onComplete: () => {

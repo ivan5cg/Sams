@@ -5,6 +5,7 @@ import { deleteGame, loadGame, saveGame, saveGameSync } from './save/db';
 import { migrate, serialize } from './save/serialize';
 import { World } from './sim/world';
 import { Hud } from './ui/hud';
+import { markRenderer, setWebglWanted, webglWanted } from './render/gfx';
 
 const AUTOSAVE_MS = 30_000;
 
@@ -38,6 +39,11 @@ async function boot() {
         hud.toast((e as Error).message || 'No se pudo importar', '⚠️');
       }
     },
+    onReload: () => {
+      // Se guarda antes de recargar (el cambio de gráficos se aplica al arrancar).
+      saveGameSync(world.state);
+      location.reload();
+    },
     onNewGame: async () => {
       await deleteGame();
       setWorld(World.createNew());
@@ -50,9 +56,9 @@ async function boot() {
   bindToasts(world);
 
   const game = new Phaser.Game({
-    // Canvas 2D en vez de WebGL: en algunos móviles Android, WebGL dejaba los textos
-    // y emojis invisibles. El juego es ligero y en canvas 2D se ve igual en todas partes.
-    type: Phaser.CANVAS,
+    // Normal: Canvas 2D (en algunos Android, WebGL dejaba textos y emojis invisibles).
+    // Avanzado (opción del menú): WebGL con efectos; si el móvil no puede, Phaser vuelve solo a Canvas.
+    type: webglWanted() ? Phaser.AUTO : Phaser.CANVAS,
     fps: { limit: 45 },
     parent: 'game',
     backgroundColor: '#3d5a40',
@@ -61,6 +67,16 @@ async function boot() {
     render: { antialias: true, roundPixels: false },
     input: { activePointers: 3 },
   });
+  const isWebgl = game.renderer?.type === Phaser.WEBGL;
+  markRenderer(isWebgl);
+  if (webglWanted() && !isWebgl) {
+    setWebglWanted(false);
+    setTimeout(() => hud.toast('Este móvil no admite los gráficos avanzados: seguimos en normal', '🖥️'), 1500);
+  }
+  if (isWebgl) {
+    // Si el móvil "olvida" los gráficos (al volver a la app), se vuelven a dibujar.
+    game.renderer.on(Phaser.Renderer.Events.RESTORE_WEBGL, () => (game.scene.getScene('house') as HouseScene).rebuildAfterContextLoss());
+  }
   game.scene.add('house', HouseScene, true, {
     world,
     onTap: (t: Parameters<Hud['handleTap']>[0], tile: { x: number; y: number }) => hud.handleTap(t, tile),

@@ -13,6 +13,7 @@ import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
 import { DILEMMA_BY_ID } from '../data/dilemmas';
 import { EVENTS } from '../data/seasons';
 import { ROLE_LABEL } from '../data/street';
+import { IS_WEBGL, setWebglWanted, webglWanted } from '../render/gfx';
 import { NEED_KEYS, type Agent, type Rel, type SpeciesId } from '../sim/types';
 import { CATALOG, CATEGORIES, OBJECTS, QUALITY, SELL_RATIO, priceOf, type CatalogCategory } from '../data/objects';
 import type { HouseScene } from '../render/HouseScene';
@@ -25,6 +26,7 @@ export interface HudCallbacks {
   onExport: () => void;
   onImport: (file: File) => void;
   onNewGame: () => void;
+  onReload: () => void;
 }
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
@@ -117,6 +119,24 @@ export class Hud {
     } catch {
       $('#panel').classList.add('collapsed');
     }
+    // Gráficos: normal (Canvas) o avanzado (WebGL). Hace falta recargar.
+    const gfxSeg = $('#gfx');
+    const paintGfx = () => {
+      for (const b of gfxSeg.querySelectorAll<HTMLButtonElement>('button')) b.classList.toggle('on', (b.dataset.gfx === 'webgl') === webglWanted());
+      const note = $('#gfx-note');
+      if (note) note.textContent = webglWanted() && !IS_WEBGL ? 'Se aplicará al recargar.' : IS_WEBGL ? 'Ahora: avanzado (luces y efectos). Si algo se ve raro, vuelve a normal.' : 'Ahora: normal (el de siempre, el más compatible).';
+    };
+    paintGfx();
+    gfxSeg.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b?.dataset.gfx) return;
+      const want = b.dataset.gfx === 'webgl';
+      if (want === webglWanted()) return;
+      setWebglWanted(want);
+      paintGfx();
+      if (confirm(want ? 'Gráficos avanzados: hay que recargar el juego (la partida se guarda). Si en tu móvil algo no se ve bien, vuelve aquí y elige «Normal». ¿Recargar ahora?' : 'Volver a gráficos normales: hay que recargar (la partida se guarda). ¿Recargar ahora?')) this.cb.onReload();
+    });
+
     $('#needs-toggle').addEventListener('click', () => {
       const collapsed = $('#panel').classList.toggle('collapsed');
       try {
