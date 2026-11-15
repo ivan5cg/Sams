@@ -170,7 +170,7 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 - Interfaz: avisos más discretos, bocadillos que no se pisan, panel de necesidades plegable (se recuerda), la
   cámara sigue al personaje activo y un mapa ilustrado con Madrid, la línea de metro y Alcorcón.
 - El decorado fijo se pinta una sola vez como imagen, para que el móvil vaya fluido.
-- **Gráficos avanzados** (☰ → Gráficos → Avanzados): usa WebGL, con resplandor en farolas, ventanas y neones de
+- **Gráficos avanzados** (☰ → Gráficos → Avanzados): usa WebGL, con halos más intensos en farolas, ventanas y neones de
   noche, viñeta, colores más vivos, decorado más nítido y más lluvia y nieve. Si el móvil no lo admite, el juego
   vuelve solo al modo normal; y si algo se ve raro, se vuelve a "Normal" desde el mismo menú. Los iconos y las
   partículas son imágenes fijas (no textos con emoji), que es lo que fallaba en algunos Android con WebGL.

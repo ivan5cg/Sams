@@ -183,8 +183,9 @@ export class SceneFx {
 
   private floatText(ch: string, x: number, y: number, color: string, size: number, dx: number, dy: number, dur: number) {
     // Imagen cacheada del símbolo (no un texto nuevo cada vez): más rápido y sin problemas en WebGL.
-    const t = this.scene.add.image(x, y, glyph(this.scene, ch, color)).setOrigin(0.5).setDepth(1e5 + 2);
     const base = (size * 1.25) / 64;
+    // Nace ya pequeño (si no, el primer fotograma sale a tamaño completo: un emoji enorme que parpadea).
+    const t = this.scene.add.image(x, y, glyph(this.scene, ch, color)).setOrigin(0.5).setDepth(1e5 + 2).setScale(base * 0.7);
     this.particles++;
     this.scene.tweens.add({
       targets: t,

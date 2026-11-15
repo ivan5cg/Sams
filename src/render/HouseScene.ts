@@ -216,18 +216,17 @@ export class HouseScene extends Phaser.Scene {
   }
 
   /** Efectos que solo existen en modo avanzado (WebGL): resplandor de luces, viñeta y color. */
-  private bloom?: { strength: number };
   private grade?: { saturate: (v: number, multiply?: boolean) => unknown; reset: () => unknown };
   private setupWebglFx() {
     if (!IS_WEBGL) return;
     try {
       const fx = this.cameras.main.postFX;
-      this.bloom = fx.addBloom(0xffffff, 1, 1, 0.7, 0) as unknown as { strength: number };
-      fx.addVignette(0.5, 0.5, 0.95, 0.22);
+      // Sin bloom: el de Phaser oscurece toda la imagen. Viñeta suave y algo más de color.
+      fx.addVignette(0.5, 0.5, 0.98, 0.12);
       this.grade = fx.addColorMatrix() as unknown as AdvancedScene['grade'];
       this.grade?.saturate(0.15);
     } catch {
-      this.bloom = undefined;
+      /* sin efectos: se ve igual que en normal */
     }
   }
 
@@ -1037,8 +1036,8 @@ export class HouseScene extends Phaser.Scene {
     const level = blackout ? 0 : a / NIGHT_MAX;
     if (Math.abs(level - this.nightLevel) > 0.01) {
       this.nightLevel = level;
-      for (const g of this.glows) g.setAlpha(level);
-      if (this.bloom) this.bloom.strength = level * 0.22;
+      // En avanzados las luces brillan más (la mezcla aditiva en WebGL queda limpia).
+      for (const g of this.glows) g.setAlpha(Math.min(1, level * (IS_WEBGL ? 1.35 : 1)));
     }
   }
 
