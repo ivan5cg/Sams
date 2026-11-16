@@ -28,9 +28,10 @@ cambió al hacerlas está en la columna «Notas».
 | 4.2 Carreras y negocio | ✅ | Opciones de dilema con habilidad o rasgo, teletrabajo (oficina y ciencia), decisiones semanales del bar. Más el fin de semana fuera que quedó de 4.1 |
 | 5.1 Crear tu familia | ✅ | Creador al empezar y desde ☰ → Nueva partida; García como opción rápida. SAVE_VERSION 13 (`look` de cada persona) |
 | 5.2 Fiestas nuevas | ✅ | Reyes, Carnaval y Halloween en `systems/holidays.ts` (fechas en `holidayOf`, que lee también la agenda). Sin cambios en lo que se guarda |
-| Resto de la fase 5 | ⏳ | Orden: álbum de fotos, sitios nuevos, tercer barrio |
+| 5.3 Álbum de fotos | ✅ | Base de IndexedDB aparte (`sams-album`): no toca la partida ni su versión. Fotos automáticas con el evento `moment` |
+| Resto de la fase 5 | ⏳ | Orden: sitios nuevos, tercer barrio |
 
-**Lo siguiente:** el resto de la Fase 5 (álbum de fotos). La partida va por la **versión 13**: si algo nuevo cambia lo que se guarda, toca la 14 con su migración.
+**Lo siguiente:** el resto de la Fase 5 (sitios nuevos: biblioteca, gimnasio y mercadillo). La partida va por la **versión 13**: si algo nuevo cambia lo que se guarda, toca la 14 con su migración.
 
 ---
 
@@ -353,8 +354,11 @@ datos.
   *Hecho:* el año son 4 semanas, así que Reyes abre la primavera (el lunes; el primer día de la partida no),
   Carnaval es el jueves de primavera y Halloween el viernes de otoño. Acciones que solo existen en su día
   (`HOLIDAY_ACTIONS`: fuera de él ni se ven), disfraces dibujados (antifaz, corona, sombrero de bruja) y frases.
-- **Álbum de fotos**: hacer una captura del canvas (`game.renderer.snapshot`), guardarla en IndexedDB (con
+- ✅ **Álbum de fotos**: hacer una captura del canvas (`game.renderer.snapshot`), guardarla en IndexedDB (con
   límite de tamaño) y verla en un álbum por generaciones. Exportable.
+  *Hecho:* `render/photo.ts` (captura reducida a 720 px de ancho, JPEG, con pie de foto), `save/album.ts` (60 fotos
+  o 12 MB; sin IndexedDB, en memoria) y `ui/album.ts`. Compartir con `navigator.share` si el móvil lo admite.
+  De paso: la lluvia y la nieve solo caían en un recuadro del centro con la cámara alejada (se compensa el zoom).
 - Un tercer barrio conectado por metro (seguir el patrón de Alcorcón en `src/data/street.ts` y
   `neighborhood.ts`).
 

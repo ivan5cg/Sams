@@ -23,6 +23,7 @@ import { Notices } from './notices';
 import { AgendaPanel } from './agenda';
 import { FeatsPanel } from './feats';
 import { FamilyCreator } from './creator';
+import { AlbumPanel } from './album';
 import type { FamilySpec } from '../sim/family';
 
 export interface HudCallbacks {
@@ -49,6 +50,7 @@ export class Hud {
   readonly agenda = new AgendaPanel(this);
   readonly feats = new FeatsPanel(this);
   readonly creator = new FamilyCreator(this);
+  readonly album = new AlbumPanel(this);
 
   world: World;
   /** El sonido (se carga después del arranque). */
@@ -94,6 +96,7 @@ export class Hud {
     this.agenda.bind();
     this.feats.bind();
     this.creator.bind();
+    this.album.bind();
   }
 
   /** Toque en la escena: en modo construcción lo gestiona la obra; si no, el menú de acciones. */

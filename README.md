@@ -23,6 +23,10 @@ Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
 - Tócate a ti mismo (al personaje activo) para ver lo que puede hacer por su cuenta: la siesta del gato,
   la danza de guerra del hurón, el chillido de la cobaya…
 - La partida se guarda sola. Desde el menú ☰ puedes exportarla o importarla como archivo.
+- **📸 Fotos**: ☰ → Hacer una foto guarda lo que se ve (sin botones, con su pie de foto) en el **🖼️ álbum**,
+  ordenado por familia y generación. En los grandes momentos (un nacimiento, una boda) la foto se hace sola.
+  Cada foto se puede compartir o borrar, y el álbum entero se exporta como una página que se abre en cualquier
+  navegador. Caben 60 fotos; con el álbum lleno se avisa (no se borra ninguna sola).
 
 ## El barrio
 

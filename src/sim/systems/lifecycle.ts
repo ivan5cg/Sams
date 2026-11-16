@@ -116,6 +116,7 @@ export function births(w: World) {
       if (m.kind === 'person') w.feel(m, 'bebe', name);
       else setRel(w.state, m.id, baby.id, { f: 30, r: 0 });
     }
+    if (mine) w.emit({ type: 'moment', text: `¡Ha nacido ${name}!`, lotId: h.lotId });
     if (mine) w.toast(`¡Ha nacido ${name}! Bienvenido/a al mundo${parents.length ? `, bebé de ${parents.map((p) => p.name).join(' y ')}` : ''}`, '👶');
     w.addNews(`ha nacido ${name}, el bebé de la ${h.name}`, [baby.id, ...parents.map((p) => p.id)]);
   }

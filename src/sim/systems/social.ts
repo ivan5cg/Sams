@@ -191,6 +191,7 @@ export function socialFeelings(w: World, a: Agent, t: Agent, id: string) {
     w.feel(a, 'boda', t.name);
     w.feel(t, 'boda', a.name);
     remember(w, t, a, 'boda');
+    if (w.isPlayerMember(a) || w.isPlayerMember(t)) w.emit({ type: 'moment', text: `${a.name} y ${t.name}: ¡vivan los novios!`, lotId: a.lotId });
   }
   if (id === 'insult') {
     w.feel(t, 'insultado', a.name);

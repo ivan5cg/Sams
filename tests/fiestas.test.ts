@@ -59,6 +59,8 @@ describe('fiestas nuevas', () => {
     const rosa = w.agent('a1')!;
     fullNeeds(rosa);
     rosa.needs.hunger = 40;
+    // (Por la mañana la nevera se puede haber estropeado: es una avería normal.)
+    fridge(w).broken = false;
     const before = w.household.funds;
     expect(w.command('a1', 'eat_roscon', { kind: 'object', id: fridge(w).id })).toBe(true);
     w.tick(60);

@@ -69,7 +69,9 @@ export type SimEvent =
   /** Alguien entra o sale por la puerta de una parcela. */
   | { type: 'door'; lotId: string }
   /** Un sonido suelto (comprar un mueble...). */
-  | { type: 'sound'; id: string; lotId?: string };
+  | { type: 'sound'; id: string; lotId?: string }
+  /** Un gran momento de la familia (para la foto del álbum). */
+  | { type: 'moment'; text: string; lotId: string };
 
 export class World {
   state: WorldState;

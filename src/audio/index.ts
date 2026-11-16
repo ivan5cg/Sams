@@ -43,6 +43,7 @@ export function startAudio(getWorld: () => World, getScene: () => Listener | und
       if (!e.lotId || e.lotId === w.viewLotId) engine.play(e.id as SoundId, 1);
       return;
     }
+    if (e.type !== 'act') return;
     const a = w.agent(e.agentId);
     const gain = agentGain(a);
     if (!a || !gain) return;

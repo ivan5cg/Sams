@@ -988,6 +988,11 @@ export class HouseScene extends Phaser.Scene {
     }
     const g = this.weatherGfx;
     if (!g) return;
+    // Aunque no se mueva con la cámara, el zoom sí le afecta: se compensa para que llueva en toda la
+    // pantalla (si no, con la cámara alejada solo llovía en un recuadro en el centro).
+    const cam = this.cameras.main;
+    const z = cam.zoom || 1;
+    g.setScale(1 / z).setPosition(cam.width * cam.originX * (1 - 1 / z), cam.height * cam.originY * (1 - 1 / z));
     g.clear();
     const dt = Math.min(delta, 60) / 16;
     for (const p of this.weatherParts) {

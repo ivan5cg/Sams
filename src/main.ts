@@ -8,6 +8,7 @@ import { Hud } from './ui/hud';
 import { markRenderer, setWebglWanted, webglWanted } from './render/gfx';
 import { DEBUG } from './render/perf';
 import { applyPrefs } from './prefs';
+import { takePhoto } from './render/photo';
 
 const AUTOSAVE_MS = 30_000;
 
@@ -56,7 +57,13 @@ async function boot() {
     },
   });
 
-  const bindToasts = (w: World) => w.onToast((t) => hud.notify(t));
+  // Avisos y grandes momentos (foto al álbum si se está viendo dónde pasa).
+  const bindToasts = (w: World) => {
+    w.onToast((t) => hud.notify(t));
+    w.onEvent((e) => {
+      if (e.type === 'moment' && e.lotId === w.viewLotId && !document.hidden) setTimeout(() => void hud.album.snap(e.text, true), 400);
+    });
+  };
   bindToasts(world);
 
   const game = new Phaser.Game({
@@ -87,6 +94,7 @@ async function boot() {
     onLongPress: (id: string) => hud.longPress(id),
   });
   hud.setScene(() => game.scene.getScene('house') as HouseScene);
+  hud.album.setCamera((caption) => takePhoto(game, caption));
 
   window.addEventListener('resize', () => game.scale.resize(window.innerWidth * DPR, window.innerHeight * DPR));
 
