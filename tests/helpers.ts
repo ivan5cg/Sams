@@ -55,6 +55,7 @@ export function saveAt(version: number): Raw {
   // v12: muebles girados y pintura por habitación.
   if (version <= 11) {
     for (const o of st.objects) delete o.rot;
+    delete st.arcs;
     for (const l of st.lots) {
       delete l.paint;
       delete l.plans;

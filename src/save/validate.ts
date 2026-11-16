@@ -105,6 +105,14 @@ export function validateState(s: WorldState) {
       optStr(c.failed, 'reto');
     }
   }
+  for (const c of s.arcs ?? []) {
+    id(c.id, 'culebrón');
+    if (!['lio', 'pelea', 'romance'].includes(c.kind)) throw new Broken('tipo de culebrón');
+    num(c.step, 'culebrón');
+    num(c.next, 'culebrón');
+    for (const x of arr(c.who, 'culebrón')) id(x, 'culebrón');
+    if (c.end) str(c.end.how, 'culebrón');
+  }
   for (const o of s.schedule ?? []) {
     id(o.id, 'orden programada');
     id(o.agentId, 'orden programada');

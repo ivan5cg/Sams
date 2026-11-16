@@ -278,6 +278,8 @@ export interface WorldState {
   schedule?: ScheduledOrder[];
   /** Logros conseguidos, contadores de la familia y retos activos (desde la versión 11). */
   feats?: Feats;
+  /** Culebrones del barrio: historias de varios días entre vecinos (desde la versión 12). */
+  arcs?: Arc[];
   objects: PlacedObject[];
 }
 
@@ -299,4 +301,20 @@ export interface Feats {
   counts: Record<string, number>;
   /** Retos activados: desde cuándo, sus contadores, y si se cumplieron o se perdieron. */
   challenges: Record<string, { since: number; counts: Record<string, number>; done?: number; failed?: string }>;
+}
+
+/** Un culebrón del barrio: una historia en pasos que duran días. */
+export interface Arc {
+  id: string;
+  kind: 'lio' | 'pelea' | 'romance';
+  /** Paso actual (0 = el primero). */
+  step: number;
+  /** Quiénes: lio [infiel, amante, engañado/a]; pelea [a, b]; romance [a, b]. */
+  who: string[];
+  /** Cuándo toca el siguiente paso (minuto de la partida). */
+  next: number;
+  /** Día en que empezó. */
+  day: number;
+  /** Cómo acabó (si ha acabado). */
+  end?: { day: number; how: string };
 }

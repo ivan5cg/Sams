@@ -1940,3 +1940,31 @@ body.building.guiding #toasts {
   background-image: linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
   background-size: 8px 8px;
 }
+
+/* --- Culebrones (en el salseo) ------------------------------------------------------ */
+
+.arc-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.arc-step {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+}
+
+.arc-step.done {
+  background: rgba(61, 220, 74, 0.18);
+  color: var(--text);
+}
+
+.arc-step.now {
+  background: rgba(242, 193, 78, 0.3);
+  color: var(--text);
+  font-weight: 700;
+}

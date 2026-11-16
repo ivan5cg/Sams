@@ -28,6 +28,7 @@ export const EVENTS: Record<string, EventDef> = {
   verbena: { id: 'verbena', label: 'Verbena en el parque', icon: '🎆' },
   ofertas: { id: 'ofertas', label: 'Días de la huerta en el Mercadona', icon: '🥬' },
   apagon: { id: 'apagon', label: 'Apagón', icon: '🕯️' },
+  boda: { id: 'boda', label: 'Boda en el parque', icon: '💒' },
   navidad: { id: 'navidad', label: 'Navidad', icon: '🎄' },
   campana: { id: 'campana', label: 'Campaña electoral', icon: '🗳️' },
   lluvia: { id: 'lluvia', label: 'Llueve', icon: '🌧️' },

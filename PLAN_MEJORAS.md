@@ -24,10 +24,10 @@ cambió al hacerlas está en la columna «Notas».
 | 4.1 Economía | ✅ | Ver «Economía» al final. Pendiente: vacaciones de fin de semana |
 | 4.4 Logros y retos | ✅ | 15 logros y 3 retos; generaciones contadas desde la familia fundadora |
 | 4.5 Construcción | ✅ | Girar (trasponiendo el dibujo isométrico), deshacer en la sesión de obra, pintura por habitación y dos plantillas por reforma. SAVE_VERSION 12 |
-| 4.2, 4.3, Fase 5 | ⏳ | Sin empezar |
+| 4.3 Historias del barrio | ✅ | Tres culebrones (lío, guerra de vecinos, romance con boda), mediar y chivarse; se ven en el salseo. Dentro de la versión 12 (`arcs`) |
+| 4.2, Fase 5 | ⏳ | Sin empezar |
 
-**Lo siguiente, por orden:** 4.3 (historias
-del barrio de varios días), 4.2 (carreras y negocio), las vacaciones de fin de semana que quedaron de 4.1, y la
+**Lo siguiente, por orden:** 4.2 (carreras y negocio), las vacaciones de fin de semana que quedaron de 4.1, y la
 Fase 5. La partida va por la **versión 12**: si algo nuevo cambia lo que se guarda, toca la 13 con su migración.
 
 ---
@@ -319,7 +319,7 @@ datos.
 - Bar de tapas: decisiones semanales (carta barata/cara, contratar a un vecino, abrir el domingo) que
   cambian el rango de ganancias.
 
-### 4.3 Historias del barrio que duran varios días
+### 4.3 Historias del barrio que duran varios días ✅
 - Encadenar sucesos que ya existen (salseo, parejas, bodas, mudanzas, peleas) en **arcos** de 3-5 pasos con
   estado: p. ej. "rumor de lío → pillados → bronca en el parque → separación → uno se muda". Cada paso genera
   noticias, salseo y conversaciones.

@@ -20,6 +20,7 @@ import { bestPath, face, moveAlong, neighbours } from './movement';
 import { skillLevel } from './skills';
 import { streetOutcome } from './street';
 import { completeTask, endTask } from './tasks';
+import { mediate, snitch } from './arcs';
 
 export function canEngage(_w: World, actor: Agent, actorTask: Task, t: Agent): boolean {
   if (t.hidden || t.travel || t.lotId !== actor.lotId) return false;
@@ -231,6 +232,8 @@ export function socialOutcome(w: World, a: Agent, t: Agent, actionId: string) {
   socialFeelings(w, a, t, actionId);
   if (ACTIONS[actionId].targetRoles) streetOutcome(w, a, t, actionId);
   if (actionId === 'gossip_with') gossipOutcome(w, a, t);
+  if (actionId === 'mediate') mediate(w, a, t);
+  if (actionId === 'snitch') snitch(w, a, t);
   if (actionId === 'chotis' && (hasEvent(w, 'sanisidro') || Math.random() < 0.3)) {
     w.feel(a, 'castizo');
     w.feel(t, 'castizo');

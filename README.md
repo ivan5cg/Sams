@@ -272,6 +272,17 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   (un nivel de golpe en la habilidad que elijas), además de muebles, reformas y caprichos.
 - Todas las cifras están en `src/data/economy.ts`.
 
+## Culebrones del barrio
+
+- Entre los vecinos pasan historias que duran varios días, con noticias, salseo y conversaciones en cada paso:
+  - **Un lío**: rumores → los pillan → bronca en el parque → separación → uno se muda con su amante.
+  - **Guerra de vecinos**: quejas por el ruido → cartel en el portal → bronca en la calle → paces con unas
+    cañas... o no se vuelven a hablar.
+  - **Romance**: miradas en el bar → novios → pedida en la plaza → boda en el parque (estáis invitados).
+- Te puedes meter: toca a uno de ellos y elige **🕊️ Mediar** (con carisma sale mejor) o, si a alguien le ponen
+  los cuernos, **🤫 Contarle lo que se dice**.
+- Se siguen en ☰ → 🌶️ Salseo del barrio, con el paso en el que va cada historia.
+
 ## Logros y retos
 
 - En ☰ → **🏆 Logros y retos**: 15 logros que se consiguen jugando (primer ascenso, boda, un bebé, tres y cinco

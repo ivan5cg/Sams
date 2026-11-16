@@ -27,6 +27,18 @@ export function cantMoveOut(w: World, t: Agent): string | undefined {
   return undefined;
 }
 
+/** Un vecino se va a vivir con otra familia del barrio (si deja la suya sin personas, llega otra). */
+export function moveToHousehold(w: World, a: Agent, to: Household) {
+  const old = w.householdOf(a);
+  if (!old || old.id === to.id) return;
+  old.memberIds = old.memberIds.filter((id) => id !== a.id);
+  a.householdId = to.id;
+  to.memberIds.push(a.id);
+  a.visitUntil = undefined;
+  if (a.lotId !== to.lotId && !a.travel) startTravel(w, a, to.lotId);
+  if (!old.memberIds.some((id) => w.agent(id)?.kind === 'person')) replaceFamily(w, old, []);
+}
+
 /** `t` deja su familia y se viene a vivir con la del jugador. */
 export function moveIn(w: World, t: Agent) {
   const old = w.householdOf(t);

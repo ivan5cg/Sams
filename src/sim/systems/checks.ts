@@ -15,6 +15,7 @@ import { nearHammock } from './pets';
 import { closedReason, pantryOwner } from './shopping';
 import { skillLevel } from './skills';
 import { grudge } from './social';
+import { canMediate, canSnitch } from './arcs';
 
 export function speciesOk(w: World, a: Agent, def: ActionDef) {
   if (!def.actors.includes(a.kind) || (def.species && !def.species.includes(a.species))) return false;
@@ -130,6 +131,8 @@ export function checkSocialAction(w: World, a: Agent, t: Agent, actionId: string
     if (relX.r < 40) return { def, ok: false, reason: 'Aún no hay tanta química' };
   }
   if (actionId === 'end_affair' && !relX.affair) return { def, ok: false };
+  if (actionId === 'mediate' && (!w.isPlayerMember(a) || !canMediate(w, t))) return { def, ok: false };
+  if (actionId === 'snitch' && (!w.isPlayerMember(a) || !canSnitch(w, t))) return { def, ok: false };
   if (actionId === 'chotis' && (!['young', 'adult', 'elder', 'teen'].includes(tStage) || w.stageOf(a) === 'child')) return { def, ok: false };
   if (actionId === 'break_up' && relX.status !== 'partner') return { def, ok: false };
   if (actionId === 'divorce' && relX.status !== 'married') return { def, ok: false };

@@ -58,8 +58,10 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
-  // v11 → v12: muebles girados y pintura por habitación (campos nuevos opcionales: nada que convertir).
-  11: () => {},
+  // v11 → v12: muebles girados, pintura por habitación, reformas a elegir y culebrones del barrio.
+  11: (s) => {
+    s.arcs = s.arcs ?? [];
+  },
   // v10 → v11: órdenes programadas, logros y retos (y el registro de movimientos, que empieza vacío).
   10: (s) => {
     s.schedule = s.schedule ?? [];

@@ -21,6 +21,7 @@ import { deathChance, die, evolveTraits, freeCrib, onStageChange } from './lifec
 import { neighbourAdopts } from './pets';
 import { endTask } from './tasks';
 import { availableVisitors, districtOf, sendVisit, startTravel } from './travel';
+import { dailyArcs } from './arcs';
 
 /** ¿Está en marcha este evento (en esa parcela, si se dice)? */
 export function hasEvent(w: World, id: string, lotId?: string): boolean {
@@ -238,6 +239,7 @@ export function newDay(w: World) {
   seasonalDay(w);
   dailyGossip(w);
   evolveTraits(w);
+  dailyArcs(w);
   // Cada día, el deseo más antiguo de cada uno cambia por otro.
   for (const m of w.members) {
     if (m.wishes && m.wishes.length >= 3) {
