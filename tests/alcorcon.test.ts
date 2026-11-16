@@ -203,3 +203,30 @@ describe('Alcorcón, el metro, la calle, el salseo y las juergas', () => {
     expect(m.lots.find((l) => l.id === 'P')?.district).toBe('madrid');
   });
 });
+
+describe('casas que se quedan vacías en Alcorcón', () => {
+  it('si llegan okupas, se quedan con las mascotas que había (nadie se queda sin familia)', () => {
+    const w = World.createNew();
+    const h = w.state.households.find((x) => x.lotId.startsWith('AL') && !x.okupa)!;
+    // Que tenga una mascota.
+    const pet = w.state.agents.find((a) => a.kind === 'pet' && a.householdId !== h.id && !a.home && !w.isPlayerMember(a))!;
+    const prev = w.householdOf(pet)!;
+    prev.memberIds = prev.memberIds.filter((id) => id !== pet.id);
+    pet.householdId = h.id;
+    pet.lotId = h.lotId;
+    h.memberIds.push(pet.id);
+    const orig = Math.random;
+    Math.random = () => 0.1; // llegan okupas
+    try {
+      for (const id of [...h.memberIds]) {
+        const a = w.agent(id);
+        if (a?.kind === 'person') w.die(a, 'old');
+      }
+    } finally {
+      Math.random = orig;
+    }
+    const owner = w.householdOf(pet);
+    expect(owner?.okupa).toBe(true);
+    expect(owner?.memberIds).toContain(pet.id);
+  });
+});

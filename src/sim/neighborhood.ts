@@ -8,7 +8,7 @@ import { OBJECTS } from '../data/objects';
 import { JOB_CAREERS } from '../data/careers';
 import { SPECIES, lifeStage } from '../data/species';
 import { isAdult, relKey, setRel } from './social';
-import { NEED_KEYS, type Agent, type Lot, type Needs, type SpeciesId, type WorldState } from './types';
+import { NEED_KEYS, type Agent, type Household, type Lot, type Needs, type SpeciesId, type WorldState } from './types';
 
 export const PLAYER_LOT = 'L0';
 export const PARK_LOT = 'P';
@@ -148,7 +148,7 @@ export function addAlcorcon(state: WorldState) {
 }
 
 /** Unos okupas en una casa que llevaba años vacía. */
-export function generateOkupas(state: WorldState, lotId: string) {
+export function generateOkupas(state: WorldState, lotId: string): Household {
   const hid = `h${state.nextId++}`;
   const lot = state.lots.find((l) => l.id === lotId)!;
   lot.name = 'Casa okupada';
@@ -162,10 +162,12 @@ export function generateOkupas(state: WorldState, lotId: string) {
   members.push(makeAgent({ id: `a${state.nextId++}`, name: 'Canelo', species: 'dog', ageDays: 10, color: 0x999999, householdId: hid, lotId, ...randomIndoorTile() }));
   for (const m of members) m.abstract = true;
   state.agents.push(...members);
-  state.households.push({ id: hid, name: 'Los okupas', funds: 150, memberIds: members.map((m) => m.id), lotId, pantry: 15, okupa: true });
+  const h: Household = { id: hid, name: 'Los okupas', funds: 150, memberIds: members.map((m) => m.id), lotId, pantry: 15, okupa: true };
+  state.households.push(h);
   setupFamilyLife(state, members, { jobs: false });
   // Entre ellos son amigos (no pareja), y el perro es de todos.
   for (const a of members) for (const b of members) if (a !== b && a.kind === 'person' && b.kind === 'person') setRel(state, a.id, b.id, { f: 60, r: 0 });
+  return h;
 }
 
 /** Vendedor, rapero y músico del metro, vecinas cotillas, militantes y riders. */

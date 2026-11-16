@@ -153,11 +153,21 @@ describe('personalidad, noticias y charlas a la española', () => {
     expect(pairs).toContain('Odio los lunes...');
     expect(pairs.some((p) => p.includes('desayunado'))).toBe(true);
     expect(pairs.some((p) => p.includes('Toby') || p.includes('Misi'))).toBe(true);
-    // El cuñado suelta sus cosas
+    // El cuñado suelta sus cosas (con una secuencia de azar fija: si no, a veces salían justo 5).
     let cunado = 0;
-    for (let i = 0; i < 60; i++) {
-      const first = chatPair(w, w.agent('a2')!, w.agent('a1')!)[0].toLowerCase();
-      if (CUNADO_LINES.some((c) => first.includes(c[0].toLowerCase().slice(1, 16)))) cunado++;
+    let seed = 42;
+    const orig = Math.random;
+    Math.random = () => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return seed / 2147483648;
+    };
+    try {
+      for (let i = 0; i < 60; i++) {
+        const first = chatPair(w, w.agent('a2')!, w.agent('a1')!)[0].toLowerCase();
+        if (CUNADO_LINES.some((c) => first.includes(c[0].toLowerCase().slice(1, 16)))) cunado++;
+      }
+    } finally {
+      Math.random = orig;
     }
     expect(cunado).toBeGreaterThan(5);
   });

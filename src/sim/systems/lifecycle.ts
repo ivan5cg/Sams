@@ -231,7 +231,12 @@ export function replaceFamily(w: World, old: Household, extraPets: Agent[]) {
   const pets = [...old.memberIds.map((id) => w.agent(id)!).filter(Boolean), ...extraPets];
   w.state.households = w.state.households.filter((x) => x.id !== old.id);
   if (districtOf(w, old.lotId) === 'alcorcon' && Math.random() < 0.4) {
-    generateOkupas(w.state, old.lotId);
+    const okupas = generateOkupas(w.state, old.lotId);
+    // Las mascotas que quedaban en la casa se quedan con los okupas.
+    for (const pet of pets) {
+      pet.householdId = okupas.id;
+      okupas.memberIds.push(pet.id);
+    }
     w.addNews('unos okupas se han metido en la casa vacía de Alcorcón', []);
     return;
   }
