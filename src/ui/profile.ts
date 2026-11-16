@@ -29,10 +29,10 @@ export class ProfilePanel extends Part {
       if (!b) return;
       if (b.dataset.close !== undefined) return this.closeProfile();
       if (b.dataset.quit !== undefined && confirm('¿Seguro que quieres dejar el trabajo?')) {
-        this.world.quitJob(this.world.activeAgent);
+        this.world.quitJob(this.subject());
         this.renderProfile();
       }
-      const a = this.world.activeAgent;
+      const a = this.subject();
       if (b.dataset.aspChange !== undefined) {
         this.aspPicking = !this.aspPicking;
         this.renderProfile();
@@ -54,7 +54,15 @@ export class ProfilePanel extends Part {
     });
   }
 
-  openProfile() {
+  /** De quién es el perfil abierto (por defecto, el personaje activo). */
+  subjectId = '';
+
+  subject() {
+    return (this.subjectId && this.world.agent(this.subjectId)) || this.world.activeAgent;
+  }
+
+  openProfile(agentId = '') {
+    this.subjectId = agentId;
     this.hud.sheet.closeSheet();
     $('#profile').hidden = false;
     this.renderProfile();
@@ -66,7 +74,8 @@ export class ProfilePanel extends Part {
 
   renderProfile() {
     const w = this.world;
-    const a = w.activeAgent;
+    const a = this.subject();
+    const mine = w.isPlayerMember(a);
     const stage = lifeStage(a.species, a.ageDays);
     let jobHtml = '';
     if (a.kind === 'person') {
@@ -78,7 +87,7 @@ export class ProfilePanel extends Part {
           <div class="prof-h">${c.icon} ${c.school ? 'Colegio' : esc(lvl.title)}</div>
           <div class="muted small">${c.school ? '' : `${esc(c.name)} · nivel ${a.job.level}/${c.levels.length} · §${lvl.pay} por jornada · `}${esc(scheduleText(c))}</div>
           <div class="perf"><span class="small">${perfLabel}</span><div class="bar"><div class="fill" style="width:${Math.round(a.job.perf)}%;background:#4f8fd9"></div></div></div>
-          ${c.school ? '' : '<button class="map-btn ghost small-btn" data-quit>Dejar el trabajo</button>'}
+          ${c.school || !mine ? '' : '<button class="map-btn ghost small-btn" data-quit>Dejar el trabajo</button>'}
         </div>`;
       } else if (isAdult(a)) {
         jobHtml = `<div class="prof-sec"><div class="prof-h">💼 Sin trabajo</div><div class="muted small">Busca trabajo en el ordenador de casa.</div></div>`;
@@ -146,7 +155,7 @@ export class ProfilePanel extends Part {
     $('#profile').innerHTML = `<div class="map-card">
       <div class="sheet-head">
         <div><div class="sheet-title">${a.kind === 'person' ? '🧑' : SPECIES[a.species].icon} ${esc(a.name)}</div>
-        <div class="sheet-sub">${esc(SPECIES[a.species].label)} · ${esc(stage.label)} · ${a.ageDays} ${a.ageDays === 1 ? 'día' : 'días'}</div></div>
+        <div class="sheet-sub">${esc(SPECIES[a.species].label)} · ${esc(stage.label)} · ${a.ageDays} ${a.ageDays === 1 ? 'día' : 'días'}${mine ? '' : ` · ${esc(w.householdOf(a)?.name ?? 'vecino/a')}`}</div></div>
         <button class="icon-btn" data-close>✕</button>
       </div>
       ${this.emotionsHtml(a)}

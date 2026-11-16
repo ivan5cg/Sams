@@ -249,6 +249,28 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   manejar a la mascota, buscar trabajo, comprar un mueble e ir al parque), con una flecha sobre el mueble o un
   halo en el botón que toca. El tiempo solo se para en el primero, se puede saltar y recuerda por dónde ibas.
 
+## Controles táctiles
+
+- **Arrastra** para mover la cámara y **pellizca** para el zoom. Al moverla, deja de seguir al personaje hasta
+  que tocas **🎯** (o cambias de personaje).
+- **Mantén pulsado** sobre cualquier personaje para ver su perfil (también el de los vecinos).
+- Todos los botones tienen al menos 44 px de zona de toque, y el móvil vibra un poco con los avisos urgentes
+  y al comprar (se puede quitar en ☰).
+
+## Agenda
+
+- **📅 Agenda** (en el panel de abajo): lo que viene hoy y mañana para la familia. Turnos de trabajo y colegio,
+  días libres, las facturas del lunes, la campaña, San Isidro, la verbena, el derbi, la Navidad y el sorteo,
+  quién cumple años (cambia de etapa) y cuándo llega el bebé.
+- **⏰ Órdenes programadas**: en el menú de acciones, pulsa ⏰, elige qué hacer y a qué hora («a las 20:00,
+  Mateo cocina»). Se da sola a su hora, sale en la agenda y se puede quitar desde ahí.
+
+## Accesibilidad
+
+En ☰ → **♿ Accesibilidad**: letra grande, alto contraste, movimiento reducido (sin parpadeos, partículas ni
+deslizamientos de cámara; viene activado si el móvil lo pide) y vibración. Las necesidades muestran su valor
+en número y un ⚠ cuando están bajas, no solo el color; las emociones llevan su signo (+/−).
+
 ## Avisos
 
 - **Urgentes** (alguien se muere de hambre, se ha hecho pis, se ha desplomado, un bebé llora sin nadie, números

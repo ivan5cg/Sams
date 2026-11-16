@@ -3,9 +3,9 @@
 
 import { ACTIONS, type ActionDef } from '../../data/actions';
 import { QUALITY } from '../../data/objects';
-import { FRIDGE_FOOD } from '../constants';
+import { FRIDGE_FOOD, MINUTES_PER_DAY } from '../constants';
 import { findPath } from '../pathfinding';
-import { NEED_KEYS, type Agent, type Needs, type SpeciesId, type Task } from '../types';
+import { NEED_KEYS, type Agent, type Needs, type ScheduledOrder, type SpeciesId, type Task } from '../types';
 import { clamp, objectCenter } from '../util';
 import type { Target, World } from '../world';
 import { costOf } from './calendar';
@@ -271,4 +271,39 @@ export function isSatisfied(_w: World, a: Agent, def: ActionDef): boolean {
     return ups.length > 0 && ups.every((k) => a.needs[k] >= 99.5);
   }
   return NEED_KEYS.every((k) => until[k] === undefined || a.needs[k] >= until[k]);
+}
+
+/** Programa una orden para la próxima vez que el reloj marque `minuteOfDay` (hoy o mañana). */
+export function scheduleOrder(w: World, agentId: string, actionId: string, target: Target, minuteOfDay: number, param?: string): ScheduledOrder | null {
+  const a = w.agent(agentId);
+  const def = ACTIONS[actionId];
+  if (!a || !def || !w.isPlayerMember(a)) return null;
+  const dayStart = Math.floor(w.state.minutes / MINUTES_PER_DAY) * MINUTES_PER_DAY;
+  let at = dayStart + Math.max(0, Math.min(MINUTES_PER_DAY - 1, Math.round(minuteOfDay)));
+  if (at <= w.state.minutes) at += MINUTES_PER_DAY;
+  const order: ScheduledOrder = { id: w.newId('p'), agentId, at, actionId, target: { ...target }, ...(param ? { param } : {}) };
+  w.state.schedule = [...(w.state.schedule ?? []), order].sort((x, y) => x.at - y.at);
+  const hh = `${String(Math.floor(minuteOfDay / 60)).padStart(2, '0')}:${String(Math.round(minuteOfDay) % 60).padStart(2, '0')}`;
+  w.toast(`Programado: a las ${hh}, ${a.name} → ${def.label.toLowerCase()}`, '⏰');
+  return order;
+}
+
+export function cancelOrder(w: World, orderId: string) {
+  w.state.schedule = (w.state.schedule ?? []).filter((o) => o.id !== orderId);
+}
+
+/** Da las órdenes programadas que ya toca dar. */
+export function runSchedule(w: World) {
+  const list = w.state.schedule;
+  if (!list?.length || list[0].at > w.state.minutes) return;
+  const due = list.filter((o) => o.at <= w.state.minutes);
+  w.state.schedule = list.filter((o) => o.at > w.state.minutes);
+  for (const o of due) {
+    const a = w.agent(o.agentId);
+    const def = ACTIONS[o.actionId];
+    if (!a || !def) continue;
+    const ok = command(w, o.agentId, o.actionId, o.target as Target, o.param);
+    if (ok) w.toast(`⏰ Es la hora: ${a.name} → ${def.label.toLowerCase()}`, '⏰', a.id);
+    else w.toast(`⏰ ${a.name} no ha podido ${def.label.toLowerCase()} a su hora`, '⏰', a.id);
+  }
 }

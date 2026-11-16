@@ -5,6 +5,7 @@ import type { HouseScene } from '../render/HouseScene';
 import type { Target } from '../sim/world';
 import { $, esc } from './dom';
 import { Part } from './part';
+import { vibrate } from '../prefs';
 
 export class BuildMode extends Part {
   sceneRef?: () => HouseScene;
@@ -137,6 +138,7 @@ export class BuildMode extends Part {
     if (!sel || !g) return;
     const ok = sel.kind === 'move' ? w.moveObject(sel.id, g.x, g.y) : w.buy(sel.def, g.x, g.y, OBJECTS[sel.def].tiers ? this.buildTier : 2);
     if (!ok) return;
+    vibrate(30);
     if (sel.kind === 'move') this.selectForBuild(null);
     else {
       // Se puede seguir colocando más del mismo.

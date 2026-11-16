@@ -16,6 +16,7 @@ import { PET_ART, drawAccessory, drawBackHead, drawBaby, drawFace, drawLeg, draw
 import { hasEmotion } from '../sim/emotions';
 import { moodScore } from '../sim/world';
 import { DEBUG, perf } from './perf';
+import { prefs } from '../prefs';
 import { TILE_H, TILE_W, isoToScreen, screenToTile, shade, tileCenter } from './iso';
 
 /** Minutos de juego por segundo real para cada velocidad. */
@@ -129,6 +130,8 @@ interface ObjectView {
 export interface SceneHooks {
   world: World;
   onTap: (target: Target, tile: { x: number; y: number }) => void;
+  /** Pulsación larga sobre un personaje. */
+  onLongPress?: (agentId: string) => void;
 }
 
 /**
@@ -176,6 +179,7 @@ type AdvancedScene = { grade?: { saturate: (v: number, multiply?: boolean) => un
 export class HouseScene extends Phaser.Scene {
   private world!: World;
   private onTap!: (t: Target, tile: { x: number; y: number }) => void;
+  private onLongPress?: (agentId: string) => void;
   private ghostGfx?: Phaser.GameObjects.Graphics;
   private ghostKey = '';
   private agentViews = new Map<string, AgentView>();
@@ -208,6 +212,7 @@ export class HouseScene extends Phaser.Scene {
   init(hooks: SceneHooks) {
     this.world = hooks.world;
     this.onTap = hooks.onTap;
+    this.onLongPress = hooks.onLongPress;
   }
 
   /** Cambia el mundo (al cargar o empezar partida nueva). */
@@ -321,6 +326,7 @@ export class HouseScene extends Phaser.Scene {
     this.convo.clear();
     this.pendingSpeech = [];
     this.shownLot = lotId;
+    this.camFree = false;
     this.fitCamera();
     this.drawLot();
     this.cameras.main.fadeIn(280, 20, 24, 36);
@@ -824,7 +830,7 @@ export class HouseScene extends Phaser.Scene {
       e = m > 62 || speaking || acting === 'joke' || acting === 'dance' ? 'feliz' : m < 30 ? 'triste' : 'normal';
     }
     // Parpadeo cada pocos segundos
-    if (e !== 'dormido' && (t + (a.id.length * 997)) % 3800 < 130) e = 'parpadeo';
+    if (e !== 'dormido' && !prefs().reduceMotion && (t + (a.id.length * 997)) % 3800 < 130) e = 'parpadeo';
     if (e !== v.faceKey) {
       v.faceKey = e;
       v.face.clear();
@@ -944,7 +950,7 @@ export class HouseScene extends Phaser.Scene {
   /** Lluvia, nieve u hojas cayendo (en pantalla, por encima de todo). */
   private updateWeather(delta: number) {
     const w = this.world;
-    const kind = w.lotById(this.shownLot)?.layout === 'metro' ? '' : w.hasEvent('lluvia') ? 'rain' : w.hasEvent('nevada') ? 'snow' : w.seasonDef.id === 'otono' ? 'leaves' : '';
+    const kind = w.lotById(this.shownLot)?.layout === 'metro' ? '' : w.hasEvent('lluvia') ? 'rain' : w.hasEvent('nevada') ? 'snow' : w.seasonDef.id === 'otono' && !prefs().reduceMotion ? 'leaves' : '';
     const { width, height } = this.scale;
     if (kind !== this.weatherKind) {
       this.weatherKind = kind;
@@ -1010,10 +1016,31 @@ export class HouseScene extends Phaser.Scene {
   }
 
   private lastUserCam = 0;
+  /** El jugador ha movido la cámara: deja de seguir al activo hasta que toque 🎯 (o cambie de personaje). */
+  camFree = false;
+  private followId = '';
+
+  /** Volver a seguir al personaje activo (botón 🎯). */
+  recenter() {
+    this.camFree = false;
+    this.lastUserCam = 0;
+    const a = this.world.activeAgent;
+    if (!a || a.lotId !== this.shownLot || a.hidden || a.travel) return;
+    const p = this.agentScreenPos(a);
+    const cam = this.cameras.main;
+    if (prefs().reduceMotion) cam.centerOn(p.x, p.y + cam.worldView.height * 0.08);
+    else cam.pan(p.x, p.y + cam.worldView.height * 0.08, 500, 'Sine.easeInOut');
+  }
 
   /** La cámara sigue con suavidad al personaje activo si se sale de la vista. */
   private followActive(time: number) {
-    if (this.dragStart || this.pointers.size || time - this.lastUserCam < 4000 || this.world.ui.building) return;
+    const id = this.world.activeAgent?.id ?? '';
+    if (id !== this.followId) {
+      // Al cambiar de personaje, la cámara vuelve a seguirle.
+      this.followId = id;
+      if (this.camFree) this.recenter();
+    }
+    if (this.camFree || this.dragStart || this.pointers.size || time - this.lastUserCam < 600 || this.world.ui.building) return;
     const a = this.world.activeAgent;
     if (!a || a.lotId !== this.shownLot || a.hidden || a.travel) return;
     const cam = this.cameras.main;
@@ -1021,7 +1048,8 @@ export class HouseScene extends Phaser.Scene {
     const v = cam.worldView;
     const mx = v.width * 0.18, myTop = v.height * 0.18, myBot = v.height * 0.38;
     if (p.x < v.x + mx || p.x > v.right - mx || p.y < v.y + myTop || p.y > v.bottom - myBot) {
-      if (!cam.panEffect.isRunning) cam.pan(p.x, p.y + v.height * 0.08, 700, 'Sine.easeInOut');
+      if (prefs().reduceMotion) cam.centerOn(p.x, p.y + v.height * 0.08);
+      else if (!cam.panEffect.isRunning) cam.pan(p.x, p.y + v.height * 0.08, 700, 'Sine.easeInOut');
     }
   }
 
@@ -1065,6 +1093,16 @@ export class HouseScene extends Phaser.Scene {
       if (this.pointers.size === 1) {
         this.dragStart = { x: p.x, y: p.y, scrollX: cam.scrollX, scrollY: cam.scrollY };
         this.dragged = false;
+        this.longPressed = false;
+        // Pulsación larga sobre un personaje: su perfil.
+        this.longTimer?.remove();
+        this.longTimer = this.time.delayedCall(550, () => {
+          if (this.dragged || this.pointers.size !== 1 || this.world.ui.building) return;
+          const hit = this.agentAt(p.worldX, p.worldY);
+          if (!hit) return;
+          this.longPressed = true;
+          this.onLongPress?.(hit.id);
+        });
       } else if (this.pointers.size === 2) {
         const [a, b] = [...this.pointers.values()];
         this.pinchStart = { dist: Math.hypot(a.x - b.x, a.y - b.y), zoom: cam.zoom };
@@ -1095,21 +1133,42 @@ export class HouseScene extends Phaser.Scene {
       const wasTap = this.pointers.size === 1 && !this.dragged && this.dragStart;
       this.pointers.delete(p.id);
       if (this.pointers.size < 2) this.pinchStart = null;
-      if (!wasTap) this.lastUserCam = this.time.now;
+      this.longTimer?.remove();
+      if (!wasTap) {
+        this.lastUserCam = this.time.now;
+        if (this.dragged) this.camFree = true;
+      }
       if (this.pointers.size === 0) this.dragStart = null;
       else if (this.pointers.size === 1) {
         // Al soltar un dedo del pellizco, seguir arrastrando con el otro sin saltos.
         const [rest] = [...this.pointers.values()];
         this.dragStart = { x: rest.x, y: rest.y, scrollX: cam.scrollX, scrollY: cam.scrollY };
       }
-      if (wasTap) this.handleTap(p.worldX, p.worldY);
+      if (wasTap && !this.longPressed) this.handleTap(p.worldX, p.worldY);
     };
     this.input.on('pointerup', up);
     this.input.on('pointerupoutside', up);
 
     this.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => {
       cam.setZoom(Phaser.Math.Clamp(cam.zoom * (dy > 0 ? 0.9 : 1.1), ZOOM_MIN, ZOOM_MAX));
+      this.camFree = true;
     });
+  }
+
+  private longTimer?: Phaser.Time.TimerEvent;
+  private longPressed = false;
+
+  /** El personaje que hay bajo el dedo (el más cercano). */
+  private agentAt(wx: number, wy: number): Agent | undefined {
+    let best: { a: Agent; d: number } | null = null;
+    for (const a of this.world.agentsIn(this.shownLot)) {
+      if (a.hidden) continue;
+      const p = this.agentScreenPos(a);
+      const h = a.kind === 'person' ? 44 : 26;
+      const d = Math.hypot(wx - p.x, (wy - (p.y - h / 2)) * 0.8);
+      if (d < 26 && (!best || d < best.d)) best = { a, d };
+    }
+    return best?.a;
   }
 
   private handleTap(wx: number, wy: number) {
@@ -1118,15 +1177,8 @@ export class HouseScene extends Phaser.Scene {
     // En modo construcción con un mueble elegido, lo que importa es la casilla.
     if (this.world.ui.building && this.selectingTile) return tap({ kind: 'tile', x: tile.x, y: tile.y });
     // 1) Agentes (lo más cercano al dedo)
-    let bestAgent: { a: Agent; d: number } | null = null;
-    for (const a of this.world.agentsIn(this.shownLot)) {
-      if (a.hidden) continue;
-      const p = this.agentScreenPos(a);
-      const h = a.kind === 'person' ? 44 : 26;
-      const d = Math.hypot(wx - p.x, (wy - (p.y - h / 2)) * 0.8);
-      if (d < 26 && (!bestAgent || d < bestAgent.d)) bestAgent = { a, d };
-    }
-    if (bestAgent && !this.world.ui.building) return tap({ kind: 'agent', id: bestAgent.a.id });
+    const bestAgent = this.agentAt(wx, wy);
+    if (bestAgent && !this.world.ui.building) return tap({ kind: 'agent', id: bestAgent.id });
 
     // 2) Objetos (por su caja en pantalla, el de delante gana)
     let bestObj: { o: PlacedObject; depth: number } | null = null;
@@ -1190,7 +1242,7 @@ export class HouseScene extends Phaser.Scene {
     arrow.fillTriangle(-12, -20, 12, -20, 0, 0);
     arrow.fillRect(-5, -38, 10, 20);
     this.guideArrow = this.add.container(c.x, top, [arrow]).setDepth(1e5 + 2);
-    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = prefs().reduceMotion;
     if (!reduce) this.tweens.add({ targets: this.guideArrow, y: top - 12, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 

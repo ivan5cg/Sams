@@ -14,6 +14,8 @@ import { Part } from './part';
 
 export class ActionSheet extends Part {
   sheetTarget: Target | null = null;
+  /** Modo ⏰: elegir una acción la programa a una hora en vez de hacerla ya. */
+  scheduling = false;
 
   /** Engancha los eventos de su parte de la interfaz. */
   bind() {
@@ -23,6 +25,23 @@ export class ActionSheet extends Part {
       const b = el.closest('button');
       if (!b || !this.sheetTarget) return;
       if (b.dataset.close !== undefined) return this.closeSheet();
+      if (b.dataset.sched !== undefined) {
+        this.scheduling = !this.scheduling;
+        return this.handleTap(this.sheetTarget);
+      }
+      if (b.dataset.schedgo) {
+        const input = $('#sheet').querySelector<HTMLInputElement>('.sched-row input');
+        const [hh, mm] = (input?.value || '20:00').split(':').map(Number);
+        this.world.scheduleOrder(this.world.activeAgent.id, b.dataset.schedgo, this.sheetTarget, (hh || 0) * 60 + (mm || 0));
+        this.scheduling = false;
+        this.closeSheet();
+        this.hud.render();
+        return;
+      }
+      if (b.dataset.schedno !== undefined) {
+        $('#sheet').querySelector('.sched-row')?.remove();
+        return;
+      }
       if (b.dataset.bmove) {
         const o = this.world.object(b.dataset.bmove);
         if (o) this.hud.build.selectForBuild({ kind: 'move', id: o.id, def: o.def });
@@ -48,6 +67,7 @@ export class ActionSheet extends Part {
       const action = b.dataset.action;
       if (action === 'adopt') return this.showAdoption();
       if (action === 'find_job') return this.showJobs();
+      if (action && this.scheduling) return this.askTime(action);
       if (action) {
         this.world.command(this.world.activeAgent.id, action, this.sheetTarget);
         this.closeSheet();
@@ -119,15 +139,18 @@ export class ActionSheet extends Part {
       .join('');
 
     const isMember = target.kind === 'agent' && target.id !== active.id && w.household.memberIds.includes(target.id);
+    // Se puede programar lo que se le manda a alguien de la familia (no las listas de trabajo o adopción).
+    const canSchedule = w.isPlayerMember(active) && !!items;
     const switchBtn = isMember ? `<button class="act switch" data-switch="${target.id}"><span class="act-icon">🔁</span><span class="act-label">Controlar a ${esc(w.agent(target.id)!.name)}</span></button>` : '';
 
     $('#sheet').innerHTML = `
       <div class="sheet-card">
         <div class="sheet-head">
           <div><div class="sheet-title">${esc(title)}</div><div class="sheet-sub">${esc(subtitle)}</div></div>
+          ${canSchedule ? `<button class="icon-btn sched-toggle ${this.scheduling ? 'on' : ''}" data-sched aria-label="Programar a una hora" aria-pressed="${this.scheduling}">⏰</button>` : ''}
           <button class="icon-btn" data-close>✕</button>
         </div>
-        <div class="sheet-who">${target.kind === 'agent' && target.id === active.id ? 'Por su cuenta puede…' : `${esc(active.name)} puede…`}</div>
+        <div class="sheet-who">${this.scheduling && canSchedule ? `⏰ Elige qué programar para ${esc(active.name)}…` : target.kind === 'agent' && target.id === active.id ? 'Por su cuenta puede…' : `${esc(active.name)} puede…`}</div>
         <div class="sheet-actions">
           ${items || `<div class="empty">${esc(active.name)} no puede hacer nada con esto.</div>`}
           ${switchBtn}
@@ -142,6 +165,22 @@ export class ActionSheet extends Part {
     });
     this.sheetTarget = target;
     $('#sheet').hidden = false;
+  }
+
+  /** Modo ⏰: ¿a qué hora? Por defecto, la próxima hora en punto. */
+  private askTime(actionId: string) {
+    const card = $('#sheet').querySelector('.sheet-card');
+    if (!card) return;
+    card.querySelector('.sched-row')?.remove();
+    const next = (Math.floor((this.world.state.minutes % 1440) / 60) + 1) % 24;
+    const label = $('#sheet').querySelector(`[data-action="${CSS.escape(actionId)}"] .act-label`)?.firstChild?.textContent?.trim() ?? '';
+    const row = document.createElement('div');
+    row.className = 'sched-row';
+    row.innerHTML = `<label class="small">¿A qué hora? <input type="time" step="900" value="${String(next).padStart(2, '0')}:00" aria-label="Hora para ${esc(label)}" /></label>
+      <button class="map-btn" data-schedgo="${esc(actionId)}">⏰ Programar</button>
+      <button class="icon-btn" data-schedno aria-label="Cancelar">✕</button>`;
+    card.append(row);
+    row.querySelector('input')?.focus();
   }
 
   /** Buscar trabajo: elegir carrera. */
@@ -188,6 +227,7 @@ export class ActionSheet extends Part {
   }
 
   closeSheet() {
+    this.scheduling = false;
     $('#sheet').hidden = true;
     this.sheetTarget = null;
   }

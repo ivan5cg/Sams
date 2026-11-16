@@ -132,7 +132,8 @@ export class FamilyPanel extends Part {
     // Necesidades
     if (this.needsFor !== a.id) {
       $('#needs').innerHTML = NEED_KEYS.map(
-        (k) => `<div class="need"><span class="ni">${NEED_INFO[k].icon}</span><span class="nl">${esc(needLabel(a.species, k))}</span><div class="bar"><div class="fill" data-need="${k}"></div></div></div>`,
+        (k) =>
+          `<div class="need" data-row="${k}"><span class="ni">${NEED_INFO[k].icon}</span><span class="nl">${esc(needLabel(a.species, k))}</span><div class="bar" role="progressbar" aria-label="${esc(needLabel(a.species, k))}" aria-valuemin="0" aria-valuemax="100"><div class="fill" data-need="${k}"></div></div><b class="nv"></b></div>`,
       ).join('');
       this.needsFor = a.id;
     }
@@ -140,6 +141,13 @@ export class FamilyPanel extends Part {
       const v = a.needs[el.dataset.need as keyof Agent['needs']];
       el.style.width = `${v}%`;
       el.style.background = needColor(v);
+      // No solo color: el número y un aviso cuando está baja.
+      const row = el.closest<HTMLElement>('.need');
+      const n = Math.round(v);
+      row?.classList.toggle('low', v <= 30);
+      el.parentElement?.setAttribute('aria-valuenow', String(n));
+      const label = row?.querySelector('.nv');
+      if (label && label.textContent !== `${n}`) label.textContent = `${n}`;
     }
   }
 }

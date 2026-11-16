@@ -7,7 +7,7 @@ import type { Toast } from '../sim/world';
 import { $, esc } from './dom';
 import { noticeLevel } from './notice-level';
 import { Part } from './part';
-import { vibrate } from './prefs';
+import { vibrate } from '../prefs';
 
 interface TrayItem {
   when: string;

@@ -250,5 +250,18 @@ export interface WorldState {
   dilemma?: { id: string; agentId: string; until: number };
   /** Noticias del barrio (lo último primero): de qué se habla y se cotillea. */
   news?: { day: number; text: string; about: string[] }[];
+  /** Órdenes programadas a una hora (desde la versión 11). */
+  schedule?: ScheduledOrder[];
   objects: PlacedObject[];
+}
+
+/** Una orden que se da sola a una hora («a las 20:00, Mateo cocina»). */
+export interface ScheduledOrder {
+  id: string;
+  agentId: string;
+  /** Minuto absoluto de la partida en que se da. */
+  at: number;
+  actionId: string;
+  target: { kind: 'object' | 'agent' | 'tile'; id?: string; x?: number; y?: number };
+  param?: string;
 }

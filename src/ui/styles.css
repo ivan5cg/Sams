@@ -307,7 +307,7 @@ button {
 
 .need {
   display: grid;
-  grid-template-columns: 18px 64px 1fr;
+  grid-template-columns: 18px 64px 1fr 24px;
   align-items: center;
   gap: 4px;
   font-size: 12px;
@@ -403,6 +403,7 @@ button {
 #build[hidden],
 #placebar[hidden],
 #log[hidden],
+#agenda[hidden],
 #tutorial[hidden],
 #talk[hidden],
 #menu[hidden] {
@@ -589,7 +590,7 @@ button {
 
 @media (max-width: 380px) {
   .need {
-    grid-template-columns: 18px 1fr;
+    grid-template-columns: 18px 1fr 24px;
   }
   .need .nl {
     display: none;
@@ -1618,4 +1619,240 @@ body.guiding #toasts {
 
 .log-row .log-icon {
   align-self: flex-start;
+}
+
+/* --- Zonas táctiles: al menos 44×44 px donde se toca ----------------------------
+   Donde hay sitio, el botón crece; donde no (barra de arriba, chips, pines del mapa),
+   el botón se ve igual pero su zona de toque invisible llega a 44 px. */
+
+.icon-btn,
+.small-btn,
+.map-btn {
+  min-height: 44px;
+}
+
+.icon-btn {
+  min-width: 44px;
+}
+
+.panel-head .icon-btn#profile-btn,
+.panel-head .icon-btn#build-btn,
+#needs-toggle {
+  min-width: 44px;
+  min-height: 40px;
+}
+
+.menu-card .seg button,
+.vol input {
+  min-height: 40px;
+}
+
+.top-right .icon-btn,
+#speed button,
+#who,
+.wish,
+.comp,
+.chip .x,
+.menu-card .seg button,
+.panel-head .icon-btn {
+  position: relative;
+}
+
+.top-right .icon-btn::after,
+#speed button::after,
+#who::after,
+.wish::after,
+.comp::after,
+.chip .x::after,
+.pin::after,
+.menu-card .seg button::after,
+.panel-head .icon-btn::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
+/* Botón para volver a seguir al personaje activo (aparece al mover la cámara). */
+#recenter {
+  align-self: flex-end;
+  pointer-events: auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--panel-solid);
+  border: 2px solid var(--accent);
+  font-size: 22px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+#recenter[hidden] {
+  display: none;
+}
+
+body.building #recenter {
+  display: none;
+}
+
+/* --- Necesidades: no solo color ------------------------------------------------ */
+
+.need .nv {
+  font-size: 11px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.need.low .nv {
+  color: var(--danger);
+}
+
+.need.low .nv::before {
+  content: '⚠';
+  margin-right: 1px;
+}
+
+.need.low .bar {
+  outline: 1px solid rgba(255, 90, 77, 0.7);
+}
+
+/* --- Accesibilidad (☰ → ♿) ----------------------------------------------------- */
+
+html.big-text #sheet,
+html.big-text #map,
+html.big-text #profile,
+html.big-text #log,
+html.big-text #menu,
+html.big-text #talk,
+html.big-text #dilemma,
+html.big-text #toasts,
+html.big-text #guide,
+html.big-text #panel,
+html.big-text #tutorial,
+html.big-text #gone {
+  zoom: 1.15;
+}
+
+html.contrast {
+  --panel: rgba(0, 0, 0, 0.94);
+  --panel-solid: #000;
+  --line: rgba(255, 255, 255, 0.55);
+  --text: #fff;
+  --muted: #e2e5f0;
+}
+
+html.contrast .toast,
+html.contrast .sheet-card,
+html.contrast .map-card,
+html.contrast .menu-card,
+html.contrast #panel,
+html.contrast .guide-card {
+  border: 2px solid #fff;
+}
+
+html.contrast .act,
+html.contrast .comp,
+html.contrast .wish,
+html.contrast .chip,
+html.contrast .icon-btn {
+  outline: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+html.contrast .bar {
+  background: #333;
+  outline: 1px solid #fff;
+}
+
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* --- Agenda ---------------------------------------------------------------------- */
+
+#agenda {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.agenda-row {
+  display: grid;
+  grid-template-columns: 74px 24px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  font-size: 14px;
+}
+
+.agenda-row.past {
+  opacity: 0.5;
+}
+
+.agenda-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.agenda-row.k-order .agenda-text {
+  color: #f2c14e;
+}
+
+.agenda-x {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 13px;
+}
+
+.panel-head .icon-btn#agenda-btn {
+  font-size: 16px;
+}
+
+/* --- Programar una orden (⏰ en el menú de acciones) ------------------------------- */
+
+.sched-toggle.on {
+  background: rgba(242, 193, 78, 0.3);
+  outline: 1px solid #f2c14e;
+}
+
+.sched-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(242, 193, 78, 0.12);
+}
+
+.sched-row input {
+  min-height: 44px;
+  font: inherit;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  padding: 0 8px;
+}
+
+/* En la obra, la barra de «colocar aquí» va arriba: la guía (y los avisos) bajan. */
+body.building #guide {
+  top: calc(126px + var(--safe-top));
+}
+
+body.building.guiding #toasts {
+  top: calc(216px + var(--safe-top));
 }

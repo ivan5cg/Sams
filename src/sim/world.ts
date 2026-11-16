@@ -137,6 +137,7 @@ export class World {
       objects: [],
       rels: {},
       aging: 'normal',
+      schedule: [],
     };
     const mk = (id: string, name: string, species: SpeciesId, ageDays: number, color: number, x: number, y: number) =>
       makeAgent({ id, name, species, ageDays, color, householdId: 'h1', lotId: PLAYER_LOT, x, y });
@@ -425,6 +426,7 @@ export class World {
       }
     }
     Street.rapTick(this);
+    Tasks.runSchedule(this);
 
     Lifecycle.births(this);
     Shopping.checkDelivery(this);
@@ -888,6 +890,12 @@ export class World {
   }
 
   // Tasks
+  scheduleOrder(agentId: string, actionId: string, target: Target, minuteOfDay: number, param?: string) {
+    return Tasks.scheduleOrder(this, agentId, actionId, target, minuteOfDay, param);
+  }
+  cancelOrder(orderId: string) {
+    return Tasks.cancelOrder(this, orderId);
+  }
   command(agentId: string, actionId: string, target: Target, param?: string): boolean {
     return Tasks.command(this, agentId, actionId, target, param);
   }

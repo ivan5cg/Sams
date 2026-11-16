@@ -1,5 +1,6 @@
 // Efectos de la escena: bocadillos con frases y partículas (Zzz, notas, corazones, gotas...).
 
+import { prefs } from '../prefs';
 import Phaser from 'phaser';
 import { glyph, webglWanted } from './gfx';
 
@@ -126,7 +127,8 @@ export class SceneFx {
   // ---------------------------------------------------------------------------
 
   emit(kind: FxKind, x: number, y: number) {
-    if (this.particles > 90) return;
+    // Con «reducir movimiento», sin partículas.
+    if (this.particles > 90 || prefs().reduceMotion) return;
     const rnd = (a: number, b: number) => a + Math.random() * (b - a);
     switch (kind) {
       case 'zzz': {

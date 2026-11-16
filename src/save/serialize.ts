@@ -58,6 +58,10 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v10 → v11: órdenes programadas.
+  10: (s) => {
+    s.schedule = s.schedule ?? [];
+  },
   // v9 → v10: Alcorcón, el metro, la gente de la calle y el salseo.
   9: (s) => {
     addAlcorcon(s);

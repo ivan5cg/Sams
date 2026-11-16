@@ -3,6 +3,7 @@
 import { SPECIES, lifeStage } from '../data/species';
 import { IS_WEBGL, setWebglWanted, webglWanted } from '../render/gfx';
 import { loadAudioSettings, saveAudioSettings, type AudioSettings } from '../audio/settings';
+import { prefs, setPrefs, type Prefs } from '../prefs';
 import { $, esc } from './dom';
 import { Part } from './part';
 
@@ -31,6 +32,14 @@ export class GameMenu extends Part {
     $('#sound-on').addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('button');
       if (b?.dataset.sound) this.setAudio({ muted: b.dataset.sound === 'off' });
+    });
+    // Accesibilidad: letra, contraste, movimiento y vibración.
+    $('#access').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      const seg = b?.closest<HTMLElement>('[data-pref]');
+      if (!b || !seg) return;
+      setPrefs({ [seg.dataset.pref as keyof Prefs]: b.dataset.v === '1' });
+      this.renderAccess();
     });
     for (const input of $('#sound').querySelectorAll<HTMLInputElement>('input[data-vol]')) {
       input.addEventListener('input', () => this.setAudio({ [input.dataset.vol!]: Number(input.value) / 100 }));
@@ -98,6 +107,14 @@ export class GameMenu extends Part {
     }
   }
 
+  renderAccess() {
+    const p = prefs();
+    for (const seg of $('#access').querySelectorAll<HTMLElement>('[data-pref]')) {
+      const on = p[seg.dataset.pref as keyof Prefs];
+      for (const b of seg.querySelectorAll<HTMLButtonElement>('button')) b.classList.toggle('on', (b.dataset.v === '1') === on);
+    }
+  }
+
   renderAging() {
     const mode = this.world.state.aging ?? 'normal';
     for (const b of $('#aging').querySelectorAll<HTMLButtonElement>('button')) b.classList.toggle('on', b.dataset.aging === mode);
@@ -131,6 +148,7 @@ export class GameMenu extends Part {
     if (open) {
       this.renderAging();
       this.renderAudio();
+      this.renderAccess();
     }
     $('#menu').hidden = !open;
   }

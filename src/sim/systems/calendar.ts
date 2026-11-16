@@ -10,7 +10,7 @@ import { MINUTES_PER_DAY } from '../constants';
 import { BAR_LOT, PARK_LOT, PLAZA_LOT, SUPER_LOT } from '../neighborhood';
 import { getRel, isAdult, partnerOf } from '../social';
 import { hasTrait } from '../traits';
-import type { Agent, SpeciesId } from '../types';
+import type { Agent, Household, SpeciesId } from '../types';
 import { rand } from '../util';
 import { newWish } from '../wishes';
 import type { World } from '../world';
@@ -214,7 +214,7 @@ export function newDay(w: World) {
   if (w.weekday === 0 && w.day > 1) {
     for (const h of w.state.households) {
       const ms = h.memberIds.map((id) => w.agent(id)!).filter(Boolean);
-      const bill = h.okupa ? 0 : 60 + 20 * ms.filter((m) => m.kind === 'person').length + 10 * ms.filter((m) => m.kind === 'pet').length;
+      const bill = weeklyBill(w, h);
       h.funds -= bill;
       for (const m of ms) {
         if (m.job && CAREERS[m.job.career]?.business) {
@@ -304,4 +304,11 @@ export function newDay(w: World) {
     const h = candidates[Math.floor(Math.random() * candidates.length)];
     if (h) neighbourAdopts(w, h, species);
   }
+}
+
+/** Lo que cuestan las facturas de la semana de una familia (se pagan los lunes). */
+export function weeklyBill(w: World, h: Household): number {
+  if (h.okupa) return 0;
+  const ms = h.memberIds.map((id) => w.agent(id)!).filter(Boolean);
+  return 60 + 20 * ms.filter((m) => m.kind === 'person').length + 10 * ms.filter((m) => m.kind === 'pet').length;
 }

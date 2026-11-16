@@ -7,6 +7,7 @@ import type { AudioEngine } from '../audio/engine';
 import type { HouseScene } from '../render/HouseScene';
 import type { Target, Toast, World } from '../sim/world';
 import { $ } from './dom';
+import { vibrate } from '../prefs';
 import { BuildMode } from './build';
 import { TalkPanel } from './talk';
 import { Journal } from './log';
@@ -19,6 +20,7 @@ import { FamilyPanel } from './panel';
 import { GameMenu } from './menu';
 import { Guide } from './guide';
 import { Notices } from './notices';
+import { AgendaPanel } from './agenda';
 
 export interface HudCallbacks {
   onSave: () => void;
@@ -41,6 +43,7 @@ export class Hud {
   readonly menu = new GameMenu(this);
   readonly guide = new Guide(this);
   readonly notices = new Notices(this);
+  readonly agenda = new AgendaPanel(this);
 
   world: World;
   /** El sonido (se carga después del arranque). */
@@ -65,6 +68,7 @@ export class Hud {
   }
 
   private bind() {
+    $('#recenter').addEventListener('click', () => this.build.sceneRef?.().recenter());
     $('#speed').addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('button');
       if (b?.dataset.speed) this.world.state.speed = Number(b.dataset.speed);
@@ -82,6 +86,7 @@ export class Hud {
     this.menu.bind();
     this.guide.bind();
     this.notices.bind();
+    this.agenda.bind();
   }
 
   /** Toque en la escena: en modo construcción lo gestiona la obra; si no, el menú de acciones. */
@@ -92,6 +97,14 @@ export class Hud {
 
   setScene(get: () => HouseScene) {
     this.build.setScene(get);
+  }
+
+  /** Pulsación larga sobre un personaje: si es de la familia, pasa a controlarlo; y se abre su perfil. */
+  longPress(agentId: string) {
+    const a = this.world.agent(agentId);
+    if (!a) return;
+    vibrate(25);
+    this.profile.openProfile(agentId);
   }
 
   /** Al arrancar: la primera vez, el tutorial guiado. */
@@ -138,6 +151,8 @@ export class Hud {
     }
 
     this.panel.render();
+    const scene = this.build.sceneRef?.();
+    $('#recenter').hidden = !scene?.camFree || w.ui.building;
     this.guide.sync();
 
     this.talk.syncTalk();

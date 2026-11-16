@@ -56,11 +56,13 @@
     <div id="toasts"></div>
 
     <footer id="hud-bottom">
+      <button id="recenter" hidden aria-label="Volver a seguir al personaje">🎯</button>
       <section id="panel">
         <div class="panel-head">
           <button id="who" aria-label="Ver perfil y relaciones"></button>
           <button id="profile-btn" class="icon-btn" aria-label="Perfil y relaciones">👥</button>
           <button id="build-btn" class="icon-btn" aria-label="Modo construcción">🔨</button>
+          <button id="agenda-btn" class="icon-btn" aria-label="Agenda de la familia">📅</button>
           <button id="needs-toggle" class="icon-btn" aria-label="Mostrar u ocultar necesidades">▾</button>
         </div>
         <div id="queue"></div>
@@ -92,6 +94,7 @@
     <div id="placebar" hidden></div>
     <div id="talk" hidden></div>
     <div id="log" hidden></div>
+    <div id="agenda" hidden></div>
     <div id="tutorial" hidden></div>
     <div id="guide" hidden></div>
     <div id="dilemma" hidden></div>
@@ -118,6 +121,26 @@
           <label class="vol"><span>Ambiente</span><input type="range" min="0" max="100" step="5" data-vol="ambient" /></label>
           <label class="vol"><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" /></label>
           <p class="muted small">Todo el sonido se genera en el propio juego. Se para solo con la pantalla apagada.</p>
+        </details>
+        <details class="menu-sub" id="access">
+          <summary>♿ Accesibilidad</summary>
+          <div class="aging">
+            <span class="muted small">Letra</span>
+            <div class="seg" data-pref="bigText"><button data-v="0">Normal</button><button data-v="1">Grande</button></div>
+          </div>
+          <div class="aging">
+            <span class="muted small">Contraste</span>
+            <div class="seg" data-pref="contrast"><button data-v="0">Normal</button><button data-v="1">Alto</button></div>
+          </div>
+          <div class="aging">
+            <span class="muted small">Movimiento</span>
+            <div class="seg" data-pref="reduceMotion"><button data-v="0">Normal</button><button data-v="1">Reducido</button></div>
+          </div>
+          <div class="aging">
+            <span class="muted small">Vibración</span>
+            <div class="seg" data-pref="vibrate"><button data-v="1">Sí</button><button data-v="0">No</button></div>
+          </div>
+          <p class="muted small">«Reducido» quita parpadeos, partículas y deslizamientos de cámara. Son ajustes de este dispositivo.</p>
         </details>
         <div class="aging">
           <span class="muted small">Envejecimiento</span>

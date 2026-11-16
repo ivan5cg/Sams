@@ -2,6 +2,7 @@
 // sean lo que dicen ser. Así un fichero manipulado no puede colar HTML por un id o un número
 // (los textos libres, como los nombres, se escapan siempre al pintarlos).
 
+import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { SPECIES } from '../data/species';
 import type { WorldState } from '../sim/types';
@@ -83,4 +84,14 @@ export function validateState(s: WorldState) {
   }
   for (const k of Object.keys(s.rels ?? {})) for (const x of k.split('|')) id(x, 'relación');
   for (const sec of s.secrets ?? []) str(sec.text, 'salseo');
+  for (const o of s.schedule ?? []) {
+    id(o.id, 'orden programada');
+    id(o.agentId, 'orden programada');
+    num(o.at, 'hora de una orden');
+    if (!ACTIONS[o.actionId]) throw new Broken('acción de una orden');
+    optId(o.target?.id, 'objetivo de una orden');
+    optNum(o.target?.x, 'objetivo de una orden');
+    optNum(o.target?.y, 'objetivo de una orden');
+    optStr(o.param, 'orden programada');
+  }
 }

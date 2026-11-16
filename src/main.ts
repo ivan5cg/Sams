@@ -7,8 +7,11 @@ import { World } from './sim/world';
 import { Hud } from './ui/hud';
 import { markRenderer, setWebglWanted, webglWanted } from './render/gfx';
 import { DEBUG } from './render/perf';
+import { applyPrefs } from './prefs';
 
 const AUTOSAVE_MS = 30_000;
+
+applyPrefs();
 
 async function boot() {
   const saved = await loadGame();
@@ -81,6 +84,7 @@ async function boot() {
   game.scene.add('house', HouseScene, true, {
     world,
     onTap: (t: Parameters<Hud['handleTap']>[0], tile: { x: number; y: number }) => hud.handleTap(t, tile),
+    onLongPress: (id: string) => hud.longPress(id),
   });
   hud.setScene(() => game.scene.getScene('house') as HouseScene);
 
