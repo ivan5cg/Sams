@@ -270,7 +270,8 @@ Se adoptan en la protectora desde el **ordenador** de casa (máximo 8 miembros e
 ```bash
 npm install
 npm run dev       # servidor de desarrollo (abre la URL "Network" desde el móvil en la misma wifi)
-npm test          # pruebas de la simulación
+npm test          # pruebas de la simulación (Vitest)
+npm run test:e2e  # pruebas en navegador (Playwright) sobre dist/: antes, npm run build
 npm run build     # versión de producción en dist/
 npm run preview   # sirve dist/ para probar la PWA
 npm run icons     # regenera los PNG del icono desde public/icon.svg
@@ -287,16 +288,23 @@ Para instalarla como app hace falta HTTPS.
 ```
 src/
   sim/      Simulación pura, sin gráficos (se puede probar sin navegador)
-    world.ts        Reloj, agentes, tareas, necesidades, envejecimiento
+    world.ts        El mundo: estado, consultas, bucle de simulación y fachada de los sistemas
+    systems/        Un fichero por sistema: tareas, trabajo, viajes, construcción, ciclo de vida,
+                    calendario, compra, mascotas, salseo, calle, fiestas, cuerpo, movimiento...
     ai.ts           Autonomía por utilidad: los objetos "anuncian" lo que ofrecen
     pathfinding.ts  A* en cuadrícula
+    constants.ts    Constantes (versión de guardado, minutos por día...)
     types.ts        Estado del juego (JSON puro, se guarda tal cual)
-  data/     Contenido: especies, acciones, objetos y la parcela
+  data/     Contenido: especies, acciones, objetos, carreras, diálogos, la parcela...
   render/   Dibujado isométrico con Phaser
   ui/       Interfaz HTML (paneles, menú de acciones, retratos)
   save/     Guardado en IndexedDB, exportar/importar y migraciones
-tests/      Pruebas de la simulación (Vitest)
+tests/      Pruebas de la simulación (Vitest), de migraciones y de resistencia (8 semanas)
+  e2e/      Pruebas en navegador (Playwright)
 ```
+
+Los sistemas son funciones que reciben el mundo (`w`) y operan sobre `w.state`; `World` conserva
+los métodos que usan la interfaz, la escena y las pruebas, y delega en ellos.
 
 Para añadir un objeto nuevo basta con definirlo en `src/data/objects.ts` y sus
 acciones en `src/data/actions.ts`: la IA lo usará automáticamente.
