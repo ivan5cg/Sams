@@ -1,5 +1,5 @@
 import { HOUSE_OBJECTS, START_OBJECTS } from '../data/lot';
-import { OBJECTS } from '../data/objects';
+import { OBJECTS, sizeOf } from '../data/objects';
 import { PET_TRAITS } from '../data/pets';
 import { SAVE_VERSION } from '../sim/world';
 import { PLAYER_LOT, addAlcorcon, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
@@ -14,7 +14,7 @@ export function serialize(state: WorldState): string {
 function overlaps(objects: PlacedObject[], def: string, x: number, y: number): boolean {
   const d = OBJECTS[def];
   return objects.some((o) => {
-    const od = OBJECTS[o.def];
+    const od = sizeOf(o);
     return x < o.x + od.w && x + d.w > o.x && y < o.y + od.h && y + d.h > o.y;
   });
 }
@@ -58,6 +58,8 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v11 → v12: muebles girados y pintura por habitación (campos nuevos opcionales: nada que convertir).
+  11: () => {},
   // v10 → v11: órdenes programadas, logros y retos (y el registro de movimientos, que empieza vacío).
   10: (s) => {
     s.schedule = s.schedule ?? [];

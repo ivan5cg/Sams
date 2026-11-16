@@ -4,6 +4,7 @@
 
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
+import { FLOOR_BY_ID } from '../data/paint';
 import { SPECIES } from '../data/species';
 import type { WorldState } from '../sim/types';
 
@@ -44,6 +45,12 @@ export function validateState(s: WorldState) {
     str(l.name, `nombre de ${l.id}`);
     optId(l.householdId, `familia de ${l.id}`);
     optNum(l.size, `tamaño de ${l.id}`);
+    for (const p of l.plans ?? []) if (!['jardin', 'bano', 'salon', 'dormitorios'].includes(p)) throw new Broken(`reforma de ${l.id}`);
+    for (const [room, p] of Object.entries(l.paint ?? {})) {
+      id(room, `habitación de ${l.id}`);
+      optNum(p?.wall, `pintura de ${l.id}`);
+      if (p?.floor !== undefined && !FLOOR_BY_ID[p.floor]) throw new Broken(`suelo de ${l.id}`);
+    }
   }
   for (const h of arr(s.households, 'familias') as WorldState['households']) {
     id(h.id, 'familia');
@@ -85,6 +92,7 @@ export function validateState(s: WorldState) {
     num(o.y, `posición de ${o.id}`);
     optStr(o.label, `etiqueta de ${o.id}`);
     if (o.q !== undefined && ![1, 2, 3].includes(o.q)) throw new Broken(`calidad de ${o.id}`);
+    if (o.rot !== undefined && o.rot !== 1) throw new Broken(`giro de ${o.id}`);
   }
   for (const k of Object.keys(s.rels ?? {})) for (const x of k.split('|')) id(x, 'relación');
   for (const sec of s.secrets ?? []) str(sec.text, 'salseo');

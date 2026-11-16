@@ -45,6 +45,15 @@ export const QUALITY: Record<1 | 2 | 3, { label: string; short: string; price: n
   3: { label: 'De lujo', short: 'de lujo', price: 3, mult: 1.35, breaks: 0.3 },
 };
 
+/** Huella de un mueble colocado (girado, cambian el ancho y el fondo). */
+export function sizeOf(o: { def: string; rot?: number }): { w: number; h: number } {
+  const d = OBJECTS[o.def];
+  return o.rot ? { w: d.h, h: d.w } : { w: d.w, h: d.h };
+}
+
+/** ¿Se puede girar? (solo tiene sentido si no es cuadrado). */
+export const canRotate = (defId: string) => !!OBJECTS[defId] && OBJECTS[defId].w !== OBJECTS[defId].h;
+
 export function priceOf(d: ObjectDef, q: 1 | 2 | 3 = 2): number {
   return Math.round((d.price ?? 0) * (d.tiers ? QUALITY[q].price : 1));
 }

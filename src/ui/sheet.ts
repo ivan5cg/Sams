@@ -49,6 +49,11 @@ export class ActionSheet extends Part {
         if (o) this.hud.build.selectForBuild({ kind: 'move', id: o.id, def: o.def });
         return this.closeSheet();
       }
+      if (b.dataset.brot) {
+        this.world.rotateObject(b.dataset.brot);
+        this.hud.build.renderBuild();
+        return this.closeSheet();
+      }
       if (b.dataset.bsell) {
         this.world.sellObject(b.dataset.bsell);
         this.hud.build.renderBuild();

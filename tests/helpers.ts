@@ -52,6 +52,14 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v12: muebles girados y pintura por habitación.
+  if (version <= 11) {
+    for (const o of st.objects) delete o.rot;
+    for (const l of st.lots) {
+      delete l.paint;
+      delete l.plans;
+    }
+  }
   // v11: órdenes programadas.
   if (version <= 10) {
     delete st.schedule;

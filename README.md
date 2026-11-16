@@ -243,6 +243,11 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   no se rompe, alegra el ambiente y se duerme "como un bebé".
 - **🏗️ Reformas**: amplía la casa. Primero una habitación nueva junto al jardín (§6.000; lo del jardín se corre
   solo) y después un salón grande hacia la calle (§12.000).
+- **↻ Girar** muebles alargados (cama, sofá, jaula...) al colocarlos o moverlos, o tocándolos en la obra.
+- **↩️ Deshacer** lo último de la obra (compras, ventas, movimientos y pintura), con el dinero devuelto.
+- **🎨 Pintura**: color de las paredes y suelo (parqué, baldosa, terrazo, moqueta...) habitación a habitación.
+- Las **reformas** se eligen: la primera, habitación junto al jardín o con baño propio; la segunda, salón grande o
+  dos dormitorios hacia la calle.
 - A veces pasan cosas: encontrar dinero en un abrigo viejo... o que os toque la lotería.
 - En el menú ☰: **📜 Diario** con todo lo que ha pasado y **❓ Cómo se juega** (resumen rápido).
 - **Tutorial guiado** la primera vez: seis pasos que se aprenden haciendo (tocar la nevera, que alguien coma,

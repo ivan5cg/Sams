@@ -174,6 +174,8 @@ export interface PlacedObject {
   broken?: boolean;
   /** Calidad: 1 básica, 2 normal (por defecto), 3 de lujo. */
   q?: 1 | 2 | 3;
+  /** Girado 90° (la huella pasa de w×h a h×w). Desde la versión 12. */
+  rot?: 1;
 }
 
 export interface Household {
@@ -215,6 +217,17 @@ export interface Lot {
   style?: { wall: number; floor: number };
   /** Tamaño de la casa (1 = la de siempre; 2 y 3 = ampliada). */
   size?: number;
+  /** Plantillas elegidas en cada reforma de la casa ('jardin'/'bano', 'salon'/'dormitorios'). Desde la versión 12. */
+  plans?: string[];
+  /** Pintura de cada habitación (por su id, ver sim/rooms.ts). Desde la versión 12. */
+  paint?: Record<string, RoomPaint>;
+}
+
+/** Color de las paredes y suelo de una habitación. */
+export interface RoomPaint {
+  wall?: number;
+  /** Id de un suelo de data/paint.ts. */
+  floor?: string;
 }
 
 export interface Secret {

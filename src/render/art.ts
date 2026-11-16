@@ -19,10 +19,28 @@ export interface Rect {
 
 const R = (x: number, y: number, w: number, h: number): Rect => ({ x, y, w, h });
 
+/** Mientras se dibuja un mueble girado: se trasponen las coordenadas alrededor de su esquina. */
+let XF: { X: number; Y: number } | null = null;
+
 /** Punto de la casilla (tx, ty) a `z` píxeles de altura. */
 export function P(tx: number, ty: number, z = 0): Pt {
-  const p = isoToScreen(tx, ty);
+  const p = XF ? isoToScreen(XF.X + (ty - XF.Y), XF.Y + (tx - XF.X)) : isoToScreen(tx, ty);
   return { x: p.x, y: p.y - z };
+}
+
+/**
+ * Dibuja algo de un mueble teniendo en cuenta si está girado: girar 90° en la vista isométrica es
+ * trasponer x e y (las caras visibles siguen siendo las visibles; la huella pasa de w×h a h×w).
+ */
+export function withRotation(o: { x: number; y: number; rot?: number }, draw: () => void) {
+  if (!o.rot) return draw();
+  const prev = XF;
+  XF = { X: o.x, Y: o.y };
+  try {
+    draw();
+  } finally {
+    XF = prev;
+  }
 }
 
 export const WOOD = 0xa0703f;
@@ -116,6 +134,8 @@ function shadowUnder(g: G, cx: number, cy: number, w: number, alpha = 0.18) {
 export interface LotStyle {
   wall: number;
   floor: number;
+  /** Color de la baldosa (por defecto, blanca). */
+  tile?: number;
   /** Color del césped (cambia con la estación). */
   grass?: number;
   /** Nieve en el suelo (invierno). */
@@ -126,7 +146,7 @@ const GRASS = 0x79b65a;
 const TILE = 0xe3eaee;
 const PATH = 0xd9cba6;
 
-export function drawTile(g: G, t: TileType, x: number, y: number, style: LotStyle) {
+export function drawTile(g: G, t: TileType | 'carpet', x: number, y: number, style: LotStyle) {
   const h = hash(`${x},${y}`);
   const r = R(x, y, 1, 1);
   switch (t) {
@@ -145,8 +165,19 @@ export function drawTile(g: G, t: TileType, x: number, y: number, style: LotStyl
       g.lineBetween(c0.x, c0.y, c1.x, c1.y);
       break;
     }
+    case 'carpet': {
+      // Moqueta: color liso con algo de textura.
+      flat(g, r, 0, shade(style.floor, 0.97 + ((h % 5) / 100)));
+      g.fillStyle(shade(style.floor, 0.86), 0.5);
+      for (let i = 0; i < 4; i++) {
+        const c = P(x + (((h >>> (i * 4)) % 80) + 10) / 100, y + (((h >>> (i * 4 + 2)) % 80) + 10) / 100);
+        g.fillCircle(c.x, c.y, 0.9);
+      }
+      break;
+    }
     case 'tile': {
-      flat(g, r, 0, (x + y) % 2 ? TILE : shade(TILE, 0.93));
+      const tc = style.tile ?? TILE;
+      flat(g, r, 0, (x + y) % 2 ? tc : shade(tc, 0.93));
       g.lineStyle(1, 0xffffff, 0.55);
       g.strokePoints([P(x, y), P(x + 1, y), P(x + 1, y + 1), P(x, y + 1)], true);
       break;
@@ -223,6 +254,7 @@ export interface ObjLike {
   def: string;
   x: number;
   y: number;
+  rot?: number;
   stock?: number;
   dirt?: number;
   broken?: boolean;
@@ -1046,7 +1078,7 @@ const ART: Record<string, Art> = {
 export function drawObjectArt(g: G, f: G, o: ObjLike): boolean {
   const art = ART[o.def];
   if (!art) return false;
-  art(g, f, o.x, o.y, o);
+  withRotation(o, () => art(g, f, o.x, o.y, o));
   return true;
 }
 

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ACTIONS } from '../data/actions';
-import { OBJECTS } from '../data/objects';
+import { OBJECTS, sizeOf } from '../data/objects';
 import { lifeStage } from '../data/species';
 import type { Agent, PlacedObject } from '../sim/types';
 import type { Target, World } from '../sim/world';
@@ -10,12 +10,14 @@ import { fresh, vary } from '../sim/phrases';
 import { NEED_KEYS } from '../sim/types';
 import { drawSurroundings, skyAt } from './scenery';
 import { IS_WEBGL, glyph, webglWanted } from './gfx';
-import { P, SCREEN_GLOW, drawObjectArt, drawTile, drawWall, faceQuad, flat, prism, type LotStyle } from './art';
+import { P, SCREEN_GLOW, drawObjectArt, withRotation, drawTile, drawWall, faceQuad, flat, prism, type LotStyle } from './art';
 import { SceneFx, type FxKind } from './fx';
 import { PET_ART, drawAccessory, drawBackHead, drawBaby, drawFace, drawLeg, drawPersonBody, drawProp, personLook, petColor, type Expression, type PersonLook } from './characters';
 import { hasEmotion } from '../sim/emotions';
 import { moodScore } from '../sim/world';
 import { DEBUG, perf } from './perf';
+import { roomAt, wallRoom } from '../sim/rooms';
+import { FLOOR_BY_ID } from '../data/paint';
 import { prefs } from '../prefs';
 import { TILE_H, TILE_W, isoToScreen, screenToTile, shade, tileCenter } from './iso';
 
@@ -267,7 +269,8 @@ export class HouseScene extends Phaser.Scene {
   /** Lo que obliga a redibujar la parcela: la estación y el tamaño de la casa. */
   private shownKey = '';
   private lotKey() {
-    return `${this.world.season}:${this.world.lotById(this.shownLot)?.size ?? 1}`;
+    const lot = this.world.lotById(this.shownLot);
+    return `${this.world.season}:${lot?.size ?? 1}:${lot?.paint ? JSON.stringify(lot.paint) : ''}`;
   }
   /** Adornos de los eventos (guirnaldas de la verbena). */
   private eventDeco: Phaser.GameObjects.Graphics[] = [];
@@ -396,7 +399,18 @@ export class HouseScene extends Phaser.Scene {
 
     const floor = this.add.graphics().setDepth(-1e5);
     this.lotGraphics.push(floor);
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (tiles[y][x] !== 'wall') drawTile(floor, tiles[y][x], x, y, style);
+    // Suelo: cada habitación con el suyo si se ha cambiado en la obra.
+    const paint = lot.paint ?? {};
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const t = tiles[y][x];
+        if (t === 'wall') continue;
+        const room = roomAt(layout, x, y);
+        const f = room ? FLOOR_BY_ID[paint[room]?.floor ?? ''] : undefined;
+        if (f) drawTile(floor, f.kind, x, y, { ...style, floor: f.color, tile: f.color });
+        else drawTile(floor, t, x, y, style);
+      }
+    }
     // Sombra suave junto a las paredes (da sensación de volumen)
     for (let y = 1; y < h; y++) {
       for (let x = 1; x < w; x++) {
@@ -427,7 +441,8 @@ export class HouseScene extends Phaser.Scene {
         const g = this.add.graphics().setDepth((x + y) * 10 + 9);
         this.lotGraphics.push(g);
         const deco = back ? wallDeco(lot.layout, x, y) : undefined;
-        drawWall(g, x, y, back ? 56 : 12, style.wall, deco);
+        const wr = wallRoom(layout, x, y);
+        drawWall(g, x, y, back ? 56 : 12, (wr ? paint[wr]?.wall : undefined) ?? style.wall, deco);
         if (deco?.kind === 'window') faceQuad(windowsGlow, { x, y, w: 1, h: 1 }, deco.face, 0.24, 0.76, 21, 41, 0xffc56b, 0.9);
       }
     }
@@ -438,17 +453,17 @@ export class HouseScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   private objectDepth(o: PlacedObject) {
-    const d = OBJECTS[o.def];
+    const d = { ...OBJECTS[o.def], ...sizeOf(o) };
     return (o.x + d.w - 1 + o.y + d.h - 1) * 10 + (d.walkable ? 1 : 6);
   }
 
   /** Lo que cambia el dibujo de un objeto: sitio, si tiene comida, si está sucio o roto. */
   private objKey(o: PlacedObject) {
-    return `${o.x},${o.y},${(o.stock ?? 0) > 0},${(o.dirt ?? 0) >= 2},${!!o.broken},${o.q ?? 2}`;
+    return `${o.x},${o.y},${o.rot ?? 0},${(o.stock ?? 0) > 0},${(o.dirt ?? 0) >= 2},${!!o.broken},${o.q ?? 2}`;
   }
 
   private createObjectView(o: PlacedObject): ObjectView {
-    const d = OBJECTS[o.def];
+    const d = { ...OBJECTS[o.def], ...sizeOf(o) };
     const depth = this.objectDepth(o);
     const gfx = this.add.graphics().setDepth(o.def === 'pond' ? -1e4 : depth);
     const front = this.add.graphics().setDepth(depth + 3);
@@ -497,8 +512,9 @@ export class HouseScene extends Phaser.Scene {
     }
     let screen: Phaser.GameObjects.Graphics | undefined;
     if (SCREEN_GLOW[o.def] && !o.broken) {
-      screen = this.add.graphics().setDepth(depth + 0.5).setAlpha(0);
-      SCREEN_GLOW[o.def](screen, o.x, o.y);
+      const sg = this.add.graphics().setDepth(depth + 0.5).setAlpha(0);
+      withRotation(o, () => SCREEN_GLOW[o.def](sg, o.x, o.y));
+      screen = sg;
     }
     return { gfx, front, icon, badge, glow, screen, key: this.objKey(o) };
   }
@@ -537,7 +553,7 @@ export class HouseScene extends Phaser.Scene {
         v.screen.setAlpha(watching ? 0.25 + 0.35 * Math.abs(Math.sin(this.time.now / 140 + o.x)) : 0);
       }
       if (v.badge) {
-        const d = OBJECTS[o.def];
+        const d = { ...OBJECTS[o.def], ...sizeOf(o) };
         const empty = d.maxStock !== undefined && !o.stock;
         const dirty = d.maxDirt !== undefined && (o.dirt ?? 0) >= Math.ceil(d.maxDirt / 2);
         const broken = !!o.broken;
@@ -645,7 +661,7 @@ export class HouseScene extends Phaser.Scene {
     // Vive en una jaula o cuna: siempre dentro, en un sitio u otro según lo que haga.
     const home = this.world.object(a.home);
     if (home) {
-      const d = OBJECTS[home.def];
+      const d = { ...OBJECTS[home.def], ...sizeOf(home) };
       const act = t?.phase === 'acting' ? t.actionId : '';
       let fx = 0.3;
       if (act === 'cage_sleep') fx = 0.78;
@@ -657,7 +673,7 @@ export class HouseScene extends Phaser.Scene {
     }
     if (t && t.phase === 'acting' && t.targetObjectId) {
       const o = this.world.object(t.targetObjectId);
-      const d = o && OBJECTS[o.def];
+      const d = o && { ...OBJECTS[o.def], ...sizeOf(o) };
       if (o && d?.snap) {
         const users = this.world.usersOf(o.id).filter((u) => u.current?.phase === 'acting');
         const slot = users.indexOf(a);
@@ -1183,7 +1199,7 @@ export class HouseScene extends Phaser.Scene {
     // 2) Objetos (por su caja en pantalla, el de delante gana)
     let bestObj: { o: PlacedObject; depth: number } | null = null;
     for (const o of this.world.objectsIn(this.shownLot)) {
-      const d = OBJECTS[o.def];
+      const d = { ...OBJECTS[o.def], ...sizeOf(o) };
       const minX = isoToScreen(o.x, o.y + d.h).x, maxX = isoToScreen(o.x + d.w, o.y).x;
       const minY = isoToScreen(o.x, o.y).y - Math.max(d.height, 26) - 6, maxY = isoToScreen(o.x + d.w, o.y + d.h).y;
       if (wx >= minX && wx <= maxX && wy >= minY && wy <= maxY) {
@@ -1232,7 +1248,7 @@ export class HouseScene extends Phaser.Scene {
     this.guideArrow?.destroy();
     this.guideArrow = undefined;
     if (!o) return;
-    const d = OBJECTS[o.def];
+    const d = { ...OBJECTS[o.def], ...sizeOf(o) };
     const c = tileCenter(o.x + (d.w - 1) / 2, o.y + (d.h - 1) / 2);
     const top = c.y - d.height - 34;
     const arrow = this.add.graphics();
@@ -1249,13 +1265,13 @@ export class HouseScene extends Phaser.Scene {
   /** Vista previa del mueble que se va a colocar (verde si cabe, rojo si no). */
   private syncGhost() {
     const g = this.world.ui.building ? this.world.ui.ghost : null;
-    const key = g ? `${g.def}:${g.x}:${g.y}:${g.ok}:${this.shownLot}` : '';
+    const key = g ? `${g.def}:${g.x}:${g.y}:${g.rot ?? 0}:${g.ok}:${this.shownLot}` : '';
     if (key === this.ghostKey) return;
     this.ghostKey = key;
     this.ghostGfx?.destroy();
     this.ghostGfx = undefined;
     if (!g) return;
-    const d = OBJECTS[g.def];
+    const d = { ...OBJECTS[g.def], ...sizeOf(g) };
     const color = g.ok ? 0x3ddc4a : 0xff4d3d;
     const gfx = this.add.graphics().setDepth(1e5 - 1);
     for (let y = g.y; y < g.y + d.h; y++) for (let x = g.x; x < g.x + d.w; x++) {
@@ -1266,7 +1282,7 @@ export class HouseScene extends Phaser.Scene {
       gfx.strokePoints([a, b, c, e], true);
     }
     const art = this.add.graphics().setDepth(1e5).setAlpha(0.75);
-    if (!drawObjectArt(art, art, { def: g.def, x: g.x, y: g.y })) prism(art, { x: g.x + 0.1, y: g.y + 0.1, w: d.w - 0.2, h: d.h - 0.2 }, 0, d.height, d.color);
+    if (!drawObjectArt(art, art, { def: g.def, x: g.x, y: g.y, rot: g.rot })) prism(art, { x: g.x + 0.1, y: g.y + 0.1, w: d.w - 0.2, h: d.h - 0.2 }, 0, d.height, d.color);
     // Al destruir la huella se destruye también el dibujo.
     this.ghostGfx = gfx;
     gfx.once('destroy', () => art.destroy());

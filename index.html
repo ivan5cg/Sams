@@ -84,7 +84,10 @@
     <section id="build" hidden>
       <div class="build-head">
         <div><b>🔨 Construir</b> <span id="build-funds" class="muted small"></span></div>
-        <button id="build-exit" class="map-btn">✓ Listo</button>
+        <div class="build-actions">
+          <button id="build-undo" class="map-btn ghost" disabled aria-label="Nada que deshacer">↩️ Deshacer</button>
+          <button id="build-exit" class="map-btn">✓ Listo</button>
+        </div>
       </div>
       <div id="build-tabs"></div>
       <div id="build-tiers"></div>

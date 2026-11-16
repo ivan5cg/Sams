@@ -1920,3 +1920,23 @@ body.building.guiding #toasts {
 .feat-bar {
   margin-top: 4px;
 }
+
+/* --- Obra: deshacer, girar y pintar ------------------------------------------------ */
+
+.build-actions {
+  display: flex;
+  gap: 6px;
+}
+
+#build-undo:disabled {
+  opacity: 0.4;
+}
+
+.swatch.floor-wood {
+  background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 7px) !important;
+}
+
+.swatch.floor-tile {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 8px 8px;
+}

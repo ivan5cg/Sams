@@ -182,13 +182,46 @@ export const LAYOUTS: Record<LayoutId, LotLayout> = {
   bar: parseLot(BAR_MAP, { x: 5, y: 8 }),
 };
 
-/** Planos de la casa según lo ampliada que esté (1, 2 o 3). */
-export const HOUSE_SIZES: LotLayout[] = [LAYOUTS.house, parseLot(HOUSE2_MAP, { x: 5, y: 11 }, { x: 16, y: 6 }), parseLot(HOUSE3_MAP, { x: 5, y: 15 }, { x: 16, y: 6 })];
+/** Cambia algunas casillas de un plano: [x, y, carácter]. */
+function patchMap(rows: string[], edits: [number, number, string][]): string[] {
+  return rows.map((r, y) => [...r].map((c, x) => edits.find((e) => e[0] === x && e[1] === y)?.[2] ?? c).join(''));
+}
 
-/** Ampliaciones: precio y lo que se gana. */
+/** Variante de la primera ampliación: la habitación nueva, con un baño propio al fondo. */
+const BANO: [number, number, string][] = [
+  ...[11, 12, 13].flatMap((x) => [1, 2, 3].map((y) => [x, y, 't'] as [number, number, string])),
+  [11, 4, 'W'], [12, 4, 'd'], [13, 4, 'W'],
+];
+/** Variante de la segunda ampliación: en vez de un salón, dos dormitorios. */
+const DORMITORIOS: [number, number, string][] = [[7, 11, 'W'], [7, 12, 'd'], [7, 13, 'W']];
+
+const HOUSE_PLANS: Record<string, LotLayout> = {
+  '1': LAYOUTS.house,
+  '2:jardin': parseLot(HOUSE2_MAP, { x: 5, y: 11 }, { x: 16, y: 6 }),
+  '2:bano': parseLot(patchMap(HOUSE2_MAP, BANO), { x: 5, y: 11 }, { x: 16, y: 6 }),
+  '3:jardin+salon': parseLot(HOUSE3_MAP, { x: 5, y: 15 }, { x: 16, y: 6 }),
+  '3:jardin+dormitorios': parseLot(patchMap(HOUSE3_MAP, DORMITORIOS), { x: 5, y: 15 }, { x: 16, y: 6 }),
+  '3:bano+salon': parseLot(patchMap(HOUSE3_MAP, BANO), { x: 5, y: 15 }, { x: 16, y: 6 }),
+  '3:bano+dormitorios': parseLot(patchMap(HOUSE3_MAP, [...BANO, ...DORMITORIOS]), { x: 5, y: 15 }, { x: 16, y: 6 }),
+};
+
+/** Plano de la casa según lo ampliada que esté (1, 2 o 3) y las plantillas elegidas en cada reforma. */
+export function houseLayout(size: number, plans: string[] = []): LotLayout {
+  const s = Math.max(1, Math.min(3, size));
+  if (s === 1) return HOUSE_PLANS['1'];
+  const p = [plans[0] ?? 'jardin', plans[1] ?? 'salon'].slice(0, s - 1);
+  return HOUSE_PLANS[`${s}:${p.join('+')}`] ?? HOUSE_PLANS[s === 2 ? '2:jardin' : '3:jardin+salon'];
+}
+
+/** Planos por tamaño con las plantillas de siempre (compatibilidad). */
+export const HOUSE_SIZES: LotLayout[] = [houseLayout(1), houseLayout(2), houseLayout(3)];
+
+/** Ampliaciones: para cada tamaño, las plantillas que se pueden elegir. */
 export const EXPANSIONS = [
-  { size: 2, price: 6000, label: 'Habitación nueva junto al jardín', shiftX: 4 },
-  { size: 3, price: 12000, label: 'Salón grande hacia la calle', shiftX: 0 },
+  { size: 2, plan: 'jardin', price: 6000, label: 'Habitación nueva junto al jardín', shiftX: 4 },
+  { size: 2, plan: 'bano', price: 7500, label: 'Habitación con baño propio', shiftX: 4 },
+  { size: 3, plan: 'salon', price: 12000, label: 'Salón grande hacia la calle', shiftX: 0 },
+  { size: 3, plan: 'dormitorios', price: 13000, label: 'Dos dormitorios hacia la calle', shiftX: 0 },
 ];
 
 /** Entrada de la casa (todas las casas comparten plano). */

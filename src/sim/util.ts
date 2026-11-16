@@ -1,6 +1,6 @@
 // Pequeñas utilidades de la simulación.
 
-import { OBJECTS } from '../data/objects';
+import { sizeOf } from '../data/objects';
 import { emotionMood } from './emotions';
 import { hasTrait } from './traits';
 import { NEED_KEYS, type Agent, type PlacedObject, type Vec } from './types';
@@ -20,6 +20,6 @@ export function moodScore(a: Agent): number {
 
 /** Centro de un objeto en coordenadas de casilla. */
 export function objectCenter(o: PlacedObject): Vec {
-  const d = OBJECTS[o.def];
+  const d = sizeOf(o);
   return { x: o.x + (d.w - 1) / 2, y: o.y + (d.h - 1) / 2 };
 }

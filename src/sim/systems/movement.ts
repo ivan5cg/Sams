@@ -5,6 +5,7 @@ import { SPECIES } from '../../data/species';
 import { findPath, isWalkable, pathLength } from '../pathfinding';
 import type { Agent, PlacedObject, Vec } from '../types';
 import type { World } from '../world';
+import { sizeOf } from '../../data/objects';
 
 export function face(_w: World, a: Agent, p: Vec) {
   const sx = p.x - p.y - (a.pos.x - a.pos.y);
@@ -42,8 +43,8 @@ export function neighbours(w: World, lotId: string, x: number, y: number): Vec[]
 
 /** Casillas desde las que se puede usar un objeto. */
 export function interactTiles(w: World, o: PlacedObject): Vec[] {
-  const d = w.objDef(o);
-  if (d.walkable) return [{ x: o.x, y: o.y }];
+  if (w.objDef(o).walkable) return [{ x: o.x, y: o.y }];
+  const d = sizeOf(o);
   const grid = w.gridOf(o.lotId);
   const out: Vec[] = [];
   for (let y = o.y - 1; y <= o.y + d.h; y++) {

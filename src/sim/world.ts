@@ -4,8 +4,8 @@
 
 import { ACTIONS, type ActionDef } from '../data/actions';
 import { EMOTIONS } from '../data/emotions';
-import { HOUSE_OBJECTS, HOUSE_SIZES, LAYOUTS, isOutdoor, type LotLayout } from '../data/lot';
-import { OBJECTS, type ObjectDef } from '../data/objects';
+import { HOUSE_OBJECTS, LAYOUTS, houseLayout, isOutdoor, type LotLayout } from '../data/lot';
+import { OBJECTS, sizeOf, type ObjectDef } from '../data/objects';
 import { SEASONS } from '../data/seasons';
 import { SPECIES, lifeStage } from '../data/species';
 import { chooseAutonomous } from './ai';
@@ -15,7 +15,7 @@ import { ACAI_LOTS, BAR_LOT, METRO_LOT, PARK_LOT, PLAYER_LOT, PLAZA_LOT, STUDIO_
 import { isWalkable, type Grid } from './pathfinding';
 import { setRel } from './social';
 import { randomPetTrait, traitDecay, traitsOf } from './traits';
-import { NEED_KEYS, type Agent, type Household, type Lot, type NeedKey, type PlacedObject, type SpeciesId, type Task, type Vec, type WorldState } from './types';
+import { NEED_KEYS, type Agent, type Household, type Lot, type NeedKey, type PlacedObject, type RoomPaint, type SpeciesId, type Task, type Vec, type WorldState } from './types';
 import { topUpWishes } from './wishes';
 import { MAX_STEP, MINUTES_PER_DAY, SAVE_VERSION } from './constants';
 import { clamp, rand } from './util';
@@ -72,7 +72,7 @@ export class World {
   /** Estado de la interfaz que no se guarda (modo construcción y vista previa del mueble). */
   ui: {
     building: boolean;
-    ghost: { def: string; x: number; y: number; ok: boolean } | null;
+    ghost: { def: string; x: number; y: number; ok: boolean; rot?: 1 } | null;
     /** Mueble sobre el que el tutorial guiado pone una flecha. */
     guide?: { def: string } | null;
     /** Frases que la escena tiene que mostrar en bocadillos. */
@@ -114,6 +114,8 @@ export class World {
   lastRap = new Map<string, number>();
   /** Último día en que las militantes llamaron a la puerta de la familia. */
   campaignKnockDay = -1;
+  /** Lo que se puede deshacer en la obra (no se guarda: dura lo que dura la sesión de obra). */
+  buildUndo: Build.UndoEntry[] = [];
 
   constructor(state: WorldState) {
     this.state = state;
@@ -263,7 +265,7 @@ export class World {
   objectAt(lotId: string, x: number, y: number): PlacedObject | undefined {
     // Los objetos sólidos tienen prioridad sobre los transitables (charcos, pelota).
     const hits = this.objectsIn(lotId).filter((o) => {
-      const d = this.objDef(o);
+      const d = sizeOf(o);
       return x >= o.x && x < o.x + d.w && y >= o.y && y < o.y + d.h;
     });
     return hits.find((o) => !this.objDef(o).walkable) ?? hits[0];
@@ -303,7 +305,7 @@ export class World {
   /** Plano de una parcela (las casas, según lo ampliadas que estén). */
   layoutFor(lot: Lot | undefined): LotLayout {
     if (!lot) return LAYOUTS.house;
-    if (lot.layout === 'house') return HOUSE_SIZES[Math.max(1, Math.min(3, lot.size ?? 1)) - 1];
+    if (lot.layout === 'house') return houseLayout(lot.size ?? 1, lot.plans);
     return LAYOUTS[lot.layout];
   }
 
@@ -713,8 +715,8 @@ export class World {
       const { w, h, tiles } = this.layoutFor(lot);
       const grid = Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => tiles[y][x] !== 'wall'));
       for (const o of this.objectsIn(lot.id)) {
-        const d = this.objDef(o);
-        if (d.walkable) continue;
+        if (this.objDef(o).walkable) continue;
+        const d = sizeOf(o);
         for (let y = o.y; y < o.y + d.h; y++) for (let x = o.x; x < o.x + d.w; x++) if (grid[y]) grid[y][x] = false;
       }
       this.grids.set(lot.id, grid);
@@ -754,26 +756,41 @@ export class World {
   }
 
   // Build
+  rotateObject(id: string) {
+    return Build.rotateObject(this, id);
+  }
+  paintRoom(roomId: string, patch: RoomPaint) {
+    return Build.paintRoom(this, roomId, patch);
+  }
+  undoBuild() {
+    return Build.undoBuild(this);
+  }
+  lastUndo() {
+    return Build.lastUndo(this);
+  }
   canBuildHere(): boolean {
     return Build.canBuildHere(this);
   }
-  canPlace(defId: string, x: number, y: number, ignoreId?: string): { ok: boolean; reason?: string } {
-    return Build.canPlace(this, defId, x, y, ignoreId);
+  canPlace(defId: string, x: number, y: number, ignoreId?: string, rot?: 1): { ok: boolean; reason?: string } {
+    return Build.canPlace(this, defId, x, y, ignoreId, rot);
   }
-  buy(defId: string, x: number, y: number, q: 1 | 2 | 3 = 2): boolean {
-    return Build.buy(this, defId, x, y, q);
+  buy(defId: string, x: number, y: number, q: 1 | 2 | 3 = 2, rot?: 1): boolean {
+    return Build.buy(this, defId, x, y, q, rot);
   }
   nextExpansion() {
     return Build.nextExpansion(this);
   }
-  expandHouse(): boolean {
-    return Build.expandHouse(this);
+  nextExpansions() {
+    return Build.nextExpansions(this);
+  }
+  expandHouse(plan?: string): boolean {
+    return Build.expandHouse(this, plan);
   }
   cantTouch(o: PlacedObject): string | undefined {
     return Build.cantTouch(this, o);
   }
-  moveObject(id: string, x: number, y: number): boolean {
-    return Build.moveObject(this, id, x, y);
+  moveObject(id: string, x: number, y: number, rot?: 0 | 1): boolean {
+    return Build.moveObject(this, id, x, y, rot);
   }
   sellObject(id: string): boolean {
     return Build.sellObject(this, id);
