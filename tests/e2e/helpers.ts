@@ -36,6 +36,10 @@ export async function objectOnScreen(page: Page, def: string): Promise<{ x: numb
     const s = (window as unknown as { sams: { world: { viewLotId: string; objectsIn(l: string): { def: string; x: number; y: number }[] }; game: { scene: { getScene(k: string): { cameras: { main: Cam } } }; canvas: HTMLCanvasElement } } }).sams;
     const o = s.world.objectsIn(s.world.viewLotId).find((x) => x.def === def);
     if (!o) throw new Error(`No hay ${def}`);
+    // Que nadie lo esté usando (los demás van por su cuenta y podrían haberlo cogido).
+    for (const a of (s.world as unknown as { state: { agents: { current: { targetObjectId?: string } | null }[] } }).state.agents) {
+      if (a.current?.targetObjectId === (o as unknown as { id: string }).id) a.current = null;
+    }
     const cam = s.game.scene.getScene('house').cameras.main;
     cam.panEffect.reset();
     // Centro de la casilla en el mundo isométrico (64×32), un poco por encima del suelo.
