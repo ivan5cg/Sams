@@ -35,6 +35,7 @@ import * as Checks from './systems/checks';
 import * as Wishes from './systems/wishes';
 import * as Tasks from './systems/tasks';
 import * as Social from './systems/social';
+import * as Feats from './systems/feats';
 
 export { SAVE_VERSION, MINUTES_PER_DAY, MAX_MEMBERS, TRAVEL_MINUTES, RIDE_MINUTES, PANTRY_MAX } from './constants';
 export { moodScore, objectCenter } from './util';
@@ -138,6 +139,7 @@ export class World {
       rels: {},
       aging: 'normal',
       schedule: [],
+      feats: { got: {}, counts: {}, challenges: {} },
     };
     const mk = (id: string, name: string, species: SpeciesId, ageDays: number, color: number, x: number, y: number) =>
       makeAgent({ id, name, species, ageDays, color, householdId: 'h1', lotId: PLAYER_LOT, x, y });
@@ -456,6 +458,7 @@ export class World {
     Street.campaignHour(this);
     Body.bodyHour(this);
     Lifecycle.checkAspirations(this);
+    Feats.checkFeats(this);
     if (this.wishesEnabled) topUpWishes(this);
     Shopping.closingTime(this);
     Shopping.groceryErrand(this);
@@ -890,6 +893,12 @@ export class World {
   }
 
   // Tasks
+  startChallenge(id: string) {
+    return Feats.startChallenge(this, id);
+  }
+  dropChallenge(id: string) {
+    return Feats.dropChallenge(this, id);
+  }
   scheduleOrder(agentId: string, actionId: string, target: Target, minuteOfDay: number, param?: string) {
     return Tasks.scheduleOrder(this, agentId, actionId, target, minuteOfDay, param);
   }

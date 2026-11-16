@@ -13,7 +13,7 @@ interface Listener {
   listenerTile(): { lotId: string; x: number; y: number };
 }
 
-const OVERLAYS = ['#sheet', '#map', '#profile', '#menu', '#log', '#agenda', '#build', '#talk', '#dilemma'];
+const OVERLAYS = ['#sheet', '#map', '#profile', '#menu', '#log', '#agenda', '#feats', '#build', '#talk', '#dilemma'];
 
 export function startAudio(getWorld: () => World, getScene: () => Listener | undefined): AudioEngine {
   const engine = new AudioEngine();

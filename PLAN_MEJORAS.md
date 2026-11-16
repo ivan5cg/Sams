@@ -20,7 +20,8 @@ en el commit `81e00a6` ("Diálogos con más profundidad y casi sin repeticiones"
 | 2.5 Accesibilidad | ✅ | |
 | 3 Sonido | ✅ | Todo sintetizado (sin ficheros); voz del metro con `speechSynthesis` |
 | 4.1 Economía | ✅ | Ver «Economía» al final. Pendiente: vacaciones de fin de semana |
-| 4.2 – 4.5, Fase 5 | ⏳ | Sin empezar |
+| 4.4 Logros y retos | ✅ | 15 logros y 3 retos; generaciones contadas desde la familia fundadora |
+| 4.2, 4.3, 4.5, Fase 5 | ⏳ | Sin empezar |
 
 ---
 

@@ -88,6 +88,15 @@ export function validateState(s: WorldState) {
   }
   for (const k of Object.keys(s.rels ?? {})) for (const x of k.split('|')) id(x, 'relación');
   for (const sec of s.secrets ?? []) str(sec.text, 'salseo');
+  if (s.feats) {
+    for (const k of [...Object.keys(s.feats.got ?? {}), ...Object.keys(s.feats.challenges ?? {})]) id(k, 'logro');
+    for (const v of [...Object.values(s.feats.got ?? {}), ...Object.values(s.feats.counts ?? {})]) num(v, 'logros');
+    for (const c of Object.values(s.feats.challenges ?? {})) {
+      num(c.since, 'reto');
+      optNum(c.done, 'reto');
+      optStr(c.failed, 'reto');
+    }
+  }
   for (const o of s.schedule ?? []) {
     id(o.id, 'orden programada');
     id(o.agentId, 'orden programada');

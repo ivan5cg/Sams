@@ -14,6 +14,7 @@ import { clamp, moodScore, rand } from '../util';
 import type { World } from '../world';
 import { money } from './money';
 import { beginTask, endTask } from './tasks';
+import { countFeat } from './feats';
 
 export function canAdopt(w: World, species: SpeciesId): { ok: boolean; reason?: string } {
   const sp = SPECIES[species];
@@ -56,6 +57,7 @@ export function adopt(w: World, species: SpeciesId): Agent | null {
     pet.pos = { x: home.x, y: home.y };
   }
   money(w, w.household, -sp.price, 'mascotas');
+  countFeat(w, `adopt_${species}`);
   w.state.agents.push(pet);
   w.household.memberIds.push(pet.id);
   w.toast(`¡Bienvenido/a a casa, ${name}! (${sp.label.toLowerCase()})`, '🎉');

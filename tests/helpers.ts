@@ -53,7 +53,10 @@ export function saveAt(version: number): Raw {
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
   // v11: órdenes programadas.
-  if (version <= 10) delete st.schedule;
+  if (version <= 10) {
+    delete st.schedule;
+    delete st.feats;
+  }
   // v10: Alcorcón, el metro, la gente de la calle y el salseo.
   if (version <= 9) {
     dropLots((id) => ['MT', 'PL', 'BR'].includes(id) || id.startsWith('AL'));

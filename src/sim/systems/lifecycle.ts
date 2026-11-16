@@ -16,6 +16,7 @@ import { clamp } from '../util';
 import type { World } from '../world';
 import { money } from './money';
 import { districtOf, freeSpotNear, startTravel } from './travel';
+import { countFeat } from './feats';
 
 /** Si alguien no puede dejar su casa (p. ej. no dejaría solos a sus hijos), el motivo. */
 export function cantMoveOut(w: World, t: Agent): string | undefined {
@@ -89,6 +90,8 @@ export function births(w: World) {
     const baby = makeAgent({ id: w.newId('a'), name, species: 'human', ageDays: 0, color, householdId: h.id, lotId: h.lotId, x: crib.x, y: crib.y });
     baby.home = crib.id;
     baby.parents = parents.map((p) => p.id);
+    baby.gen = Math.max(1, ...parents.map((p) => p.gen ?? 1)) + 1;
+    if (mine) countFeat(w, 'babies');
     baby.traits = inheritTraits(w, parents);
     for (const p of parents) w.bump(p, 'babies');
     baby.abstract = !w.detailedLots().has(h.lotId);

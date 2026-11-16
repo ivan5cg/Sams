@@ -21,6 +21,7 @@ import { GameMenu } from './menu';
 import { Guide } from './guide';
 import { Notices } from './notices';
 import { AgendaPanel } from './agenda';
+import { FeatsPanel } from './feats';
 
 export interface HudCallbacks {
   onSave: () => void;
@@ -44,6 +45,7 @@ export class Hud {
   readonly guide = new Guide(this);
   readonly notices = new Notices(this);
   readonly agenda = new AgendaPanel(this);
+  readonly feats = new FeatsPanel(this);
 
   world: World;
   /** El sonido (se carga después del arranque). */
@@ -87,6 +89,7 @@ export class Hud {
     this.guide.bind();
     this.notices.bind();
     this.agenda.bind();
+    this.feats.bind();
   }
 
   /** Toque en la escena: en modo construcción lo gestiona la obra; si no, el menú de acciones. */

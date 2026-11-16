@@ -404,6 +404,7 @@ button {
 #placebar[hidden],
 #log[hidden],
 #agenda[hidden],
+#feats[hidden],
 #tutorial[hidden],
 #talk[hidden],
 #menu[hidden] {
@@ -1879,4 +1880,43 @@ body.building.guiding #toasts {
   margin-top: 4px;
   padding-top: 6px;
   font-weight: 700;
+}
+
+/* --- Logros y retos ---------------------------------------------------------------- */
+
+#feats {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.feat-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 6px 0;
+  opacity: 0.75;
+}
+
+.feat-row.got {
+  opacity: 1;
+}
+
+.feat-icon {
+  font-size: 24px;
+  width: 30px;
+  text-align: center;
+}
+
+.feat-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.feat-bar {
+  margin-top: 4px;
 }

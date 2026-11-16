@@ -22,6 +22,7 @@ import { askChismosa, learnSecret, makePublic } from './gossip';
 import { bestPath, neighbours } from './movement';
 import { beginTask, runTask } from './tasks';
 import { districtOf, freeSpotNear, goHome, startTravel } from './travel';
+import { countFeat } from './feats';
 
 /** La gente de la calle hace lo suyo: no tiene necesidades ni autonomía normal. */
 export function stepRole(w: World, a: Agent, dt: number) {
@@ -140,6 +141,7 @@ export function rapTick(w: World) {
 
 /** Un rap con lo que se sabe de `t`: trabajo, mascota, pareja, rasgos... */
 export function startRap(w: World, rapper: Agent, t: Agent) {
+  if (w.isPlayerMember(t)) countFeat(w, 'raps');
   const fill = (pair: [string, string], x = '', y = '') => pair.map((l) => l.replace('{name}', t.name).replace('{x}', x).replace('{y}', y));
   const pickPair = (list: [string, string][]) => list[Math.floor(Math.random() * list.length)];
   const lines: string[] = [...fill(pickPair(RAP_INTRO))];
@@ -282,10 +284,12 @@ export function streetTask(w: World, a: Agent, id: string) {
         money(w, h, 100, 'premios');
         w.feel(a, 'premio');
         if (mine) w.toast(`¡Premio gordo en la tragaperras! ${a.name} se lleva §100`, '🎰');
+        if (mine) countFeat(w, 'slot_wins');
       } else if (h && r < 0.07) {
         money(w, h, 15, 'premios');
         w.feel(a, 'premio');
         if (mine) w.toast(`¡Ding, ding, ding! ${a.name} saca §15 de la tragaperras`, '🎰');
+        if (mine) countFeat(w, 'slot_wins');
       }
       break;
     }

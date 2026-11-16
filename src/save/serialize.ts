@@ -58,9 +58,10 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
-  // v10 → v11: órdenes programadas (y el registro de movimientos, que empieza vacío).
+  // v10 → v11: órdenes programadas, logros y retos (y el registro de movimientos, que empieza vacío).
   10: (s) => {
     s.schedule = s.schedule ?? [];
+    s.feats = s.feats ?? { got: {}, counts: {}, challenges: {} };
   },
   // v9 → v10: Alcorcón, el metro, la gente de la calle y el salseo.
   9: (s) => {

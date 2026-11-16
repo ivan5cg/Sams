@@ -84,6 +84,8 @@ export interface Agent {
   aspiration?: { id: string; stage: number };
   /** Metas de vida ya cumplidas. */
   aspirationsDone?: string[];
+  /** Generación en la familia del jugador (1 = la fundadora). */
+  gen?: number;
   /** Padres (para saber quién es hijo/nieto de quién). */
   parents?: string[];
   /** Puede elegir un rasgo nuevo (al hacerse adulto). */
@@ -261,6 +263,8 @@ export interface WorldState {
   news?: { day: number; text: string; about: string[] }[];
   /** Órdenes programadas a una hora (desde la versión 11). */
   schedule?: ScheduledOrder[];
+  /** Logros conseguidos, contadores de la familia y retos activos (desde la versión 11). */
+  feats?: Feats;
   objects: PlacedObject[];
 }
 
@@ -273,4 +277,13 @@ export interface ScheduledOrder {
   actionId: string;
   target: { kind: 'object' | 'agent' | 'tile'; id?: string; x?: number; y?: number };
   param?: string;
+}
+
+export interface Feats {
+  /** Logros conseguidos: id → día. */
+  got: Record<string, number>;
+  /** Contadores de la familia del jugador (bebés, raps, premios...). */
+  counts: Record<string, number>;
+  /** Retos activados: desde cuándo, sus contadores, y si se cumplieron o se perdieron. */
+  challenges: Record<string, { since: number; counts: Record<string, number>; done?: number; failed?: string }>;
 }

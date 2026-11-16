@@ -267,6 +267,15 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   (un nivel de golpe en la habilidad que elijas), además de muebles, reformas y caprichos.
 - Todas las cifras están en `src/data/economy.ts`.
 
+## Logros y retos
+
+- En ☰ → **🏆 Logros y retos**: 15 logros que se consiguen jugando (primer ascenso, boda, un bebé, tres y cinco
+  generaciones, una meta de vida, Navidad sin deudas, adoptar las cinco especies, premio en la tragaperras, que
+  MC Kalimotxo os dedique 3 temas, tres fiestas, el casoplón, §20.000, una mascota de circo y 10 salseos), con su
+  progreso.
+- **Retos** opcionales, con premio de §1.000: *100 bebés*, *vivir sin nevera* (7 días) y *vivir del arte*
+  (dos semanas sin trabajar y sin números rojos). Se pueden abandonar o volver a intentar.
+
 ## Agenda
 
 - **📅 Agenda** (en el panel de abajo): lo que viene hoy y mañana para la familia. Turnos de trabajo y colegio,
