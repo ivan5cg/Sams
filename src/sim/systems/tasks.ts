@@ -82,6 +82,7 @@ export function beginTask(w: World, a: Agent, task: Task): boolean {
     if (!speciesOk(w, a, def)) return fail('no puede hacer eso');
     task.phase = 'acting';
     task.remaining = def.duration;
+    w.emit({ type: 'act', agentId: a.id, actionId: task.actionId });
     return true;
   }
   if (def.target === 'tile') {
@@ -227,6 +228,7 @@ export function runTask(w: World, a: Agent, task: Task, dt: number) {
     }
     task.phase = 'acting';
     task.remaining = def.duration;
+    w.emit({ type: 'act', agentId: a.id, actionId: task.actionId });
     face(w, a, objectCenter(o));
     return;
   }

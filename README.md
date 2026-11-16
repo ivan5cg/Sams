@@ -249,6 +249,20 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   manejar a la mascota, buscar trabajo, comprar un mueble e ir al parque), con una flecha sobre el mueble o un
   halo en el botón que toca. El tiempo solo se para en el primero, se puede saltar y recuerda por dónde ibas.
 
+## Sonido
+
+- Todo el sonido se **genera en el propio juego** (no hay ficheros que descargar): efectos de la interfaz, de la
+  casa (pasos, puerta, nevera, sartén, ducha, váter, tele, guitarra), de las mascotas (ladrido, maullido, el
+  «uic» de la cobaya, el «dook» del hurón, la capibara) y de los eventos (sueldo, ascenso, facturas, bebé,
+  despertador, lotería, fuegos artificiales... y los pedos).
+- Lo que pasa lejos de la cámara suena más bajo, y lo de otras parcelas no se oye.
+- **Ambiente** según el sitio y la hora: el reloj de casa, pájaros en el parque, grillos de noche, la fuente de la
+  plaza de Alcorcón, el murmullo y la tragaperras del bar, el traqueteo del metro (con «Próxima estación…»),
+  lluvia y viento.
+- **Música** tranquila de día y de noche, y temas para las fiestas, Navidad y la verbena o San Isidro (chotis),
+  con fundido entre ellos.
+- En ☰ → **🔊 Sonido**: quitarlo del todo o ajustar efectos, ambiente y música. Con la pantalla apagada se para.
+
 ## Mascotas
 
 Se adoptan en la protectora desde el **ordenador** de casa (máximo 8 miembros en la familia).

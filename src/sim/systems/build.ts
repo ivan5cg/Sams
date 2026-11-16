@@ -92,6 +92,7 @@ export function buy(w: World, defId: string, x: number, y: number, q: 1 | 2 | 3 
     ...(d.maxDirt ? { dirt: 0 } : {}),
   });
   w.rebuildGrid();
+  w.emit({ type: 'sound', id: 'buy', lotId: w.household.lotId });
   return true;
 }
 

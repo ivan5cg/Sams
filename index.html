@@ -105,6 +105,20 @@
         <button data-menu="save">💾 Guardar ahora</button>
         <button data-menu="export">📤 Exportar partida</button>
         <button data-menu="import">📥 Importar partida</button>
+        <details class="menu-sub" id="sound">
+          <summary>🔊 Sonido</summary>
+          <div class="aging">
+            <span class="muted small">Sonido</span>
+            <div class="seg" id="sound-on">
+              <button data-sound="on">🔊 Sí</button>
+              <button data-sound="off">🔇 No</button>
+            </div>
+          </div>
+          <label class="vol"><span>Efectos</span><input type="range" min="0" max="100" step="5" data-vol="sfx" /></label>
+          <label class="vol"><span>Ambiente</span><input type="range" min="0" max="100" step="5" data-vol="ambient" /></label>
+          <label class="vol"><span>Música</span><input type="range" min="0" max="100" step="5" data-vol="music" /></label>
+          <p class="muted small">Todo el sonido se genera en el propio juego. Se para solo con la pantalla apagada.</p>
+        </details>
         <div class="aging">
           <span class="muted small">Envejecimiento</span>
           <div class="seg" id="aging">

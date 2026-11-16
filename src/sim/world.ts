@@ -55,6 +55,15 @@ export interface Toast {
   icon?: string;
 }
 
+/** Cosas que pasan en la simulación y que le interesan a quien la mira (el sonido, por ejemplo). */
+export type SimEvent =
+  /** Alguien empieza a hacer algo (comer, ducharse, ladrar...). */
+  | { type: 'act'; agentId: string; actionId: string }
+  /** Alguien entra o sale por la puerta de una parcela. */
+  | { type: 'door'; lotId: string }
+  /** Un sonido suelto (comprar un mueble...). */
+  | { type: 'sound'; id: string; lotId?: string };
+
 export class World {
   state: WorldState;
   /** Estado de la interfaz que no se guarda (modo construcción y vista previa del mueble). */
@@ -82,6 +91,8 @@ export class World {
   grids = new Map<string, Grid>();
   /** Quién escucha los avisos (la interfaz). */
   toastListeners: ((t: Toast) => void)[] = [];
+  /** Quién escucha los eventos de la simulación (el sonido). */
+  eventListeners: ((e: SimEvent) => void)[] = [];
   /** Avisos de necesidades ya dados (para no repetirlos hasta que se recuperen). */
   warned = new Set<string>();
   /** Cuándo salió por última vez cada aviso con clave (ver toastOnce). */
@@ -307,6 +318,15 @@ export class World {
 
   toast(text: string, icon?: string) {
     for (const fn of this.toastListeners) fn({ text, icon });
+  }
+
+  /** Suscribirse a los eventos de la simulación. */
+  onEvent(fn: (e: SimEvent) => void) {
+    this.eventListeners.push(fn);
+  }
+
+  emit(e: SimEvent) {
+    for (const fn of this.eventListeners) fn(e);
   }
 
   /** Aviso que no se repite más de una vez cada `every` minutos de juego. */

@@ -109,6 +109,12 @@ async function boot() {
   });
   window.addEventListener('pagehide', () => saveGameSync(world.state));
 
+  // El sonido se carga después de arrancar (no retrasa la primera imagen).
+  void import('./audio').then((m) => {
+    hud.audio = m.startAudio(() => world, () => game.scene.getScene('house') as HouseScene | undefined);
+    Object.assign((window as unknown as { sams: object }).sams, { audio: hud.audio });
+  });
+
   // Panel de rendimiento (?debug): se carga aparte, solo si se pide.
   if (DEBUG) void import('./ui/debug').then((m) => m.startDebugOverlay(game, () => world));
 

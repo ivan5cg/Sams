@@ -65,6 +65,7 @@ export function startTravel(w: World, a: Agent, to: string, direct = false) {
   } else if (districtOf(w, a.lotId) === 'metro') {
     mins = 8;
   }
+  w.emit({ type: 'door', lotId: a.lotId });
   a.travel = { from: a.lotId, to, arrive: w.state.minutes + mins };
   a.hidden = false;
 }
@@ -79,6 +80,7 @@ export function arrive(w: World, a: Agent) {
   a.travel = undefined;
   if (reason) finishShift(w, a, reason, mood ?? 50);
   a.lotId = to;
+  w.emit({ type: 'door', lotId: to });
   a.pos = freeSpotNear(w, to, w.layoutOf(to).entrance);
   a.path = [];
   a.current = null;

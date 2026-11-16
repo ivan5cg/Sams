@@ -3,6 +3,7 @@
 
 import { WEEKDAY_NAMES } from '../data/careers';
 import { EVENTS } from '../data/seasons';
+import type { AudioEngine } from '../audio/engine';
 import type { HouseScene } from '../render/HouseScene';
 import type { Target, World } from '../sim/world';
 import { $, esc } from './dom';
@@ -40,6 +41,8 @@ export class Hud {
   readonly guide = new Guide(this);
 
   world: World;
+  /** El sonido (se carga después del arranque). */
+  audio?: AudioEngine;
 
   constructor(
     world: World,

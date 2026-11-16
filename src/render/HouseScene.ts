@@ -1155,6 +1155,13 @@ export class HouseScene extends Phaser.Scene {
     }
   }
 
+  /** Dónde «escucha» el jugador: la casilla del centro de la cámara (para el volumen del sonido). */
+  listenerTile(): { lotId: string; x: number; y: number } {
+    const m = this.cameras.main.midPoint;
+    const t = screenToTile(m.x, m.y);
+    return { lotId: this.shownLot, x: t.x, y: t.y };
+  }
+
   /** Lo pone la interfaz: hay un mueble elegido y el siguiente toque es para colocarlo. */
   selectingTile = false;
 

@@ -507,6 +507,8 @@ button {
 .menu-card {
   width: 100%;
   max-width: 340px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
   background: var(--panel-solid);
   border-radius: 20px;
   padding: 18px;
@@ -1474,4 +1476,45 @@ body.guiding #toasts {
   .guide-glow {
     animation: none;
   }
+}
+
+/* --- Sonido (en el menú) ----------------------------------------------------- */
+
+.menu-sub {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 10px;
+}
+
+.menu-sub summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.menu-sub summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-sub[open] {
+  padding-bottom: 8px;
+}
+
+.vol {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.vol input {
+  width: 100%;
+  accent-color: var(--accent);
+  min-height: 32px;
 }

@@ -71,6 +71,7 @@ export function walkToAgent(w: World, a: Agent, task: Task, dt: number) {
       t.path = [];
       task.phase = 'acting';
       task.remaining = def.duration;
+      w.emit({ type: 'act', agentId: a.id, actionId: task.actionId });
       face(w, a, t.pos);
       if (!t.home) face(w, t, a.pos);
       if (def.offLot) {

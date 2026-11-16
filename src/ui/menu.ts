@@ -2,6 +2,7 @@
 
 import { SPECIES, lifeStage } from '../data/species';
 import { IS_WEBGL, setWebglWanted, webglWanted } from '../render/gfx';
+import { loadAudioSettings, saveAudioSettings, type AudioSettings } from '../audio/settings';
 import { $, esc } from './dom';
 import { Part } from './part';
 
@@ -26,6 +27,14 @@ export class GameMenu extends Part {
       if (confirm(want ? 'Gráficos avanzados: hay que recargar el juego (la partida se guarda). Si en tu móvil algo no se ve bien, vuelve aquí y elige «Normal». ¿Recargar ahora?' : 'Volver a gráficos normales: hay que recargar (la partida se guarda). ¿Recargar ahora?')) this.hud.cb.onReload();
     });
     $('#menu-btn').addEventListener('click', () => this.toggleMenu(true));
+    // Sonido: sí/no y volumen de cada canal (son ajustes de este dispositivo).
+    $('#sound-on').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (b?.dataset.sound) this.setAudio({ muted: b.dataset.sound === 'off' });
+    });
+    for (const input of $('#sound').querySelectorAll<HTMLInputElement>('input[data-vol]')) {
+      input.addEventListener('input', () => this.setAudio({ [input.dataset.vol!]: Number(input.value) / 100 }));
+    }
     $('#gone').addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('button');
       if (!b?.dataset.continue) return;
@@ -70,6 +79,25 @@ export class GameMenu extends Part {
     });
   }
 
+  private audioSettings(): AudioSettings {
+    return this.hud.audio?.settings ?? loadAudioSettings();
+  }
+
+  private setAudio(patch: Partial<AudioSettings>) {
+    if (this.hud.audio) this.hud.audio.update(patch);
+    else saveAudioSettings({ ...loadAudioSettings(), ...patch });
+    this.renderAudio();
+  }
+
+  renderAudio() {
+    const s = this.audioSettings();
+    for (const b of $('#sound-on').querySelectorAll<HTMLButtonElement>('button')) b.classList.toggle('on', (b.dataset.sound === 'off') === s.muted);
+    for (const input of $('#sound').querySelectorAll<HTMLInputElement>('input[data-vol]')) {
+      input.value = String(Math.round(s[input.dataset.vol as 'sfx' | 'ambient' | 'music'] * 100));
+      input.disabled = s.muted;
+    }
+  }
+
   renderAging() {
     const mode = this.world.state.aging ?? 'normal';
     for (const b of $('#aging').querySelectorAll<HTMLButtonElement>('button')) b.classList.toggle('on', b.dataset.aging === mode);
@@ -100,7 +128,10 @@ export class GameMenu extends Part {
   }
 
   toggleMenu(open: boolean) {
-    if (open) this.renderAging();
+    if (open) {
+      this.renderAging();
+      this.renderAudio();
+    }
     $('#menu').hidden = !open;
   }
 }
