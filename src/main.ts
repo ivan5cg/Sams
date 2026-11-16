@@ -53,7 +53,7 @@ async function boot() {
     },
   });
 
-  const bindToasts = (w: World) => w.onToast((t) => hud.toast(t.text, t.icon));
+  const bindToasts = (w: World) => w.onToast((t) => hud.notify(t));
   bindToasts(world);
 
   const game = new Phaser.Game({

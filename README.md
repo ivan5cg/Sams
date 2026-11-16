@@ -249,6 +249,16 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   manejar a la mascota, buscar trabajo, comprar un mueble e ir al parque), con una flecha sobre el mueble o un
   halo en el botón que toca. El tiempo solo se para en el primero, se puede saltar y recuerda por dónde ibas.
 
+## Avisos
+
+- **Urgentes** (alguien se muere de hambre, se ha hecho pis, se ha desplomado, un bebé llora sin nadie, números
+  rojos): se quedan en pantalla hasta tocarlos, vibran y, al tocarlos, pasas a controlar a quien lo necesita.
+- **De la familia** (sueldos, ascensos, facturas, deseos, la nevera...): salen un momento; si se repiten, se
+  cuentan (×2, ×3) en vez de amontonarse.
+- **Del barrio** (mudanzas, noticias, campaña, visitas que se van, el día que empieza...): no interrumpen. Se
+  guardan en la bandeja **🔔**, con un contador y los repetidos agrupados.
+- Todo queda también en el **📜 Diario**.
+
 ## Sonido
 
 - Todo el sonido se **genera en el propio juego** (no hay ficheros que descargar): efectos de la interfaz, de la

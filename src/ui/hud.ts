@@ -5,8 +5,8 @@ import { WEEKDAY_NAMES } from '../data/careers';
 import { EVENTS } from '../data/seasons';
 import type { AudioEngine } from '../audio/engine';
 import type { HouseScene } from '../render/HouseScene';
-import type { Target, World } from '../sim/world';
-import { $, esc } from './dom';
+import type { Target, Toast, World } from '../sim/world';
+import { $ } from './dom';
 import { BuildMode } from './build';
 import { TalkPanel } from './talk';
 import { Journal } from './log';
@@ -18,6 +18,7 @@ import { DilemmaPanel } from './dilemma';
 import { FamilyPanel } from './panel';
 import { GameMenu } from './menu';
 import { Guide } from './guide';
+import { Notices } from './notices';
 
 export interface HudCallbacks {
   onSave: () => void;
@@ -39,6 +40,7 @@ export class Hud {
   readonly panel = new FamilyPanel(this);
   readonly menu = new GameMenu(this);
   readonly guide = new Guide(this);
+  readonly notices = new Notices(this);
 
   world: World;
   /** El sonido (se carga después del arranque). */
@@ -79,6 +81,7 @@ export class Hud {
     this.panel.bind();
     this.menu.bind();
     this.guide.bind();
+    this.notices.bind();
   }
 
   /** Toque en la escena: en modo construcción lo gestiona la obra; si no, el menú de acciones. */
@@ -96,19 +99,16 @@ export class Hud {
     this.guide.start();
   }
 
+  /** Aviso de la propia interfaz («Partida guardada»...). */
   toast(text: string, icon = 'ℹ️') {
-    const w = this.world;
-    this.journal.log.unshift({ when: `${WEEKDAY_NAMES[w.weekday]} ${w.day} · ${w.clock}`, icon, text });
-    if (this.journal.log.length > 100) this.journal.log.pop();
-    const box = $('#toasts');
-    const el = document.createElement('div');
-    el.className = 'toast';
-    el.innerHTML = `<span>${esc(icon)}</span><span>${esc(text)}</span>`;
-    box.prepend(el);
-    while (box.children.length > 2) box.lastElementChild?.remove();
-    setTimeout(() => el.classList.add('out'), 2800);
-    setTimeout(() => el.remove(), 3300);
+    this.notices.notify({ text, icon });
   }
+
+  /** Aviso de la simulación: según su nivel, urgente, normal o a la bandeja del barrio. */
+  notify(t: Toast) {
+    this.notices.notify(t);
+  }
+
 
   placeName(lotId: string): string {
     const lot = this.world.lotById(lotId);

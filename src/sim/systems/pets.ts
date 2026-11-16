@@ -182,7 +182,7 @@ export function callForAttention(w: World, pet: Agent) {
   if (!best) {
     if (w.isPlayerMember(pet)) {
       const baby = pet.kind === 'person';
-      w.toastOnce(`${pet.id}:squeak`, baby ? `${pet.name} está llorando y no hay nadie para atenderle` : `${pet.name} chilla pidiendo atención`, baby ? '😭' : '📣', 240);
+      w.toastOnce(`${pet.id}:squeak`, baby ? `${pet.name} está llorando y no hay nadie para atenderle` : `${pet.name} chilla pidiendo atención`, baby ? '😭' : '📣', 240, pet.id);
     }
     return;
   }

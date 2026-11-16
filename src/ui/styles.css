@@ -69,8 +69,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: calc(8px + var(--safe-top)) 12px 8px;
+  gap: 5px;
+  padding: calc(8px + var(--safe-top)) 10px 8px;
   background: linear-gradient(var(--panel), rgba(22, 26, 40, 0.6));
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -79,9 +79,19 @@ button {
 
 .top-left {
   min-width: 0;
+  flex: 1;
+}
+
+.top-line {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  min-width: 0;
 }
 
 #family {
+  flex: 1;
+  min-width: 0;
   font-size: 11px;
   color: var(--muted);
   white-space: nowrap;
@@ -91,9 +101,11 @@ button {
 
 #clock {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
+  letter-spacing: -0.2px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  overflow: hidden;
 }
 
 #speed {
@@ -104,7 +116,7 @@ button {
 }
 
 #speed button {
-  width: 38px;
+  width: 32px;
   height: 34px;
   border-radius: 9px;
   font-size: 15px;
@@ -120,10 +132,17 @@ button {
 .top-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+}
+
+.top-right .icon-btn {
+  min-width: 38px;
+  min-height: 40px;
+  padding: 0;
 }
 
 #funds {
+  font-size: 12px;
   font-weight: 700;
   color: #9ff59a;
   font-variant-numeric: tabular-nums;
@@ -1517,4 +1536,86 @@ body.guiding #toasts {
   width: 100%;
   accent-color: var(--accent);
   min-height: 32px;
+}
+
+/* --- Avisos con prioridad ---------------------------------------------------- */
+
+.toast.urgent {
+  pointer-events: auto;
+  border: 2px solid var(--danger);
+  background: #3a1f24;
+  text-align: left;
+  min-height: 44px;
+  animation: toast-in 0.25s ease-out, urgent-pulse 1.6s ease-in-out 0.3s infinite;
+}
+
+.toast .toast-go {
+  margin-left: auto;
+  font-weight: 700;
+  color: #ffb3ab;
+  white-space: nowrap;
+}
+
+.toast-n {
+  margin-left: 4px;
+  color: var(--accent);
+}
+
+@keyframes urgent-pulse {
+  50% {
+    box-shadow: 0 0 0 5px rgba(255, 90, 77, 0.25);
+  }
+}
+
+#tray-btn {
+  position: relative;
+}
+
+#tray-btn .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+#tray-btn .badge[hidden] {
+  display: none;
+}
+
+.log-icon {
+  position: relative;
+}
+
+.tray-count {
+  position: absolute;
+  bottom: -4px;
+  right: -8px;
+  font-size: 10px;
+  background: var(--panel-solid);
+  border-radius: 8px;
+  padding: 0 4px;
+}
+
+.tray-more summary {
+  cursor: pointer;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.tray-old {
+  font-size: 13px;
+  padding: 2px 0;
+}
+
+.log-row .log-icon {
+  align-self: flex-start;
 }

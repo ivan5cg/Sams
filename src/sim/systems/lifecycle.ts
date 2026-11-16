@@ -151,7 +151,7 @@ export function die(w: World, a: Agent, cause: 'old' | 'hunger' | 'social' | 'ru
     runaway: `${a.name} se ha escapado de casa en busca de comida`,
   };
   const knownByPlayer = w.members.some((m) => m !== a && (getRel(w.state, m.id, a.id).f >= 15 || getRel(w.state, m.id, a.id).status));
-  if (mine || knownByPlayer) w.toast(mine ? texts[cause] : `${texts[cause]} (${h?.name ?? ''})`, cause === 'old' || cause === 'hunger' ? '🕊️' : '💔');
+  if (mine || knownByPlayer) w.toast(mine ? texts[cause] : `${texts[cause]} (${h?.name ?? ''})`, cause === 'old' || cause === 'hunger' ? '🕊️' : '💔', a.id);
   // Luto: su familia y quien le quería.
   if (cause === 'old' || cause === 'hunger') {
     for (const o of w.state.agents) {

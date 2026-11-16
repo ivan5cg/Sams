@@ -53,6 +53,8 @@ export interface ActionOption {
 export interface Toast {
   text: string;
   icon?: string;
+  /** De quién va el aviso (para clasificarlo y para ir hasta esa persona o mascota al tocarlo). */
+  agentId?: string;
 }
 
 /** Cosas que pasan en la simulación y que le interesan a quien la mira (el sonido, por ejemplo). */
@@ -316,8 +318,8 @@ export class World {
     this.toastListeners.push(fn);
   }
 
-  toast(text: string, icon?: string) {
-    for (const fn of this.toastListeners) fn({ text, icon });
+  toast(text: string, icon?: string, agentId?: string) {
+    for (const fn of this.toastListeners) fn({ text, icon, ...(agentId ? { agentId } : {}) });
   }
 
   /** Suscribirse a los eventos de la simulación. */
@@ -330,16 +332,16 @@ export class World {
   }
 
   /** Aviso que no se repite más de una vez cada `every` minutos de juego. */
-  toastOnce(key: string, text: string, icon: string, every = 180) {
+  toastOnce(key: string, text: string, icon: string, every = 180, agentId?: string) {
     const last = this.lastToast.get(key);
     if (last !== undefined && this.state.minutes - last < every) return;
     this.lastToast.set(key, this.state.minutes);
-    this.toast(text, icon);
+    this.toast(text, icon, agentId);
   }
 
   /** Avisos sobre la familia del jugador o lo que pasa donde está. */
   toastFor(a: Agent, text: string, icon: string) {
-    if (this.isPlayerMember(a) || a.lotId === this.viewLotId) this.toast(text, icon);
+    if (this.isPlayerMember(a) || a.lotId === this.viewLotId) this.toast(text, icon, a.id);
   }
 
   /** Algo que pasa en el barrio y de lo que la gente habla. */
@@ -666,7 +668,7 @@ export class World {
           bladder: `${a.name} necesita ir al baño ya`,
           energy: `${a.name} está agotado/a`,
         };
-        this.toast(msgs[k], '❗');
+        this.toast(msgs[k], '❗', a.id);
       } else if (a.needs[k] > 30) {
         this.warned.delete(key);
       }
@@ -682,7 +684,7 @@ export class World {
     a.starving = (a.starving ?? 0) + dt;
     const baby = a.kind === 'person' && this.stageOf(a) === 'baby';
     const limit = baby ? 360 : MINUTES_PER_DAY;
-    if (a.starving === dt && this.isPlayerMember(a)) this.toast(`¡${a.name} está muriéndose de hambre!`, '🆘');
+    if (a.starving === dt && this.isPlayerMember(a)) this.toast(`¡${a.name} está muriéndose de hambre!`, '🆘', a.id);
     if (a.starving < limit) return false;
     Lifecycle.die(this, a, baby ? 'social' : a.kind === 'pet' ? 'runaway' : 'hunger');
     return true;
