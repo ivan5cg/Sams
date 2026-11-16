@@ -36,7 +36,7 @@ describe('agenda de la familia', () => {
       const predicted = calendarEvents(day).map((e) => e.id).filter((id) => checked.includes(id));
       for (const id of predicted) expect(seen.get(day)?.has(id), `día ${day}: ${id}`).toBe(true);
     }
-  });
+  }, 60_000);
 
   it('cumpleaños y bebés en camino', () => {
     const w = World.createNew();

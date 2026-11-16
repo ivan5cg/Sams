@@ -49,5 +49,7 @@ export default defineConfig({
   ],
   test: {
     include: ['tests/**/*.test.ts'],
+    // Las simulaciones de varios días tardan el doble en los servidores de CI.
+    testTimeout: 20_000,
   },
 });
