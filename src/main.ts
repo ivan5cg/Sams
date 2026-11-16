@@ -6,6 +6,7 @@ import { migrate, serialize } from './save/serialize';
 import { World } from './sim/world';
 import { Hud } from './ui/hud';
 import { markRenderer, setWebglWanted, webglWanted } from './render/gfx';
+import { DEBUG } from './render/perf';
 
 const AUTOSAVE_MS = 30_000;
 
@@ -107,6 +108,9 @@ async function boot() {
     }
   });
   window.addEventListener('pagehide', () => saveGameSync(world.state));
+
+  // Panel de rendimiento (?debug): se carga aparte, solo si se pide.
+  if (DEBUG) void import('./ui/debug').then((m) => m.startDebugOverlay(game, () => world));
 
   // Acceso para depurar desde la consola del navegador.
   Object.assign(window, { sams: { get world() { return world; }, game } });

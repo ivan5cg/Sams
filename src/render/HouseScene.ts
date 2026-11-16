@@ -15,6 +15,7 @@ import { SceneFx, type FxKind } from './fx';
 import { PET_ART, drawAccessory, drawBackHead, drawBaby, drawFace, drawLeg, drawPersonBody, drawProp, personLook, petColor, type Expression, type PersonLook } from './characters';
 import { hasEmotion } from '../sim/emotions';
 import { moodScore } from '../sim/world';
+import { DEBUG, perf } from './perf';
 import { TILE_H, TILE_W, isoToScreen, screenToTile, shade, tileCenter } from './iso';
 
 /** Minutos de juego por segundo real para cada velocidad. */
@@ -914,7 +915,9 @@ export class HouseScene extends Phaser.Scene {
   update(time: number, delta: number) {
     const dt = Math.min(delta, 100) / 1000;
     const speed = SPEEDS[this.world.state.speed] ?? 1;
+    const t0 = DEBUG ? performance.now() : 0;
     if (speed > 0) this.world.tick(dt * speed);
+    const t1 = DEBUG ? performance.now() : 0;
     if (this.world.viewLotId !== this.shownLot || this.lotKey() !== this.shownKey) this.showLot(this.world.viewLotId);
     this.syncEventDeco();
     this.syncObjects();
@@ -924,6 +927,11 @@ export class HouseScene extends Phaser.Scene {
     this.updateWeather(delta);
     this.festiveFx(time);
     this.followActive(time);
+    if (DEBUG) {
+      const t2 = performance.now();
+      perf.tick.add(t1 - t0, t2);
+      perf.scene.add(t2 - t1, t2);
+    }
   }
 
   // --- Clima, fiestas y cámara ----------------------------------------------

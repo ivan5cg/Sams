@@ -277,6 +277,9 @@ npm run preview   # sirve dist/ para probar la PWA
 npm run icons     # regenera los PNG del icono desde public/icon.svg
 ```
 
+Añadiendo `?debug` a la URL aparece un panel de rendimiento (FPS, coste de la simulación y del dibujado,
+agentes simulados al detalle, memoria y un botón que mide cuánto tarda simular un día).
+
 Cada vez que se sube algo a `main`, GitHub Actions pasa las pruebas, compila y lo publica en
 GitHub Pages: **https://ivan5cg.github.io/Sams/**
 

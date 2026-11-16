@@ -31,7 +31,7 @@ src/
                      scenery.ts, gfx.ts (selector Canvas/WebGL), iso.ts
   ui/                hud.ts (1.310 líneas, todo el HUD) + styles.css (1.384)
   save/              db.ts (IndexedDB) y serialize.ts (serializar + migraciones por versión)
-tests/               sim.test.ts (118 pruebas) y dialogos.test.ts (1)
+tests/               sim.test.ts (ver más abajo)
 ```
 
 ### Estado medido (16-11-2026)
@@ -351,3 +351,22 @@ juega por menos esfuerzo: carga más rápida, tutorial y sonido.
 | Fecha | Commit | JS total (gzip) | Chunk propio | FPS móvil | ms/tick a ×8 | Pruebas |
 |---|---|---|---|---|---|---|
 | 2026-11-16 | 81e00a6 | 1.851 kB (463 kB) | — (todo en uno) | ? | ? | 119 ✅ |
+| 2026-11-16 | fase 1 | 1.858 kB (468 kB) | 140 kB (49 kB) + contenido 230 kB (77 kB) | 60 / 18 (CPU ×4) | 0,22 / 1,4 (CPU ×4) | 134 ✅ + 5 e2e |
+
+**Cómo se mide** (`?debug` en la URL abre el panel; el botón ⏱ simula un día sobre una copia de la partida):
+Chromium sin pantalla con `devices['iPhone 13']` (390×844, DPR 3), gráficos normales (Canvas), partida
+nueva a ×8 durante 12 s; «CPU ×4» es la CPU ralentizada cuatro veces por CDP, para parecerse a un móvil
+de gama media. Con esa misma configuración:
+
+| Medida | CPU ×1 | CPU ×4 |
+|---|---|---|
+| FPS (Canvas) | 60 | 18 |
+| `world.tick` por frame a ×8 | 0,22 ms (máx 0,7) | 1,4 ms (máx 5,7) |
+| Resto del update de la escena | 0,6 ms | 2,7 ms |
+| Frame entero (update + dibujado) | 2,4 ms | 12,9 ms |
+| Simular 1 día de juego de golpe | 174 ms | 670 ms |
+| Memoria JS | 11 MB | 14 MB |
+
+Conclusión: la simulación no es el cuello de botella (≈10 % del frame); lo caro es dibujar a resolución
+nativa (DPR 3). Los FPS de WebGL en este entorno no sirven (va por software, SwiftShader): hay que medirlos
+en un móvil de verdad.
