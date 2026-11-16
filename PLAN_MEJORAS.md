@@ -1,16 +1,18 @@
 # Plan de mejoras de Sams
 
 Plan pensado para pasárselo a otra sesión de trabajo (persona o IA). Cada tarea dice **por qué** se hace,
-**qué ficheros** toca, **cómo** abordarla y **cuándo está terminada**. Está escrito sobre el estado del repositorio
-en el commit `81e00a6` ("Diálogos con más profundidad y casi sin repeticiones").
+**qué ficheros** toca, **cómo** abordarla y **cuándo está terminada**. Se escribió sobre el commit `81e00a6`
+("Diálogos con más profundidad y casi sin repeticiones"); las fases 1 a 3 y parte de la 4 ya están hechas
+(PR #2, en `main`). Las descripciones de las tareas hechas se dejan como estaban, como referencia: lo que
+cambió al hacerlas está en la columna «Notas».
 
-## Estado (16-11-2026, PR #2)
+## Estado (16-11-2026)
 
 | Tarea | Estado | Notas |
 |---|---|---|
-| 1.1 Partir `world.ts` | ✅ | 910 líneas + 17 sistemas en `src/sim/systems/`; misma simulación bit a bit con la misma semilla |
-| 1.2 Partir `hud.ts` + `innerHTML` | ✅ | 160 líneas + un fichero por panel; partidas validadas al cargar (`save/validate.ts`) y prueba de inyección |
-| 1.3 Aligerar el bundle | ✅ | Phaser y contenido aparte; código propio 140 kB; pantalla de carga; PWA offline probada. No se cargan paneles con `import()` (ahorraría ~20 kB: no compensa) |
+| 1.1 Partir `world.ts` | ✅ | 919 líneas + 17 sistemas en `src/sim/systems/`; misma simulación bit a bit con la misma semilla |
+| 1.2 Partir `hud.ts` + `innerHTML` | ✅ | 165 líneas + un fichero por panel; partidas validadas al cargar (`save/validate.ts`) y prueba de inyección |
+| 1.3 Aligerar el bundle | ✅ | Phaser y contenido aparte; código propio 166 kB (más 20 kB de sonido, que se carga después); pantalla de carga; PWA offline probada. No se cargan paneles con `import()` (ahorraría ~20 kB: no compensa) |
 | 1.4 Pruebas | ✅ | Migraciones v1→actual, 8 semanas, e2e con Playwright en CI (también en cada PR) |
 | 1.5 Rendimiento | ✅ | `?debug`; cifras en «Mediciones» |
 | 2.1 Tutorial guiado | ✅ | Comprar va antes que ir al parque (solo se construye en casa) |
@@ -23,6 +25,10 @@ en el commit `81e00a6` ("Diálogos con más profundidad y casi sin repeticiones"
 | 4.4 Logros y retos | ✅ | 15 logros y 3 retos; generaciones contadas desde la familia fundadora |
 | 4.2, 4.3, 4.5, Fase 5 | ⏳ | Sin empezar |
 
+**Lo siguiente, por orden:** 4.5 (construcción: girar muebles, deshacer, pintar paredes y suelos), 4.3 (historias
+del barrio de varios días), 4.2 (carreras y negocio), las vacaciones de fin de semana que quedaron de 4.1, y la
+Fase 5. La partida va por la **versión 11**: si algo nuevo cambia lo que se guarda, toca la 12 con su migración.
+
 ---
 
 ## 0. Contexto para quien retome esto
@@ -34,39 +40,45 @@ en el commit `81e00a6` ("Diálogos con más profundidad y casi sin repeticiones"
   interfaz es HTML/CSS a mano en `src/ui/`.
 - El `README.md` describe todas las funcionalidades actuales con detalle: léelo antes de tocar nada.
 
-### Arquitectura
+### Arquitectura (actual)
 ```
 src/
-  main.ts            Arranque: carga partida, crea World, Hud y Phaser; autoguardado cada 30 s
+  main.ts            Arranque: carga partida, crea World, Hud y Phaser; carga el sonido después; autoguardado
+  prefs.ts           Preferencias del dispositivo (letra, contraste, movimiento, vibración)
   sim/               Simulación pura, sin navegador (se prueba en Node)
-    world.ts         3.630 líneas, 178 métodos: TODO el juego (reloj, tareas, trabajo, ciclo de vida,
-                     compras, construcción, calle, salseo, fiestas, movimiento...)
-    ai.ts            Autonomía por utilidad (los objetos "anuncian" lo que ofrecen)
-    types.ts         Estado del juego (JSON puro, se guarda tal cual). SAVE_VERSION = 10 (en world.ts)
-    neighborhood.ts, social.ts, conversation.ts, chatter.ts, phrases.ts, gossip.ts,
+    world.ts         ~920 líneas: estado, consultas, avisos, bucle de simulación y fachada de los sistemas
+    systems/         Un fichero por sistema (funciones que reciben el mundo): tasks, checks, jobs, travel,
+                     calendar, lifecycle, shopping, build, pets, skills, social, street, gossip, party,
+                     body, movement, wishes, money (dinero y cuentas) y feats (logros y retos)
+    constants.ts     SAVE_VERSION = 11, minutos por día...      util.ts  clamp, rand, moodScore
+    agenda.ts        Lo que viene hoy y mañana (puro)
+    ai.ts, types.ts, neighborhood.ts, social.ts, conversation.ts, chatter.ts, phrases.ts, gossip.ts,
     aspirations.ts, wishes.ts, emotions.ts, traits.ts, pathfinding.ts
-  data/              Contenido declarativo: objetos, acciones, especies, carreras, dilemas, diálogos...
-  render/            Phaser isométrico: HouseScene.ts (1.185), art.ts (1.063), characters.ts, fx.ts,
-                     scenery.ts, gfx.ts (selector Canvas/WebGL), iso.ts
-  ui/                hud.ts (1.310 líneas, todo el HUD) + styles.css (1.384)
-  save/              db.ts (IndexedDB) y serialize.ts (serializar + migraciones por versión)
-tests/               sim.test.ts (ver más abajo)
+  data/              Contenido declarativo: objetos, acciones, especies, carreras, economía, logros...
+  render/            Phaser isométrico: HouseScene.ts, art.ts, characters.ts, fx.ts, scenery.ts, gfx.ts,
+                     iso.ts y perf.ts (mediciones de ?debug)
+  ui/                hud.ts (coordinador, ~165 líneas) + un fichero por panel (build, talk, log, tutorial,
+                     guide, map, sheet, profile, dilemma, panel, menu, notices, agenda, feats, debug)
+                     + dom.ts (utilidades) + styles.css
+  audio/             Motor Web Audio, efectos, ambientes y música, todo sintetizado (CREDITOS.md)
+  save/              db.ts (IndexedDB), serialize.ts (migraciones) y validate.ts (validar al cargar)
+tests/               Un fichero por área (Vitest), migraciones, 8 semanas de juego, helpers.ts
+  e2e/               Playwright a 390×844: humo, paneles, offline, inyección, tutorial, sonido, avisos,
+                     táctil, agenda, accesibilidad y logros
 ```
 
-### Estado medido (16-11-2026)
-- `npm test`: **119 pruebas, todas pasan** (~5 s).
+### Estado medido (16-11-2026, al terminar el PR #2)
+- `npm test`: **157 pruebas**, todas pasan (~15 s). `npm run test:e2e` (tras `npm run build`): **18**, ~30 s.
 - `tsc --noEmit`: sin errores.
-- `vite build`: **un único JS de 1.851 kB (463 kB gzip)**. `chunkSizeWarningLimit` está subido a 2000 para
-  esconder el aviso, y Workbox tiene `maximumFileSizeToCacheInBytes` a 5 MB por Phaser.
-- **No hay sonido de ningún tipo.**
-- Hay un tutorial de 5 diapositivas (`Hud.showTutorial`, `hud.ts:644-680`) que solo explica, no guía.
-- El HUD usa `innerHTML` con plantillas (≈27 sitios) y una función `esc()` para escapar texto.
-- CI: `.github/workflows/deploy.yml` hace `npm ci → npm test → npm run build → Pages` en cada push a `main`.
+- `vite build`: Phaser 1.482 kB (aparte, cacheado), código propio 166 kB, contenido 242 kB, sonido 20 kB
+  (después del arranque), panel de `?debug` 2 kB (solo si se pide).
+- CI: `deploy.yml` (push a `main`: pruebas, build, e2e y Pages) y `ci.yml` (lo mismo en cada PR, sin publicar).
+- Las simulaciones de varios días tardan el doble en CI que en local: el límite de las pruebas es de 20 s.
 
 ### Reglas de trabajo para la siguiente sesión
 1. **Nada de cambiar el comportamiento del juego en las tareas de refactor** (Fase 1). Si una prueba falla
    tras un refactor, el refactor está mal, no la prueba.
-2. Después de cada tarea: `npm test`, `npx tsc --noEmit` y `npm run build` deben pasar.
+2. Después de cada tarea: `npm test`, `npx tsc --noEmit`, `npm run build` y `npm run test:e2e` deben pasar.
 3. **Cualquier cambio en `types.ts` que afecte a lo que se guarda exige subir `SAVE_VERSION` y añadir una
    migración** en `src/save/serialize.ts` (`MIGRATIONS[n]`), con prueba que cargue una partida de la versión
    anterior.
@@ -79,12 +91,12 @@ tests/               sim.test.ts (ver más abajo)
 
 ---
 
-## Fase 1 — Base técnica (prioridad alta, poco riesgo)
+## Fase 1 — Base técnica ✅
 
 Objetivo: que el código sea más fácil de ampliar y que el juego arranque más rápido. El jugador no debería
 notar nada salvo la carga.
 
-### 1.1 Partir `src/sim/world.ts` en sistemas
+### 1.1 Partir `src/sim/world.ts` en sistemas ✅
 **Por qué:** 3.630 líneas en una clase hacen que cada cambio sea lento y arriesgado, y que dos tareas en
 paralelo choquen siempre en el mismo fichero.
 
@@ -126,7 +138,7 @@ en cada uno.
 **Hecho cuando:** `world.ts` < 1.000 líneas, ningún módulo > 500, las 119 pruebas pasan sin cambiarlas, y una
 partida guardada antes del refactor carga igual.
 
-### 1.2 Partir `src/ui/hud.ts` en componentes
+### 1.2 Partir `src/ui/hud.ts` en componentes ✅
 **Por qué:** mismo problema que `world.ts`, y el HUD es lo que más se toca al añadir funcionalidades.
 
 **Cómo:** `src/ui/` con un fichero por panel: `toasts.ts`, `build.ts` (modo construcción, 400-500),
@@ -143,7 +155,7 @@ debe escapar también `"` y `'`. Añadir una prueba que importe una partida con 
 
 **Hecho cuando:** `hud.ts` < 300 líneas, mismo comportamiento visual, y la prueba de inyección pasa.
 
-### 1.3 Aligerar el bundle y la carga inicial
+### 1.3 Aligerar el bundle y la carga inicial ✅
 **Por qué:** 1,85 MB en un solo fichero es mucho para un móvil con mala cobertura, y cada despliegue obliga a
 bajarlo entero otra vez aunque solo cambie una frase.
 
@@ -162,7 +174,7 @@ bajarlo entero otra vez aunque solo cambie una frase.
 
 **Hecho cuando:** el chunk de código propio del juego (sin Phaser) < 500 kB, y la PWA funciona offline.
 
-### 1.4 Pruebas que faltan
+### 1.4 Pruebas que faltan ✅
 1. **Migraciones:** ya hay pruebas sueltas (`sim.test.ts:203`, `:320`, `:363`, `:655`). Añadir una por cada
    versión de guardado de 1 a 9: generar con `oldSave(n)` (ya existe un helper) y comprobar que
    `migrate()` llega a `SAVE_VERSION` y que `new World(...)` simula un día entero sin lanzar errores.
@@ -178,7 +190,7 @@ bajarlo entero otra vez aunque solo cambie una frase.
 
 **Hecho cuando:** la CI ejecuta pruebas unitarias + smoke y todo está en verde.
 
-### 1.5 Medir el rendimiento
+### 1.5 Medir el rendimiento ✅
 **Cómo:** modo debug activable con `?debug` en la URL que muestre FPS, milisegundos por `world.tick` y por
 frame de render, número de agentes simulados al detalle y memoria (si `performance.memory` existe). Guardar
 en el diario de desarrollo cuánto tarda simular un día a ×8.
@@ -190,7 +202,7 @@ al final), para poder comparar después de cada fase.
 
 ## Fase 2 — Que se entienda y se juegue mejor
 
-### 2.1 Tutorial guiado (sustituye las 5 diapositivas actuales)
+### 2.1 Tutorial guiado (sustituye las 5 diapositivas actuales) ✅
 **Por qué:** el tutorial actual explica pero no enseña haciendo; un jugador nuevo no sabe qué hacer después.
 
 **Cómo:** convertir `showTutorial` en una lista de **pasos con objetivo**, cada uno con un texto corto, un
@@ -209,7 +221,7 @@ mundo:
 **Hecho cuando:** un jugador nuevo completa los 6 pasos sin leer el README; prueba de Playwright que los
 recorre.
 
-### 2.2 Avisos con prioridad y bandeja
+### 2.2 Avisos con prioridad y bandeja ✅
 **Por qué:** con el barrio, el salseo, la calle y los eventos hay muchos toasts y los importantes se pierden.
 
 **Cómo:**
@@ -222,7 +234,7 @@ recorre.
 
 **Hecho cuando:** en una hora de juego a ×3 en el barrio no salen más de ~5 toasts no urgentes.
 
-### 2.3 Controles táctiles
+### 2.3 Controles táctiles ✅
 - **Pellizcar para hacer zoom** y **arrastrar para mover la cámara** en `HouseScene` (ahora la cámara sigue al
   activo; al arrastrar se desengancha y un botón 🎯 la vuelve a enganchar).
 - Zonas táctiles mínimas de 44×44 px en todos los botones (revisar `styles.css`: `.icon-btn`, chips del menú de
@@ -233,13 +245,13 @@ recorre.
 
 **Hecho cuando:** todo se puede hacer con una mano en un móvil de 390 px de ancho.
 
-### 2.4 Agenda de la familia
+### 2.4 Agenda de la familia ✅
 - Panel 📅 con lo que viene hoy y mañana: turnos de trabajo, colegio, eventos del barrio (verbena, derbi,
   San Isidro, lotería), facturas del lunes, cumpleaños (cambios de etapa) y bebés por nacer.
 - Poder **programar una orden a una hora** ("a las 20:00, Mateo cocina") reutilizando la cola de órdenes.
   Esto toca el estado: subir `SAVE_VERSION` y migrar.
 
-### 2.5 Accesibilidad y ajustes
+### 2.5 Accesibilidad y ajustes ✅
 - Ajustes nuevos en ☰: tamaño de letra (normal/grande), alto contraste, reducir movimiento (quita el
   parpadeo, las partículas y el temblor de cámara), vibración on/off.
 - Emociones y necesidades: no depender solo del color (añadir icono o signo + / −).
@@ -248,11 +260,11 @@ recorre.
 
 ---
 
-## Fase 3 — Sonido (ahora mismo no hay ninguno)
+## Fase 3 — Sonido ✅
 
 **Por qué:** es lo que más se echa de menos para que el juego tenga vida; está todo pensado para ser visual.
 
-### 3.1 Motor de audio
+### 3.1 Motor de audio ✅
 - `src/audio/` con un gestor propio sobre **Web Audio API** (sin Phaser Sound, para no atarlo a la escena):
   canales `sfx`, `ambiente` y `música`, volumen por canal, silencio global, y desbloqueo con el primer toque
   (iOS/Android lo exigen).
@@ -262,7 +274,7 @@ recorre.
 - Licencias: solo sonidos propios, generados por código o con licencia CC0. Anotar el origen de cada fichero
   en `public/audio/CREDITOS.md`.
 
-### 3.2 Efectos
+### 3.2 Efectos ✅
 Enganchar a eventos que ya existen en la simulación (añadir un emisor de eventos en `World` si hace falta,
 en vez de que el audio lea el estado cada frame):
 - Interfaz: tocar, abrir/cerrar panel, comprar, vender, error.
@@ -272,7 +284,7 @@ en vez de que el audio lea el estado cada frame):
   pedo (imprescindible).
 - Volumen según la distancia a la cámara, para no oír la cocina desde el jardín.
 
-### 3.3 Ambiente y música
+### 3.3 Ambiente y música ✅
 - Ambiente por sitio y hora: casa (reloj, nevera), parque (pájaros, niños), plaza de Alcorcón (fuente),
   bar Casa Paco (murmullo, tragaperras), metro (traqueteo, "próxima estación"), lluvia, noche (grillos),
   verbena (chotis).
@@ -286,7 +298,7 @@ sigue funcionando igual con el sonido desactivado o si el navegador bloquea el a
 
 ## Fase 4 — Más profundidad en lo que ya hay
 
-### 4.1 Economía equilibrada
+### 4.1 Economía equilibrada ✅
 **Problema a comprobar primero:** con la prueba larga de 1.4.2, sacar una gráfica del dinero de la familia
 del jugador y de 3 vecinos durante 8 semanas. Probablemente se acumula sin límite o se arruinan; decidir con
 datos.
@@ -313,7 +325,7 @@ datos.
 - El jugador puede meterse: contarlo, mediar, chivarse.
 - Guardar el estado de los arcos en `WorldState` (subir versión y migrar).
 
-### 4.4 Logros y retos
+### 4.4 Logros y retos ✅
 - Lista de logros (primer ascenso, boda, 5 generaciones, completar una meta de vida, sobrevivir a la Navidad
   sin deudas, adoptar las 5 especies, ganar a la tragaperras, MC Kalimotxo te dedica 3 temas...).
 - Retos opcionales que se activan desde ☰ (p. ej. "100 bebés", "vivir sin nevera"). Se ven en el Diario.

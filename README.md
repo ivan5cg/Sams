@@ -392,3 +392,7 @@ acciones en `src/data/actions.ts`: la IA lo usará automáticamente.
    decisiones, estaciones y eventos, mascotas con carácter, muebles por calidades y ampliar la casa.
 8. ✅ Alcorcón y el metro, gente de la calle, salseo con vecinas cotillas, pedos, borracheras, infidelidades y
    folclore madrileño.
+9. ✅ Base técnica (código partido en sistemas y paneles, carga más ligera, pruebas en navegador), tutorial guiado,
+   sonido, avisos con prioridad, controles táctiles, agenda, accesibilidad, economía y logros.
+10. ⏳ Lo que sigue está en [`PLAN_MEJORAS.md`](PLAN_MEJORAS.md): construcción (girar, deshacer, pintar), historias
+    del barrio de varios días, más carreras y contenido nuevo.
