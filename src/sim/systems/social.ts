@@ -11,6 +11,8 @@ import { hasTrait } from '../traits';
 import type { Agent, PlacedObject, Task } from '../types';
 import { clamp, moodScore } from '../util';
 import type { World } from '../world';
+import { money } from './money';
+import { SPEND_CATEGORY } from '../../data/economy';
 import { hasEvent } from './calendar';
 import { catchAffair, gossipOutcome } from './gossip';
 import { freeBed, moveIn } from './lifecycle';
@@ -54,7 +56,7 @@ export function walkToAgent(w: World, a: Agent, task: Task, dt: number) {
       if (!accepts(w, a, t, task.actionId)) return endTask(w, a);
       if (def.cost) {
         const hh = w.householdOf(a);
-        if (hh) hh.funds -= def.cost;
+        money(w, hh, -def.cost, SPEND_CATEGORY[task.actionId] ?? 'calle');
       }
       if (task.actionId === 'flirt' || task.actionId === 'kiss' || task.actionId === 'niqui' || task.actionId === 'ask_affair') jealousy(w, a, t, task.actionId);
       let bedId: string | undefined;
@@ -178,6 +180,7 @@ export function socialFeelings(w: World, a: Agent, t: Agent, id: string) {
     w.feel(t, 'abrazo');
   }
   if (id === 'joke') w.feel(t, 'risas');
+  if (id === 'give_gift') w.feel(t, 'regalo', a.name);
   if (id === 'kiss' || id === 'ask_partner') {
     w.feel(a, 'enamorado', t.name);
     w.feel(t, 'enamorado', a.name);

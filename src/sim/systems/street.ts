@@ -15,6 +15,7 @@ import { hasTrait, traitsOf } from '../traits';
 import { NEED_KEYS, type Agent } from '../types';
 import { clamp, rand } from '../util';
 import type { World } from '../world';
+import { money } from './money';
 import { drink, fartReactions } from './body';
 import { hasEvent } from './calendar';
 import { askChismosa, learnSecret, makePublic } from './gossip';
@@ -278,11 +279,11 @@ export function streetTask(w: World, a: Agent, id: string) {
       const h = w.householdOf(a);
       const r = Math.random();
       if (h && r < 0.01) {
-        h.funds += 100;
+        money(w, h, 100, 'premios');
         w.feel(a, 'premio');
         if (mine) w.toast(`¡Premio gordo en la tragaperras! ${a.name} se lleva §100`, '🎰');
       } else if (h && r < 0.07) {
-        h.funds += 15;
+        money(w, h, 15, 'premios');
         w.feel(a, 'premio');
         if (mine) w.toast(`¡Ding, ding, ding! ${a.name} saca §15 de la tragaperras`, '🎰');
       }

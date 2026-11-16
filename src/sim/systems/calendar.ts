@@ -10,10 +10,12 @@ import { MINUTES_PER_DAY } from '../constants';
 import { BAR_LOT, PARK_LOT, PLAZA_LOT, SUPER_LOT } from '../neighborhood';
 import { getRel, isAdult, partnerOf } from '../social';
 import { hasTrait } from '../traits';
-import type { Agent, Household, SpeciesId } from '../types';
+import type { Agent, SpeciesId } from '../types';
 import { rand } from '../util';
 import { newWish } from '../wishes';
 import type { World } from '../world';
+import { money, weeklyBill, weeklyMortgage } from './money';
+import { ECONOMY } from '../../data/economy';
 import { dailyGossip } from './gossip';
 import { deathChance, die, evolveTraits, freeCrib, onStageChange } from './lifecycle';
 import { neighbourAdopts } from './pets';
@@ -166,15 +168,15 @@ export function lotteryDraw(w: World) {
     if (!a || !h) continue;
     const r = Math.random();
     if (r < 0.03) {
-      h.funds += 4000;
+      money(w, h, 4000, 'premios');
       w.feel(a, 'loteria');
       w.toast(`¡¡EL GORDO!! ¡A ${a.name} le han tocado §4.000!`, '🤑');
       w.addNews(`a ${a.name} le ha tocado el Gordo de Navidad`, [a.id]);
     } else if (r < 0.2) {
-      h.funds += 100;
+      money(w, h, 100, 'premios');
       w.toast(`Pedrea para ${a.name}: +§100. Algo es algo`, '🎫');
     } else if (r < 0.32) {
-      h.funds += 20;
+      money(w, h, 20, 'premios');
       w.toast(`Reintegro para ${a.name}: recupera los §20`, '🎫');
     } else {
       w.toast(`A ${a.name} no le ha tocado nada. Lo importante es la salud`, '🙃');
@@ -194,11 +196,11 @@ export function dailyEvents(w: World) {
   }
   const r = Math.random();
   if (r < 0.01) {
-    h.funds += 500;
+    money(w, h, 500, 'premios');
     w.toast('¡Os ha tocado la lotería! +§500', '🎟️');
     w.addNews(`a la ${h.name} le ha tocado la lotería`, []);
   } else if (r < 0.08) {
-    h.funds += 50;
+    money(w, h, 50, 'premios');
     w.toast('Habéis encontrado §50 en el bolsillo de un abrigo viejo', '🧥');
   }
 }
@@ -210,21 +212,24 @@ export function newDay(w: World) {
     if (!rel.kin && Math.abs(rel.f) > 5) rel.f -= Math.sign(rel.f) * 0.5;
     rel.r = Math.max(0, rel.r - (rel.status ? 0.5 : 1));
   }
-  // Facturas, cada lunes.
+  // Facturas e hipoteca, cada lunes (y los vecinos pagan su compra de la semana).
   if (w.weekday === 0 && w.day > 1) {
     for (const h of w.state.households) {
       const ms = h.memberIds.map((id) => w.agent(id)!).filter(Boolean);
       const bill = weeklyBill(w, h);
-      h.funds -= bill;
+      const mortgage = weeklyMortgage(w, h);
+      money(w, h, -bill, 'facturas');
+      money(w, h, -mortgage, 'hipoteca');
+      if (h.id !== w.household.id && !h.okupa) money(w, h, -ECONOMY.neighbourFood * ms.filter((m) => m.kind === 'person').length, 'compra');
       for (const m of ms) {
         if (m.job && CAREERS[m.job.career]?.business) {
-          h.funds -= 90;
+          money(w, h, -ECONOMY.autonomos, 'autonomos');
           w.feel(m, 'cuota');
-          if (h.id === w.household.id) w.toast(`Cuota de autónomos de ${m.name}: −§90`, '🧾');
+          if (h.id === w.household.id) w.toast(`Cuota de autónomos de ${m.name}: −§${ECONOMY.autonomos}`, '🧾');
         }
       }
       if (h.id === w.household.id) {
-        w.toast(`Han llegado las facturas de la semana: §${bill}`, '🧾');
+        w.toast(`Han llegado las facturas de la semana: §${bill} y la hipoteca: §${mortgage}`, '🧾');
         if (h.funds < 0) w.toast('¡Estáis en números rojos!', '⚠️');
       }
     }
@@ -247,7 +252,7 @@ export function newDay(w: World) {
   for (const h of w.state.households) {
     for (const id of h.memberIds) {
       const m = w.agent(id);
-      if (m?.kind === 'person' && w.stageOf(m) === 'elder' && !m.job) h.funds += 30;
+      if (m?.kind === 'person' && w.stageOf(m) === 'elder' && !m.job) money(w, h, ECONOMY.pension, 'pension');
     }
   }
   // Envejecer
@@ -304,11 +309,4 @@ export function newDay(w: World) {
     const h = candidates[Math.floor(Math.random() * candidates.length)];
     if (h) neighbourAdopts(w, h, species);
   }
-}
-
-/** Lo que cuestan las facturas de la semana de una familia (se pagan los lunes). */
-export function weeklyBill(w: World, h: Household): number {
-  if (h.okupa) return 0;
-  const ms = h.memberIds.map((id) => w.agent(id)!).filter(Boolean);
-  return 60 + 20 * ms.filter((m) => m.kind === 'person').length + 10 * ms.filter((m) => m.kind === 'pet').length;
 }

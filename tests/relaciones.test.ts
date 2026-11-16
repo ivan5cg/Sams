@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { World } from '../src/sim/world';
+import { ELECTRIC } from '../src/data/seasons';
 import { migrate, serialize } from '../src/save/serialize';
 import type { Agent } from '../src/sim/types';
 import { canRomance, getRel, isAdult, setRel } from '../src/sim/social';
@@ -196,7 +197,10 @@ describe('relaciones, trabajo y economía (fase 4)', () => {
     } finally {
       Math.random = orig;
     }
-    expect(w.household.funds).toBe(f1 - (60 + 2 * 20 + 2 * 10));
+    // Facturas según la casa (fijo, personas, mascotas y electrodomésticos) más la hipoteca.
+    const appliances = w.objectsIn('L0').filter((o) => ELECTRIC.has(o.def)).length;
+    expect(w.household.funds).toBe(f1 - (60 + 2 * 20 + 2 * 10 + 3 * appliances) - 80);
+    expect(w.household.ledger?.at(-1)?.out).toMatchObject({ facturas: 60 + 2 * 20 + 2 * 10 + 3 * appliances, hipoteca: 80 });
   });
 
   it('una partida de la fase 3 recibe relaciones y trabajos al migrar', () => {

@@ -7,6 +7,7 @@ import { reachable } from '../pathfinding';
 import type { Agent, PlacedObject } from '../types';
 import type { World } from '../world';
 import { endTask } from './tasks';
+import { money } from './money';
 
 /** Solo se construye en la casa de la familia, estando allí. */
 export function canBuildHere(w: World): boolean {
@@ -80,7 +81,7 @@ export function buy(w: World, defId: string, x: number, y: number, q: 1 | 2 | 3 
     if (can.reason) w.toast(can.reason, '🚫');
     return false;
   }
-  w.household.funds -= price;
+  money(w, w.household, -price, 'muebles');
   w.state.objects.push({
     id: w.newId('o'),
     def: defId,
@@ -112,7 +113,7 @@ export function expandHouse(w: World): boolean {
     return false;
   }
   const before = w.layoutFor(lot);
-  w.household.funds -= ex.price;
+  money(w, w.household, -ex.price, 'reformas');
   if (ex.shiftX) {
     // Todo lo que estaba en el jardín de la derecha se corre para dejar sitio a la habitación.
     const edge = before.w - 3;
@@ -164,7 +165,7 @@ export function sellObject(w: World, id: string): boolean {
     return false;
   }
   const refund = Math.floor(priceOf(d, o.q ?? 2) * SELL_RATIO);
-  w.household.funds += refund;
+  money(w, w.household, refund, 'ventas');
   w.state.objects = w.state.objects.filter((x) => x !== o);
   w.rebuildGrid();
   w.toast(`Vendido: ${d.name.toLowerCase()} (+§${refund})`, '🏷️');

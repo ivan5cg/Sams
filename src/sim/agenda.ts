@@ -8,7 +8,8 @@ import { ACTIONS } from '../data/actions';
 import { SEASONS } from '../data/seasons';
 import { lifeStage } from '../data/species';
 import { MINUTES_PER_DAY } from './constants';
-import { weeklyBill } from './systems/calendar';
+import { ECONOMY } from '../data/economy';
+import { weeklyBill, weeklyMortgage } from './systems/money';
 import type { World } from './world';
 
 export interface AgendaItem {
@@ -72,8 +73,8 @@ export function agendaFor(w: World, offset: 0 | 1): AgendaItem[] {
   }
   // Facturas (los lunes, menos el primero)
   if (wd === 0 && day > 1) {
-    const business = w.members.filter((m) => m.job && CAREERS[m.job.career]?.business).length * 90;
-    items.push({ minute: 0, icon: '🧾', text: `Facturas de la semana: §${weeklyBill(w, h) + business}${business ? ' (con la cuota de autónomos)' : ''}`, kind: 'bills' });
+    const business = w.members.filter((m) => m.job && CAREERS[m.job.career]?.business).length * ECONOMY.autonomos;
+    items.push({ minute: 0, icon: '🧾', text: `Facturas: §${weeklyBill(w, h) + business}${business ? ' (con la cuota de autónomos)' : ''} · hipoteca: §${weeklyMortgage(w, h)}`, kind: 'bills' });
   }
   // Calendario del barrio
   for (const e of calendarEvents(day)) {

@@ -12,6 +12,7 @@ import { getRel, setRel } from '../social';
 import type { Agent, Household, PlacedObject, SpeciesId, Vec } from '../types';
 import { clamp, moodScore, rand } from '../util';
 import type { World } from '../world';
+import { money } from './money';
 import { beginTask, endTask } from './tasks';
 
 export function canAdopt(w: World, species: SpeciesId): { ok: boolean; reason?: string } {
@@ -54,7 +55,7 @@ export function adopt(w: World, species: SpeciesId): Agent | null {
     pet.home = home.id;
     pet.pos = { x: home.x, y: home.y };
   }
-  w.household.funds -= sp.price;
+  money(w, w.household, -sp.price, 'mascotas');
   w.state.agents.push(pet);
   w.household.memberIds.push(pet.id);
   w.toast(`¡Bienvenido/a a casa, ${name}! (${sp.label.toLowerCase()})`, '🎉');

@@ -1,5 +1,6 @@
 // Perfil del personaje activo: ánimo, meta de vida, trabajo, rasgos, habilidades, mascota y relaciones.
 
+import { MONEY_CATEGORIES } from '../data/economy';
 import { CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
 import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
 import { MAX_SKILL, SKILLS } from '../data/skills';
@@ -161,11 +162,35 @@ export class ProfilePanel extends Part {
       ${this.emotionsHtml(a)}
       ${this.aspirationHtml(a)}
       ${jobHtml}
+      ${mine ? this.ledgerHtml() : ''}
       ${a.kind === 'person' ? `<div class="prof-sec"><div class="prof-h">🧬 Forma de ser</div>${traitsOf(a).map((x) => `<div class="trait-row"><span class="trait-icon">${x.icon}</span><div><b>${esc(x.label)}</b><div class="muted small">${esc(x.desc)}</div></div></div>`).join('')}${this.traitPickHtml(a)}<div class="muted small">Los hijos heredan un rasgo de sus padres. Y los hábitos cambian a la gente: quien corre mucho acaba siendo deportista.</div></div>` : ''}
       ${skillsHtml}
       ${this.petHtml(a)}
       <div class="prof-sec"><div class="prof-h">👥 Relaciones</div>${relHtml}</div>
     </div>`;
+  }
+
+  /** Cuentas de la semana de la familia: ingresos y gastos por categoría, y el saldo. */
+  ledgerHtml(): string {
+    const w = this.world;
+    const ledger = w.household.ledger ?? [];
+    const week = Math.floor((w.day - 1) / 7);
+    const cur = ledger.find((l) => l.week === week);
+    const prev = ledger.find((l) => l.week === week - 1);
+    const sum = (r: Record<string, number> = {}) => Object.values(r).reduce((s, v) => s + v, 0);
+    const rows = (r: Record<string, number> = {}, sign: string) =>
+      Object.entries(r)
+        .sort((x, y) => y[1] - x[1])
+        .map(([k, v]) => {
+          const c = MONEY_CATEGORIES[k] ?? { icon: '•', label: k };
+          return `<div class="money-row"><span>${c.icon} ${esc(c.label)}</span><b class="${sign === '+' ? 'in' : 'out'}">${sign}§${Math.round(v).toLocaleString('es-ES')}</b></div>`;
+        })
+        .join('');
+    const balance = cur ? sum(cur.in) - sum(cur.out) : 0;
+    const fmt = (n: number) => `${n >= 0 ? '+' : '−'}§${Math.abs(Math.round(n)).toLocaleString('es-ES')}`;
+    const prevTxt = prev ? `<div class="muted small">La semana pasada: ${fmt(sum(prev.in) - sum(prev.out))}</div>` : '';
+    const body = cur && (sum(cur.in) || sum(cur.out)) ? `${rows(cur.in, '+')}${rows(cur.out, '−')}<div class="money-row total"><span>Saldo de la semana</span><b class="${balance >= 0 ? 'in' : 'out'}">${fmt(balance)}</b></div>` : '<div class="muted small">Esta semana aún no ha entrado ni salido dinero.</div>';
+    return `<div class="prof-sec"><div class="prof-h">💶 Cuentas de la semana</div>${body}${prevTxt}<div class="muted small">Los lunes se pagan las facturas (según la casa: tamaño, electrodomésticos y muebles de lujo) y la hipoteca.</div></div>`;
   }
 
   petHtml(a: Agent): string {

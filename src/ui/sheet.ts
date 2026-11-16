@@ -9,6 +9,8 @@ import { getRel, relLabel } from '../sim/social';
 import { traitsOf } from '../sim/traits';
 import type { SpeciesId } from '../sim/types';
 import { MAX_MEMBERS, type Target } from '../sim/world';
+import { ACTIONS } from '../data/actions';
+import { MAX_SKILL, SKILLS } from '../data/skills';
 import { $, esc } from './dom';
 import { Part } from './part';
 
@@ -58,6 +60,12 @@ export class ActionSheet extends Part {
         this.hud.render();
         return;
       }
+      if (b.dataset.course) {
+        this.world.command(this.world.activeAgent.id, 'take_course', this.sheetTarget, b.dataset.course);
+        this.closeSheet();
+        this.hud.render();
+        return;
+      }
       if (b.dataset.adopt) {
         this.world.command(this.world.activeAgent.id, 'adopt', this.sheetTarget, b.dataset.adopt);
         this.closeSheet();
@@ -67,6 +75,7 @@ export class ActionSheet extends Part {
       const action = b.dataset.action;
       if (action === 'adopt') return this.showAdoption();
       if (action === 'find_job') return this.showJobs();
+      if (action === 'take_course' && !this.scheduling) return this.showCourses();
       if (action && this.scheduling) return this.askTime(action);
       if (action) {
         this.world.command(this.world.activeAgent.id, action, this.sheetTarget);
@@ -181,6 +190,25 @@ export class ActionSheet extends Part {
       <button class="icon-btn" data-schedno aria-label="Cancelar">✕</button>`;
     card.append(row);
     row.querySelector('input')?.focus();
+  }
+
+  /** Curso online: elegir qué habilidad mejorar (sube un nivel de golpe). */
+  private showCourses() {
+    const a = this.world.activeAgent;
+    const items = SKILLS.map((s) => {
+      const lvl = Math.floor(a.skills?.[s.id] ?? 0);
+      const max = lvl >= MAX_SKILL;
+      return `<button class="act" data-course="${s.id}" ${max ? 'disabled' : ''}>
+        <span class="act-icon">${s.icon}</span>
+        <span class="act-label">${esc(s.label)}<small class="info">Ahora: nivel ${lvl}${max ? ' (el máximo)' : ` → ${lvl + 1}`}</small></span>
+      </button>`;
+    }).join('');
+    $('#sheet').querySelector('.sheet-card')!.innerHTML = `
+      <div class="sheet-head">
+        <div><div class="sheet-title">🎓 Cursos online</div><div class="sheet-sub">§${ACTIONS.take_course.cost} · dos horas delante del ordenador · sube un nivel</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      <div class="sheet-actions one-col">${items}</div>`;
   }
 
   /** Buscar trabajo: elegir carrera. */

@@ -20,6 +20,10 @@ import { socialOutcome, taskFeelings, walkToAgent } from './social';
 import { streetTask } from './street';
 import { goHome } from './travel';
 import { wishEvent } from './wishes';
+import { money } from './money';
+import { CLOTHES } from '../neighborhood';
+import { MAX_SKILL, SKILL_BY_ID } from '../../data/skills';
+import { SPEND_CATEGORY } from '../../data/economy';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -166,6 +170,23 @@ export function completeTask(w: World, a: Agent, task: Task) {
     a.job.dayOff = w.day + 1;
     w.toast(`${a.name} tiene libre mañana. ¡A disfrutar!`, '🏖️');
   }
+  if (task.actionId === 'buy_clothes') {
+    // Ropa nueva: cambia el color de lo que lleva.
+    const options = CLOTHES.filter((c) => c !== a.color);
+    a.color = options[Math.floor(Math.random() * options.length)];
+    w.feel(a, 'estreno');
+    if (w.isPlayerMember(a)) w.toast(`${a.name} estrena ropa. ¡Va hecho un pincel!`, '👕');
+  }
+  if (task.actionId === 'take_course' && task.param && SKILL_BY_ID[task.param]) {
+    // Un curso sube un nivel de golpe (sin pasar del máximo).
+    const s = SKILL_BY_ID[task.param];
+    a.skills = a.skills ?? {};
+    const before = Math.floor(a.skills[s.id] ?? 0);
+    a.skills[s.id] = Math.min(MAX_SKILL, before + 1);
+    w.feel(a, 'nivel', s.label.toLowerCase());
+    if (w.isPlayerMember(a)) w.toast(`${a.name} ha terminado el curso: ${s.label.toLowerCase()} nivel ${Math.floor(a.skills[s.id])}`, '🎓');
+    if (Math.floor(a.skills[s.id]) > before) wishEvent(w, a, { skill: s.id, level: Math.floor(a.skills[s.id]) });
+  }
   if (task.actionId === 'buy_lottery') {
     w.state.lottery = [...(w.state.lottery ?? []), a.id];
     w.toast(`${a.name} ha comprado un décimo. ¡Que toque!`, '🎫');
@@ -220,7 +241,7 @@ export function runTask(w: World, a: Agent, task: Task, dt: number) {
       return endTask(w, a);
     }
     const hh = w.householdOf(a);
-    if (def.cost && hh) hh.funds -= costOf(w, task.actionId);
+    if (def.cost && hh) money(w, hh, -costOf(w, task.actionId), SPEND_CATEGORY[task.actionId] ?? 'ocio');
     if (def.consumes) o.stock = Math.max(0, (o.stock ?? 0) - 1);
     if (FRIDGE_FOOD.has(task.actionId)) {
       const owner = pantryOwner(w, o.lotId);

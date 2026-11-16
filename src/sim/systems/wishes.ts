@@ -6,6 +6,7 @@ import type { Agent } from '../types';
 import { clamp } from '../util';
 import { matchWish, newWish } from '../wishes';
 import type { World } from '../world';
+import { money } from './money';
 import { checkObjectAction } from './checks';
 import { command, endTask } from './tasks';
 import { travel } from './travel';
@@ -16,7 +17,7 @@ export function wishEvent(w: World, a: Agent, ev: { action?: string; target?: st
   const wish = matchWish(a, ev, w.household.id);
   if (!wish) return;
   a.wishes = a.wishes.filter((x) => x !== wish);
-  w.household.funds += wish.reward;
+  money(w, w.household, wish.reward, 'deseos');
   a.needs.fun = clamp(a.needs.fun + 15);
   a.needs.social = clamp(a.needs.social + 5);
   w.toast(`¡Deseo cumplido! ${a.name}: ${wish.label} (+§${wish.reward})`, '⭐');

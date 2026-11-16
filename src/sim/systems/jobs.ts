@@ -9,6 +9,8 @@ import { isAdult } from '../social';
 import type { Agent } from '../types';
 import { clamp, moodScore, rand } from '../util';
 import type { World } from '../world';
+import { money } from './money';
+import { incomeTax } from '../../data/economy';
 import { skillLevel } from './skills';
 import { startTravel } from './travel';
 
@@ -21,7 +23,7 @@ export function setJob(w: World, a: Agent, careerId: string) {
       w.toast(`Montar el negocio cuesta §${c.startup}: no hay dinero suficiente`, '💸');
       return;
     }
-    h.funds -= c.startup;
+    money(w, h, -c.startup, 'negocio');
     a.job = { career: careerId, level: 1, perf: 0 };
     w.feel(a, 'jefe_propio');
     w.toast(`¡${a.name} monta su propio negocio: ${c.levels[0].title}! (−§${c.startup}). Ojo: cada lunes, cuota de autónomos`, c.icon);
@@ -62,7 +64,7 @@ export function resolveDilemma(w: World, index: number) {
   const res = opt.chance === undefined || Math.random() < opt.chance || !opt.fail ? opt.ok : opt.fail;
   const h = w.householdOf(a);
   if (a.job && res.perf) a.job.perf = Math.max(0, Math.min(100, a.job.perf + res.perf));
-  if (h && res.money) h.funds += res.money;
+  if (h && res.money) money(w, h, res.money, 'trabajo');
   if (res.energy) a.needs.energy = clamp(a.needs.energy + res.energy);
   if (res.emotion) w.feel(a, res.emotion);
   if (res.skill && a.job) {
@@ -151,7 +153,10 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
     pay = Math.random() < 0.12 ? -Math.round(rand(20, 60)) : Math.round(pay * rand(0.3, 1.7) * (0.6 + Math.max(0, mood) / 125));
   }
   const h = w.householdOf(a);
-  if (h) h.funds += pay;
+  money(w, h, pay, c.business ? 'negocio' : 'sueldo');
+  // Hacienda se lleva su parte del sueldo (en el negocio propio ya está la cuota de autónomos).
+  const tax = c.business ? 0 : incomeTax(pay);
+  money(w, h, -tax, 'hacienda');
   const delta = job.perf - before;
   if (delta >= 12) w.feel(a, 'buen_dia_curro');
   else if (delta <= -3) w.feel(a, 'mal_dia_curro');
@@ -169,6 +174,6 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
     if (mine) w.toast(`¡Ascenso! ${a.name} ahora es ${lvl.title} (§${lvl.pay} por jornada)`, '🎉');
   } else if (mine) {
     if (c.business && pay < 0) w.toast(`Hoy en el bar de ${a.name} no ha entrado ni el tato: −§${-pay} de gastos`, '🦗');
-    else w.toast(`${a.name} vuelve del ${c.business ? 'bar' : 'trabajo'}: +§${pay}`, '💰');
+    else w.toast(`${a.name} vuelve del ${c.business ? 'bar' : 'trabajo'}: +§${pay - tax}${tax ? ` (Hacienda se queda §${tax})` : ''}`, '💰');
   }
 }

@@ -69,7 +69,7 @@ const D: ObjectDef[] = [
   { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true, tiers: true },
 
   { id: 'tv', name: 'Televisión', icon: '📺', w: 1, h: 1, height: 30, color: 0x333a44, capacity: 0, actions: ['repair'], price: 220, category: 'ocio', breakable: true, tiers: true },
-  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'whatsapp', 'order_glovo', 'find_job', 'throw_party', 'day_off', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
+  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'whatsapp', 'order_glovo', 'buy_clothes', 'take_course', 'find_job', 'throw_party', 'day_off', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
   { id: 'bookshelf', name: 'Estantería', icon: '📚', w: 1, h: 1, height: 44, color: 0x8b5a2b, capacity: 1, actions: ['read'], price: 90, category: 'ocio', tiers: true },
   { id: 'stereo', name: 'Equipo de música', icon: '📻', w: 1, h: 1, height: 24, color: 0x2d2d3a, capacity: 3, actions: ['dance', 'listen_music', 'repair'], price: 150, category: 'ocio', breakable: true, tiers: true },
   { id: 'gamebox', name: 'Videoconsola', icon: '🎮', w: 1, h: 1, height: 18, color: 0x3a3f55, capacity: 2, actions: ['play_games', 'repair'], price: 280, category: 'ocio', breakable: true, tiers: true },

@@ -14,6 +14,7 @@ import { traitsOf } from '../traits';
 import type { Agent, Household, PlacedObject } from '../types';
 import { clamp } from '../util';
 import type { World } from '../world';
+import { money } from './money';
 import { districtOf, freeSpotNear, startTravel } from './travel';
 
 /** Si alguien no puede dejar su casa (p. ej. no dejaría solos a sus hijos), el motivo. */
@@ -217,7 +218,7 @@ export function inherit(w: World, h: Household, last: Agent) {
   if (!best) return;
   const to = w.householdOf(best.heir);
   if (!to) return;
-  to.funds += h.funds;
+  money(w, to, h.funds, 'herencia');
   if (to.id === w.household.id) w.toast(`${best.heir.name} hereda §${h.funds} de ${last.name}`, '💰');
   h.funds = 0;
 }
@@ -331,7 +332,7 @@ export function checkAspirations(w: World) {
     m.aspiration.stage++;
     const last = m.aspiration.stage >= def.stages.length;
     const reward = last ? 1500 : 150 * m.aspiration.stage;
-    w.household.funds += reward;
+    money(w, w.household, reward, 'metas');
     if (last) {
       w.feel(m, 'orgulloso', def.label, 72);
       m.aspirationsDone = [...(m.aspirationsDone ?? []), def.id];

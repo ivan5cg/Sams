@@ -5,6 +5,7 @@ import { MAX_SKILL, SKILL_BY_ID } from '../../data/skills';
 import type { Agent } from '../types';
 import { clamp, rand } from '../util';
 import type { World } from '../world';
+import { money } from './money';
 import { wishEvent } from './wishes';
 
 export function skillLevel(_w: World, a: Agent, id: string): number {
@@ -34,12 +35,12 @@ export function skillPayoff(w: World, a: Agent, actionId: string) {
   if (actionId === 'paint' && h) {
     const lvl = skillLevel(w, a, 'arte');
     const price = Math.round(10 + lvl * 15 + rand(0, 10 + lvl * 5));
-    h.funds += price;
+    money(w, h, price, 'ventas');
     if (mine) w.toast(`${a.name} ha vendido un cuadro por §${price}`, '🖼️');
   }
   if (actionId === 'busk' && h) {
     const tips = Math.round(skillLevel(w, a, 'musica') * 8 + rand(0, 15));
-    h.funds += tips;
+    money(w, h, tips, 'propinas');
     if (mine) w.toast(`${a.name} ha sacado §${tips} en propinas`, '🪕');
   }
   if (actionId === 'homework' && a.job?.career === 'school') a.job.perf = Math.min(100, a.job.perf + 4);

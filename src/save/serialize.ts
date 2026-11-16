@@ -58,7 +58,7 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
-  // v10 → v11: órdenes programadas.
+  // v10 → v11: órdenes programadas (y el registro de movimientos, que empieza vacío).
   10: (s) => {
     s.schedule = s.schedule ?? [];
   },

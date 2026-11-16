@@ -85,6 +85,8 @@ const A: ActionDef[] = [
   { id: 'drink_beer', label: 'Tomarse una cerveza', verb: 'Tomándose una cerveza', icon: '🍺', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], duration: 12, effects: { fun: 0.5, social: 0.1, bladder: -0.4 } },
   { id: 'throw_party', label: 'Montar una fiesta (§120)', verb: 'Organizando una fiesta', icon: '🥳', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], duration: 15, effects: { fun: 0.2 }, cost: 120, playerOnly: true },
   { id: 'day_off', label: 'Pedir el día libre mañana', verb: 'Pidiendo el día libre', icon: '🏖️', target: 'object', actors: ['person'], duration: 5, effects: {}, playerOnly: true },
+  { id: 'buy_clothes', label: 'Comprar ropa por internet (§60)', verb: 'Mirando ropa', icon: '👕', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], cost: 60, duration: 15, effects: { fun: 0.4 }, playerOnly: true },
+  { id: 'take_course', label: 'Hacer un curso online (§150)', verb: 'Haciendo un curso', icon: '🎓', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], cost: 150, duration: 120, effects: { fun: -0.05, energy: -0.05 }, playerOnly: true },
   { id: 'find_job', label: 'Buscar trabajo', verb: 'Buscando trabajo', icon: '📰', target: 'object', actors: ['person'], duration: 20, effects: { fun: -0.05 }, playerOnly: true },
   { id: 'adopt', label: 'Adoptar una mascota', verb: 'Mirando la protectora', icon: '🏠', target: 'object', actors: ['person'], duration: 15, effects: { fun: 0.1 }, playerOnly: true },
   { id: 'fill_bowl', label: 'Llenar el comedero (§10)', verb: 'Llenando el comedero', icon: '🥣', target: 'object', actors: ['person'], duration: 2, effects: {}, cost: 10, refill: true },
@@ -214,6 +216,7 @@ const A: ActionDef[] = [
   { id: 'rock_baby', label: 'Mecer', verb: 'Meciendo', icon: '🤱', target: 'agent', actors: ['person'], targetKinds: ['person'], targetStages: ['baby'], duration: 15, effects: { social: 0.4 }, partnerEffects: { social: 2.5, energy: 0.6, fun: 0.4 } },
   { id: 'play_baby', label: 'Hacer cucamonas', verb: 'Haciendo cucamonas', icon: '🤪', target: 'agent', actors: ['person'], targetKinds: ['person'], targetStages: ['baby'], duration: 10, effects: { fun: 0.4 }, partnerEffects: { fun: 2, social: 0.8 } },
   { id: 'say_goodbye', label: 'Despedirse', verb: 'Despidiéndose', icon: '👋', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 3, effects: { social: 0.5 }, partnerEffects: { social: 0.5 }, playerOnly: true },
+  { id: 'give_gift', label: 'Hacer un regalo (§40)', verb: 'Dando un regalo', icon: '🎁', target: 'agent', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], targetKinds: ['person'], cost: 40, duration: 5, effects: { social: 1, fun: 0.5 }, partnerEffects: { social: 1.5, fun: 2 }, playerOnly: true },
   { id: 'hug', label: 'Abrazar', verb: 'Abrazando', icon: '🤗', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 4, effects: { social: 2 }, partnerEffects: { social: 2 } },
 
   // --- Social: persona → mascota ---

@@ -1856,3 +1856,27 @@ body.building #guide {
 body.building.guiding #toasts {
   top: calc(216px + var(--safe-top));
 }
+
+/* --- Cuentas de la semana (perfil) ------------------------------------------------ */
+
+.money-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 2px 0;
+}
+
+.money-row b.in {
+  color: #9ff59a;
+}
+
+.money-row b.out {
+  color: #ffb3ab;
+}
+
+.money-row.total {
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+  padding-top: 6px;
+  font-weight: 700;
+}

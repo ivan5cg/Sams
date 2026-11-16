@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ELECTRIC } from '../src/data/seasons';
 import { findPath } from '../src/sim/pathfinding';
 import { SAVE_VERSION, World, moodScore } from '../src/sim/world';
 import { hasEmotion } from '../src/sim/emotions';
@@ -229,7 +230,8 @@ describe('más profundidad: emociones, metas, casa, rasgos, relaciones, trabajo,
     expect(w.household.funds).toBe(500);
     w.state.minutes = 7 * 1440 - 1;
     withRandom(0.99, () => w.tick(1));
-    expect(w.household.funds).toBe(500 - (60 + 2 * 20 + 2 * 10) - 90);
+    const appliances = w.objectsIn('L0').filter((o) => ELECTRIC.has(o.def)).length;
+    expect(w.household.funds).toBe(500 - (60 + 2 * 20 + 2 * 10 + 3 * appliances) - 80 - 90);
     expect(hasEmotion(mateo, 'cuota')).toBe(true);
   });
 

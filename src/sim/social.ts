@@ -71,6 +71,7 @@ export const REL_EFFECTS: Record<string, [number, number]> = {
   chat: [4, 0],
   joke: [5, 0],
   hug: [4, 1],
+  give_gift: [15, 3],
   insult: [-15, -5],
   argue: [-10, -4],
   apologize: [12, 2],

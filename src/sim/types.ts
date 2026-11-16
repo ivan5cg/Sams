@@ -189,6 +189,15 @@ export interface Household {
   delivery?: { at: number; amount: number };
   /** Okupas (no pagan facturas, pero tampoco tienen trabajo). */
   okupa?: boolean;
+  /** Movimientos de dinero por categoría: esta semana y la anterior (desde la versión 11). */
+  ledger?: LedgerWeek[];
+}
+
+export interface LedgerWeek {
+  /** Semana del juego (0 = la primera). */
+  week: number;
+  in: Record<string, number>;
+  out: Record<string, number>;
 }
 
 export interface Lot {

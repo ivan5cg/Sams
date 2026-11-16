@@ -4,6 +4,24 @@ Plan pensado para pasárselo a otra sesión de trabajo (persona o IA). Cada tare
 **qué ficheros** toca, **cómo** abordarla y **cuándo está terminada**. Está escrito sobre el estado del repositorio
 en el commit `81e00a6` ("Diálogos con más profundidad y casi sin repeticiones").
 
+## Estado (16-11-2026, PR #2)
+
+| Tarea | Estado | Notas |
+|---|---|---|
+| 1.1 Partir `world.ts` | ✅ | 910 líneas + 17 sistemas en `src/sim/systems/`; misma simulación bit a bit con la misma semilla |
+| 1.2 Partir `hud.ts` + `innerHTML` | ✅ | 160 líneas + un fichero por panel; partidas validadas al cargar (`save/validate.ts`) y prueba de inyección |
+| 1.3 Aligerar el bundle | ✅ | Phaser y contenido aparte; código propio 140 kB; pantalla de carga; PWA offline probada. No se cargan paneles con `import()` (ahorraría ~20 kB: no compensa) |
+| 1.4 Pruebas | ✅ | Migraciones v1→actual, 8 semanas, e2e con Playwright en CI (también en cada PR) |
+| 1.5 Rendimiento | ✅ | `?debug`; cifras en «Mediciones» |
+| 2.1 Tutorial guiado | ✅ | Comprar va antes que ir al parque (solo se construye en casa) |
+| 2.2 Avisos con prioridad | ✅ | |
+| 2.3 Controles táctiles | ✅ | El zoom y el arrastre ya existían; añadido 🎯, pulsación larga y zonas de 44 px |
+| 2.4 Agenda | ✅ | SAVE_VERSION 11 (órdenes programadas y registro de movimientos) |
+| 2.5 Accesibilidad | ✅ | |
+| 3 Sonido | ✅ | Todo sintetizado (sin ficheros); voz del metro con `speechSynthesis` |
+| 4.1 Economía | ✅ | Ver «Economía» al final. Pendiente: vacaciones de fin de semana |
+| 4.2 – 4.5, Fase 5 | ⏳ | Sin empezar |
+
 ---
 
 ## 0. Contexto para quien retome esto
@@ -370,3 +388,23 @@ de gama media. Con esa misma configuración:
 Conclusión: la simulación no es el cuello de botella (≈10 % del frame); lo caro es dibujar a resolución
 nativa (DPR 3). Los FPS de WebGL en este entorno no sirven (va por software, SwiftShader): hay que medirlos
 en un móvil de verdad.
+
+## Economía (4.1): antes y después
+
+8 semanas simuladas, con la misma semilla, la familia por su cuenta y Lucía y Mateo trabajando (oficina y
+cocina) desde el primer día; dinero de la familia al final de cada semana (§):
+
+| Semana | Antes | Después (3 semillas) | Vecino A | Vecino B | Vecino C |
+|---|---|---|---|---|---|
+| 1 | 2.140 | 2.054 / 2.024 / 2.134 | 1.792 | 1.542 | 2.732 |
+| 4 | 3.475 | 3.080 / 3.430 / 4.134 | 1.994 | 2.568 | 5.627 |
+| 8 | 9.808 | 8.261 / 8.931 / 9.642 | 987 | 2.084 | 9.567 |
+
+Sin trabajo: antes se llegaba a §0 en la semana 4 y se quedaba ahí (−§237 al final); ahora se llega en la
+semana 3 y se acaba en −§750. Los vecinos antes acumulaban todos sin límite (unos §10.000) porque la compra les
+salía gratis; ahora la pagan, y unos ahorran y otros van justos.
+
+Decisiones: facturas según la casa, hipoteca por tamaño, compra semanal de los vecinos, retención de Hacienda
+por tramos (frena las carreras altas sin tocar los primeros niveles), registro de movimientos y gastos
+opcionales (regalos, ropa, cursos). Las cifras, en `src/data/economy.ts`. Pendiente: vacaciones de fin de semana.
+

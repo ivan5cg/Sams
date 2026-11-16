@@ -52,6 +52,10 @@ export function validateState(s: WorldState) {
     num(h.funds, `dinero de ${h.id}`);
     optNum(h.pantry, `despensa de ${h.id}`);
     for (const m of arr(h.memberIds, `miembros de ${h.id}`)) id(m, `miembro de ${h.id}`);
+    for (const l of h.ledger ?? []) {
+      num(l.week, `cuentas de ${h.id}`);
+      for (const v of [...Object.values(l.in ?? {}), ...Object.values(l.out ?? {})]) num(v, `cuentas de ${h.id}`);
+    }
   }
   for (const a of arr(s.agents, 'personajes') as WorldState['agents']) {
     id(a.id, 'personaje');

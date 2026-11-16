@@ -257,6 +257,16 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
 - Todos los botones tienen al menos 44 px de zona de toque, y el móvil vibra un poco con los avisos urgentes
   y al comprar (se puede quitar en ☰).
 
+## Dinero
+
+- Los lunes llegan las **facturas**, que dependen de la casa (tamaño, electrodomésticos y muebles de lujo) y de
+  quién vive en ella, y la **hipoteca**, que sube con cada reforma.
+- **Hacienda** retiene parte del sueldo por tramos (los sueldos bajos, nada).
+- En el perfil, **💶 Cuentas de la semana**: ingresos y gastos por categoría y el saldo (y el de la semana pasada).
+- Gastos con sentido: **🎁 hacer un regalo** (sube mucho la amistad), **👕 ropa nueva** y **🎓 cursos online**
+  (un nivel de golpe en la habilidad que elijas), además de muebles, reformas y caprichos.
+- Todas las cifras están en `src/data/economy.ts`.
+
 ## Agenda
 
 - **📅 Agenda** (en el panel de abajo): lo que viene hoy y mañana para la familia. Turnos de trabajo y colegio,
