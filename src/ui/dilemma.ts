@@ -4,6 +4,8 @@ import { CAREERS } from '../data/careers';
 import { DILEMMA_BY_ID } from '../data/dilemmas';
 import { $, esc } from './dom';
 import { Part } from './part';
+import { SKILL_BY_ID } from '../data/skills';
+import { TRAIT_BY_ID } from '../data/traits';
 
 export class DilemmaPanel extends Part {
   speedBeforeDilemma = 1;
@@ -40,7 +42,13 @@ export class DilemmaPanel extends Part {
       <h3>${c?.icon ?? '💼'} ${esc(d.title)}</h3>
       <div class="muted small">${esc(who.name)} · ${esc(c?.levels[(who.job?.level ?? 1) - 1]?.title ?? 'en el trabajo')}</div>
       <p>${esc(d.text.replace('{name}', who.name))}</p>
-      ${d.options.map((o, i) => `<button class="act" data-dl="${i}"><span class="act-icon">${o.icon}</span><span class="act-label">${esc(o.label)}${o.chance !== undefined ? '<small class="info">Puede salir bien... o no</small>' : ''}</span></button>`).join('')}
+      ${d.options
+        .map((o, i) => {
+          if (!w.canChoose(who, o)) return '';
+          const need = o.needs?.skill ? `⭐ ${SKILL_BY_ID[o.needs.skill[0]]?.label ?? ''} ${o.needs.skill[1]}` : o.needs?.trait ? `🧬 ${TRAIT_BY_ID[o.needs.trait]?.label ?? ''}` : '';
+          return `<button class="act ${need ? 'gifted' : ''}" data-dl="${i}"><span class="act-icon">${o.icon}</span><span class="act-label">${esc(o.label)}${need ? `<small class="info">${esc(need)}: solo por ser quien es</small>` : o.chance !== undefined ? '<small class="info">Puede salir bien... o no</small>' : ''}</span></button>`;
+        })
+        .join('')}
     </div>`;
     box.hidden = false;
   }

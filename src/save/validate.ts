@@ -58,6 +58,11 @@ export function validateState(s: WorldState) {
     str(h.name, `nombre de ${h.id}`);
     num(h.funds, `dinero de ${h.id}`);
     optNum(h.pantry, `despensa de ${h.id}`);
+    if (h.trip) {
+      num(h.trip.start, `viaje de ${h.id}`);
+      num(h.trip.end, `viaje de ${h.id}`);
+      str(h.trip.dest, `viaje de ${h.id}`);
+    }
     for (const m of arr(h.memberIds, `miembros de ${h.id}`)) id(m, `miembro de ${h.id}`);
     for (const l of h.ledger ?? []) {
       num(l.week, `cuentas de ${h.id}`);
@@ -76,6 +81,11 @@ export function validateState(s: WorldState) {
     num(a.pos?.y, `posición de ${a.id}`);
     for (const v of Object.values(a.needs ?? {})) num(v, `necesidades de ${a.id}`);
     optId(a.home, `casa de ${a.id}`);
+    if (a.job?.bar) {
+      if (!['barata', 'normal', 'cara'].includes(a.job.bar.menu)) throw new Broken(`bar de ${a.id}`);
+      optStr(a.job.bar.staff, `bar de ${a.id}`);
+      optNum(a.job.bar.week, `bar de ${a.id}`);
+    }
     for (const w of a.wishes ?? []) {
       id(w.id, `deseo de ${a.id}`);
       str(w.label, `deseo de ${a.id}`);

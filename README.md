@@ -292,6 +292,18 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
 - **Retos** opcionales, con premio de §1.000: *100 bebés*, *vivir sin nevera* (7 días) y *vivir del arte*
   (dos semanas sin trabajar y sin números rojos). Se pueden abandonar o volver a intentar.
 
+## Trabajo y negocio
+
+- En los **dilemas del trabajo**, quien tiene la habilidad o el rasgo adecuado ve una opción extra que sale bien
+  seguro (con carisma 6, convencer al jefe con datos; si es animalero, ganarse al chihuahua...).
+- **Teletrabajo** en la oficina y en ciencia: informes desde el ordenador de casa (una vez al día) que suben el
+  rendimiento.
+- **El bar de tapas** se lleva desde el perfil, con una decisión por semana: carta barata (menos caja, casi sin
+  días malos), normal o cara (más caja, más riesgo); contratar a un vecino de camarero (más caja y menos cansancio,
+  a cambio de su sueldo) y abrir también los domingos.
+- **🧳 Fin de semana fuera** (§600, se reserva de lunes a jueves en el ordenador): la familia se va el sábado por la
+  mañana a Benidorm, Cuenca, la sierra... y vuelve el domingo por la noche, descansada.
+
 ## Agenda
 
 - **📅 Agenda** (en el panel de abajo): lo que viene hoy y mañana para la familia. Turnos de trabajo y colegio,

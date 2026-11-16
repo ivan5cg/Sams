@@ -1,12 +1,13 @@
 // Trabajo y colegio: turnos, sueldos, ascensos, despidos y dilemas.
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
-import { CAREERS, gradeLabel } from '../../data/careers';
-import { DILEMMAS, DILEMMA_BY_ID } from '../../data/dilemmas';
+import { BAR_MENUS, BAR_STAFF, CAREERS, gradeLabel, workDays } from '../../data/careers';
+import { DILEMMAS, DILEMMA_BY_ID, type DilemmaOption } from '../../data/dilemmas';
+import { hasTrait } from '../traits';
 import { CAREER_SKILL, MAX_SKILL } from '../../data/skills';
 import { MINUTES_PER_DAY } from '../constants';
 import { isAdult } from '../social';
-import type { Agent } from '../types';
+import type { Agent, BarPlan } from '../types';
 import { clamp, moodScore, rand } from '../util';
 import type { World } from '../world';
 import { money } from './money';
@@ -53,13 +54,24 @@ export function maybeDilemma(w: World, a: Agent) {
 }
 
 /** El jugador elige una opción del dilema (o se elige la última si no contesta a tiempo). */
+/** ¿Puede elegir esa opción? (las que piden habilidad o rasgo, solo quien lo tiene). */
+export function canChoose(w: World, a: Agent, opt: DilemmaOption): boolean {
+  const n = opt.needs;
+  if (!n) return true;
+  if (n.skill && skillLevel(w, a, n.skill[0]) < n.skill[1]) return false;
+  if (n.trait && !hasTrait(a, n.trait)) return false;
+  return true;
+}
+
 export function resolveDilemma(w: World, index: number) {
   const dl = w.state.dilemma;
   if (!dl) return;
   w.state.dilemma = undefined;
   const d = DILEMMA_BY_ID[dl.id];
   const a = w.agent(dl.agentId);
-  const opt = d?.options[Math.max(0, Math.min(index, d.options.length - 1))];
+  let opt = d?.options[Math.max(0, Math.min(index, d.options.length - 1))];
+  // Una opción que no le toca no se puede elegir: se queda con la última.
+  if (d && a && opt && !canChoose(w, a, opt)) opt = d.options[d.options.length - 1];
   if (!d || !a || !opt) return;
   const res = opt.chance === undefined || Math.random() < opt.chance || !opt.fail ? opt.ok : opt.fail;
   const h = w.householdOf(a);
@@ -89,7 +101,7 @@ export function checkShift(w: World, a: Agent) {
   const job = a.job;
   if (!job || job.lastShiftDay === w.day) return;
   const c = CAREERS[job.career];
-  if (!c || !c.days.includes(w.weekday)) return;
+  if (!c || !workDays(job).includes(w.weekday)) return;
   const m = w.state.minutes % MINUTES_PER_DAY;
   const start = c.start * 60, end = c.end * 60;
   const mine = w.isPlayerMember(a);
@@ -101,6 +113,11 @@ export function checkShift(w: World, a: Agent) {
     job.lastShiftDay = w.day;
     job.perf = Math.max(0, job.perf - 2);
     if (mine) w.toast(`${a.name} tiene hoy el día libre`, '🏖️');
+    return;
+  }
+  if (a.travel?.reason === 'trip') {
+    // De vacaciones: cuenta como día libre.
+    job.lastShiftDay = w.day;
     return;
   }
   const busy = a.travel || a.hidden || a.current?.actionId === 'pass_out';
@@ -149,8 +166,16 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
   if (w.state.dilemma?.agentId === a.id) resolveDilemma(w, 99);
   let pay = c.levels[job.level - 1].pay;
   if (c.business) {
-    // En el negocio propio unos días se gana mucho y otros, nada (o se pierde).
-    pay = Math.random() < 0.12 ? -Math.round(rand(20, 60)) : Math.round(pay * rand(0.3, 1.7) * (0.6 + Math.max(0, mood) / 125));
+    // En el negocio propio unos días se gana mucho y otros, nada (o se pierde). Depende de la carta.
+    const plan = job.bar;
+    const m = BAR_MENUS[plan?.menu ?? 'normal'] ?? BAR_MENUS.normal;
+    pay = Math.random() < m.bad ? -Math.round(rand(20, 60)) : Math.round(pay * m.mult * rand(1 - m.spread, 1 + m.spread) * (0.6 + Math.max(0, mood) / 125));
+    if (plan?.staff) {
+      // Con camarero se sirve más y se acaba menos reventado, pero hay que pagarle.
+      if (pay > 0) pay = Math.round(pay * BAR_STAFF.boost);
+      pay -= BAR_STAFF.wage;
+      a.needs.energy = clamp(a.needs.energy + 12);
+    }
   }
   const h = w.householdOf(a);
   money(w, h, pay, c.business ? 'negocio' : 'sueldo');
@@ -176,4 +201,28 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
     if (c.business && pay < 0) w.toast(`Hoy en el bar de ${a.name} no ha entrado ni el tato: −§${-pay} de gastos`, '🦗');
     else w.toast(`${a.name} vuelve del ${c.business ? 'bar' : 'trabajo'}: +§${pay - tax}${tax ? ` (Hacienda se queda §${tax})` : ''}`, '💰');
   }
+}
+
+/** Cambiar cómo se lleva el bar (una vez por semana). Devuelve el motivo si no se puede. */
+export function setBarPlan(w: World, a: Agent, patch: { menu?: BarPlan['menu']; staff?: boolean; sunday?: boolean }): string | undefined {
+  const job = a.job;
+  if (!job || !CAREERS[job.career]?.business) return 'No tiene bar';
+  const week = Math.floor((w.day - 1) / 7);
+  const plan: BarPlan = job.bar ?? { menu: 'normal' };
+  if (plan.week === week) return 'Esta semana ya se ha cambiado: hasta el lunes, nada';
+  const next: BarPlan = { ...plan, week };
+  if (patch.menu) next.menu = patch.menu;
+  if (patch.sunday !== undefined) next.sunday = patch.sunday;
+  if (patch.staff === true && !plan.staff) {
+    const candidates = w.state.agents.filter((x) => x.kind === 'person' && !x.role && isAdult(x) && !x.job && !w.isPlayerMember(x));
+    const hired = candidates[Math.floor(Math.random() * candidates.length)];
+    if (!hired) return 'No hay nadie en el barrio buscando trabajo';
+    next.staff = hired.name;
+    w.addNews(`${hired.name} trabaja ahora de camarero/a en el bar de ${a.name}`, [hired.id, a.id]);
+  } else if (patch.staff === false && plan.staff) {
+    w.toast(`${plan.staff} ya no trabaja en el bar. Se ha llevado una botella de anís de recuerdo`, '🍺', a.id);
+    delete next.staff;
+  }
+  job.bar = next;
+  return undefined;
 }

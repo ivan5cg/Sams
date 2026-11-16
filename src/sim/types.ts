@@ -55,7 +55,7 @@ export interface Agent {
   /** Parcela en la que está. */
   lotId: string;
   /** De camino a otra parcela (o en el trabajo / el colegio, que no se ven). */
-  travel?: { from: string; to: string; arrive: number; reason?: 'work' | 'school'; mood?: number };
+  travel?: { from: string; to: string; arrive: number; reason?: 'work' | 'school' | 'trip'; mood?: number };
   /** Trabajo o colegio. */
   job?: Job;
   /** Minutos seguidos con el hambre a cero. */
@@ -139,6 +139,21 @@ export interface Job {
   dayOff?: number;
   /** Días seguidos rindiendo fatal (para los despidos). */
   badDays?: number;
+  /** Último día en que teletrabajó (desde la versión 12). */
+  homeDay?: number;
+  /** El negocio propio: cómo se lleva el bar (desde la versión 12). */
+  bar?: BarPlan;
+}
+
+/** Decisiones del bar de tapas (se cambian una vez por semana). */
+export interface BarPlan {
+  menu: 'barata' | 'normal' | 'cara';
+  /** Un vecino contratado de camarero (su nombre). */
+  staff?: string;
+  /** Abre también los domingos. */
+  sunday?: boolean;
+  /** Semana en que se cambió por última vez. */
+  week?: number;
 }
 
 /** Relación entre dos personajes. */
@@ -193,6 +208,8 @@ export interface Household {
   delivery?: { at: number; amount: number };
   /** Okupas (no pagan facturas, pero tampoco tienen trabajo). */
   okupa?: boolean;
+  /** Fin de semana fuera reservado (desde la versión 12). */
+  trip?: { start: number; end: number; dest: string };
   /** Movimientos de dinero por categoría: esta semana y la anterior (desde la versión 11). */
   ledger?: LedgerWeek[];
 }

@@ -3,6 +3,7 @@
 // que usan la interfaz, la escena, la IA y las pruebas.
 
 import { ACTIONS, type ActionDef } from '../data/actions';
+import type { DilemmaOption } from '../data/dilemmas';
 import { EMOTIONS } from '../data/emotions';
 import { HOUSE_OBJECTS, LAYOUTS, houseLayout, isOutdoor, type LotLayout } from '../data/lot';
 import { OBJECTS, sizeOf, type ObjectDef } from '../data/objects';
@@ -37,6 +38,7 @@ import * as Tasks from './systems/tasks';
 import * as Social from './systems/social';
 import * as Feats from './systems/feats';
 import * as Arcs from './systems/arcs';
+import * as Trips from './systems/trips';
 
 export { SAVE_VERSION, MINUTES_PER_DAY, MAX_MEMBERS, TRAVEL_MINUTES, RIDE_MINUTES, PANTRY_MAX } from './constants';
 export { moodScore, objectCenter } from './util';
@@ -464,6 +466,7 @@ export class World {
     Lifecycle.checkAspirations(this);
     Feats.checkFeats(this);
     Arcs.arcsHour(this);
+    Trips.tripsHour(this);
     if (this.wishesEnabled) topUpWishes(this);
     Shopping.closingTime(this);
     Shopping.groceryErrand(this);
@@ -814,6 +817,15 @@ export class World {
   }
 
   // Jobs
+  bookTrip(a: Agent) {
+    return Trips.bookTrip(this, a);
+  }
+  setBarPlan(a: Agent, patch: { menu?: 'barata' | 'normal' | 'cara'; staff?: boolean; sunday?: boolean }) {
+    return Jobs.setBarPlan(this, a, patch);
+  }
+  canChoose(a: Agent, opt: DilemmaOption) {
+    return Jobs.canChoose(this, a, opt);
+  }
   setJob(a: Agent, careerId: string) {
     return Jobs.setJob(this, a, careerId);
   }

@@ -23,6 +23,7 @@ const E: EmotionDef[] = [
   { id: 'ducha_spa', label: 'Ducha de hotel', icon: '🧖', value: 6, hours: 4, thoughts: ['Esto es un spa'] },
   { id: 'regalo', label: 'Le han hecho un regalo', icon: '🎁', value: 10, hours: 8, likes: { hug: 1.5, chat: 1.3 }, thoughts: ['¡Qué detalle!', 'No hacía falta... pero me encanta'] },
   { id: 'estreno', label: 'Estrena ropa', icon: '👕', value: 7, hours: 12, likes: { selfie: 1.8 }, thoughts: ['Voy hecho un pincel', 'Qué bien me queda esto'] },
+  { id: 'vacaciones', label: 'Vuelve de vacaciones', icon: '🏖️', value: 14, hours: 48, thoughts: ['Qué bien nos lo hemos pasado', 'Ya estoy pensando en las próximas'] },
   { id: 'deseo', label: 'Deseo cumplido', icon: '⭐', value: 10, hours: 6, thoughts: ['¡Lo he conseguido!'] },
   { id: 'orgulloso', label: 'Orgulloso/a de sí', icon: '🏅', value: 15, hours: 24, thoughts: ['Esto hay que celebrarlo', 'Soy un crack'] },
   { id: 'nivel', label: 'Ha mejorado en algo', icon: '📈', value: 6, hours: 6 },

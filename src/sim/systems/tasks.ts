@@ -15,15 +15,16 @@ import { bestPath, face, interactTiles, moveAlong } from './movement';
 import { startParty } from './party';
 import { adopt, callForAttention, hideObject, trainPet } from './pets';
 import { pantryOwner, shopping } from './shopping';
-import { practice, skillPayoff } from './skills';
+import { practice, skillLevel, skillPayoff } from './skills';
 import { socialOutcome, taskFeelings, walkToAgent } from './social';
 import { streetTask } from './street';
 import { goHome } from './travel';
 import { wishEvent } from './wishes';
 import { money } from './money';
 import { CLOTHES } from '../neighborhood';
-import { MAX_SKILL, SKILL_BY_ID } from '../../data/skills';
+import { CAREER_SKILL, MAX_SKILL, SKILL_BY_ID } from '../../data/skills';
 import { SPEND_CATEGORY } from '../../data/economy';
+import { bookTrip } from './trips';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -169,6 +170,14 @@ export function completeTask(w: World, a: Agent, task: Task) {
   if (task.actionId === 'day_off' && a.job) {
     a.job.dayOff = w.day + 1;
     w.toast(`${a.name} tiene libre mañana. ¡A disfrutar!`, '🏖️');
+  }
+  if (task.actionId === 'book_trip') bookTrip(w, a);
+  if (task.actionId === 'work_home' && a.job) {
+    // Informes desde casa: suben el rendimiento (más con la habilidad de su carrera).
+    const sk = CAREER_SKILL[a.job.career];
+    a.job.perf = Math.min(100, a.job.perf + 8 + (sk ? skillLevel(w, a, sk) : 0));
+    a.job.homeDay = w.day;
+    if (w.isPlayerMember(a)) w.toast(`${a.name} ha mandado los informes. El jefe responde con un 👍`, '🧑‍💻');
   }
   if (task.actionId === 'buy_clothes') {
     // Ropa nueva: cambia el color de lo que lleva.

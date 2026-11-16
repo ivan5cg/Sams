@@ -16,6 +16,7 @@ import { closedReason, pantryOwner } from './shopping';
 import { skillLevel } from './skills';
 import { grudge } from './social';
 import { canMediate, canSnitch } from './arcs';
+import { tripReason } from './trips';
 
 export function speciesOk(w: World, a: Agent, def: ActionDef) {
   if (!def.actors.includes(a.kind) || (def.species && !def.species.includes(a.species))) return false;
@@ -67,6 +68,16 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
     if (!w.isPlayerMember(a) || o.lotId !== w.household.lotId) return { def, ok: false };
     if (w.state.party) return { def, ok: false, reason: 'Ya hay una fiesta montada' };
     if (w.hour < 10 || w.hour >= 21) return { def, ok: false, reason: 'Las fiestas, de 10:00 a 21:00' };
+  }
+  if (actionId === 'book_trip') {
+    if (!w.isPlayerMember(a)) return { def, ok: false };
+    const why = tripReason(w);
+    if (why) return { def, ok: false, reason: why };
+  }
+  if (actionId === 'work_home') {
+    const c = a.job && CAREERS[a.job.career];
+    if (!c?.remote) return { def, ok: false };
+    if (a.job!.homeDay === w.day) return { def, ok: false, reason: 'Hoy ya ha teletrabajado' };
   }
   if (actionId === 'day_off') {
     if (!a.job || CAREERS[a.job.career]?.school) return { def, ok: false, reason: 'No tiene trabajo' };

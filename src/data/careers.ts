@@ -20,6 +20,8 @@ export interface Career {
   school?: boolean;
   /** Negocio propio: cuesta montarlo, se gana según el día y hay cuota de autónomos. */
   business?: boolean;
+  /** Se puede teletrabajar (informes en el ordenador de casa). */
+  remote?: boolean;
   startup?: number;
 }
 
@@ -43,6 +45,7 @@ export const CAREERS: Record<string, Career> = {
   },
   oficina: {
     id: 'oficina',
+    remote: true,
     name: 'Oficina',
     icon: '💼',
     start: 9,
@@ -88,6 +91,7 @@ export const CAREERS: Record<string, Career> = {
   },
   ciencia: {
     id: 'ciencia',
+    remote: true,
     name: 'Ciencia',
     icon: '🔬',
     start: 9,
@@ -164,3 +168,20 @@ export function gradeLabel(perf: number): string {
   if (perf >= 20) return 'Suficiente';
   return 'Suspenso';
 }
+
+/** Días que se trabaja en ese empleo (el bar puede abrir también el domingo). */
+export function workDays(job: { career: string; bar?: { sunday?: boolean } }): number[] {
+  const c = CAREERS[job.career];
+  if (!c) return [];
+  return job.bar?.sunday && !c.days.includes(6) ? [...c.days, 6] : c.days;
+}
+
+/** Cómo va el bar según la carta: multiplicador de caja, cuánto varía y la probabilidad de un día malo. */
+export const BAR_MENUS = {
+  barata: { label: 'Carta barata', desc: 'Menos caja, pero siempre hay gente', mult: 0.85, spread: 0.35, bad: 0.05 },
+  normal: { label: 'Carta normal', desc: 'Lo de siempre', mult: 1, spread: 0.7, bad: 0.12 },
+  cara: { label: 'Carta cara', desc: 'Más caja... los días que viene alguien', mult: 1.35, spread: 1, bad: 0.2 },
+} as const;
+
+/** Sueldo del camarero contratado (por jornada) y lo que se nota. */
+export const BAR_STAFF = { wage: 45, boost: 1.25 };

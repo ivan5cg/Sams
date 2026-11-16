@@ -21,14 +21,14 @@ cambió al hacerlas está en la columna «Notas».
 | 2.4 Agenda | ✅ | SAVE_VERSION 11 (órdenes programadas y registro de movimientos) |
 | 2.5 Accesibilidad | ✅ | |
 | 3 Sonido | ✅ | Todo sintetizado (sin ficheros); voz del metro con `speechSynthesis` |
-| 4.1 Economía | ✅ | Ver «Economía» al final. Pendiente: vacaciones de fin de semana |
+| 4.1 Economía | ✅ | Ver «Economía» al final. Las vacaciones de fin de semana, hechas con 4.2 |
 | 4.4 Logros y retos | ✅ | 15 logros y 3 retos; generaciones contadas desde la familia fundadora |
 | 4.5 Construcción | ✅ | Girar (trasponiendo el dibujo isométrico), deshacer en la sesión de obra, pintura por habitación y dos plantillas por reforma. SAVE_VERSION 12 |
 | 4.3 Historias del barrio | ✅ | Tres culebrones (lío, guerra de vecinos, romance con boda), mediar y chivarse; se ven en el salseo. Dentro de la versión 12 (`arcs`) |
-| 4.2, Fase 5 | ⏳ | Sin empezar |
+| 4.2 Carreras y negocio | ✅ | Opciones de dilema con habilidad o rasgo, teletrabajo (oficina y ciencia), decisiones semanales del bar. Más el fin de semana fuera que quedó de 4.1 |
+| Fase 5 | ⏳ | Sin empezar |
 
-**Lo siguiente, por orden:** 4.2 (carreras y negocio), las vacaciones de fin de semana que quedaron de 4.1, y la
-Fase 5. La partida va por la **versión 12**: si algo nuevo cambia lo que se guarda, toca la 13 con su migración.
+**Lo siguiente:** la Fase 5 (contenido nuevo). La fase 4 está completa. La partida va por la **versión 12**: si algo nuevo cambia lo que se guarda, toca la 13 con su migración.
 
 ---
 
@@ -297,7 +297,7 @@ sigue funcionando igual con el sonido desactivado o si el navegador bloquea el a
 
 ---
 
-## Fase 4 — Más profundidad en lo que ya hay
+## Fase 4 — Más profundidad en lo que ya hay ✅
 
 ### 4.1 Economía equilibrada ✅
 **Problema a comprobar primero:** con la prueba larga de 1.4.2, sacar una gráfica del dinero de la familia
@@ -312,7 +312,7 @@ datos.
   regalos.
 - Todo con constantes en `src/data/` para poder ajustar sin tocar lógica.
 
-### 4.2 Carreras y negocio
+### 4.2 Carreras y negocio ✅
 - Trabajo desde casa para algunas carreras (informes en el ordenador que dan rendimiento).
 - En los dilemas (`src/data/dilemmas.ts`), una opción extra que solo aparece con habilidad o rasgo
   suficiente ("Con carisma 6: convencer al jefe").
@@ -420,5 +420,5 @@ salía gratis; ahora la pagan, y unos ahorran y otros van justos.
 
 Decisiones: facturas según la casa, hipoteca por tamaño, compra semanal de los vecinos, retención de Hacienda
 por tramos (frena las carreras altas sin tocar los primeros niveles), registro de movimientos y gastos
-opcionales (regalos, ropa, cursos). Las cifras, en `src/data/economy.ts`. Pendiente: vacaciones de fin de semana.
+opcionales (regalos, ropa, cursos y un fin de semana fuera). Las cifras, en `src/data/economy.ts`.
 

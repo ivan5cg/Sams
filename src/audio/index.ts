@@ -1,7 +1,7 @@
 // Director del sonido: escucha la simulación (avisos y eventos), la escena (dónde mira la
 // cámara) y la interfaz (botones y paneles), y decide qué suena. Se carga después del arranque.
 
-import { CAREERS } from '../data/careers';
+import { CAREERS, workDays } from '../data/careers';
 import type { Agent } from '../sim/types';
 import type { SimEvent, Toast, World } from '../sim/world';
 import { ACTION_SOUNDS, PET_SOUND, TOAST_SOUNDS, ambienceFor, distanceGain, musicFor, type SoundId } from './cues';
@@ -108,7 +108,7 @@ export function startAudio(getWorld: () => World, getScene: () => Listener | und
     const w = getWorld();
     const a = w.activeAgent;
     const c = a?.job ? CAREERS[a.job.career] : undefined;
-    if (!c || alarmDay === w.day || !c.days.includes(w.weekday)) return;
+    if (!c || alarmDay === w.day || !workDays(a.job!).includes(w.weekday)) return;
     const m = w.state.minutes % 1440;
     if (m >= c.start * 60 - 60 && m < c.start * 60 - 50) {
       alarmDay = w.day;

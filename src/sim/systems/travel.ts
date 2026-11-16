@@ -2,7 +2,7 @@
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
 import { ACTIONS } from '../../data/actions';
-import { CAREERS } from '../../data/careers';
+import { CAREERS, workDays } from '../../data/careers';
 import { lifeStage } from '../../data/species';
 import { MINUTES_PER_DAY, RIDE_MINUTES, TRAVEL_MINUTES } from '../constants';
 import { METRO_LOT, PARK_LOT } from '../neighborhood';
@@ -16,6 +16,7 @@ import { closedReason, onArriveShopping } from './shopping';
 import { deliverFood } from './street';
 import { endTask } from './tasks';
 import { wishEvent } from './wishes';
+import { backFromTrip } from './trips';
 
 export function canTravel(w: World, a: Agent, lotId: string): { ok: boolean; reason?: string } {
   if (a.travel) return { ok: false, reason: 'Ya va de camino' };
@@ -78,7 +79,8 @@ export function travelMinutes(w: World, from: string, to: string): number {
 export function arrive(w: World, a: Agent) {
   const { to, reason, mood } = a.travel!;
   a.travel = undefined;
-  if (reason) finishShift(w, a, reason, mood ?? 50);
+  if (reason === 'trip') backFromTrip(w, a);
+  else if (reason) finishShift(w, a, reason, mood ?? 50);
   a.lotId = to;
   w.emit({ type: 'door', lotId: to });
   a.pos = freeSpotNear(w, to, w.layoutOf(to).entrance);
@@ -152,7 +154,7 @@ export function busySoon(w: World, a: Agent, hours: number): boolean {
   const job = a.job;
   if (!job || job.lastShiftDay === w.day) return false;
   const c = CAREERS[job.career];
-  if (!c?.days.includes(w.weekday)) return false;
+  if (!c || !workDays(job).includes(w.weekday)) return false;
   const m = w.state.minutes % MINUTES_PER_DAY;
   return m < c.end * 60 && m + hours * 60 >= c.start * 60;
 }

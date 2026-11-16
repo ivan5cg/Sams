@@ -1,7 +1,7 @@
 // Perfil del personaje activo: ánimo, meta de vida, trabajo, rasgos, habilidades, mascota y relaciones.
 
 import { MONEY_CATEGORIES } from '../data/economy';
-import { CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
+import { BAR_MENUS, BAR_STAFF, CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
 import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
 import { MAX_SKILL, SKILLS } from '../data/skills';
 import { SPECIES, lifeStage } from '../data/species';
@@ -34,6 +34,16 @@ export class ProfilePanel extends Part {
         this.renderProfile();
       }
       const a = this.subject();
+      if (b.dataset.barmenu || b.dataset.barstaff || b.dataset.barsunday) {
+        const why = this.world.setBarPlan(a, {
+          ...(b.dataset.barmenu ? { menu: b.dataset.barmenu as 'barata' | 'normal' | 'cara' } : {}),
+          ...(b.dataset.barstaff ? { staff: b.dataset.barstaff === '1' } : {}),
+          ...(b.dataset.barsunday ? { sunday: b.dataset.barsunday === '1' } : {}),
+        });
+        if (why) this.hud.toast(why, '🍺');
+        this.renderProfile();
+        return;
+      }
       if (b.dataset.aspChange !== undefined) {
         this.aspPicking = !this.aspPicking;
         this.renderProfile();
@@ -88,6 +98,8 @@ export class ProfilePanel extends Part {
           <div class="prof-h">${c.icon} ${c.school ? 'Colegio' : esc(lvl.title)}</div>
           <div class="muted small">${c.school ? '' : `${esc(c.name)} · nivel ${a.job.level}/${c.levels.length} · §${lvl.pay} por jornada · `}${esc(scheduleText(c))}</div>
           <div class="perf"><span class="small">${perfLabel}</span><div class="bar"><div class="fill" style="width:${Math.round(a.job.perf)}%;background:#4f8fd9"></div></div></div>
+          ${c.business && mine ? this.barHtml(a) : ''}
+          ${c.remote && mine ? '<div class="muted small">🧑‍💻 Se puede teletrabajar: toca el ordenador de casa y elige «Teletrabajar».</div>' : ''}
           ${c.school || !mine ? '' : '<button class="map-btn ghost small-btn" data-quit>Dejar el trabajo</button>'}
         </div>`;
       } else if (isAdult(a)) {
@@ -167,6 +179,25 @@ export class ProfilePanel extends Part {
       ${skillsHtml}
       ${this.petHtml(a)}
       <div class="prof-sec"><div class="prof-h">👥 Relaciones</div>${relHtml}</div>
+    </div>`;
+  }
+
+  /** El bar: carta, camarero y domingos (se cambia una vez por semana). */
+  barHtml(a: Agent): string {
+    const plan = a.job?.bar ?? { menu: 'normal' as const };
+    const locked = plan.week === Math.floor((this.world.day - 1) / 7);
+    const dis = locked ? 'disabled' : '';
+    const menus = (Object.keys(BAR_MENUS) as (keyof typeof BAR_MENUS)[])
+      .map((k) => `<button class="comp ${plan.menu === k ? 'on' : ''}" data-barmenu="${k}" ${dis} title="${esc(BAR_MENUS[k].desc)}">${esc(BAR_MENUS[k].label)}</button>`)
+      .join('');
+    return `<div class="bar-plan">
+      <div class="prof-h">🍺 Cómo llevas el bar ${locked ? '<span class="muted small">· hasta el lunes no se cambia</span>' : ''}</div>
+      <div class="chips-wrap">${menus}</div>
+      <div class="muted small">${esc(BAR_MENUS[plan.menu].desc)}</div>
+      <div class="chips-wrap">
+        <button class="comp ${plan.staff ? 'on' : ''}" data-barstaff="${plan.staff ? '0' : '1'}" ${dis}>🧑‍🍳 ${plan.staff ? `Camarero: ${esc(plan.staff)}` : `Contratar camarero (§${BAR_STAFF.wage}/día)`}</button>
+        <button class="comp ${plan.sunday ? 'on' : ''}" data-barsunday="${plan.sunday ? '0' : '1'}" ${dis}>📅 ${plan.sunday ? 'Abre los domingos' : 'Abrir también los domingos'}</button>
+      </div>
     </div>`;
   }
 

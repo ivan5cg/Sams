@@ -30,6 +30,8 @@ export const ECONOMY = {
   gift: 40,
   clothes: 60,
   course: 150,
+  /** Un fin de semana fuera para toda la familia. */
+  trip: 600,
 };
 
 /** Categorías del registro de movimientos (con su icono y su nombre). */
@@ -56,6 +58,7 @@ export const MONEY_CATEGORIES: Record<string, { icon: string; label: string }> =
   regalos: { icon: '🎁', label: 'Regalos' },
   ropa: { icon: '👕', label: 'Ropa' },
   cursos: { icon: '🎓', label: 'Cursos' },
+  viajes: { icon: '🧳', label: 'Viajes' },
   calle: { icon: '🛍️', label: 'En la calle' },
 };
 

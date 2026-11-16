@@ -84,7 +84,9 @@ export class FamilyPanel extends Part {
       ? ''
       : a.travel.reason === 'work'
         ? `<div class="chip now"><span>💼</span><span class="chip-l">En el trabajo hasta las ${until}</span></div>`
-        : a.travel.reason === 'school'
+        : a.travel.reason === 'trip'
+          ? `<div class="chip now"><span>🏖️</span><span class="chip-l">De vacaciones hasta el domingo a las ${until}</span></div>`
+          : a.travel.reason === 'school'
           ? `<div class="chip now"><span>🎒</span><span class="chip-l">En clase hasta las ${until}</span></div>`
           : `<div class="chip now"><span>🚶</span><span class="chip-l">De camino a: ${esc(this.hud.placeName(a.travel.to))}</span></div>`;
     let queueHtml = travelChip + tasks

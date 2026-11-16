@@ -3,7 +3,7 @@
 // Las reglas de los eventos son las mismas que en systems/calendar.ts (si cambian allí,
 // hay que cambiarlas aquí: la prueba de la agenda lo comprueba simulando semanas enteras).
 
-import { CAREERS } from '../data/careers';
+import { CAREERS, workDays } from '../data/careers';
 import { ACTIONS } from '../data/actions';
 import { SEASONS } from '../data/seasons';
 import { lifeStage } from '../data/species';
@@ -56,7 +56,7 @@ export function agendaFor(w: World, offset: 0 | 1): AgendaItem[] {
   for (const m of w.members) {
     const job = m.job;
     const c = job && CAREERS[job.career];
-    if (!job || !c || !c.days.includes(wd)) continue;
+    if (!job || !c || !workDays(job).includes(wd)) continue;
     const school = !!c.school;
     if (job.dayOff === day) {
       items.push({ minute: -1, icon: '🏖️', text: `${m.name} tiene el día libre`, kind: 'work', agentId: m.id });
@@ -98,6 +98,12 @@ export function agendaFor(w: World, offset: 0 | 1): AgendaItem[] {
       const parents = h.expecting.parents.map((id) => w.agent(id)?.name).filter(Boolean).join(' y ');
       items.push({ minute: Math.floor(due % MINUTES_PER_DAY), icon: '👶', text: `Llega el bebé${parents ? ` de ${parents}` : ''}`, kind: 'baby' });
     }
+  }
+  // Fin de semana fuera
+  const trip = h.trip;
+  if (trip) {
+    if (Math.floor(trip.start / MINUTES_PER_DAY) + 1 === day) items.push({ minute: Math.floor(trip.start % MINUTES_PER_DAY), icon: '🧳', text: `Salida hacia ${trip.dest}`, kind: 'event' });
+    if (Math.floor(trip.end / MINUTES_PER_DAY) + 1 === day) items.push({ minute: Math.floor(trip.end % MINUTES_PER_DAY), icon: '🏠', text: `Vuelta de ${trip.dest}`, kind: 'event' });
   }
   // Órdenes programadas
   for (const o of w.state.schedule ?? []) {
