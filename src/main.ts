@@ -48,11 +48,11 @@ async function boot() {
       saveGameSync(world.state);
       location.reload();
     },
-    onNewGame: async () => {
+    onNewGame: async (family) => {
       await deleteGame();
-      setWorld(World.createNew());
+      setWorld(World.createNew(family));
       await saveGame(world.state);
-      hud.toast('¡Bienvenidos a casa!', '🏡');
+      hud.toast(`¡Bienvenida a casa, ${world.household.name.replace(/^Familia/, 'familia')}!`, '🏡');
     },
   });
 
@@ -97,10 +97,13 @@ async function boot() {
     hud.setWorld(w);
   }
 
-  // Guardado automático y pausa al salir de la app.
-  setInterval(() => saveGame(world.state), AUTOSAVE_MS);
+  // Guardado automático y pausa al salir de la app. Con el creador de familia abierto no se guarda
+  // (la primera vez, la familia de mientras no es la de nadie: si se cierra la app, se vuelve a elegir).
+  const choosing = () => hud.creator.isOpen;
+  setInterval(() => !choosing() && saveGame(world.state), AUTOSAVE_MS);
   let speedBeforeHide = world.state.speed;
   document.addEventListener('visibilitychange', () => {
+    if (choosing()) return;
     if (document.hidden) {
       // Se guarda con la velocidad a la que se jugaba (si no, al volver a abrir la app arrancaría en pausa).
       speedBeforeHide = world.state.speed;
@@ -111,7 +114,7 @@ async function boot() {
       world.state.speed = speedBeforeHide;
     }
   });
-  window.addEventListener('pagehide', () => saveGameSync(world.state));
+  window.addEventListener('pagehide', () => !choosing() && saveGameSync(world.state));
 
   // El sonido se carga después de arrancar (no retrasa la primera imagen).
   void import('./audio').then((m) => {
@@ -130,8 +133,8 @@ async function boot() {
   loading?.classList.add('out');
   setTimeout(() => loading?.remove(), 500);
 
-  hud.startGuide();
-  if (!saved) hud.toast('¡Bienvenidos a casa! Toca algo para dar órdenes', '🏡');
+  // La primera vez, antes de nada, se elige la familia (y luego viene el tutorial).
+  hud.startGuide(!saved);
 }
 
 registerSW({ immediate: true });

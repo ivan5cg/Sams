@@ -58,6 +58,8 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v12 → v13: aspecto elegido en el creador de familia (campo nuevo opcional: nada que convertir).
+  12: () => {},
   // v11 → v12: muebles girados, pintura por habitación, reformas a elegir y culebrones del barrio.
   11: (s) => {
     s.arcs = s.arcs ?? [];

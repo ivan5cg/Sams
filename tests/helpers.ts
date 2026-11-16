@@ -52,6 +52,8 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v13: aspecto elegido en el creador de familia.
+  if (version <= 12) for (const a of st.agents) delete a.look;
   // v12: muebles girados y pintura por habitación.
   if (version <= 11) {
     for (const o of st.objects) delete o.rot;

@@ -26,9 +26,10 @@ cambió al hacerlas está en la columna «Notas».
 | 4.5 Construcción | ✅ | Girar (trasponiendo el dibujo isométrico), deshacer en la sesión de obra, pintura por habitación y dos plantillas por reforma. SAVE_VERSION 12 |
 | 4.3 Historias del barrio | ✅ | Tres culebrones (lío, guerra de vecinos, romance con boda), mediar y chivarse; se ven en el salseo. Dentro de la versión 12 (`arcs`) |
 | 4.2 Carreras y negocio | ✅ | Opciones de dilema con habilidad o rasgo, teletrabajo (oficina y ciencia), decisiones semanales del bar. Más el fin de semana fuera que quedó de 4.1 |
-| Fase 5 | ⏳ | Sin empezar |
+| 5.1 Crear tu familia | ✅ | Creador al empezar y desde ☰ → Nueva partida; García como opción rápida. SAVE_VERSION 13 (`look` de cada persona) |
+| Resto de la fase 5 | ⏳ | Orden: fiestas, álbum de fotos, sitios nuevos, tercer barrio |
 
-**Lo siguiente:** la Fase 5 (contenido nuevo). La fase 4 está completa. La partida va por la **versión 12**: si algo nuevo cambia lo que se guarda, toca la 13 con su migración.
+**Lo siguiente:** el resto de la Fase 5 (fiestas nuevas). La partida va por la **versión 13**: si algo nuevo cambia lo que se guarda, toca la 14 con su migración.
 
 ---
 
@@ -340,8 +341,12 @@ datos.
 ---
 
 ## Fase 5 — Contenido nuevo (cuando lo anterior esté hecho)
-- **Crear tu familia** al empezar: nombres, rasgos, aspecto (reutilizando los generadores de vecinos) y
+- ✅ **Crear tu familia** al empezar: nombres, rasgos, aspecto (reutilizando los generadores de vecinos) y
   mascota inicial. Mantener "Familia García" como opción rápida.
+  *Hecho:* `sim/family.ts` (`FamilySpec`, `GARCIA`, `randomFamily`, `familyProblems`) y `World.createNew(family)`;
+  las paletas de aspecto, en `data/looks.ts`; la interfaz, en `ui/creator.ts`. Con la García por defecto, la
+  simulación sale idéntica a la de antes (comprobado con semilla). Mientras el creador está abierto no se
+  guarda: si se cierra la app sin elegir, al volver se elige otra vez.
 - Sitios nuevos: biblioteca (lógica y deberes), gimnasio, mercadillo del domingo (comprar barato, regatear).
 - Fiestas nuevas: Carnaval, Halloween (truco o trato por las casas), Reyes (roscón con haba y cabalgata).
 - **Álbum de fotos**: hacer una captura del canvas (`game.renderer.snapshot`), guardarla en IndexedDB (con

@@ -22,12 +22,14 @@ import { Guide } from './guide';
 import { Notices } from './notices';
 import { AgendaPanel } from './agenda';
 import { FeatsPanel } from './feats';
+import { FamilyCreator } from './creator';
+import type { FamilySpec } from '../sim/family';
 
 export interface HudCallbacks {
   onSave: () => void;
   onExport: () => void;
   onImport: (file: File) => void;
-  onNewGame: () => void;
+  onNewGame: (family: FamilySpec) => Promise<void>;
   onReload: () => void;
 }
 
@@ -46,6 +48,7 @@ export class Hud {
   readonly notices = new Notices(this);
   readonly agenda = new AgendaPanel(this);
   readonly feats = new FeatsPanel(this);
+  readonly creator = new FamilyCreator(this);
 
   world: World;
   /** El sonido (se carga después del arranque). */
@@ -90,6 +93,7 @@ export class Hud {
     this.notices.bind();
     this.agenda.bind();
     this.feats.bind();
+    this.creator.bind();
   }
 
   /** Toque en la escena: en modo construcción lo gestiona la obra; si no, el menú de acciones. */
@@ -110,9 +114,21 @@ export class Hud {
     this.profile.openProfile(agentId);
   }
 
-  /** Al arrancar: la primera vez, el tutorial guiado. */
-  startGuide() {
-    this.guide.start();
+  /** Al arrancar: la primera vez, el creador de familia y luego el tutorial guiado. */
+  startGuide(firstTime = false) {
+    if (firstTime) this.newFamily(true);
+    else this.guide.start();
+  }
+
+  /** Abre el creador de familia (con el tiempo parado) y empieza la partida con la elegida. */
+  newFamily(firstTime: boolean) {
+    const speed = this.world.state.speed;
+    this.world.state.speed = 0;
+    this.creator.open({ cancellable: !firstTime }, async (f) => {
+      if (f) await this.cb.onNewGame(f);
+      else this.world.state.speed = speed || 1;
+      if (firstTime) this.guide.start();
+    });
   }
 
   /** Aviso de la propia interfaz («Partida guardada»...). */

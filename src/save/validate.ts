@@ -81,6 +81,11 @@ export function validateState(s: WorldState) {
     num(a.pos?.y, `posición de ${a.id}`);
     for (const v of Object.values(a.needs ?? {})) num(v, `necesidades de ${a.id}`);
     optId(a.home, `casa de ${a.id}`);
+    if (a.look) {
+      optNum(a.look.skin, `aspecto de ${a.id}`);
+      optNum(a.look.hair, `aspecto de ${a.id}`);
+      optStr(a.look.hairStyle, `aspecto de ${a.id}`);
+    }
     if (a.job?.bar) {
       if (!['barata', 'normal', 'cara'].includes(a.job.bar.menu)) throw new Broken(`bar de ${a.id}`);
       optStr(a.job.bar.staff, `bar de ${a.id}`);

@@ -14,7 +14,7 @@ import { canAspire, suggestAspiration } from './aspirations';
 import { feel as feelEmotion, pruneEmotions } from './emotions';
 import { ACAI_LOTS, BAR_LOT, METRO_LOT, PARK_LOT, PLAYER_LOT, PLAZA_LOT, STUDIO_LOT, SUPER_LOT, addAlcorcon, generateNeighborhood, makeAgent, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { isWalkable, type Grid } from './pathfinding';
-import { setRel } from './social';
+import { isAdult, setRel } from './social';
 import { randomPetTrait, traitDecay, traitsOf } from './traits';
 import { NEED_KEYS, type Agent, type Household, type Lot, type NeedKey, type PlacedObject, type RoomPaint, type SpeciesId, type Task, type Vec, type WorldState } from './types';
 import { topUpWishes } from './wishes';
@@ -39,6 +39,7 @@ import * as Social from './systems/social';
 import * as Feats from './systems/feats';
 import * as Arcs from './systems/arcs';
 import * as Trips from './systems/trips';
+import { GARCIA, MAX_START_PEOPLE, STAGE_AGE, type FamilySpec } from './family';
 
 export { SAVE_VERSION, MINUTES_PER_DAY, MAX_MEMBERS, TRAVEL_MINUTES, RIDE_MINUTES, PANTRY_MAX } from './constants';
 export { moodScore, objectCenter } from './util';
@@ -129,7 +130,8 @@ export class World {
     for (const a of state.agents) if (a.kind === 'pet' && !a.petTrait) a.petTrait = randomPetTrait(a);
   }
 
-  static createNew(): World {
+  /** Partida nueva: la familia García o la que se haya diseñado en el creador. */
+  static createNew(family: FamilySpec = GARCIA): World {
     const state: WorldState = {
       version: SAVE_VERSION,
       minutes: 8 * 60,
@@ -147,25 +149,45 @@ export class World {
       feats: { got: {}, counts: {}, challenges: {} },
       arcs: [],
     };
-    const mk = (id: string, name: string, species: SpeciesId, ageDays: number, color: number, x: number, y: number) =>
-      makeAgent({ id, name, species, ageDays, color, householdId: 'h1', lotId: PLAYER_LOT, x, y });
-    state.agents.push(
-      mk('a1', 'Lucía', 'human', 24, 0xe0607e, 6, 4),
-      mk('a2', 'Mateo', 'human', 27, 0x4f8fd9, 7, 5),
-      mk('a3', 'Toby', 'dog', 9, 0xc68642, 3, 7),
-      mk('a4', 'Misi', 'cat', 12, 0x9a9a9a, 4, 5),
-    );
-    state.agents[0].traits = ['deportista', 'romantico'];
-    state.agents[1].traits = ['cunado', 'gloton'];
-    state.households.push({ id: 'h1', name: 'Familia García', funds: 2000, memberIds: state.agents.map((a) => a.id), lotId: PLAYER_LOT, pantry: 15 });
-    // Lucía y Mateo son pareja; los dos están sin trabajo (lo eliges tú).
-    setRel(state, 'a1', 'a2', { f: 70, r: 75, status: 'partner' });
+    let n = 0;
+    const mk = (name: string, species: SpeciesId, ageDays: number, color: number, x: number, y: number) =>
+      makeAgent({ id: `a${++n}`, name, species, ageDays, color, householdId: 'h1', lotId: PLAYER_LOT, x, y });
+    // Dónde aparece cada uno al empezar.
+    const spots = [{ x: 6, y: 4 }, { x: 7, y: 5 }, { x: 5, y: 6 }, { x: 8, y: 4 }];
+    const petSpots: Partial<Record<SpeciesId, { x: number; y: number }>> = { dog: { x: 3, y: 7 }, cat: { x: 4, y: 5 }, ferret: { x: 5, y: 7 }, guineapig: { x: 3, y: 6 }, capybara: { x: 11, y: 6 } };
+    const people = family.people.slice(0, MAX_START_PEOPLE).map((p, i) => {
+      const a = mk(p.name.trim(), 'human', p.ageDays ?? STAGE_AGE[p.stage], p.color, spots[i].x, spots[i].y);
+      if (p.look) a.look = { ...p.look };
+      return a;
+    });
+    const pets = family.pets.map((p) => {
+      const at = petSpots[p.species] ?? { x: 4, y: 6 };
+      return mk(p.name.trim(), p.species, p.ageDays ?? SPECIES[p.species].stages[0].until + 2, p.color ?? 0x999999, at.x, at.y);
+    });
+    state.agents.push(...people, ...pets);
+    family.people.slice(0, MAX_START_PEOPLE).forEach((p, i) => (people[i].traits = [...p.traits]));
+    state.households.push({ id: 'h1', name: `Familia ${family.surname.trim()}`, funds: 2000, memberIds: state.agents.map((a) => a.id), lotId: PLAYER_LOT, pantry: 15 });
+    // La pareja (si la hay); todos empiezan sin trabajo (lo eliges tú) y los peques, al colegio.
+    const grownUps = people.filter((a) => isAdult(a));
+    if (family.couple && grownUps.length >= 2) setRel(state, grownUps[0].id, grownUps[1].id, { f: 70, r: 75, status: 'partner' });
     setupFamilyLife(state, state.agents, { jobs: false });
+    for (const a of people) if (['child', 'teen'].includes(lifeStage('human', a.ageDays).id)) a.job = { career: 'school', level: 1, perf: 50 };
     placeObjects(state, PLAYER_LOT, HOUSE_OBJECTS);
+    // Las cobayas viven en su jaula.
+    for (const pet of pets) {
+      const habitat = SPECIES[pet.species].habitat;
+      if (!habitat) continue;
+      const home = state.objects.find((o) => o.lotId === PLAYER_LOT && o.def === habitat && !state.agents.some((a) => a.home === o.id));
+      if (home) {
+        pet.home = home.id;
+        pet.pos = { x: home.x, y: home.y };
+      }
+    }
     generateNeighborhood(state);
     addAlcorcon(state);
     return new World(state);
   }
+
 
   // ---------------------------------------------------------------------------
   // Consultas

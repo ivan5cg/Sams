@@ -84,6 +84,8 @@ export interface Agent {
   aspiration?: { id: string; stage: number };
   /** Metas de vida ya cumplidas. */
   aspirationsDone?: string[];
+  /** Aspecto elegido en el creador de familia (si no, sale del nombre). Desde la versión 13. */
+  look?: { skin?: number; hair?: number; hairStyle?: string };
   /** Generación en la familia del jugador (1 = la fundadora). */
   gen?: number;
   /** Padres (para saber quién es hijo/nieto de quién). */

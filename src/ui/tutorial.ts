@@ -45,8 +45,10 @@ export class Tutorial extends Part {
   }
 
   renderTutorial() {
+    const who = this.world.members.map((m) => m.name);
+    const list = who.length > 1 ? `${who.slice(0, -1).join(', ')} y ${who[who.length - 1]}` : who[0] ?? 'tu familia';
     const steps = [
-      { icon: '🏡', title: '¡Bienvenidos a Sams!', text: 'Cuidas de la familia García: Lucía, Mateo, el perro Toby y la gata Misi. La partida no termina nunca.' },
+      { icon: '🏡', title: '¡Bienvenidos a Sams!', text: `Cuidas de la ${this.world.household.name.replace(/^Familia/, 'familia')}: ${list}. La partida no termina nunca.` },
       { icon: '👆', title: 'Dar órdenes', text: 'Toca algo de la casa (la nevera, la cama, a otra persona...) para ver qué puede hacer el personaje activo. Toca el suelo para que camine.' },
       { icon: '🟢', title: 'Uno cada vez', text: 'Controlas a un miembro de la familia cada vez (mascotas incluidas): toca su retrato abajo para cambiar. Los demás se cuidan solos.' },
       { icon: '🗺️', title: 'El barrio', text: 'Con 🗺️ vas al parque o de visita, e invitas a los vecinos. Con 👥 ves el trabajo y las relaciones. Con 🔨 compras y colocas muebles.' },

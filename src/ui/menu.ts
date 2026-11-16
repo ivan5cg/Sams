@@ -74,8 +74,8 @@ export class GameMenu extends Part {
           break;
         case 'new':
           if (confirm('¿Empezar una partida nueva? Se perderá la actual si no la has exportado.')) {
-            this.hud.cb.onNewGame();
             this.toggleMenu(false);
+            this.hud.newFamily(false);
           }
           break;
       }

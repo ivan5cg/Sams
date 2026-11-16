@@ -8,6 +8,10 @@ Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
 
 ## Cómo jugar
 
+- **Al empezar eliges tu familia**: apellido, hasta 4 personas (nombre, edad, dos rasgos, ropa, piel, pelo
+  y peinado), si los dos primeros adultos son pareja y una mascota. Con 🎲 sale una al azar, y la
+  **Familia García** de siempre (Lucía, Mateo, Toby y Misi) sigue a un toque. Los niños van al colegio desde
+  el primer día. ☰ → Nueva partida vuelve a abrir el creador.
 - La partida no termina nunca. El tiempo avanza solo; arriba puedes pausar o acelerar (×1, ×3, ×8).
 - Controlas a **un miembro de tu familia cada vez**, incluidas las mascotas. Toca su retrato abajo para cambiar.
 - **Toca algo de la casa** (nevera, cama, otra persona, el perro…) para ver qué puede hacer el personaje activo.

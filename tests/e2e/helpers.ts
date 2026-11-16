@@ -11,7 +11,7 @@ export function watchErrors(page: Page): string[] {
 }
 
 /** Abre el juego en una partida nueva y espera a que la escena esté lista. */
-export async function openGame(page: Page, opts: { tutorial?: boolean } = {}) {
+export async function openGame(page: Page, opts: { tutorial?: boolean; creator?: boolean } = {}) {
   await page.addInitScript((tuto) => {
     // Partida limpia en cada prueba.
     if (!sessionStorage.getItem('sams:e2e')) {
@@ -26,7 +26,25 @@ export async function openGame(page: Page, opts: { tutorial?: boolean } = {}) {
     const s = (window as unknown as { sams?: { game: { scene: { getScene(k: string): { sys: { isActive(): boolean } } | null } } } }).sams;
     return !!s?.game.scene.getScene('house')?.sys.isActive();
   });
-  await expect(page.locator('#portraits .portrait')).toHaveCount(4);
+  // La primera vez sale el creador de familia: se elige la García de siempre.
+  // (Con un clic del propio script, que no cuenta como toque: así el sonido sigue sin desbloquear.)
+  if (!opts.creator) {
+    // Se espera a que la familia elegida sustituya a la de mientras (si no, se jugaría con la vieja).
+    const fresh = await page.evaluate(() => {
+      const g = window as unknown as { sams: { world: object }; __oldWorld?: object };
+      const b = document.querySelector<HTMLButtonElement>('#creator:not([hidden]) [data-cr="garcia"]');
+      if (!b) return true;
+      g.__oldWorld = g.sams.world;
+      b.click();
+      return false;
+    });
+    if (!fresh) await page.waitForFunction(() => {
+      const g = window as unknown as { sams: { world: object }; __oldWorld?: object };
+      return g.sams.world !== g.__oldWorld;
+    });
+    await expect(page.locator('#creator')).toBeHidden();
+    await expect(page.locator('#portraits .portrait')).toHaveCount(4);
+  }
 }
 
 /** Coordenadas en pantalla (CSS) del centro de un objeto de la parcela que se ve. */

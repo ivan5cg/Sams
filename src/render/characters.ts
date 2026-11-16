@@ -4,12 +4,10 @@ import type Phaser from 'phaser';
 import type { Agent, SpeciesId } from '../sim/types';
 import { hash } from './art';
 import { shade } from './iso';
+import { HAIR, HAIR_STYLES, PANTS, SKIN } from '../data/looks';
 
 type G = Phaser.GameObjects.Graphics;
 
-const SKIN = [0xf6d2b0, 0xf1c27d, 0xe0ac69, 0xc68642, 0x8d5524, 0x6b4226];
-const HAIR = [0x2b1a10, 0x111111, 0x6b3e1f, 0xb5651d, 0xe6c35c, 0x9c3d2a];
-const PANTS = [0x34384a, 0x3d5a80, 0x5c4033, 0x2f4f4f, 0x4a4e69, 0x6c757d];
 const DOG_COLORS = [0xc68642, 0xe0b170, 0x3b3b3b, 0xf2efe8, 0x8b5a2b];
 const CAT_COLORS = [0xf0a04b, 0x9a9a9a, 0x2f2f2f, 0xf5f5f5, 0xc9a27a];
 
@@ -28,11 +26,13 @@ export interface PersonLook {
 
 export function personLook(a: Agent, elder: boolean): PersonLook {
   const h = hash(a.id + a.name);
-  const styles: PersonLook['hairStyle'][] = ['short', 'long', 'bun', 'curly', 'ponytail'];
+  const styles: PersonLook['hairStyle'][] = [...HAIR_STYLES];
+  // Lo elegido en el creador de familia manda; si no, sale del nombre.
+  const look = a.look;
   return {
-    skin: SKIN[h % SKIN.length],
-    hair: elder ? 0xd9d9d9 : HAIR[(h >>> 3) % HAIR.length],
-    hairStyle: styles[(h >>> 6) % styles.length],
+    skin: look?.skin ?? SKIN[h % SKIN.length],
+    hair: elder ? 0xd9d9d9 : (look?.hair ?? HAIR[(h >>> 3) % HAIR.length]),
+    hairStyle: (look?.hairStyle as PersonLook['hairStyle'] | undefined) ?? styles[(h >>> 6) % styles.length],
     pants: PANTS[(h >>> 9) % PANTS.length],
     shirt: a.color,
     build: [0.88, 1, 1, 1.15][(h >>> 12) % 4],

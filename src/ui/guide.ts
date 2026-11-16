@@ -25,6 +25,8 @@ export class Guide extends Part {
   step = -1;
   private speedBefore = 1;
   private objectsAtStart = 0;
+  /** A quién se controlaba al llegar al paso de cambiar de personaje. */
+  private activeAtStart = '';
   private glowing: Element[] = [];
   private lastHtml = '';
 
@@ -130,7 +132,8 @@ export class Guide extends Part {
       case 1:
         return [a.current, ...a.queue].some((t) => t && FRIDGE_FOOD.has(t.actionId));
       case 2:
-        return a.kind === 'pet';
+        // Sin mascota, vale con cambiar a otro; y si se vive solo, no hay a quién cambiar.
+        return this.pet ? a.kind === 'pet' : w.members.length < 2 || a.id !== this.activeAtStart;
       case 3:
         return w.members.some((m) => m.job && !CAREERS[m.job.career]?.school);
       case 4:
@@ -154,6 +157,7 @@ export class Guide extends Part {
       this.speedBefore = w.state.speed || 1;
       w.state.speed = 0;
     }
+    if (i === 2) this.activeAtStart = w.activeAgent.id;
     if (i === 4) this.objectsAtStart = this.playerObjects;
     document.body.classList.add('guiding');
     $('#guide').hidden = false;
