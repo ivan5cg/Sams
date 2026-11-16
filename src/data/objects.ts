@@ -72,7 +72,7 @@ const D: ObjectDef[] = [
   { id: 'armchair', name: 'Sillón', icon: '💺', w: 1, h: 1, height: 14, color: 0x7b4fa0, capacity: 1, snap: true, actions: ['sit', 'watch_tv', 'sniff_sofa'], price: 120, category: 'descanso', tiers: true },
   { id: 'crib', name: 'Cuna', icon: '', w: 1, h: 1, height: 20, color: 0xf2a7c3, shape: 'cage', capacity: 3, actions: ['baby_sleep'], price: 150, category: 'descanso' },
 
-  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'eat', 'snack', 'drink_beer', 'repair'], price: 250, category: 'cocina', breakable: true, tiers: true },
+  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'eat', 'snack', 'eat_roscon', 'drink_beer', 'repair'], price: 250, category: 'cocina', breakable: true, tiers: true },
   { id: 'toilet', name: 'Váter', icon: '🚽', w: 1, h: 1, height: 14, color: 0xf4f4f4, capacity: 1, snap: true, actions: ['toilet', 'repair'], price: 120, category: 'cocina', breakable: true, tiers: true },
   { id: 'shower', name: 'Ducha', icon: '🚿', w: 1, h: 1, height: 6, color: 0x9fd3e6, capacity: 1, snap: true, actions: ['shower', 'repair'], price: 200, category: 'cocina', breakable: true, tiers: true },
   { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true, tiers: true },

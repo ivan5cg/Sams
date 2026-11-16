@@ -23,7 +23,7 @@ describe('agenda de la familia', () => {
   it('los eventos que anuncia la agenda pasan de verdad ese día', () => {
     const w = World.createNew();
     w.state.activeAgentId = 'nadie';
-    const checked = ['campana', 'sanisidro', 'verbena', 'ofertas', 'navidad'];
+    const checked = ['campana', 'sanisidro', 'verbena', 'ofertas', 'navidad', 'carnaval', 'desfile', 'halloween'];
     const seen = new Map<number, Set<string>>();
     for (let h = 0; h < 28 * 24; h++) {
       w.tick(60);

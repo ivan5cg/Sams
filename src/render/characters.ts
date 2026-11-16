@@ -309,6 +309,40 @@ export function drawAccessory(g: G, kind: string) {
       g.lineStyle(1, 0x5a3a1c, 1);
       g.strokeCircle(7.5, -25, 2.5);
       break;
+    case 'disfraz':
+      // Antifaz y gorro de fiesta
+      g.fillStyle(0x9b5de5, 1);
+      g.fillRoundedRect(-8, hy - 1, 16, 4.5, 2);
+      g.fillStyle(0xf2c14e, 1);
+      g.fillTriangle(-5, hy - 7, 5, hy - 7, 0, hy - 20);
+      g.fillStyle(0xe63946, 1);
+      g.fillCircle(0, hy - 20, 2);
+      g.fillCircle(-2, hy - 11, 1.1);
+      g.fillCircle(2, hy - 14, 1.1);
+      break;
+    case 'corona':
+      // Corona de la figurita del roscón
+      g.fillStyle(0xf2c14e, 1);
+      g.fillRect(-6, hy - 12, 12, 4);
+      g.fillTriangle(-6, hy - 12, -3, hy - 12, -4.5, hy - 17);
+      g.fillTriangle(-1.5, hy - 12, 1.5, hy - 12, 0, hy - 18);
+      g.fillTriangle(3, hy - 12, 6, hy - 12, 4.5, hy - 17);
+      g.fillStyle(0xe63946, 1);
+      g.fillCircle(0, hy - 10, 1.2);
+      break;
+    case 'bruja':
+      // Sombrero de bruja y cubo-calabaza
+      g.fillStyle(0x2b2d42, 1);
+      g.fillEllipse(0, hy - 7, 24, 5);
+      g.fillTriangle(-7, hy - 8, 7, hy - 8, 3, hy - 26);
+      g.fillStyle(0x9b5de5, 1);
+      g.fillRect(-6, hy - 10, 12, 2);
+      g.fillStyle(0xf28c28, 1);
+      g.fillCircle(10, -22, 4.5);
+      g.fillStyle(0x2b2d42, 1);
+      g.fillRect(8, -23, 1.3, 1.3);
+      g.fillRect(10.8, -23, 1.3, 1.3);
+      break;
     case 'chulapo':
       // Parpusa de cuadros
       g.fillStyle(0x6b6f76, 1);

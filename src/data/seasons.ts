@@ -34,6 +34,11 @@ export const EVENTS: Record<string, EventDef> = {
   lluvia: { id: 'lluvia', label: 'Llueve', icon: '🌧️' },
   nevada: { id: 'nevada', label: 'Nieva', icon: '🌨️' },
   sanisidro: { id: 'sanisidro', label: 'San Isidro', icon: '🎩' },
+  reyes: { id: 'reyes', label: 'Día de Reyes', icon: '👑' },
+  cabalgata: { id: 'cabalgata', label: 'Cabalgata de Reyes', icon: '🐪' },
+  carnaval: { id: 'carnaval', label: 'Carnaval', icon: '🎭' },
+  desfile: { id: 'desfile', label: 'Desfile de Carnaval', icon: '🎉' },
+  halloween: { id: 'halloween', label: 'Halloween', icon: '🎃' },
 };
 
 /** Aparatos que no funcionan sin luz. */

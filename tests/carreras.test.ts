@@ -100,7 +100,8 @@ describe('fin de semana fuera', () => {
     for (const m of w.members) if (!m.home) expect(m.travel?.reason, m.name).toBe('trip');
     // El domingo por la noche, de vuelta.
     w.tick(1440 + 10 * 60);
-    for (const m of w.members) expect(m.travel).toBeUndefined();
+    // (Ya de vuelta, alguno puede haber salido otra vez: al Mercadona, al parque...)
+    for (const m of w.members) expect(m.travel?.reason, m.name).not.toBe('trip');
     expect(lucia.emotions?.some((e) => e.id === 'vacaciones')).toBe(true);
     expect(w.household.trip).toBeUndefined();
   }, 60_000);

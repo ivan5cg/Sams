@@ -80,6 +80,11 @@ const EVENT_LINES: Record<string, [string, string][]> = {
   sanisidro: [['¿Vas a ir de chulapo/a?', '¡Claro! Con su clavel y todo'], ['¿Rosquillas tontas o listas?', 'Las dos, que es fiesta']],
   verbena: [['¡Esta noche es la verbena!', 'Pienso bailar hasta que me echen'], ['¿Sabes bailar el chotis?', 'Sobre un ladrillo, como manda la tradición']],
   ofertas: [['Hay ofertas en el Mercadona', 'Pues yo me voy a llevar diez kilos de tomate'], ['Con las ofertas me he llenado la despensa', 'Previsor/a, como las hormigas']],
+  reyes: [['¿Qué te han traído los Reyes?', 'Calcetines. Como todos los años'], ['¿Te ha salido el haba?', 'Calla, que me toca pagar a mí']],
+  cabalgata: [['¡Mira, Baltasar!', '¡Que tire caramelos para aquí!'], ['Me he llevado un caramelazo en la frente', 'Gajes de la cabalgata']],
+  carnaval: [['¿De qué vas disfrazado/a?', 'De persona normal. Es lo más difícil'], ['Ese disfraz es de premio', '¡Que lo diga el jurado!']],
+  desfile: [['¿Quién va a ganar el concurso?', 'Seguro que los de Alcorcón otra vez'], ['¡Qué carroza más bonita!', 'Es la del Mercadona, toda de cartón']],
+  halloween: [['¿Tienes caramelos para los niños?', 'He comprado una bolsa. Me he comido la mitad'], ['Esto de Halloween es americano', 'Y las castañas asadas no, ¿eh?']],
   navidad: [['¡Feliz Navidad!', '¡Igualmente! ¿Te ha tocado algo?'], ['Ya he comido turrón para todo el año', 'Y aún quedan los polvorones']],
 };
 const TIME_LINES: [number, number, string[]][] = [

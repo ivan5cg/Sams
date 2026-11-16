@@ -123,6 +123,16 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
   barata), algún **apagón** por la noche (sin tele ni ordenador, y a oscuras) y **Navidad** al final del invierno:
   lotería (décimos a §20 en la caja del Mercadona, sorteo el último día, con Gordo, pedrea y reintegro) y cena con
   el cuñado arreglando el país.
+- **Reyes** (el lunes que abre la primavera, desde el segundo año): regalos para los pequeños, carbón dulce para
+  el cuñado o el gruñón, **roscón** en la nevera (en cada trozo puede salir la figurita, con corona para todo el
+  día, o el haba, y entonces toca pagarlo) y **cabalgata** en el parque a las 17:00 con caramelos para todos.
+- **Carnaval** (el jueves de primavera): tócate a ti mismo para **disfrazarte** (§15, antifaz y gorro de fiesta)
+  y ve al **desfile** del parque a las 18:00. A las 20:00, **concurso de disfraces** (§100 de premio, más fácil
+  con gracia y arte).
+- **Halloween** (el viernes de otoño): de 18:00 a 22:00 los niños de la casa van de **truco o trato** con su
+  sombrero de bruja, y a las 19:00 los del barrio llaman a vuestra puerta: si hay algo en la despensa, trato;
+  si no, os llenan la puerta de papel higiénico.
+- Todo sale en la 📅 agenda.
 
 ## Alcorcón y el metro
 

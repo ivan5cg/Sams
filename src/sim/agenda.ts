@@ -11,6 +11,7 @@ import { MINUTES_PER_DAY } from './constants';
 import { ECONOMY } from '../data/economy';
 import { weeklyBill, weeklyMortgage } from './systems/money';
 import type { World } from './world';
+import { HOLIDAY_HOURS, holidayOf } from './systems/holidays';
 
 export interface AgendaItem {
   /** Minuto del día (0-1439), o -1 si es para todo el día. */
@@ -39,6 +40,19 @@ export function calendarEvents(day: number): { id: string; minute: number; icon:
     out.push({ id: 'navidad', minute: -1, icon: '🎄', text: 'Navidad' });
     out.push({ id: 'sorteo', minute: 12 * 60, icon: '🎶', text: 'Sorteo de la Lotería de Navidad' });
     out.push({ id: 'campanadas', minute: 23 * 60, icon: '🍇', text: 'Las doce campanadas' });
+  }
+  const fiesta = holidayOf(day);
+  if (fiesta === 'reyes') {
+    out.push({ id: 'reyes', minute: -1, icon: '👑', text: 'Reyes: regalos y roscón (¡ojo con el haba!)' });
+    out.push({ id: 'cabalgata', minute: HOLIDAY_HOURS.cabalgata * 60, icon: '🐪', text: 'Cabalgata de Reyes en el parque' });
+  }
+  if (fiesta === 'carnaval') {
+    out.push({ id: 'carnaval', minute: -1, icon: '🎭', text: 'Carnaval: disfrázate (tocándote a ti mismo)' });
+    out.push({ id: 'desfile', minute: HOLIDAY_HOURS.desfile * 60, icon: '🎉', text: `Desfile en el parque; concurso de disfraces a las ${HOLIDAY_HOURS.concurso}:00` });
+  }
+  if (fiesta === 'halloween') {
+    out.push({ id: 'halloween', minute: -1, icon: '🎃', text: 'Halloween' });
+    out.push({ id: 'truco', minute: HOLIDAY_HOURS.trucoDesde * 60, icon: '🍬', text: 'Truco o trato por las casas (que haya algo en la despensa)' });
   }
   if (wd === 6) out.push({ id: 'derbi', minute: 19 * 60, icon: '⚽', text: 'Derbi Madrid–Atleti en el Bar Casa Paco' });
   return out;

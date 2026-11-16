@@ -17,6 +17,7 @@ import { skillLevel } from './skills';
 import { grudge } from './social';
 import { canMediate, canSnitch } from './arcs';
 import { tripReason } from './trips';
+import { HOLIDAY_ACTIONS, holidayReason } from './holidays';
 
 export function speciesOk(w: World, a: Agent, def: ActionDef) {
   if (!def.actors.includes(a.kind) || (def.species && !def.species.includes(a.species))) return false;
@@ -84,6 +85,8 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
     if (a.job.dayOff === w.day + 1) return { def, ok: false, reason: 'Ya lo tiene pedido' };
   }
   if (ALCOHOL[actionId] && w.hour < 12 && w.hour >= 6) return { def, ok: false, reason: '¿Alcohol a estas horas? Mejor un café' };
+  const fiesta = holidayReason(w, a, actionId);
+  if (fiesta) return fiesta;
   if (actionId === 'buy_lottery') {
     const why = lotteryReason(w, a);
     if (why) return { def, ok: false, reason: why };
@@ -168,6 +171,8 @@ export function checkSelfAction(w: World, a: Agent, actionId: string): ActionOpt
   if (def.roles ? !def.roles.includes(a.role ?? '') : !!a.role && actionId !== 'idle') return { def, ok: false };
   if (actionId === 'fart' && a.kind === 'person' && w.stageOf(a) === 'baby') return { def, ok: false };
   if (actionId === 'homework' && a.job?.career !== 'school') return { def, ok: false };
+  const fiesta = holidayReason(w, a, actionId);
+  if (fiesta) return fiesta;
   if (actionId === 'busk') {
     if (w.lotById(a.lotId)?.kind !== 'park') return { def, ok: false };
     if (skillLevel(w, a, 'musica') < 3) return { def, ok: false, reason: 'Hace falta música nivel 3' };
@@ -184,7 +189,9 @@ export function optionsFor(w: World, agentId: string, target: Target): ActionOpt
     if (!o) return [];
     return w.objDef(o)
       .actions.filter((id) => speciesOk(w, a, ACTIONS[id]) && (id !== 'repair' || o.broken))
-      .map((id) => checkObjectAction(w, a, o, id));
+      .map((id) => checkObjectAction(w, a, o, id))
+      // Las cosas de fiesta, fuera de su día, ni se ven.
+      .filter((op) => op.ok || op.reason || !HOLIDAY_ACTIONS[op.def.id]);
   }
   if (target.kind === 'agent') {
     if (target.id === a.id) {

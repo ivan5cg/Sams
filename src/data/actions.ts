@@ -151,6 +151,8 @@ const A: ActionDef[] = [
 
   // Mercadona
   { id: 'shop_small', label: 'Compra pequeña (§45 · 8 raciones)', verb: 'Haciendo la compra', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 45, duration: 20, effects: { social: 0.1 }, playerOnly: true },
+  // --- Fiestas (solo existen en su día: ver systems/holidays.ts) ---
+  { id: 'eat_roscon', guestOk: true, label: 'Comer roscón de Reyes', verb: 'Comiendo roscón', icon: '🥯', target: 'object', actors: ['person'], duration: 15, effects: { hunger: 2.5, fun: 0.4 }, baseScore: 12 },
   { id: 'buy_lottery', label: 'Lotería de Navidad (§20)', verb: 'Comprando lotería', icon: '🎫', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], guestOk: true, cost: 20, duration: 5, effects: { fun: 0.5 }, playerOnly: true },
   { id: 'cana', label: 'Una caña (§2)', verb: 'Tomándose una caña', icon: '🍺', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], guestOk: true, cost: 2, duration: 15, effects: { fun: 0.5, social: 0.3, bladder: -0.4 } },
   { id: 'vermut', label: 'Un vermut (§3)', verb: 'Tomándose un vermut', icon: '🍷', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], guestOk: true, cost: 3, duration: 15, effects: { fun: 0.5, social: 0.3 } },
@@ -248,6 +250,8 @@ const A: ActionDef[] = [
   { id: 'rap', label: 'Rapear', verb: 'Rapeando', icon: '🎤', target: 'self', actors: ['person'], roles: ['rapero'], duration: 6, effects: {}, playerOnly: true, interruptible: true },
   { id: 'play_accordion', label: 'Tocar el acordeón', verb: 'Tocando el acordeón', icon: '🪗', target: 'self', actors: ['person'], roles: ['musico'], duration: 30, effects: {}, playerOnly: true, interruptible: true },
   { id: 'move', label: 'Ir aquí', verb: 'Caminando', icon: '👣', target: 'tile', actors: ['person', 'pet'], duration: 0, effects: {}, playerOnly: true },
+  { id: 'costume', label: 'Disfrazarse (§15)', verb: 'Disfrazándose', icon: '🎭', target: 'self', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], duration: 20, effects: { fun: 0.6 }, baseScore: 8 },
+  { id: 'trick_or_treat', label: 'Truco o trato por las casas', verb: 'Pidiendo caramelos', icon: '🎃', target: 'self', actors: ['person'], actorStages: ['child', 'teen'], duration: 60, effects: { fun: 0.7, social: 0.4, hunger: 0.1, energy: -0.05 }, baseScore: 25 },
   { id: 'idle', label: 'Esperar', verb: 'Pensando', icon: '💭', target: 'self', actors: ['person', 'pet'], duration: 15, effects: {}, interruptible: true, playerOnly: true },
   { id: 'pass_out', label: 'Desmayarse', verb: 'Agotado en el suelo', icon: '😵', target: 'self', actors: ['person', 'pet'], duration: 300, effects: { energy: 0.5 }, until: { energy: 40 }, forced: true, playerOnly: true },
 ];

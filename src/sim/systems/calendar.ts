@@ -22,6 +22,7 @@ import { neighbourAdopts } from './pets';
 import { endTask } from './tasks';
 import { availableVisitors, districtOf, sendVisit, startTravel } from './travel';
 import { dailyArcs } from './arcs';
+import { holidayDay, holidayHour } from './holidays';
 
 /** ¿Está en marcha este evento (en esa parcela, si se dice)? */
 export function hasEvent(w: World, id: string, lotId?: string): boolean {
@@ -92,6 +93,7 @@ export function seasonalDay(w: World) {
       '🎄',
     );
   }
+  holidayDay(w);
   w.blackoutTonight = w.wishesEnabled && Math.random() < w.blackoutChance;
   // El tiempo: lluvia en primavera y otoño, nieve en invierno.
   if ((se === 0 || se === 2) && Math.random() < 0.25) startEvent(w, 'lluvia', Math.round(rand(10, 20)) * 60);
@@ -155,6 +157,7 @@ export function eventsHour(w: World) {
     w.toast(cunado ? `¡Las doce campanadas! ${cunado.name} se ha atragantado con la quinta uva. Feliz año` : '¡Las doce campanadas! Doce uvas, cava y ¡feliz año nuevo!', '🍇');
     for (const m of w.members) if (m.kind === 'person') w.feel(m, 'fiesta', undefined, 6);
   }
+  holidayHour(w);
   // Lotería de Navidad: el sorteo, el último día del invierno a mediodía.
   if (se === 3 && w.weekday === 6 && h === 12 && w.state.lottery?.length) lotteryDraw(w);
 }

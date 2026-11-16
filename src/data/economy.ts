@@ -32,6 +32,10 @@ export const ECONOMY = {
   course: 150,
   /** Un fin de semana fuera para toda la familia. */
   trip: 600,
+  /** Fiestas: disfraz de Carnaval, premio del concurso y lo que cuesta el roscón a quien le sale el haba. */
+  costume: 15,
+  costumePrize: 100,
+  roscon: 25,
 };
 
 /** Categorías del registro de movimientos (con su icono y su nombre). */

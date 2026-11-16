@@ -574,7 +574,18 @@ export class HouseScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   private agentKey(a: Agent) {
-    return `${lifeStage(a.species, a.ageDays).id}:${a.color}:${a.role ?? ''}:${this.chulapo(a)}`;
+    return `${lifeStage(a.species, a.ageDays).id}:${a.color}:${this.accessoryOf(a)}`;
+  }
+
+  /** Lo que lleva encima: lo de su oficio, o lo de la fiesta (gorra de chulapo, disfraz, corona...). */
+  private accessoryOf(a: Agent): string {
+    if (a.role) return a.role;
+    if (a.kind !== 'person') return '';
+    if (this.chulapo(a)) return 'chulapo';
+    if (hasEmotion(a, 'rey_roscon')) return 'corona';
+    if (hasEmotion(a, 'disfrazado')) return 'disfraz';
+    if (a.current?.actionId === 'trick_or_treat' || (hasEmotion(a, 'caramelos') && this.world.hasEvent('halloween'))) return 'bruja';
+    return '';
   }
 
   /** En San Isidro, en el parque y la plaza, la gente va de chulapo. */
@@ -617,7 +628,7 @@ export class HouseScene extends Phaser.Scene {
         const backHead = this.add.graphics().setVisible(false);
         drawBackHead(backHead, look);
         const acc = this.add.graphics();
-        const accKind = a.role ?? (this.chulapo(a) ? 'chulapo' : '');
+        const accKind = this.accessoryOf(a);
         if (accKind) drawAccessory(acc, accKind);
         const prop = this.add.graphics();
         body.add([back, fore, torso, face, backHead, acc, prop]);

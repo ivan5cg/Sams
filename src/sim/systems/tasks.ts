@@ -25,6 +25,7 @@ import { CLOTHES } from '../neighborhood';
 import { CAREER_SKILL, MAX_SKILL, SKILL_BY_ID } from '../../data/skills';
 import { SPEND_CATEGORY } from '../../data/economy';
 import { bookTrip } from './trips';
+import { holidayTask } from './holidays';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -172,6 +173,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
     w.toast(`${a.name} tiene libre mañana. ¡A disfrutar!`, '🏖️');
   }
   if (task.actionId === 'book_trip') bookTrip(w, a);
+  holidayTask(w, a, task.actionId);
   if (task.actionId === 'work_home' && a.job) {
     // Informes desde casa: suben el rendimiento (más con la habilidad de su carrera).
     const sk = CAREER_SKILL[a.job.career];

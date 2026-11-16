@@ -27,9 +27,10 @@ cambió al hacerlas está en la columna «Notas».
 | 4.3 Historias del barrio | ✅ | Tres culebrones (lío, guerra de vecinos, romance con boda), mediar y chivarse; se ven en el salseo. Dentro de la versión 12 (`arcs`) |
 | 4.2 Carreras y negocio | ✅ | Opciones de dilema con habilidad o rasgo, teletrabajo (oficina y ciencia), decisiones semanales del bar. Más el fin de semana fuera que quedó de 4.1 |
 | 5.1 Crear tu familia | ✅ | Creador al empezar y desde ☰ → Nueva partida; García como opción rápida. SAVE_VERSION 13 (`look` de cada persona) |
-| Resto de la fase 5 | ⏳ | Orden: fiestas, álbum de fotos, sitios nuevos, tercer barrio |
+| 5.2 Fiestas nuevas | ✅ | Reyes, Carnaval y Halloween en `systems/holidays.ts` (fechas en `holidayOf`, que lee también la agenda). Sin cambios en lo que se guarda |
+| Resto de la fase 5 | ⏳ | Orden: álbum de fotos, sitios nuevos, tercer barrio |
 
-**Lo siguiente:** el resto de la Fase 5 (fiestas nuevas). La partida va por la **versión 13**: si algo nuevo cambia lo que se guarda, toca la 14 con su migración.
+**Lo siguiente:** el resto de la Fase 5 (álbum de fotos). La partida va por la **versión 13**: si algo nuevo cambia lo que se guarda, toca la 14 con su migración.
 
 ---
 
@@ -348,7 +349,10 @@ datos.
   simulación sale idéntica a la de antes (comprobado con semilla). Mientras el creador está abierto no se
   guarda: si se cierra la app sin elegir, al volver se elige otra vez.
 - Sitios nuevos: biblioteca (lógica y deberes), gimnasio, mercadillo del domingo (comprar barato, regatear).
-- Fiestas nuevas: Carnaval, Halloween (truco o trato por las casas), Reyes (roscón con haba y cabalgata).
+- ✅ Fiestas nuevas: Carnaval, Halloween (truco o trato por las casas), Reyes (roscón con haba y cabalgata).
+  *Hecho:* el año son 4 semanas, así que Reyes abre la primavera (el lunes; el primer día de la partida no),
+  Carnaval es el jueves de primavera y Halloween el viernes de otoño. Acciones que solo existen en su día
+  (`HOLIDAY_ACTIONS`: fuera de él ni se ven), disfraces dibujados (antifaz, corona, sombrero de bruja) y frases.
 - **Álbum de fotos**: hacer una captura del canvas (`game.renderer.snapshot`), guardarla en IndexedDB (con
   límite de tamaño) y verla en un álbum por generaciones. Exportable.
 - Un tercer barrio conectado por metro (seguir el patrón de Alcorcón en `src/data/street.ts` y
