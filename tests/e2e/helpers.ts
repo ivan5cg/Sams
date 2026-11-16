@@ -50,3 +50,18 @@ export async function objectOnScreen(page: Page, def: string): Promise<{ x: numb
     return { x: r.left + (wx - cam.worldView.x) * cam.zoom * scale, y: r.top + (wy - cam.worldView.y) * cam.zoom * scale };
   }, def);
 }
+
+/** Coordenadas en pantalla (CSS) del centro de una casilla de la parcela que se ve. */
+export async function tileOnScreen(page: Page, x: number, y: number): Promise<{ x: number; y: number }> {
+  return page.evaluate(([tx, ty]) => {
+    type Cam = { worldView: { x: number; y: number }; zoom: number; panEffect: { reset(): void } };
+    const s = (window as unknown as { sams: { game: { scene: { getScene(k: string): { cameras: { main: Cam } } }; canvas: HTMLCanvasElement } } }).sams;
+    const cam = s.game.scene.getScene('house').cameras.main;
+    cam.panEffect.reset();
+    const wx = (tx + 0.5 - (ty + 0.5)) * 32;
+    const wy = (tx + 0.5 + (ty + 0.5)) * 16;
+    const r = s.game.canvas.getBoundingClientRect();
+    const scale = r.width / s.game.canvas.width;
+    return { x: r.left + (wx - cam.worldView.x) * cam.zoom * scale, y: r.top + (wy - cam.worldView.y) * cam.zoom * scale };
+  }, [x, y]);
+}
