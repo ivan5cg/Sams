@@ -1343,7 +1343,7 @@ body.building #hud-bottom {
 /* --- Mapa ilustrado --- */
 .mini-map {
   position: relative;
-  height: 210px;
+  height: 250px;
   margin: 8px 0 12px;
   border-radius: 16px;
   background: linear-gradient(160deg, #c7d9a8, #a9c48a);
@@ -1372,7 +1372,7 @@ body.building #hud-bottom {
   position: absolute;
   left: 58%;
   width: 18%;
-  top: calc(56% - 3px);
+  top: calc(42% - 3px);
   height: 6px;
   border-radius: 3px;
   background: repeating-linear-gradient(90deg, #0074c8 0 10px, #9b5de5 10px 20px);

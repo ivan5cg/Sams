@@ -1,6 +1,6 @@
 // Constantes de la simulación (compartidas por World y los sistemas).
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 export const MINUTES_PER_DAY = 1440;
 export const MAX_MEMBERS = 8;
 /** Minutos de juego que se tarda en ir de una parcela a otra del barrio. */

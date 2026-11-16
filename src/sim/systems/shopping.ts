@@ -1,6 +1,7 @@
 // La compra: despensa, horarios de las tiendas, Mercadona y pedidos a domicilio.
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
+import { placeClosedReason } from './places';
 import { ACTIONS } from '../../data/actions';
 import { MINUTES_PER_DAY, PANTRY_MAX } from '../constants';
 import { SUPER_LOT } from '../neighborhood';
@@ -23,7 +24,7 @@ export function closedReason(w: World, lotId: string): string | undefined {
   const m = w.state.minutes % MINUTES_PER_DAY;
   if (layout === 'super' && (m < 9 * 60 || m >= 21 * 60 + 30)) return 'Está cerrado (abre de 9:00 a 21:30)';
   if (layout === 'acai' && (m < 10 * 60 || m >= 22 * 60)) return 'Está cerrado (abre de 10:00 a 22:00)';
-  return undefined;
+  return placeClosedReason(layout, w.state.minutes);
 }
 
 /** A la hora de cerrar, todo el mundo a la calle (y a casa). */

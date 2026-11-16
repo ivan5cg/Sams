@@ -29,9 +29,10 @@ cambió al hacerlas está en la columna «Notas».
 | 5.1 Crear tu familia | ✅ | Creador al empezar y desde ☰ → Nueva partida; García como opción rápida. SAVE_VERSION 13 (`look` de cada persona) |
 | 5.2 Fiestas nuevas | ✅ | Reyes, Carnaval y Halloween en `systems/holidays.ts` (fechas en `holidayOf`, que lee también la agenda). Sin cambios en lo que se guarda |
 | 5.3 Álbum de fotos | ✅ | Base de IndexedDB aparte (`sams-album`): no toca la partida ni su versión. Fotos automáticas con el evento `moment` |
-| Resto de la fase 5 | ⏳ | Orden: sitios nuevos, tercer barrio |
+| 5.4 Sitios nuevos | ✅ | Biblioteca, gimnasio y mercadillo (`systems/places.ts`), con horarios, regateo y vecinos que van. SAVE_VERSION 14 (las tres parcelas) |
+| Resto de la fase 5 | ⏳ | El tercer barrio |
 
-**Lo siguiente:** el resto de la Fase 5 (sitios nuevos: biblioteca, gimnasio y mercadillo). La partida va por la **versión 13**: si algo nuevo cambia lo que se guarda, toca la 14 con su migración.
+**Lo siguiente:** el tercer barrio (lo último de la fase 5). La partida va por la **versión 14**: si algo nuevo cambia lo que se guarda, toca la 15 con su migración.
 
 ---
 
@@ -349,7 +350,9 @@ datos.
   las paletas de aspecto, en `data/looks.ts`; la interfaz, en `ui/creator.ts`. Con la García por defecto, la
   simulación sale idéntica a la de antes (comprobado con semilla). Mientras el creador está abierto no se
   guarda: si se cierra la app sin elegir, al volver se elige otra vez.
-- Sitios nuevos: biblioteca (lógica y deberes), gimnasio, mercadillo del domingo (comprar barato, regatear).
+- ✅ Sitios nuevos: biblioteca (lógica y deberes), gimnasio, mercadillo del domingo (comprar barato, regatear).
+  *Hecho:* parcelas `BI`, `GY` y `MK` en Madrid (`addPlaces`, también en la migración 13 → 14). La rebaja de
+  regatear es una emoción (`regateo`, 2 horas), así que se guarda sin campos nuevos. El minimapa tiene una fila más.
 - ✅ Fiestas nuevas: Carnaval, Halloween (truco o trato por las casas), Reyes (roscón con haba y cabalgata).
   *Hecho:* el año son 4 semanas, así que Reyes abre la primavera (el lunes; el primer día de la partida no),
   Carnaval es el jueves de primavera y Halloween el viernes de otoño. Acciones que solo existen en su día

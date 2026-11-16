@@ -115,7 +115,7 @@ export function drawSurroundings(g: G, glow: G, lot: Lot, lay: LotLayout, season
     return;
   }
   const brick = lot.district === 'alcorcon';
-  const park = lot.layout === 'park' || lot.layout === 'plaza';
+  const park = lot.layout === 'park' || lot.layout === 'plaza' || lot.layout === 'market';
   const gap = park ? 4 : 1.5;
   // Edificios: detrás (cara L hacia la parcela) y a la izquierda (cara R), de lejos a cerca.
   const blocks: { r: Rect; face: 'L' | 'R'; hgt: number; s: number }[] = [];

@@ -995,6 +995,52 @@ const ART: Record<string, Art> = {
     f.fillStyle(0x5a3825, 1);
     f.fillEllipse(cup.x, cup.y - 6, 6, 2);
   },
+  // --- Biblioteca, gimnasio y mercadillo ---
+  study_table: (g, _f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 36, 0.14);
+    for (const [px, py] of [[0.16, 0.2], [0.84, 0.2], [0.16, 0.8], [0.84, 0.8]]) poleAt(g, X + px, Y + py, 0, 14, WOOD_DARK, 2);
+    prism(g, R(X + 0.08, Y + 0.1, 0.84, 0.8), 14, 16, WOOD);
+    // Libros abiertos y un flexo verde de biblioteca
+    flat(g, R(X + 0.2, Y + 0.25, 0.25, 0.2), 16.2, 0xf6f1e3);
+    flat(g, R(X + 0.5, Y + 0.55, 0.25, 0.2), 16.2, 0xf6f1e3);
+    prism(g, R(X + 0.62, Y + 0.2, 0.16, 0.12), 16, 19, 0x7b2d26);
+    poleAt(g, X + 0.3, Y + 0.7, 16, 26, 0x777777, 1.5);
+    const lamp = P(X + 0.3, Y + 0.7, 26);
+    g.fillStyle(0x2d6a4f, 1);
+    g.fillEllipse(lamp.x + 3, lamp.y + 1, 10, 5);
+  },
+  weights: (g, _f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 40, 0.14);
+    // Banco tumbado y barra con discos
+    prism(g, R(X + 0.38, Y + 0.12, 0.24, 0.76), 7, 11, 0x1d2026);
+    for (const py of [0.2, 0.8]) poleAt(g, X + 0.5, Y + py, 0, 7, 0x8a93a3, 2);
+    poleAt(g, X + 0.12, Y + 0.3, 0, 22, 0x8a93a3, 2);
+    poleAt(g, X + 0.88, Y + 0.3, 0, 22, 0x8a93a3, 2);
+    const a = P(X + 0.06, Y + 0.3, 22);
+    const b = P(X + 0.94, Y + 0.3, 22);
+    g.lineStyle(2.5, 0xb8bec8, 1);
+    g.lineBetween(a.x, a.y, b.x, b.y);
+    for (const p of [a, b]) {
+      g.fillStyle(0x2b2d35, 1);
+      g.fillEllipse(p.x, p.y, 6, 13);
+      g.fillStyle(0x555c6b, 1);
+      g.fillEllipse(p.x, p.y, 3, 7);
+    }
+  },
+  punching_bag: (g, _f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 26, 0.16);
+    poleAt(g, X + 0.5, Y + 0.5, 40, 50, 0x555555, 1.5);
+    const top = P(X + 0.5, Y + 0.5, 40);
+    g.fillStyle(0xb23a3a, 1);
+    g.fillRoundedRect(top.x - 7, top.y, 14, 28, 6);
+    g.fillStyle(0x7d2424, 1);
+    g.fillRect(top.x - 7, top.y + 10, 14, 3);
+    g.fillStyle(0xffffff, 0.25);
+    g.fillRect(top.x - 4, top.y + 3, 2, 20);
+  },
+  stall_fruit: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0x2e8b57, [0xf28c28, 0xd62828, 0x8ac926, 0xffd23f]),
+  stall_clothes: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0x4f8fd9, [0xe0607e, 0x52b788, 0x9b5de5, 0xf4a261]),
+  stall_junk: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0xc9a227, [0x8b5a2b, 0x6d6875, 0xc9a66b, 0x2a9d8f]),
   // --- Bar ---
   bar_counter: (g, f, X, Y) => {
     const r = R(X + 0.05, Y + 0.3, 2.9, 0.6);
@@ -1073,6 +1119,20 @@ const ART: Record<string, Art> = {
     }
   },
 };
+
+/** Puesto del mercadillo: mesa con género y un toldo a rayas. */
+function stall(g: G, f: G, X: number, Y: number, _o: ObjLike, awning: number, goods: number[]) {
+  shadowUnder(g, X + 0.5, Y + 0.5, 40, 0.14);
+  const r = R(X + 0.08, Y + 0.3, 0.84, 0.5);
+  prism(f, r, 0, 14, 0xe9e1d4, { top: 0xd9c3a5 });
+  for (let i = 0; i < 6; i++) {
+    const p = P(X + 0.18 + (i % 3) * 0.3, Y + 0.42 + Math.floor(i / 3) * 0.22, 14);
+    f.fillStyle(goods[i % goods.length], 1);
+    f.fillRoundedRect(p.x - 4, p.y - 4, 8, 5, 2);
+  }
+  for (const [px, py] of [[0.1, 0.2], [0.9, 0.2], [0.1, 0.85], [0.9, 0.85]]) poleAt(g, X + px, Y + py, 0, 32, 0x9a9a9a, 1.5);
+  for (let i = 0; i < 5; i++) flat(f, R(X + 0.05 + i * 0.18, Y + 0.12, 0.18, 0.78), 32, i % 2 ? 0xffffff : awning);
+}
 
 /** Dibuja un objeto. `f` recibe lo que va por delante de quien lo usa (manta, barrotes, agua...). */
 export function drawObjectArt(g: G, f: G, o: ObjLike): boolean {

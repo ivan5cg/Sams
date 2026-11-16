@@ -2,7 +2,7 @@ import { PET_TRAITS } from '../data/pets';
 import { STREET_NPCS } from '../data/street';
 // Creación del barrio: las 9 familias vecinas, sus casas y el parque.
 
-import { ACAI_OBJECTS, HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, SUPER_OBJECTS, type ObjectPlacement, METRO_OBJECTS, PLAZA_OBJECTS, BAR_OBJECTS } from '../data/lot';
+import { ACAI_OBJECTS, HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, SUPER_OBJECTS, type ObjectPlacement, METRO_OBJECTS, PLAZA_OBJECTS, BAR_OBJECTS, LIBRARY_OBJECTS, GYM_OBJECTS, MARKET_OBJECTS } from '../data/lot';
 import { CAREER_SKILL } from '../data/skills';
 import { OBJECTS } from '../data/objects';
 import { JOB_CAREERS } from '../data/careers';
@@ -22,6 +22,9 @@ export const METRO_LOT = 'MT';
 export const PLAZA_LOT = 'PL';
 export const BAR_LOT = 'BR';
 export const ALCORCON_HOMES = ['AL1', 'AL2', 'AL3'];
+export const LIBRARY_LOT = 'BI';
+export const GYM_LOT = 'GY';
+export const MARKET_LOT = 'MK';
 export const NEIGHBOUR_COUNT = 9;
 
 const SURNAMES = ['López', 'Martín', 'Sánchez', 'Romero', 'Navarro', 'Torres', 'Díaz', 'Moreno', 'Gil', 'Ruiz', 'Ortega', 'Molina'];
@@ -147,6 +150,20 @@ export function addAlcorcon(state: WorldState) {
     else generateFamily(state, lotId);
   });
   addStreetNpcs(state);
+}
+
+/** Los sitios de la fase 5 en Madrid: biblioteca, gimnasio y mercadillo del domingo. */
+export function addPlaces(state: WorldState) {
+  const places = [
+    { id: LIBRARY_LOT, name: 'Biblioteca municipal', kind: 'venue' as const, layout: 'library' as const, style: { wall: 0xeee6d6, floor: 0xa47551 }, objects: LIBRARY_OBJECTS },
+    { id: GYM_LOT, name: 'Gimnasio Músculo Castizo', kind: 'venue' as const, layout: 'gym' as const, style: { wall: 0xdfe3e8, floor: 0x5c6470 }, objects: GYM_OBJECTS },
+    { id: MARKET_LOT, name: 'Mercadillo del domingo', kind: 'venue' as const, layout: 'market' as const, style: undefined, objects: MARKET_OBJECTS },
+  ];
+  for (const p of places) {
+    if (state.lots.some((l) => l.id === p.id)) continue;
+    state.lots.push({ id: p.id, name: p.name, kind: p.kind, layout: p.layout, district: 'madrid', ...(p.style ? { style: p.style } : {}) });
+    placeObjects(state, p.id, p.objects);
+  }
 }
 
 /** Unos okupas en una casa que llevaba años vacía. */

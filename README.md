@@ -241,6 +241,18 @@ forma física. Los vecinos también van. Las esterillas también se pueden compr
   Los vecinos también se dejan caer, y a los deportistas y a los tragones les encanta.
 - A la hora de cerrar echan a todo el mundo a casa. Y el cuñado tiene opiniones sobre pagar 9 euros por un yogur morado.
 
+## Biblioteca, gimnasio y mercadillo
+
+- **📚 Biblioteca municipal** (de 9:00 a 21:00, los domingos cerrada): estudiar en las mesas sube la **lógica**
+  más rápido que en casa, y los **deberes** hechos allí cunden el doble para el colegio. También hay libros y
+  ajedrez. Eso sí: un pedo o ponerse a cantar se paga con un «¡Shhh!» de la bibliotecaria.
+- **🏋️ Gimnasio Músculo Castizo** (de 7:00 a 23:00): cintas, **pesas** y **saco de boxeo** (§5 la sesión). Las
+  pesas suben la forma física; el saco quita el enfado, los celos y los insultos de encima.
+- **🏺 Mercadillo del domingo** (de 9:00 a 14:30): fruta y verdura más barata que en el Mercadona (§30 por 8
+  raciones), ropa de mercadillo (§25) y un puesto de trastos donde rebuscar (§5): un libro, un vinilo de Raphael,
+  un jarrón para revender... o cables de un Nokia. Se puede **regatear** (con carisma, mejor): si sale bien, lo
+  siguiente se compra a mitad de precio. Medio barrio se pasa por allí.
+
 ## Ñiqui ñiqui
 
 Las parejas adultas (o quien tenga mucho romance, sin ser familia) pueden hacer ñiqui ñiqui en una cama de casa.

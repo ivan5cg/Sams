@@ -23,6 +23,7 @@ import { endTask } from './tasks';
 import { availableVisitors, districtOf, sendVisit, startTravel } from './travel';
 import { dailyArcs } from './arcs';
 import { holidayDay, holidayHour } from './holidays';
+import { marketPrice } from './places';
 
 /** ¿Está en marcha este evento (en esa parcela, si se dice)? */
 export function hasEvent(w: World, id: string, lotId?: string): boolean {
@@ -38,8 +39,8 @@ export function startEvent(w: World, id: string, minutes: number, lotId?: string
 }
 
 /** Lo que cuesta una acción ahora (con ofertas, más barato). */
-export function costOf(w: World, actionId: string): number {
-  const c = ACTIONS[actionId]?.cost ?? 0;
+export function costOf(w: World, actionId: string, a?: Agent): number {
+  const c = marketPrice(a, actionId, ACTIONS[actionId]?.cost ?? 0);
   if (hasEvent(w, 'ofertas') && (actionId === 'shop_small' || actionId === 'shop_big')) return Math.round(c * 0.7);
   return c;
 }

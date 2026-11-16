@@ -36,6 +36,9 @@ export const ECONOMY = {
   costume: 15,
   costumePrize: 100,
   roscon: 25,
+  /** Mercadillo: lo que se saca revendiendo una antigüedad, y la rebaja de regatear. */
+  resale: 40,
+  haggleDiscount: 0.5,
 };
 
 /** Categorías del registro de movimientos (con su icono y su nombre). */

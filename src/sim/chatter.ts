@@ -95,6 +95,9 @@ export function contextPairs(world: World, a: Agent, t: Agent): [string, string]
   if (world.householdOf(t)?.okupa || world.householdOf(a)?.okupa) pairs.push(OKUPA_LINES[Math.floor(Math.random() * OKUPA_LINES.length)]);
   if (layout === 'metro') pairs.push(['¿Esto para en Puerta del Sur?', 'Sí, y ahí cambias al MetroSur']);
   if (layout === 'bar') pairs.push(['¡Paco, otra caña!', '¡Y unas bravas, que pican de verdad!']);
+  if (layout === 'library') pairs.push(['(¿Tú también vienes a estudiar?)', '(Vengo por el aire acondicionado)'], ['(¿Me prestas un boli?)', '(Shhh, que nos echan)']);
+  if (layout === 'gym') pairs.push(['¿Cuántas series llevas?', 'Una. Y estoy muerto/a'], ['Este año sí que voy a venir todos los días', 'Eso dijiste en enero']);
+  if (layout === 'market') pairs.push(['¡Señora, que me las quitan de las manos!', '¿A cuánto el kilo?'], ['Mira, unos calcetines de cinco pares por tres euros', 'Eso es un chollo']);
   if (hasEmotion(a, 'borracho')) pairs.push(['¡Te quiero mucho, tío!', 'Y yo a ti, pero vete a casa ya']);
   if (hasEmotion(a, 'traicionado')) pairs.push(['Me han puesto los cuernos...', 'No me digas... ¡Qué sinvergüenza!']);
   if (rel.affair) pairs.push(['Que no se entere nadie de lo nuestro...', 'Mis labios están sellados']);

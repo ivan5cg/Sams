@@ -4,7 +4,7 @@
 
 export type TileType = 'wall' | 'wood' | 'tile' | 'grass' | 'door' | 'path';
 
-export type LayoutId = 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar';
+export type LayoutId = 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market';
 
 const HOUSE_MAP = [
   'WWWWWWWWWWWggg',
@@ -180,6 +180,11 @@ export const LAYOUTS: Record<LayoutId, LotLayout> = {
   metro: parseLot(METRO_MAP, { x: 3, y: 6 }),
   plaza: parseLot(PLAZA_MAP, { x: 8, y: 11 }),
   bar: parseLot(BAR_MAP, { x: 5, y: 8 }),
+  // Los sitios de la fase 5: la biblioteca y el gimnasio, salas como la del pilates y la del bar;
+  // el mercadillo, al aire libre como la plaza.
+  library: parseLot(STUDIO_MAP, { x: 5, y: 9 }),
+  gym: parseLot(BAR_MAP, { x: 5, y: 8 }),
+  market: parseLot(PLAZA_MAP, { x: 8, y: 11 }),
 };
 
 /** Cambia algunas casillas de un plano: [x, y, carácter]. */
@@ -353,6 +358,55 @@ export const PLAZA_OBJECTS: ObjectPlacement[] = [
   { def: 'flowers', x: 10, y: 6 },
   { def: 'lamp', x: 2, y: 6 },
   { def: 'lamp', x: 13, y: 5 },
+];
+
+export const LIBRARY_OBJECTS: ObjectPlacement[] = [
+  { def: 'bookshelf', x: 1, y: 1 },
+  { def: 'bookshelf', x: 3, y: 1 },
+  { def: 'bookshelf', x: 5, y: 1 },
+  { def: 'bookshelf', x: 7, y: 1 },
+  { def: 'study_table', x: 2, y: 4 },
+  { def: 'study_table', x: 5, y: 4 },
+  { def: 'study_table', x: 2, y: 6 },
+  { def: 'study_table', x: 5, y: 6 },
+  { def: 'chess', x: 8, y: 4 },
+  { def: 'armchair', x: 9, y: 2 },
+  { def: 'toilet', x: 10, y: 1 },
+  { def: 'desk', x: 9, y: 7 },
+  { def: 'plant', x: 1, y: 7 },
+];
+
+export const GYM_OBJECTS: ObjectPlacement[] = [
+  { def: 'treadmill', x: 1, y: 1 },
+  { def: 'treadmill', x: 2, y: 1 },
+  { def: 'treadmill', x: 3, y: 1 },
+  { def: 'weights', x: 5, y: 1 },
+  { def: 'weights', x: 7, y: 1 },
+  { def: 'punching_bag', x: 9, y: 2 },
+  { def: 'punching_bag', x: 9, y: 4 },
+  { def: 'pilates_mat', x: 3, y: 4 },
+  { def: 'pilates_mat', x: 5, y: 4 },
+  { def: 'toilet', x: 10, y: 1 },
+  { def: 'desk', x: 8, y: 6 },
+  { def: 'plant', x: 1, y: 6 },
+];
+
+/** El mercadillo del domingo, en una explanada con puestos. */
+export const MARKET_OBJECTS: ObjectPlacement[] = [
+  { def: 'stall_fruit', x: 3, y: 3 },
+  { def: 'stall_clothes', x: 7, y: 3 },
+  { def: 'stall_junk', x: 11, y: 3 },
+  { def: 'stall_fruit', x: 4, y: 7 },
+  { def: 'stall_clothes', x: 10, y: 7 },
+  { def: 'churreria', x: 7, y: 8 },
+  { def: 'bench', x: 1, y: 5 },
+  { def: 'bench', x: 14, y: 5 },
+  { def: 'tree', x: 1, y: 1 },
+  { def: 'tree', x: 14, y: 1 },
+  { def: 'tree', x: 1, y: 10 },
+  { def: 'tree', x: 14, y: 10 },
+  { def: 'lamp', x: 2, y: 9 },
+  { def: 'lamp', x: 13, y: 9 },
 ];
 
 export const BAR_OBJECTS: ObjectPlacement[] = [

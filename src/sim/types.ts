@@ -228,7 +228,7 @@ export interface Lot {
   name: string;
   /** home = casa de una familia; park/venue = sitios públicos (parque, estudio de pilates). */
   kind: 'home' | 'park' | 'venue';
-  layout: 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar';
+  layout: 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market';
   /** Barrio: Madrid (por defecto), Alcorcón o el propio metro. */
   district?: 'madrid' | 'alcorcon' | 'metro';
   householdId?: string;

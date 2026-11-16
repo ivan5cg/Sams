@@ -54,7 +54,7 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (actionId === 'adopt' && w.members.length >= MAX_MEMBERS) return { def, ok: false, reason: 'La casa está llena' };
   if (actionId === 'find_job' && !isAdult(a)) return { def, ok: false, reason: 'Primero, el colegio' };
   const funds = w.householdOf(a)?.funds ?? 0;
-  if (def.cost && funds < costOf(w, actionId)) return { def, ok: false, reason: 'No hay dinero' };
+  if (def.cost && funds < costOf(w, actionId, a)) return { def, ok: false, reason: 'No hay dinero' };
   if ((ELECTRIC.has(o.def) || POWERED_ACTIONS.has(actionId)) && hasEvent(w, 'apagon', o.lotId)) return { def, ok: false, reason: 'No hay luz' };
   // Comer de la nevera gasta raciones de la despensa de esa casa.
   if (FRIDGE_FOOD.has(actionId)) {

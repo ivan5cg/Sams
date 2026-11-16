@@ -142,6 +142,13 @@ const D: ObjectDef[] = [
   // Parque (algunas cosas también se pueden comprar)
   { id: 'bench', name: 'Banco', icon: '', w: 1, h: 1, height: 12, color: 0x8b5a2b, shape: 'bench', capacity: 2, snap: true, actions: ['sit_bench'], price: 70, category: 'deco' },
   { id: 'swings', name: 'Columpios', icon: '', w: 2, h: 1, height: 40, color: 0xd9534f, shape: 'swings', capacity: 2, snap: true, actions: ['swing'], price: 250, category: 'ocio' },
+  // --- Biblioteca, gimnasio y mercadillo ---
+  { id: 'study_table', name: 'Mesa de estudio', icon: '📚', w: 1, h: 1, height: 16, color: 0x8b6a45, capacity: 2, actions: ['study', 'homework_lib'] },
+  { id: 'weights', name: 'Banco de pesas', icon: '🏋️', w: 1, h: 1, height: 20, color: 0x3c4150, capacity: 1, actions: ['lift_weights'] },
+  { id: 'punching_bag', name: 'Saco de boxeo', icon: '🥊', w: 1, h: 1, height: 44, color: 0xb23a3a, capacity: 1, actions: ['box'] },
+  { id: 'stall_fruit', name: 'Puesto de fruta', icon: '🍊', w: 1, h: 1, height: 34, color: 0x2e8b57, capacity: 2, actions: ['market_food', 'haggle'] },
+  { id: 'stall_clothes', name: 'Puesto de ropa', icon: '👕', w: 1, h: 1, height: 34, color: 0x4f8fd9, capacity: 2, actions: ['market_clothes', 'haggle'] },
+  { id: 'stall_junk', name: 'Trastos y antigüedades', icon: '🏺', w: 1, h: 1, height: 34, color: 0xc9a227, capacity: 2, actions: ['rummage', 'haggle'] },
   { id: 'foodcart', name: 'Puesto de perritos', icon: '🌭', w: 1, h: 1, height: 30, color: 0xe74c3c, capacity: 1, actions: ['buy_hotdog'] },
   { id: 'flowers', name: 'Flores', icon: '🌷', w: 1, h: 1, height: 0, color: 0x6b8e4e, shape: 'none', capacity: 0, actions: [], price: 15, category: 'deco', decor: 1 },
 ];

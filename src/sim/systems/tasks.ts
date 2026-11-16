@@ -26,6 +26,7 @@ import { CAREER_SKILL, MAX_SKILL, SKILL_BY_ID } from '../../data/skills';
 import { SPEND_CATEGORY } from '../../data/economy';
 import { bookTrip } from './trips';
 import { holidayTask } from './holidays';
+import { placeTask } from './places';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -174,6 +175,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
   }
   if (task.actionId === 'book_trip') bookTrip(w, a);
   holidayTask(w, a, task.actionId);
+  placeTask(w, a, task.actionId);
   if (task.actionId === 'work_home' && a.job) {
     // Informes desde casa: suben el rendimiento (más con la habilidad de su carrera).
     const sk = CAREER_SKILL[a.job.career];
@@ -252,7 +254,7 @@ export function runTask(w: World, a: Agent, task: Task, dt: number) {
       return endTask(w, a);
     }
     const hh = w.householdOf(a);
-    if (def.cost && hh) money(w, hh, -costOf(w, task.actionId), SPEND_CATEGORY[task.actionId] ?? 'ocio');
+    if (def.cost && hh) money(w, hh, -costOf(w, task.actionId, a), SPEND_CATEGORY[task.actionId] ?? 'ocio');
     if (def.consumes) o.stock = Math.max(0, (o.stock ?? 0) - 1);
     if (FRIDGE_FOOD.has(task.actionId)) {
       const owner = pantryOwner(w, o.lotId);

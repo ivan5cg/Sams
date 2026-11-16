@@ -52,6 +52,12 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v14: biblioteca, gimnasio y mercadillo.
+  if (version <= 13) {
+    const nuevos = ['BI', 'GY', 'MK'];
+    st.lots = st.lots.filter((l: Raw) => !nuevos.includes(l.id));
+    st.objects = st.objects.filter((o: Raw) => !nuevos.includes(o.lotId));
+  }
   // v13: aspecto elegido en el creador de familia.
   if (version <= 12) for (const a of st.agents) delete a.look;
   // v12: muebles girados y pintura por habitación.

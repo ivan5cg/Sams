@@ -6,6 +6,18 @@ import { TRAVEL_MINUTES } from '../sim/world';
 import { $, esc } from './dom';
 import { Part } from './part';
 
+/** Icono y botón de «ir» de cada local. */
+const PLACE_ICON: Record<string, string> = { studio: '🧘', super: '🛒', acai: '🫐', bar: '🍺', metro: '🚇', library: '📚', gym: '🏋️', market: '🏺' };
+const PLACE_GO: Record<string, string> = {
+  super: 'Ir a hacer la compra',
+  acai: 'Ir a por un açaí',
+  bar: 'Ir de cañas',
+  metro: 'Bajar al metro',
+  library: 'Ir a estudiar',
+  gym: 'Ir a entrenar',
+  market: 'Ir al mercadillo',
+};
+
 export class NeighbourhoodMap extends Part {
   companions = new Set<string>();
 
@@ -91,13 +103,13 @@ export class NeighbourhoodMap extends Part {
         const coming = w.state.agents.filter((x) => x.travel?.to === lotId && w.isPlayerMember(x));
         const mine = lot.householdId === w.household.id;
         const hh = lot.householdId ? w.state.households.find((h) => h.id === lot.householdId) : undefined;
-        const venueIcon = lot.layout === 'super' ? '🛒' : lot.layout === 'acai' ? '🫐' : lot.layout === 'bar' ? '🍺' : lot.layout === 'metro' ? '🚇' : '🧘';
+        const venueIcon = PLACE_ICON[lot.layout] ?? '🧘';
         const closed = lot.kind === 'venue' ? w.closedReason(lotId) : undefined;
         const title = mine ? `🏡 Vuestra casa` : lot.layout === 'plaza' ? `⛲ ${esc(lot.name)}` : hh?.okupa ? `🏚️ ${esc(lot.name)} <span class="muted small">· okupas</span>` : lot.kind === 'park' ? '🌳 Parque del barrio' : lot.kind === 'venue' ? `${venueIcon} ${esc(lot.name)}${closed ? ' <span class="muted small">· cerrado</span>' : ''}` : `🏠 ${esc(hh?.name ?? lot.name)}`;
         // Quién vive ahí y no está
         const awayResidents = hh && !mine ? hh.memberIds.map((id) => w.agent(id)!).filter((x) => x.lotId !== lotId || x.travel) : [];
         const go = w.canTravel(a, lotId);
-        const venueGo = lot.layout === 'super' ? 'Ir a hacer la compra' : lot.layout === 'acai' ? 'Ir a por un açaí' : lot.layout === 'bar' ? 'Ir de cañas' : lot.layout === 'metro' ? 'Bajar al metro' : 'Ir a clase';
+        const venueGo = PLACE_GO[lot.layout] ?? 'Ir a clase';
         const baseGo = mine ? 'Volver a casa' : lot.layout === 'plaza' ? 'Ir a la plaza' : lot.kind === 'park' ? 'Ir al parque' : lot.kind === 'venue' ? venueGo : 'Ir de visita';
         const goLabel = w.needsMetro(a.lotId, lotId) ? `${baseGo} (en metro)` : baseGo;
         const btns: string[] = [];
@@ -132,17 +144,18 @@ export class NeighbourhoodMap extends Part {
     const w = this.world;
     const a = w.activeAgent;
     const pos: Record<string, [number, number]> = {
-      L0: [7, 28], L1: [19, 28], L2: [31, 28], L3: [43, 28], L4: [55, 28],
-      G: [7, 56], P: [19, 56], M: [31, 56], A1: [43, 56], A2: [55, 56],
-      L5: [7, 84], L6: [19, 84], L7: [31, 84], L8: [43, 84], L9: [55, 84],
-      MT: [66.5, 56], PL: [79, 28], BR: [93, 28], AL1: [79, 56], AL2: [93, 56], AL3: [86, 84],
+      L0: [7, 21], L1: [19, 21], L2: [31, 21], L3: [43, 21], L4: [55, 21],
+      G: [7, 42], P: [19, 42], M: [31, 42], A1: [43, 42], A2: [55, 42],
+      L5: [7, 63], L6: [19, 63], L7: [31, 63], L8: [43, 63], L9: [55, 63],
+      BI: [13, 84], GY: [31, 84], MK: [49, 84],
+      MT: [66.5, 42], PL: [79, 21], BR: [93, 21], AL1: [79, 42], AL2: [93, 42], AL3: [86, 63],
     };
     const icon = (id: string) => {
       const lot = w.lotById(id);
       if (!lot) return '';
       if (lot.householdId === w.household.id) return '🏡';
       if (w.state.households.find((h) => h.id === lot.householdId)?.okupa) return '🏚️';
-      return ({ park: '🌳', studio: '🧘', super: '🛒', acai: '🫐', metro: '🚇', plaza: '⛲', bar: '🍺' } as Record<string, string>)[lot.layout] ?? '🏠';
+      return ({ park: '🌳', plaza: '⛲', ...PLACE_ICON } as Record<string, string>)[lot.layout] ?? '🏠';
     };
     const pins = Object.entries(pos)
       .filter(([id]) => w.lotById(id))

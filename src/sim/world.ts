@@ -12,7 +12,7 @@ import { SPECIES, lifeStage } from '../data/species';
 import { chooseAutonomous } from './ai';
 import { canAspire, suggestAspiration } from './aspirations';
 import { feel as feelEmotion, pruneEmotions } from './emotions';
-import { ACAI_LOTS, BAR_LOT, METRO_LOT, PARK_LOT, PLAYER_LOT, PLAZA_LOT, STUDIO_LOT, SUPER_LOT, addAlcorcon, generateNeighborhood, makeAgent, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
+import { ACAI_LOTS, BAR_LOT, GYM_LOT, LIBRARY_LOT, MARKET_LOT, METRO_LOT, PARK_LOT, PLAYER_LOT, PLAZA_LOT, STUDIO_LOT, SUPER_LOT, addAlcorcon, addPlaces, generateNeighborhood, makeAgent, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { isWalkable, type Grid } from './pathfinding';
 import { isAdult, setRel } from './social';
 import { randomPetTrait, traitDecay, traitsOf } from './traits';
@@ -187,6 +187,7 @@ export class World {
     }
     generateNeighborhood(state);
     addAlcorcon(state);
+    addPlaces(state);
     return new World(state);
   }
 
@@ -516,10 +517,15 @@ export class World {
           if (Math.random() < 0.02) Travel.sendVisit(this, nh, BAR_LOT, false);
           continue;
         }
-        if (Math.random() < 0.08) Travel.sendVisit(this, nh, PARK_LOT, false);
+        // El domingo por la mañana, lo primero es el mercadillo (los demás días ni se mira: está cerrado).
+        if (!Shopping.closedReason(this, MARKET_LOT) && Math.random() < 0.2) Travel.sendVisit(this, nh, MARKET_LOT, false);
+        else if (Math.random() < 0.08) Travel.sendVisit(this, nh, PARK_LOT, false);
         else if (Math.random() < 0.04) Travel.sendVisit(this, nh, STUDIO_LOT, false);
         else if (Math.random() < 0.05 && !Shopping.closedReason(this, SUPER_LOT)) Travel.sendVisit(this, nh, SUPER_LOT, false);
         else if (Math.random() < 0.05 && !Shopping.closedReason(this, ACAI_LOTS[0])) Travel.sendVisit(this, nh, ACAI_LOTS[Math.floor(Math.random() * ACAI_LOTS.length)], false);
+        // Los sitios nuevos: el gimnasio y la biblioteca.
+        else if (Math.random() < 0.03 && !Shopping.closedReason(this, GYM_LOT)) Travel.sendVisit(this, nh, GYM_LOT, false);
+        else if (Math.random() < 0.025 && !Shopping.closedReason(this, LIBRARY_LOT)) Travel.sendVisit(this, nh, LIBRARY_LOT, false);
       }
     }
   }
@@ -873,8 +879,8 @@ export class World {
   startEvent(id: string, minutes: number, lotId?: string) {
     return Calendar.startEvent(this, id, minutes, lotId);
   }
-  costOf(actionId: string): number {
-    return Calendar.costOf(this, actionId);
+  costOf(actionId: string, a?: Agent): number {
+    return Calendar.costOf(this, actionId, a);
   }
   lotteryReason(a: Agent): string | undefined {
     return Calendar.lotteryReason(this, a);

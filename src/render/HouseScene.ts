@@ -169,6 +169,14 @@ function wallDeco(layout: string, x: number, y: number): { face: 'L' | 'R'; kind
     if (y === 0 && (x === 2 || x === 7)) return { face: 'L', kind: 'window' };
     if (x === 0 && y === 7) return { face: 'R', kind: 'window' };
   }
+  if (layout === 'library') {
+    if (y === 0 && x % 3 === 2) return { face: 'L', kind: 'window' };
+    if (x === 0) return { face: 'R', kind: 'stripe', color: 0x2d6a4f };
+  }
+  if (layout === 'gym') {
+    if (y === 0 && x >= 1 && x <= 8) return { face: 'L', kind: 'mirror' };
+    if (x === 0) return { face: 'R', kind: 'stripe', color: 0xe63946 };
+  }
   if (layout === 'studio') {
     if (y === 0 && x >= 2 && x <= 9 && x !== 10) return { face: 'L', kind: 'mirror' };
     if (x === 0 && (y === 3 || y === 6)) return { face: 'R', kind: 'window' };
