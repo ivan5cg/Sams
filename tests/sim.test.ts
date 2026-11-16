@@ -9,44 +9,8 @@ import { converse, interestsOf, knownText, topicsFor } from '../src/sim/conversa
 import { traitAffinity, traitsOf } from '../src/sim/traits';
 import { chatPair, contextPairs } from '../src/sim/chatter';
 import { CUNADO_LINES } from '../src/data/dialogue';
+import { fullNeeds, isolate, madridHomes, oldSave } from './helpers';
 
-/** Las familias de Madrid (las de Alcorcón van aparte). */
-const madridHomes = (hs: { lotId: string }[]) => hs.filter((h) => !h.lotId.startsWith('AL'));
-
-/** Una partida con el formato de una versión anterior (sin barrio). */
-function oldSave(version: number) {
-  const w = World.createNew();
-  const st = JSON.parse(serialize(w.state));
-  st.version = version;
-  st.agents = st.agents.filter((a: { householdId: string }) => a.householdId === 'h1');
-  st.objects = st.objects.filter((o: { lotId: string }) => o.lotId === 'L0');
-  st.households = st.households.filter((h: { id: string }) => h.id === 'h1');
-  for (const x of [...st.agents, ...st.objects, ...st.households]) delete x.lotId;
-  delete st.lots;
-  return st;
-}
-
-/**
- * Deja en escena solo a `keep`: los demás se van "de viaje" indefinidamente y no
- * llegan visitas espontáneas. Así las pruebas no dependen de lo que hagan los demás.
- */
-function isolate(w: World, keep: string[]) {
-  for (const a of w.state.agents) {
-    if (keep.includes(a.id)) continue;
-    a.current = null;
-    a.path = [];
-    a.hidden = false;
-    a.travel = { from: a.lotId, to: a.lotId, arrive: Number.POSITIVE_INFINITY };
-  }
-  (w as unknown as { noVisitsUntil: number }).noVisitsUntil = Number.POSITIVE_INFINITY;
-  // Sin deseos: sus recompensas descuadrarían las cuentas de las pruebas.
-  for (const a of w.state.agents) a.wishes = [];
-  w.wishesEnabled = false;
-}
-
-function fullNeeds(a: Agent) {
-  for (const k of Object.keys(a.needs) as (keyof Agent['needs'])[]) a.needs[k] = 95;
-}
 
 describe('pathfinding', () => {
   it('rodea las paredes', () => {
