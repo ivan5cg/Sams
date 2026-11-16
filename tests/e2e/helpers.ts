@@ -65,3 +65,14 @@ export async function tileOnScreen(page: Page, x: number, y: number): Promise<{ 
     return { x: r.left + (wx - cam.worldView.x) * cam.zoom * scale, y: r.top + (wy - cam.worldView.y) * cam.zoom * scale };
   }, [x, y]);
 }
+
+/** Importa una partida como si el jugador eligiera un fichero en ☰ → Importar. */
+export async function importSave(page: Page, json: string) {
+  await page.evaluate((text) => {
+    const input = document.querySelector<HTMLInputElement>('#import-file')!;
+    const dt = new DataTransfer();
+    dt.items.add(new File([text], 'partida.json', { type: 'application/json' }));
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, json);
+}

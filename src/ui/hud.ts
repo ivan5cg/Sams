@@ -96,7 +96,7 @@ export class Hud {
     const box = $('#toasts');
     const el = document.createElement('div');
     el.className = 'toast';
-    el.innerHTML = `<span>${icon}</span><span>${esc(text)}</span>`;
+    el.innerHTML = `<span>${esc(icon)}</span><span>${esc(text)}</span>`;
     box.prepend(el);
     while (box.children.length > 2) box.lastElementChild?.remove();
     setTimeout(() => el.classList.add('out'), 2800);

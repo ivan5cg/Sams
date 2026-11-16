@@ -17,7 +17,7 @@ export class Journal extends Part {
 
   showLog() {
     const rows = this.log.length
-      ? this.log.map((l) => `<div class="log-row"><span class="log-icon">${l.icon}</span><div><div class="muted small">${esc(l.when)}</div><div>${esc(l.text)}</div></div></div>`).join('')
+      ? this.log.map((l) => `<div class="log-row"><span class="log-icon">${esc(l.icon)}</span><div><div class="muted small">${esc(l.when)}</div><div>${esc(l.text)}</div></div></div>`).join('')
       : '<p class="muted small">Todavía no ha pasado nada en esta sesión.</p>';
     $('#log').innerHTML = `<div class="map-card"><div class="sheet-head"><div class="sheet-title">📜 Diario</div><button class="icon-btn" data-close>✕</button></div><div class="places">${rows}</div></div>`;
     $('#log').hidden = false;

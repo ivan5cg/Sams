@@ -6,6 +6,7 @@ import { moodScore } from '../sim/world';
 
 export const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 
+/** Escapa texto para meterlo en HTML (también en atributos, entre comillas dobles o simples). */
 export const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 export function mood(a: Agent): { score: number; icon: string; label: string; color: string } {
@@ -23,5 +24,5 @@ export function needColor(v: number) {
 }
 
 export function hexColor(n: number) {
-  return `#${n.toString(16).padStart(6, '0')}`;
+  return `#${((Number(n) || 0) & 0xffffff).toString(16).padStart(6, '0')}`;
 }

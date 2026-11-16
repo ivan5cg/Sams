@@ -110,7 +110,7 @@ export class FamilyPanel extends Part {
     // Deseos del personaje activo (tócalos para ponerte a cumplirlos)
     const wishes = a.wishes ?? [];
     const wishHtml = wishes.length
-      ? `<span class="wish-title">⭐ Deseos</span>${wishes.map((wi) => `<button class="wish" data-wish="${wi.id}"><span>${wi.icon}</span><span class="chip-l">${esc(wi.label)}</span><b>+§${wi.reward}</b></button>`).join('')}`
+      ? `<span class="wish-title">⭐ Deseos</span>${wishes.map((wi) => `<button class="wish" data-wish="${esc(wi.id)}"><span>${esc(wi.icon)}</span><span class="chip-l">${esc(wi.label)}</span><b>+§${wi.reward}</b></button>`).join('')}`
       : '';
     if (wishHtml !== this.lastWishHtml) {
       $('#wishes').innerHTML = wishHtml;

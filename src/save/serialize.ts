@@ -5,6 +5,7 @@ import { SAVE_VERSION } from '../sim/world';
 import { PLAYER_LOT, addAlcorcon, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
 import { setRel } from '../sim/social';
 import type { PlacedObject, WorldState } from '../sim/types';
+import { validateState } from './validate';
 
 export function serialize(state: WorldState): string {
   return JSON.stringify(state);
@@ -113,5 +114,6 @@ export function migrate(data: unknown): WorldState {
     MIGRATIONS[s.version]?.(s);
     s.version++;
   }
+  validateState(s);
   return s;
 }

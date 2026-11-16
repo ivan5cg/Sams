@@ -1,0 +1,86 @@
+// Comprobación de una partida al cargarla o importarla: que los identificadores y los números
+// sean lo que dicen ser. Así un fichero manipulado no puede colar HTML por un id o un número
+// (los textos libres, como los nombres, se escapan siempre al pintarlos).
+
+import { OBJECTS } from '../data/objects';
+import { SPECIES } from '../data/species';
+import type { WorldState } from '../sim/types';
+
+const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+class Broken extends Error {
+  constructor(what: string) {
+    super(`La partida está dañada (${what})`);
+  }
+}
+
+const id = (v: unknown, what: string) => {
+  if (typeof v !== 'string' || !SAFE_ID.test(v)) throw new Broken(what);
+};
+const optId = (v: unknown, what: string) => v === undefined || v === null || id(v, what);
+const num = (v: unknown, what: string) => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) throw new Broken(what);
+};
+const optNum = (v: unknown, what: string) => v === undefined || v === null || num(v, what);
+const str = (v: unknown, what: string) => {
+  if (typeof v !== 'string') throw new Broken(what);
+};
+const optStr = (v: unknown, what: string) => v === undefined || v === null || str(v, what);
+const arr = (v: unknown, what: string): unknown[] => {
+  if (!Array.isArray(v)) throw new Broken(what);
+  return v;
+};
+
+/** Lanza un error con un mensaje claro si la partida no tiene la forma esperada. */
+export function validateState(s: WorldState) {
+  num(s.minutes, 'reloj');
+  num(s.nextId, 'contador');
+  optNum(s.speed, 'velocidad');
+  id(s.playerHouseholdId, 'familia del jugador');
+  id(s.activeAgentId, 'personaje activo');
+  for (const l of arr(s.lots, 'parcelas') as WorldState['lots']) {
+    id(l.id, 'parcela');
+    str(l.name, `nombre de ${l.id}`);
+    optId(l.householdId, `familia de ${l.id}`);
+    optNum(l.size, `tamaño de ${l.id}`);
+  }
+  for (const h of arr(s.households, 'familias') as WorldState['households']) {
+    id(h.id, 'familia');
+    id(h.lotId, `casa de ${h.id}`);
+    str(h.name, `nombre de ${h.id}`);
+    num(h.funds, `dinero de ${h.id}`);
+    optNum(h.pantry, `despensa de ${h.id}`);
+    for (const m of arr(h.memberIds, `miembros de ${h.id}`)) id(m, `miembro de ${h.id}`);
+  }
+  for (const a of arr(s.agents, 'personajes') as WorldState['agents']) {
+    id(a.id, 'personaje');
+    id(a.householdId, `familia de ${a.id}`);
+    id(a.lotId, `parcela de ${a.id}`);
+    str(a.name, `nombre de ${a.id}`);
+    if (!SPECIES[a.species]) throw new Broken(`especie de ${a.id}`);
+    num(a.ageDays, `edad de ${a.id}`);
+    num(a.color, `color de ${a.id}`);
+    num(a.pos?.x, `posición de ${a.id}`);
+    num(a.pos?.y, `posición de ${a.id}`);
+    for (const v of Object.values(a.needs ?? {})) num(v, `necesidades de ${a.id}`);
+    optId(a.home, `casa de ${a.id}`);
+    for (const w of a.wishes ?? []) {
+      id(w.id, `deseo de ${a.id}`);
+      str(w.label, `deseo de ${a.id}`);
+      str(w.icon, `deseo de ${a.id}`);
+      num(w.reward, `deseo de ${a.id}`);
+    }
+    for (const t of [a.current, ...(a.queue ?? [])]) if (t) id(t.id, `tarea de ${a.id}`);
+  }
+  for (const o of arr(s.objects, 'objetos') as WorldState['objects']) {
+    id(o.id, 'objeto');
+    id(o.lotId, `parcela de ${o.id}`);
+    if (!OBJECTS[o.def]) throw new Broken(`tipo de ${o.id}`);
+    num(o.x, `posición de ${o.id}`);
+    num(o.y, `posición de ${o.id}`);
+    optStr(o.label, `etiqueta de ${o.id}`);
+    if (o.q !== undefined && ![1, 2, 3].includes(o.q)) throw new Broken(`calidad de ${o.id}`);
+  }
+  for (const k of Object.keys(s.rels ?? {})) for (const x of k.split('|')) id(x, 'relación');
+  for (const sec of s.secrets ?? []) str(sec.text, 'salseo');
+}
