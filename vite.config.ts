@@ -6,7 +6,18 @@ export default defineConfig({
   // Rutas relativas: funciona igual en la raíz de un dominio o en una subcarpeta (GitHub Pages).
   base: './',
   build: {
-    chunkSizeWarningLimit: 2000,
+    // Phaser (~1,5 MB) va aparte: casi nunca cambia y se queda en la caché entre versiones.
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/phaser')) return 'phaser';
+          // Textos y datos del juego: cambian a menudo, pero por separado del código.
+          if (/src\/data\/|src\/sim\/phrases\.ts/.test(id)) return 'contenido';
+          return undefined;
+        },
+      },
+    },
   },
   plugins: [
     VitePWA({
@@ -31,8 +42,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg}'],
-        // Phaser ocupa más de los 2 MB que Workbox permite por defecto.
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Phaser va en su propio fichero (~1,5 MB): margen por si crece.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
     }),
   ],

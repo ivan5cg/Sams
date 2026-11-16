@@ -11,8 +11,28 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <title>Sams</title>
     <link rel="stylesheet" href="/src/ui/styles.css" />
+    <style>
+      /* Pantalla de carga: HTML y CSS puros, se ve mientras baja el juego. */
+      #loading { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #1d2233; color: #e8ebf5; font: 600 18px system-ui, sans-serif; transition: opacity 0.4s; }
+      #loading.out { opacity: 0; pointer-events: none; }
+      #loading .house { font-size: 64px; animation: bob 1.2s ease-in-out infinite; }
+      #loading .dots { display: flex; gap: 6px; }
+      #loading .dots i { width: 8px; height: 8px; border-radius: 50%; background: #f0a830; animation: blink 1s infinite; }
+      #loading .dots i:nth-child(2) { animation-delay: 0.2s; }
+      #loading .dots i:nth-child(3) { animation-delay: 0.4s; }
+      #loading small { font-weight: 400; opacity: 0.6; font-size: 13px; }
+      @keyframes bob { 50% { transform: translateY(-8px); } }
+      @keyframes blink { 50% { opacity: 0.25; } }
+      @media (prefers-reduced-motion: reduce) { #loading .house, #loading .dots i { animation: none; } }
+    </style>
   </head>
   <body>
+    <div id="loading" role="status" aria-live="polite">
+      <div class="house">🏡</div>
+      <div>Sams</div>
+      <div class="dots"><i></i><i></i><i></i></div>
+      <small>Abriendo la puerta de casa…</small>
+    </div>
     <div id="game"></div>
 
     <header id="hud-top">

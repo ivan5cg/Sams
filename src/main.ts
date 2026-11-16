@@ -111,9 +111,19 @@ async function boot() {
   // Acceso para depurar desde la consola del navegador.
   Object.assign(window, { sams: { get world() { return world; }, game } });
 
+  // Fuera la pantalla de carga.
+  const loading = document.getElementById('loading');
+  loading?.classList.add('out');
+  setTimeout(() => loading?.remove(), 500);
+
   hud.showTutorial();
   if (!saved) hud.toast('¡Bienvenidos a casa! Toca algo para dar órdenes', '🏡');
 }
 
 registerSW({ immediate: true });
-boot();
+boot().catch((e) => {
+  // Si algo falla al arrancar, que no se quede la pantalla de carga para siempre.
+  console.error(e);
+  const small = document.querySelector('#loading small');
+  if (small) small.textContent = 'No se ha podido abrir el juego. Prueba a recargar la página.';
+});
