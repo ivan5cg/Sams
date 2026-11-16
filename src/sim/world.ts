@@ -61,6 +61,8 @@ export class World {
   ui: {
     building: boolean;
     ghost: { def: string; x: number; y: number; ok: boolean } | null;
+    /** Mueble sobre el que el tutorial guiado pone una flecha. */
+    guide?: { def: string } | null;
     /** Frases que la escena tiene que mostrar en bocadillos. */
     speech: { agentId: string; text: string; kind: 'say' | 'think' }[];
   } = { building: false, ghost: null, speech: [] };

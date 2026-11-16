@@ -120,7 +120,7 @@ async function boot() {
   loading?.classList.add('out');
   setTimeout(() => loading?.remove(), 500);
 
-  hud.showTutorial();
+  hud.startGuide();
   if (!saved) hud.toast('¡Bienvenidos a casa! Toca algo para dar órdenes', '🏡');
 }
 

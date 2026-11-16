@@ -16,6 +16,7 @@ import { ProfilePanel } from './profile';
 import { DilemmaPanel } from './dilemma';
 import { FamilyPanel } from './panel';
 import { GameMenu } from './menu';
+import { Guide } from './guide';
 
 export interface HudCallbacks {
   onSave: () => void;
@@ -36,6 +37,7 @@ export class Hud {
   readonly dilemma = new DilemmaPanel(this);
   readonly panel = new FamilyPanel(this);
   readonly menu = new GameMenu(this);
+  readonly guide = new Guide(this);
 
   world: World;
 
@@ -73,6 +75,7 @@ export class Hud {
     this.dilemma.bind();
     this.panel.bind();
     this.menu.bind();
+    this.guide.bind();
   }
 
   /** Toque en la escena: en modo construcción lo gestiona la obra; si no, el menú de acciones. */
@@ -85,8 +88,9 @@ export class Hud {
     this.build.setScene(get);
   }
 
-  showTutorial(force = false) {
-    this.tutorial.showTutorial(force);
+  /** Al arrancar: la primera vez, el tutorial guiado. */
+  startGuide() {
+    this.guide.start();
   }
 
   toast(text: string, icon = 'ℹ️') {
@@ -131,6 +135,7 @@ export class Hud {
     }
 
     this.panel.render();
+    this.guide.sync();
 
     this.talk.syncTalk();
     this.dilemma.syncDilemma();

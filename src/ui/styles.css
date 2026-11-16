@@ -1382,3 +1382,96 @@ body.building #hud-bottom {
   background: #4cd964;
   border: 2px solid #fff;
 }
+
+/* --- Tutorial guiado --------------------------------------------------------- */
+
+#guide {
+  position: fixed;
+  top: calc(60px + var(--safe-top));
+  left: 10px;
+  right: 10px;
+  z-index: 55;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#guide[hidden] {
+  display: none;
+}
+
+.guide-card {
+  pointer-events: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  padding: 10px 10px 8px 12px;
+  border-radius: 16px;
+  background: var(--panel-solid);
+  border: 2px solid #f0c43c;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  animation: sheet-up 0.2s ease-out;
+}
+
+.guide-icon {
+  font-size: 30px;
+}
+
+.guide-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.guide-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.guide-text {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.guide-dots {
+  justify-content: flex-start;
+  margin: 6px 0 0;
+}
+
+.tuto-dots span.done {
+  background: rgba(61, 220, 74, 0.45);
+}
+
+.guide-skip {
+  font-size: 12px;
+  padding: 0 10px;
+  min-height: 44px;
+}
+
+/* Con la guía en pantalla, los avisos van debajo de ella. */
+body.guiding #toasts {
+  top: calc(152px + var(--safe-top));
+}
+
+.guide-glow {
+  position: relative;
+  outline: 3px solid #f0c43c;
+  outline-offset: 2px;
+  animation: guide-pulse 1.1s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes guide-pulse {
+  50% {
+    outline-color: rgba(240, 196, 60, 0.25);
+    box-shadow: 0 0 0 6px rgba(240, 196, 60, 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-glow {
+    animation: none;
+  }
+}

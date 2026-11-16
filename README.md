@@ -244,7 +244,10 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
 - **🏗️ Reformas**: amplía la casa. Primero una habitación nueva junto al jardín (§6.000; lo del jardín se corre
   solo) y después un salón grande hacia la calle (§12.000).
 - A veces pasan cosas: encontrar dinero en un abrigo viejo... o que os toque la lotería.
-- En el menú ☰: **📜 Diario** con todo lo que ha pasado y **❓ Cómo se juega**.
+- En el menú ☰: **📜 Diario** con todo lo que ha pasado y **❓ Cómo se juega** (resumen rápido).
+- **Tutorial guiado** la primera vez: seis pasos que se aprenden haciendo (tocar la nevera, que alguien coma,
+  manejar a la mascota, buscar trabajo, comprar un mueble e ir al parque), con una flecha sobre el mueble o un
+  halo en el botón que toca. El tiempo solo se para en el primero, se puede saltar y recuerda por dónde ibas.
 
 ## Mascotas
 

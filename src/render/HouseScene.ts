@@ -923,6 +923,7 @@ export class HouseScene extends Phaser.Scene {
     this.syncObjects();
     this.syncAgents(time);
     this.syncGhost();
+    this.syncGuideArrow();
     this.updateNight();
     this.updateWeather(delta);
     this.festiveFx(time);
@@ -1156,6 +1157,35 @@ export class HouseScene extends Phaser.Scene {
 
   /** Lo pone la interfaz: hay un mueble elegido y el siguiente toque es para colocarlo. */
   selectingTile = false;
+
+  private guideArrow?: Phaser.GameObjects.Container;
+  private guideKey = '';
+
+  /** Flecha del tutorial guiado sobre un mueble (la nevera, el ordenador...). */
+  private syncGuideArrow() {
+    // Si la escena se ha reconstruido (cambio de parcela), la flecha se ha ido con ella.
+    if (this.guideArrow && !this.guideArrow.active) this.guideKey = '';
+    const g = this.world.ui.guide;
+    const o = g ? this.world.objectsIn(this.shownLot).find((x) => x.def === g.def) : undefined;
+    const key = o ? `${o.id}:${o.x}:${o.y}` : '';
+    if (key === this.guideKey) return;
+    this.guideKey = key;
+    this.guideArrow?.destroy();
+    this.guideArrow = undefined;
+    if (!o) return;
+    const d = OBJECTS[o.def];
+    const c = tileCenter(o.x + (d.w - 1) / 2, o.y + (d.h - 1) / 2);
+    const top = c.y - d.height - 34;
+    const arrow = this.add.graphics();
+    arrow.fillStyle(0x1d2233, 0.9);
+    arrow.fillTriangle(-16, -22, 16, -22, 0, 4);
+    arrow.fillStyle(0xf0c43c, 1);
+    arrow.fillTriangle(-12, -20, 12, -20, 0, 0);
+    arrow.fillRect(-5, -38, 10, 20);
+    this.guideArrow = this.add.container(c.x, top, [arrow]).setDepth(1e5 + 2);
+    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce) this.tweens.add({ targets: this.guideArrow, y: top - 12, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
 
   /** Vista previa del mueble que se va a colocar (verde si cabe, rojo si no). */
   private syncGhost() {

@@ -5,10 +5,10 @@ test('humo: tutorial, nevera, mapa, parque y guardar, sin errores', async ({ pag
   const errors = watchErrors(page);
   await openGame(page, { tutorial: true });
 
-  // El tutorial sale la primera vez y se puede saltar.
-  await expect(page.locator('#tutorial')).toBeVisible();
-  await page.locator('#tutorial [data-done]').first().click();
-  await expect(page.locator('#tutorial')).toBeHidden();
+  // El tutorial guiado sale la primera vez y se puede saltar.
+  await expect(page.locator('#guide')).toBeVisible();
+  await page.locator('#guide [data-skip]').click();
+  await expect(page.locator('#guide')).toBeHidden();
 
   // Pausa, para que nadie se mueva mientras tocamos.
   await page.locator('#speed [data-speed="0"]').click();
