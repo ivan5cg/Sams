@@ -110,6 +110,24 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
   hay quien acaba con resaca. Si alguien cumple años (al cambiar de etapa), es fiesta de cumpleaños.
 - En el barrio también hay dramas: alguna pareja de vecinos se separa (y se cotillea).
 
+## Tipos de relación y desgaste
+
+- Cada relación tiene sus **etiquetas** (en el perfil, 👥):
+  - **familia**: padre/madre, hijo/a, hermano/a;
+  - **pareja**: su novio/a, su marido o mujer, **amantes**, **ex** e **interés romántico**;
+  - **amistad**: conocidos, amigos, buenos amigos y **mejores amigos**;
+  - **mal rollo**, **enemigos** y **persona non grata**;
+  - **compañeros de trabajo** (o de clase), y **el compañero de trabajo que odias**.
+- **Mejores amigos** es un pacto: con mucha amistad, se propone tocando a la otra persona.
+- **Persona non grata**: se le declara a alguien con quien hay mal rollo, y ya no puede pisar vuestra casa (ni
+  viene de visita) hasta que se le levante el veto. Los vecinos también te pueden vetar a ti.
+- En el trabajo pasan cosas con los compañeros: unos te invitan a un café y otros te roban el táper.
+- **Las relaciones se desgastan si no se cuidan**: cada una recuerda el último detalle (charlar, un abrazo, un
+  regalo, un beso...).
+  - Sin contacto, las amistades se enfrían y los mejores amigos dejan de serlo.
+  - Las **parejas** sin detalles durante días van perdiendo romance: primero llega la **crisis** (con aviso, y
+    en el perfil se ve cuántos días llevan sin un detalle) y, si nadie hace nada, **lo dejan** o **se divorcian**.
+
 ## Trabajo con decisiones
 
 - A veces, en mitad de la jornada, hay un **dilema** y el tiempo se para para que decidas: horas extra, un

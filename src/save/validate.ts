@@ -139,7 +139,12 @@ export function validateState(s: WorldState) {
     if (o.q !== undefined && ![1, 2, 3].includes(o.q)) throw new Broken(`calidad de ${o.id}`);
     if (o.rot !== undefined && o.rot !== 1) throw new Broken(`giro de ${o.id}`);
   }
-  for (const k of Object.keys(s.rels ?? {})) for (const x of k.split('|')) id(x, 'relación');
+  for (const [k, rel] of Object.entries(s.rels ?? {})) {
+    for (const x of k.split('|')) id(x, 'relación');
+    optNum(rel.last, `relación ${k}`);
+    optNum(rel.crisis, `relación ${k}`);
+    optId(rel.banned, `relación ${k}`);
+  }
   for (const sec of s.secrets ?? []) str(sec.text, 'salseo');
   if (s.feats) {
     for (const k of [...Object.keys(s.feats.got ?? {}), ...Object.keys(s.feats.challenges ?? {})]) id(k, 'logro');

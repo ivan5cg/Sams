@@ -1,7 +1,8 @@
 // Conversación interactiva: elegir de qué hablar en cada turno.
 
 import { converse, knownText, topicsFor } from '../sim/conversation';
-import { getRel, relLabel } from '../sim/social';
+import { getRel } from '../sim/social';
+import { mainTag } from '../sim/relations';
 import { hasTrait, traitsOf } from '../sim/traits';
 import type { Agent } from '../sim/types';
 import { $, esc } from './dom';
@@ -94,7 +95,7 @@ export class TalkPanel extends Part {
     $('#talk').innerHTML = `<div class="talk-card">
       <div class="sheet-head">
         <div><div class="sheet-title">🗨️ ${esc(a.name)} y ${esc(t.name)}</div>
-        <div class="sheet-sub">${traitsOf(t).map((x) => x.icon).join('')} ${esc(relLabel(rel, a.kind, t.kind))}${known ? ` · ${esc(known)}` : ''}</div></div>
+        <div class="sheet-sub">${traitsOf(t).map((x) => x.icon).join('')} ${esc(mainTag(this.world, a, t).label)}${known ? ` · ${esc(known)}` : ''}</div></div>
         <button class="icon-btn" data-endtalk>✕</button>
       </div>
       <div class="bar talk-bar"><div class="fill" style="width:${pct}%;background:${rel.f >= 15 ? '#4cd964' : rel.f <= -15 ? '#ff4d3d' : '#a3a9bf'}"></div></div>

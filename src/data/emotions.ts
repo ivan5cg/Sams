@@ -74,6 +74,7 @@ const E: EmotionDef[] = [
   { id: 'embarazada', label: '¡Embarazada!', icon: '🤰', value: 12, hours: 72, likes: { nap_sofa: 1.4, eat: 1.3, hug: 1.4 }, thoughts: ['¡Vamos a tener un bebé!'] },
   { id: 'antojos', label: 'Con antojos', icon: '🍓', value: 2, hours: 24, likes: { snack: 1.8, eat: 1.4, buy_fruit: 1.6 }, thoughts: ['Me comería unos pepinillos con chocolate'] },
   { id: 'enfermo', label: 'Malo/a', icon: '🤒', value: -10, hours: 72, likes: { sleep: 1.6, nap_sofa: 1.8, watch_tv: 1.5, take_medicine: 2, run: 0.2, dance: 0.2 }, thoughts: ['Qué malito/a estoy', 'Hoy no salgo de la cama'] },
+  { id: 'crisis', label: 'Crisis de pareja', icon: '🥀', value: -8, hours: 48, likes: { hug: 1.8, kiss: 1.6, give_gift: 1.8, chat: 1.4, argue: 1.3 }, thoughts: ['¿Seguimos queriéndonos?', 'Hace mucho que no hacemos nada juntos'] },
   { id: 'castizo', label: 'Castizo/a', icon: '🎩', value: 10, hours: 12, likes: { chotis: 2.5, dance: 1.5 }, thoughts: ['¡Viva San Isidro!'] },
   { id: 'glovo', label: 'Comida a domicilio', icon: '🛵', value: 5, hours: 3 },
   { id: 'premio', label: '¡Premio en la tragaperras!', icon: '🎰', value: 12, hours: 6, likes: { tragaperras: 2 }, thoughts: ['¡Lo sabía! ¡Esta máquina me debía una!'] },

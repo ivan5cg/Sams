@@ -60,6 +60,11 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v20 → v21: tipos de relación y desgaste. Se empieza a contar desde hoy (nadie rompe de golpe).
+  20: (s) => {
+    const today = Math.floor(s.minutes / 1440) + 1;
+    for (const rel of Object.values(s.rels ?? {})) rel.last = rel.last ?? today;
+  },
   // v19 → v20: enfermedades (campo nuevo opcional).
   19: () => {},
   // v18 → v19: sexo de cada persona (según el nombre) y ciclo menstrual (empieza solo, al vuelo).

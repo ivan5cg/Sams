@@ -12,7 +12,8 @@ import { TRAITS } from '../data/traits';
 import { ASPIRATIONS, ASPIRATION_BY_ID } from '../sim/aspirations';
 import { knownText } from '../sim/conversation';
 import { emotionsOf } from '../sim/emotions';
-import { MEMORY_TEXT, isAdult, relLabel } from '../sim/social';
+import { MEMORY_TEXT, isAdult } from '../sim/social';
+import { relTags } from '../sim/relations';
 import { traitsOf } from '../sim/traits';
 import type { Agent, Rel } from '../sim/types';
 import { $, esc, mood } from './dom';
@@ -151,7 +152,8 @@ export class ProfilePanel extends Part {
               <span class="rel-face">${o.kind === 'person' ? '🧑' : SPECIES[o.species].icon}</span>
               <div class="rel-main">
                 <div><b>${esc(o.name)}</b> <span class="muted small">${esc(where)}</span></div>
-                <div class="small">${esc(relLabel(rel, a.kind, o.kind))}${rel.r > 0 && !rel.kin ? ` · 💕 ${Math.round(rel.r)}` : ''}</div>
+                <div class="rel-tags">${relTags(w, a, o).map((t) => `<span class="rel-tag rel-${t.id}">${t.icon} ${esc(t.label)}</span>`).join('')}${rel.r > 0 && !rel.kin ? `<span class="rel-tag">💕 ${Math.round(rel.r)}</span>` : ''}</div>
+                ${rel.crisis !== undefined ? `<div class="small" style="color:#ff9b8a">🥀 En crisis: hace falta un detalle (abrazo, beso, regalo...)</div>` : rel.status && !rel.kin && w.day - (rel.last ?? w.day) > 2 ? `<div class="small muted">⏳ Hace ${w.day - (rel.last ?? w.day)} días sin un detalle</div>` : ''}
                 ${knownText(a, o) ? `<div class="small muted">💡 ${esc(knownText(a, o))}</div>` : ''}
                 ${(rel.mem ?? [])
                   .slice(-2)

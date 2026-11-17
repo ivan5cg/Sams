@@ -2212,3 +2212,10 @@ html.reduce-motion .photo-flash { display: none; }
 .bill-alert { margin: 8px 0; padding: 10px; border-radius: 12px; background: rgba(232, 85, 61, 0.16); border: 1px solid rgba(232, 85, 61, 0.45); font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
 .bill-alert .small-btn { align-self: flex-start; }
 .cycle-line { margin: 4px 0 8px; }
+
+/* --- Tipos de relación --- */
+.rel-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.rel-tag { font-size: 11.5px; padding: 1px 7px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); }
+.rel-tag.rel-enemigos, .rel-tag.rel-nongrata, .rel-tag.rel-companero_odio { background: rgba(232, 85, 61, 0.22); }
+.rel-tag.rel-mejores, .rel-tag.rel-esposos, .rel-tag.rel-novios { background: rgba(76, 217, 100, 0.2); }
+.rel-tag.rel-amantes, .rel-tag.rel-interes { background: rgba(240, 96, 126, 0.22); }

@@ -181,6 +181,14 @@ export interface Rel {
   ex?: boolean;
   /** Tienen un lío a escondidas. */
   affair?: boolean;
+  /** Último día con un detalle entre los dos (sin detalles, se desgasta). Desde la versión 21. */
+  last?: number;
+  /** Pacto de mejores amigos. */
+  best?: boolean;
+  /** Quién ha declarado al otro persona non grata (no puede pisar su casa). */
+  banned?: string;
+  /** Día en que la pareja entró en crisis. */
+  crisis?: number;
 }
 
 export interface PlacedObject {

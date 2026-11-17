@@ -1,6 +1,7 @@
 // Trabajo y colegio: turnos, sueldos, ascensos, despidos y dilemas.
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
+import { coworkerDay } from '../relations';
 import { BAR_MENUS, BAR_STAFF, CAREERS, gradeLabel, workDays } from '../../data/careers';
 import { DILEMMAS, DILEMMA_BY_ID, type DilemmaOption } from '../../data/dilemmas';
 import { hasTrait } from '../traits';
@@ -164,6 +165,7 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
     return;
   }
   if (w.state.dilemma?.agentId === a.id) resolveDilemma(w, 99);
+  coworkerDay(w, a);
   let pay = c.levels[job.level - 1].pay;
   if (c.business) {
     // En el negocio propio unos días se gana mucho y otros, nada (o se pierde). Depende de la carta.

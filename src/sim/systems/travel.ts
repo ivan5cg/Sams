@@ -1,6 +1,7 @@
 // Barrio: viajes entre parcelas (andando o en metro), llegadas y visitas.
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
+import { isBanned } from '../relations';
 import { ACTIONS } from '../../data/actions';
 import { CAREERS, workDays } from '../../data/careers';
 import { lifeStage } from '../../data/species';
@@ -27,6 +28,8 @@ export function canTravel(w: World, a: Agent, lotId: string): { ok: boolean; rea
   if (a.current && ACTIONS[a.current.actionId].forced) return { ok: false, reason: 'No puede moverse ahora' };
   const closed = closedReason(w, lotId);
   if (closed) return { ok: false, reason: closed };
+  const host = w.lotById(lotId)?.householdId;
+  if (host && host !== a.householdId && a.kind === 'person' && isBanned(w, a, host)) return { ok: false, reason: 'Te han declarado persona non grata en esa casa' };
   if (lotId === w.household.lotId && isEvicted(w) && w.isPlayerMember(a)) return { ok: false, reason: 'La casa está precintada: hay que pagar el alquiler atrasado y la fianza' };
   return { ok: true };
 }
@@ -166,7 +169,9 @@ export function busySoon(w: World, a: Agent, hours: number): boolean {
 
 /** Algunos miembros de una familia vecina van a otra parcela (y quizá su perro). */
 export function sendVisit(w: World, h: Household, lotId: string, toPlayer: boolean) {
-  const people = availableVisitors(w, h);
+  // A una casa donde te han vetado, no se va.
+  const hostId = w.lotById(lotId)?.householdId;
+  const people = availableVisitors(w, h).filter((p) => !hostId || !isBanned(w, p, hostId));
   if (!people.length) return;
   const n = Math.min(people.length, Math.random() < 0.5 ? 1 : 2);
   const group = people.sort(() => Math.random() - 0.5).slice(0, n);

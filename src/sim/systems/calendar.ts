@@ -27,6 +27,7 @@ import { marketPrice } from './places';
 import { dailyBills } from './bills';
 import { PREGNANCY_DAYS, dailyCycle } from './fertility';
 import { dailyHealth } from './illness';
+import { dailyRelations } from '../relations';
 import { longDate } from '../date';
 import { WEEKDAY_LONG } from '../../data/careers';
 
@@ -217,11 +218,8 @@ export function dailyEvents(w: World) {
 
 export function newDay(w: World) {
   w.toast(`Buenos días: ${WEEKDAY_LONG[w.weekday]}, ${longDate(w.date)}`, '🌅');
-  // Las relaciones se enfrían un poco si no se cuidan.
-  for (const rel of Object.values(w.state.rels)) {
-    if (!rel.kin && Math.abs(rel.f) > 5) rel.f -= Math.sign(rel.f) * 0.5;
-    rel.r = Math.max(0, rel.r - (rel.status ? 0.5 : 1));
-  }
+  // Las relaciones se desgastan si no se cuidan (y las parejas sin detalles entran en crisis y rompen).
+  dailyRelations(w);
   // Los vecinos pagan facturas, hipoteca y la compra cada lunes. La familia del jugador, sus recibos del mes (bills.ts).
   if (w.weekday === 0 && w.day > 1) {
     for (const h of w.state.households) {

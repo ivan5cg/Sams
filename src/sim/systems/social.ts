@@ -23,6 +23,7 @@ import { completeTask, endTask } from './tasks';
 import { mediate, snitch } from './arcs';
 import { PREGNANCY_DAYS, maybeConceive } from './fertility';
 import { jokeRisk } from './illness';
+import { attend } from '../relations';
 
 export function canEngage(_w: World, actor: Agent, actorTask: Task, t: Agent): boolean {
   if (t.hidden || t.travel || t.lotId !== actor.lotId) return false;
@@ -216,6 +217,25 @@ export function socialOutcome(w: World, a: Agent, t: Agent, actionId: string) {
   const key = relKey(a.id, t.id);
   const rel = w.state.rels[key];
   const loud = w.isPlayerMember(a) || w.isPlayerMember(t);
+  // Un detalle (charlar, un abrazo, un regalo, un beso...) cuenta como atención: la relación no se desgasta.
+  if (eff && (eff[0] > 0 || eff[1] > 0)) attend(w, a, t);
+  if (actionId === 'best_friends' && rel) {
+    rel.best = true;
+    remember(w, t, a, 'mejores');
+    if (loud) w.toast(`¡${a.name} y ${t.name} ahora son mejores amigos! Uña y carne`, '🫶');
+  }
+  if (actionId === 'ban' && rel) {
+    rel.banned = a.id;
+    rel.best = false;
+    w.feel(t, 'insultado', a.name);
+    // Si estaba en su casa, a la calle.
+    if (t.lotId === w.householdOf(a)?.lotId) t.visitUntil = w.state.minutes;
+    if (loud) w.toast(`${a.name} ha declarado a ${t.name} persona non grata: no vuelve a pisar su casa`, '🚫');
+  }
+  if (actionId === 'unban' && rel) {
+    rel.banned = undefined;
+    if (loud) w.toast(`${a.name} le levanta el veto a ${t.name}. Ya puede volver a casa`, '🕊️');
+  }
   if (actionId === 'ask_partner' && rel) {
     // Si `t` tenía pareja, la deja.
     const ex = partnerOf(w.state, t.id);

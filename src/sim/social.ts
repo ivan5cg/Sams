@@ -75,6 +75,9 @@ export const REL_EFFECTS: Record<string, [number, number]> = {
   insult: [-15, -5],
   argue: [-10, -4],
   apologize: [12, 2],
+  best_friends: [10, 0],
+  ban: [-25, -10],
+  unban: [10, 0],
   break_up: [-25, -50],
   divorce: [-30, -60],
   throw_party: [0, 0],
@@ -154,6 +157,8 @@ export function acceptChance(state: WorldState, a: Agent, t: Agent, actionId: st
       const base = 0.15 + rel.r / 200 + (ownRel && ownRel.r < 40 ? 0.3 : 0) + (!own ? 0.25 : 0);
       return Math.min(0.9, base);
     }
+    case 'best_friends':
+      return rel.f >= 70 ? 0.9 : 0.3;
     case 'apologize':
       // Perdonar cuesta más cuanto peor está la cosa.
       return Math.max(0.25, Math.min(0.95, 0.65 + rel.f / 150));
@@ -179,6 +184,7 @@ export const REJECT_TEXT: Record<string, string> = {
 /** Recuerdos: lo que se cuenta de cada uno ({by} = quien lo hizo, {other} = a quien). */
 export const MEMORY_TEXT: Record<string, { icon: string; text: string; bad?: boolean }> = {
   insulto: { icon: '🤬', text: '{by} insultó a {other}', bad: true },
+  mejores: { icon: '🫶', text: '{by} y {other} se hicieron mejores amigos' },
   pelea: { icon: '💢', text: '{by} y {other} tuvieron una bronca', bad: true },
   celos: { icon: '😤', text: '{by} coqueteó con otra persona delante de {other}', bad: true },
   ruptura: { icon: '💔', text: '{by} cortó con {other}', bad: true },

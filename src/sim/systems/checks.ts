@@ -112,6 +112,12 @@ export function checkSocialAction(w: World, a: Agent, t: Agent, actionId: string
   if (def.targetSpecies && !def.targetSpecies.includes(t.species)) return { def, ok: false };
   // Despedir solo a invitados de otra familia que están en tu casa.
   if (actionId === 'say_goodbye' && (t.householdId === a.householdId || !t.visitUntil || w.isGuest(a))) return { def, ok: false };
+  {
+    const r0 = getRel(w.state, a.id, t.id);
+    if (actionId === 'best_friends' && (r0.best || r0.f < 60)) return { def, ok: false };
+    if (actionId === 'ban' && (r0.banned || t.householdId === a.householdId || r0.status || !w.isPlayerMember(a))) return { def, ok: false };
+    if (actionId === 'unban' && r0.banned !== a.id) return { def, ok: false };
+  }
   const tStage = t.kind === 'person' ? w.stageOf(t) : '';
   if (def.targetStages ? !def.targetStages.includes(tStage) : tStage === 'baby') return { def, ok: false };
   if (ROMANTIC.has(actionId)) {
