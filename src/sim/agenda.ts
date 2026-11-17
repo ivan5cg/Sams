@@ -11,7 +11,9 @@ import { MINUTES_PER_DAY } from './constants';
 import { ECONOMY } from '../data/economy';
 import { weeklyBill, weeklyMortgage } from './systems/money';
 import type { World } from './world';
-import { HOLIDAY_HOURS, holidayOf } from './systems/holidays';
+import { HOLIDAY_HOURS } from './systems/holidays';
+import { factsOf } from './feasts';
+import type { GameDate } from './date';
 
 export interface AgendaItem {
   /** Minuto del día (0-1439), o -1 si es para todo el día. */
@@ -24,38 +26,34 @@ export interface AgendaItem {
   orderId?: string;
 }
 
-/** Eventos fijos del calendario en un día (por número de día del juego). */
-export function calendarEvents(day: number): { id: string; minute: number; icon: string; text: string }[] {
-  const wd = (day - 1) % 7;
-  const se = Math.floor((day - 1) / 7) % 4;
+/** Eventos fijos del calendario en una fecha (las mismas reglas que la simulación: ver feasts.ts). */
+export function calendarEvents(g: GameDate): { id: string; minute: number; icon: string; text: string }[] {
+  const f = factsOf(g);
   const out: { id: string; minute: number; icon: string; text: string }[] = [];
-  if (wd === 0) out.push({ id: 'estacion', minute: -1, icon: SEASONS[se].icon, text: `Empieza ${SEASONS[se].label.toLowerCase() === 'otoño' ? 'el otoño' : `la ${SEASONS[se].label.toLowerCase()}`}`.replace('la verano', 'el verano').replace('la invierno', 'el invierno') });
-  if (se === 0 && wd >= 1 && wd <= 4) out.push({ id: 'campana', minute: -1, icon: '🗳️', text: 'Campaña electoral: militantes llamando a las puertas' });
-  if (se === 0 && wd === 5) out.push({ id: 'sanisidro', minute: -1, icon: '🎩', text: 'San Isidro: chotis en el parque y en la plaza' });
-  if (se === 0 && wd === 6) out.push({ id: 'elecciones', minute: -1, icon: '🗳️', text: 'Elecciones' });
-  if (se === 1 && wd === 5) out.push({ id: 'verbena', minute: 19 * 60, icon: '🎆', text: 'Verbena en el parque (hasta la 1:00)' });
-  if (se === 2 && (wd === 1 || wd === 2)) out.push({ id: 'ofertas', minute: -1, icon: '🥬', text: 'Días de la huerta: la compra, un 30% más barata' });
-  if (se === 3 && wd < 6) out.push({ id: 'loteria_venta', minute: -1, icon: '🎫', text: 'Se vende lotería de Navidad (en el bar)' });
-  if (se === 3 && wd === 6) {
-    out.push({ id: 'navidad', minute: -1, icon: '🎄', text: 'Navidad' });
-    out.push({ id: 'sorteo', minute: 12 * 60, icon: '🎶', text: 'Sorteo de la Lotería de Navidad' });
-    out.push({ id: 'campanadas', minute: 23 * 60, icon: '🍇', text: 'Las doce campanadas' });
-  }
-  const fiesta = holidayOf(day);
-  if (fiesta === 'reyes') {
-    out.push({ id: 'reyes', minute: -1, icon: '👑', text: 'Reyes: regalos y roscón (¡ojo con el haba!)' });
-    out.push({ id: 'cabalgata', minute: HOLIDAY_HOURS.cabalgata * 60, icon: '🐪', text: 'Cabalgata de Reyes en el parque' });
-  }
-  if (fiesta === 'carnaval') {
+  const se = SEASONS[g.season];
+  if (f.seasonStart) out.push({ id: 'estacion', minute: -1, icon: se.icon, text: `Empieza ${se.id === 'primavera' ? 'la primavera' : `el ${se.label.toLowerCase()}`}` });
+  if (f.campaign) out.push({ id: 'campana', minute: -1, icon: '🗳️', text: 'Campaña electoral: militantes llamando a las puertas' });
+  if (f.sanIsidro) out.push({ id: 'sanisidro', minute: -1, icon: '🎩', text: 'San Isidro: chotis en el parque y en la plaza' });
+  if (f.elections) out.push({ id: 'elecciones', minute: -1, icon: '🗳️', text: 'Elecciones' });
+  if (f.verbena) out.push({ id: 'verbena', minute: 19 * 60, icon: '🎆', text: `${g.m === 6 ? 'San Juan: v' : g.m === 8 && g.d === 15 ? 'La Paloma: v' : 'V'}erbena en el parque (hasta la 1:00)` });
+  if (f.ofertasStart) out.push({ id: 'ofertas', minute: -1, icon: '🥬', text: 'Días de la huerta (hoy y mañana): la compra, un 30% más barata' });
+  if (f.lotterySale) out.push({ id: 'loteria_venta', minute: -1, icon: '🎫', text: 'Se vende lotería de Navidad (en la caja del Mercadona)' });
+  if (f.lotteryDraw) out.push({ id: 'sorteo', minute: 12 * 60, icon: '🎶', text: 'Sorteo de la Lotería de Navidad' });
+  if (f.christmasEve) out.push({ id: 'nochebuena', minute: 21 * 60, icon: '🎄', text: 'Nochebuena: cena en familia' });
+  if (f.christmas) out.push({ id: 'navidad', minute: -1, icon: '🎄', text: 'Navidad' });
+  if (f.newYearsEve) out.push({ id: 'campanadas', minute: 23 * 60, icon: '🍇', text: 'Nochevieja: las doce campanadas' });
+  if (f.cabalgata) out.push({ id: 'cabalgata', minute: HOLIDAY_HOURS.cabalgata * 60, icon: '🐪', text: 'Cabalgata de Reyes en el parque' });
+  if (f.reyes) out.push({ id: 'reyes', minute: -1, icon: '👑', text: 'Reyes: regalos y roscón (¡ojo con el haba!)' });
+  if (f.carnaval) {
     out.push({ id: 'carnaval', minute: -1, icon: '🎭', text: 'Carnaval: disfrázate (tocándote a ti mismo)' });
     out.push({ id: 'desfile', minute: HOLIDAY_HOURS.desfile * 60, icon: '🎉', text: `Desfile en el parque; concurso de disfraces a las ${HOLIDAY_HOURS.concurso}:00` });
   }
-  if (fiesta === 'halloween') {
+  if (f.halloween) {
     out.push({ id: 'halloween', minute: -1, icon: '🎃', text: 'Halloween' });
     out.push({ id: 'truco', minute: HOLIDAY_HOURS.trucoDesde * 60, icon: '🍬', text: 'Truco o trato por las casas (que haya algo en la despensa)' });
   }
-  if (wd === 6) out.push({ id: 'mercadillo', minute: 9 * 60, icon: '🏺', text: 'Mercadillo del domingo (hasta las 14:30): barato, y regateando, más' });
-  if (wd === 6) out.push({ id: 'derbi', minute: 19 * 60, icon: '⚽', text: 'Derbi Madrid–Atleti en el Bar Casa Paco' });
+  if (g.wd === 6) out.push({ id: 'mercadillo', minute: 9 * 60, icon: '🏺', text: 'Mercadillo del domingo (hasta las 14:30): barato, y regateando, más' });
+  if (g.wd === 6) out.push({ id: 'derbi', minute: 19 * 60, icon: '⚽', text: 'Derbi Madrid–Atleti en el Bar Casa Paco' });
   return out;
 }
 
@@ -64,7 +62,8 @@ const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${St
 /** Lo que viene hoy (`offset` 0) o mañana (1) para la familia del jugador. */
 export function agendaFor(w: World, offset: 0 | 1): AgendaItem[] {
   const day = w.day + offset;
-  const wd = (day - 1) % 7;
+  const date = w.dateOf(day);
+  const wd = date.wd;
   const items: AgendaItem[] = [];
   const h = w.household;
   // Trabajo y colegio
@@ -92,7 +91,7 @@ export function agendaFor(w: World, offset: 0 | 1): AgendaItem[] {
     items.push({ minute: 0, icon: '🧾', text: `Facturas: §${weeklyBill(w, h) + business}${business ? ' (con la cuota de autónomos)' : ''} · hipoteca: §${weeklyMortgage(w, h)}`, kind: 'bills' });
   }
   // Calendario del barrio
-  for (const e of calendarEvents(day)) {
+  for (const e of calendarEvents(date)) {
     if (e.id === 'sorteo' && !w.state.lottery?.length) continue;
     items.push({ minute: e.minute, icon: e.icon, text: e.text, kind: e.id === 'estacion' ? 'season' : 'event' });
   }

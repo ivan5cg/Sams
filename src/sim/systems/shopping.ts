@@ -24,7 +24,7 @@ export function closedReason(w: World, lotId: string): string | undefined {
   const m = w.state.minutes % MINUTES_PER_DAY;
   if (layout === 'super' && (m < 9 * 60 || m >= 21 * 60 + 30)) return 'Está cerrado (abre de 9:00 a 21:30)';
   if (layout === 'acai' && (m < 10 * 60 || m >= 22 * 60)) return 'Está cerrado (abre de 10:00 a 22:00)';
-  return placeClosedReason(layout, w.state.minutes);
+  return placeClosedReason(layout, w.state.minutes, w.weekday);
 }
 
 /** A la hora de cerrar, todo el mundo a la calle (y a casa). */

@@ -49,6 +49,8 @@ export default defineConfig({
   ],
   test: {
     include: ['tests/**/*.test.ts'],
+    // Las partidas empiezan «hoy»: en las pruebas, hoy es siempre el mismo día (ver tests/setup.ts).
+    setupFiles: ['tests/setup.ts'],
     // Las simulaciones de varios días tardan el doble en los servidores de CI.
     testTimeout: 20_000,
   },

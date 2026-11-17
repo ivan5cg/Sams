@@ -6,6 +6,7 @@ import { PLAYER_LOT, addAlcorcon, addGetafe, addPlaces, addShops, addStudio, gen
 import { setRel } from '../sim/social';
 import type { PlacedObject, WorldState } from '../sim/types';
 import { validateState } from './validate';
+import { startFor, todayISO } from '../sim/date';
 
 export function serialize(state: WorldState): string {
   return JSON.stringify(state);
@@ -57,6 +58,10 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       }
       setupFamilyLife(s, members, { jobs: !player });
     }
+  },
+  // v16 → v17: calendario de verdad. La partida sigue «hoy»: el día en que se va coincide con la fecha real.
+  16: (s) => {
+    s.calendarStart = startFor(todayISO(), Math.floor(s.minutes / 1440) + 1);
   },
   // v15 → v16: más aspecto editable (pantalón y gafas, barba o bigote): campos nuevos opcionales.
   15: () => {},

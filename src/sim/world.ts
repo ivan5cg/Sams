@@ -39,6 +39,8 @@ import * as Social from './systems/social';
 import * as Feats from './systems/feats';
 import * as Arcs from './systems/arcs';
 import * as Trips from './systems/trips';
+import { dateOfDay, todayISO, type GameDate } from './date';
+import { factsOf, type DayFacts } from './feasts';
 import { GARCIA, MAX_START_PEOPLE, STAGE_AGE, applyEdit, type FamilySpec, type PersonEdit } from './family';
 
 export { SAVE_VERSION, MINUTES_PER_DAY, MAX_MEMBERS, TRAVEL_MINUTES, RIDE_MINUTES, PANTRY_MAX } from './constants';
@@ -133,9 +135,11 @@ export class World {
   }
 
   /** Partida nueva: la familia García o la que se haya diseñado en el creador. */
-  static createNew(family: FamilySpec = GARCIA): World {
+  static createNew(family: FamilySpec = GARCIA, opts: { start?: string } = {}): World {
     const state: WorldState = {
       version: SAVE_VERSION,
+      // El día 1 es hoy (o el que se diga): a partir de ahí, el calendario de verdad.
+      calendarStart: opts.start ?? todayISO(),
       minutes: 8 * 60,
       speed: 1,
       nextId: 100,
@@ -227,13 +231,37 @@ export class World {
   }
 
   /** 0 = lunes … 6 = domingo. */
+  /** La fecha de hoy en el calendario de verdad. */
+  get date(): GameDate {
+    const d = this.day;
+    if (this.dateCache?.day !== d || this.dateCache.start !== this.state.calendarStart) this.dateCache = { day: d, start: this.state.calendarStart, date: dateOfDay(this.state.calendarStart, d) };
+    return this.dateCache.date;
+  }
+  private dateCache?: { day: number; start: string; date: GameDate };
+
+  /** Fecha de otro día de la partida. */
+  dateOf(day: number): GameDate {
+    return dateOfDay(this.state.calendarStart, day);
+  }
+
+  /** Lo que toca hoy (fiestas, elecciones, lotería...). */
+  get facts(): DayFacts {
+    return factsOf(this.date);
+  }
+
+  /** Día de la semana: 0 = lunes ... 6 = domingo. */
   get weekday(): number {
-    return (this.day - 1) % 7;
+    return this.date.wd;
+  }
+
+  /** Número de semana (de lunes a domingo) desde que empezó la partida. */
+  get weekIndex(): number {
+    return Math.floor((this.day - 1 + this.dateOf(1).wd) / 7);
   }
 
   /** Estación (0 primavera … 3 invierno): cada semana, una. */
   get season(): number {
-    return Math.floor((this.day - 1) / 7) % 4;
+    return this.date.season;
   }
 
   get seasonDef() {

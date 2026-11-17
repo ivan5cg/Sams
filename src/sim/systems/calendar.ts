@@ -24,6 +24,8 @@ import { availableVisitors, districtOf, sendVisit, startTravel } from './travel'
 import { dailyArcs } from './arcs';
 import { holidayDay, holidayHour } from './holidays';
 import { marketPrice } from './places';
+import { longDate } from '../date';
+import { WEEKDAY_LONG } from '../../data/careers';
 
 /** ¿Está en marcha este evento (en esa parcela, si se dice)? */
 export function hasEvent(w: World, id: string, lotId?: string): boolean {
@@ -47,45 +49,46 @@ export function costOf(w: World, actionId: string, a?: Agent): number {
 
 /** Por qué no se puede comprar lotería ahora (o nada si se puede). */
 export function lotteryReason(w: World, a: Agent): string | undefined {
-  if (w.season !== 3) return 'Solo se vende en invierno, antes de Navidad';
-  if (w.weekday === 6) return 'El sorteo es hoy: ya no se venden';
+  if (w.facts.lotteryDraw) return 'El sorteo es hoy: ya no se venden';
+  if (!w.facts.lotterySale) return 'Se vende del 1 de noviembre al 21 de diciembre';
   if (w.state.lottery?.includes(a.id)) return 'Ya tiene su décimo';
   return undefined;
 }
 
 /** Lo que pasa cada día según la estación: olas de calor, ofertas, Navidad... */
 export function seasonalDay(w: World) {
-  const wd = w.weekday;
+  const f = w.facts;
   const se = w.season;
-  if (wd === 0) w.toast(w.seasonDef.intro, w.seasonDef.icon);
-  if (wd === 0 && se === 0) {
+  if (f.seasonStart) w.toast(w.seasonDef.intro, w.seasonDef.icon);
+  if (f.seasonStart && se === 0) {
     for (const m of w.members) if (m.kind === 'person' && partnerOf(w.state, m.id)) w.feel(m, 'enamorado', undefined, 8);
   }
-  if (se === 1 && wd >= 1 && wd <= 4 && !hasEvent(w, 'calor') && Math.random() < 0.35) {
+  if (f.heatSeason && !hasEvent(w, 'calor') && Math.random() < 0.2) {
     startEvent(w, 'calor', 2 * MINUTES_PER_DAY);
     w.toast('¡Ola de calor! 40 grados a la sombra. Duchas, piscina y batidos', '🥵');
     w.addNews('hace un calor que no se puede ni respirar', []);
   }
-  if (se === 2 && wd === 1) {
+  if (f.ofertasStart) {
     startEvent(w, 'ofertas', 2 * MINUTES_PER_DAY);
     w.toast('Días de la huerta en el Mercadona: la compra, un 30% más barata', '🥬');
   }
-  if (se === 1 && wd === 5) w.toast('Esta noche hay verbena en el parque. ¡Que no falte nadie!', '🎆');
-  // Primavera: campaña electoral (martes a viernes), San Isidro (sábado) y elecciones (domingo).
-  if (se === 0 && wd === 1) {
+  if (f.verbena) w.toast(w.date.m === 6 ? '¡Noche de San Juan! Verbena en el parque' : 'Esta noche hay verbena en el parque. ¡Que no falte nadie!', '🎆');
+  // Mayo: campaña electoral (martes a viernes), San Isidro (15) y elecciones (último domingo).
+  if (f.campaignStart) {
     startEvent(w, 'campana', 4 * MINUTES_PER_DAY);
     w.toast('Empieza la campaña electoral: carteles, mítines y militantes llamando a las puertas', '🗳️');
   }
-  if (se === 0 && wd === 5) {
+  if (f.sanIsidro) {
     startEvent(w, 'sanisidro', MINUTES_PER_DAY);
     w.toast('¡San Isidro! Chulapos y chulapas, chotis en la pradera y rosquillas tontas y listas', '🎩');
     w.addNews('todo el barrio se ha vestido de chulapo por San Isidro', []);
   }
-  if (se === 0 && wd === 6) {
+  if (f.elections) {
     const cunado = w.members.find((m) => hasTrait(m, 'cunado'));
     w.toast(cunado ? `Hoy hay elecciones. ${cunado.name} dice que él ya sabía el resultado desde hace un mes` : 'Hoy hay elecciones: colas en el colegio electoral y tertulias en el bar', '🗳️');
   }
-  if (se === 3 && wd === 6) {
+  if (f.christmasEve) w.toast('¡Nochebuena! Cena en familia, langostinos y el discurso de la tele', '🎄');
+  if (f.christmas) {
     startEvent(w, 'navidad', MINUTES_PER_DAY);
     for (const m of w.members) if (m.kind === 'person') w.feel(m, 'navidad');
     const cunado = w.members.find((m) => hasTrait(m, 'cunado'));
@@ -98,13 +101,12 @@ export function seasonalDay(w: World) {
   w.blackoutTonight = w.wishesEnabled && Math.random() < w.blackoutChance;
   // El tiempo: lluvia en primavera y otoño, nieve en invierno.
   if ((se === 0 || se === 2) && Math.random() < 0.25) startEvent(w, 'lluvia', Math.round(rand(10, 20)) * 60);
-  if (se === 3 && wd !== 6 && Math.random() < 0.4) startEvent(w, 'nevada', Math.round(rand(8, 16)) * 60);
+  if (se === 3 && !f.christmas && Math.random() < 0.25) startEvent(w, 'nevada', Math.round(rand(8, 16)) * 60);
 }
 
 /** Lo que pasa cada hora con los eventos. */
 export function eventsHour(w: World) {
   const h = w.hour;
-  const se = w.season;
   const now = w.state.minutes;
   w.heatNow = hasEvent(w, 'calor') && h >= 11 && h < 20;
   if (w.heatNow) for (const m of w.members) if (m.kind === 'person' && !m.travel && m.lotId !== SUPER_LOT) w.feel(m, 'calor', undefined, 2);
@@ -115,8 +117,8 @@ export function eventsHour(w: World) {
       if (a.kind === 'person' && !a.travel && !a.role && (lot?.kind === 'park')) w.feel(a, 'mojado');
     }
   }
-  // Verbena: sábado de verano por la noche, en el parque.
-  if (se === 1 && w.weekday === 5 && h === 19 && !hasEvent(w, 'verbena')) {
+  // Verbena: San Juan, los sábados de julio y agosto y La Paloma, por la noche, en el parque.
+  if (w.facts.verbena && h === 19 && !hasEvent(w, 'verbena')) {
     const until = now + 6 * 60;
     startEvent(w, 'verbena', 6 * 60, PARK_LOT);
     for (const hh of w.state.households) {
@@ -152,15 +154,15 @@ export function eventsHour(w: World) {
     for (const hh of w.state.households) if (hh.id !== w.household.id && Math.random() < 0.35) sendVisit(w, hh, BAR_LOT, false);
     if (w.members.some((m) => m.kind === 'person' && isAdult(m))) w.toastOnce('derbi', 'Esta tarde hay derbi Madrid–Atleti. En el Bar Casa Paco lo ponen en la tele', '⚽', 600);
   }
-  // Nochevieja (último día del invierno): las uvas.
-  if (se === 3 && w.weekday === 6 && h === 23) {
+  // Nochevieja: las uvas.
+  if (w.facts.newYearsEve && h === 23) {
     const cunado = w.members.find((m) => hasTrait(m, 'cunado'));
     w.toast(cunado ? `¡Las doce campanadas! ${cunado.name} se ha atragantado con la quinta uva. Feliz año` : '¡Las doce campanadas! Doce uvas, cava y ¡feliz año nuevo!', '🍇');
     for (const m of w.members) if (m.kind === 'person') w.feel(m, 'fiesta', undefined, 6);
   }
   holidayHour(w);
-  // Lotería de Navidad: el sorteo, el último día del invierno a mediodía.
-  if (se === 3 && w.weekday === 6 && h === 12 && w.state.lottery?.length) lotteryDraw(w);
+  // Lotería de Navidad: el sorteo, el 22 de diciembre a mediodía.
+  if (w.facts.lotteryDraw && h === 12 && w.state.lottery?.length) lotteryDraw(w);
 }
 
 export function lotteryDraw(w: World) {
@@ -211,7 +213,7 @@ export function dailyEvents(w: World) {
 }
 
 export function newDay(w: World) {
-  w.toast(`Empieza el día ${w.day}`, '🌅');
+  w.toast(`Buenos días: ${WEEKDAY_LONG[w.weekday]}, ${longDate(w.date)}`, '🌅');
   // Las relaciones se enfrían un poco si no se cuidan.
   for (const rel of Object.values(w.state.rels)) {
     if (!rel.kin && Math.abs(rel.f) > 5) rel.f -= Math.sign(rel.f) * 0.5;

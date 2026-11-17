@@ -1,9 +1,12 @@
 // Fiestas de la fase 5: Reyes (regalos, roscón con haba y cabalgata), Carnaval (disfraces y
-// concurso en el desfile) y Halloween (truco o trato). Las fechas, en `holidayOf` (la agenda
-// las lee de ahí); lo que pasa cada día y cada hora, aquí.
+// concurso en el desfile) y Halloween (truco o trato). Las fechas son las de verdad (ver feasts.ts):
+// Reyes el 6 de enero (la cabalgata, la tarde del 5), Carnaval el sábado de Carnaval y Halloween el 31
+// de octubre. Lo que pasa cada día y cada hora, aquí.
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
 import { MINUTES_PER_DAY } from '../constants';
+import type { GameDate } from '../date';
+import { factsOf } from '../feasts';
 import { hasEmotion } from '../emotions';
 import { CERRO_LOT, PARK_LOT, PLAZA_LOT, squareOf } from '../neighborhood';
 import { isAdult } from '../social';
@@ -18,17 +21,12 @@ import { districtOf, sendVisit } from './travel';
 
 export type HolidayId = 'reyes' | 'carnaval' | 'halloween';
 
-/**
- * La fiesta de ese día (por número de día del juego), si la hay.
- * El año son 4 semanas: Reyes, el lunes que abre la primavera (menos el primer día de la partida);
- * Carnaval, el jueves de la primavera (jueves lardero); Halloween, el viernes del otoño.
- */
-export function holidayOf(day: number): HolidayId | null {
-  const wd = (day - 1) % 7;
-  const se = Math.floor((day - 1) / 7) % 4;
-  if (se === 0 && wd === 0 && day > 1) return 'reyes';
-  if (se === 0 && wd === 3) return 'carnaval';
-  if (se === 2 && wd === 4) return 'halloween';
+/** La fiesta de una fecha, si la hay. */
+export function holidayOf(g: GameDate): HolidayId | null {
+  const f = factsOf(g);
+  if (f.reyes) return 'reyes';
+  if (f.carnaval) return 'carnaval';
+  if (f.halloween) return 'halloween';
   return null;
 }
 
@@ -62,7 +60,7 @@ export function holidayReason(w: World, a: Agent, actionId: string): ActionOptio
 
 /** Por la mañana: lo que trae el día de fiesta. */
 export function holidayDay(w: World) {
-  const fiesta = holidayOf(w.day);
+  const fiesta = holidayOf(w.date);
   if (!fiesta) return;
   startEvent(w, fiesta, MINUTES_PER_DAY);
   if (fiesta === 'reyes') {
@@ -102,8 +100,9 @@ const atParty = (a: Agent) => !a.travel && (a.lotId === PARK_LOT || a.lotId === 
 /** Cada hora: cabalgata, desfile y concurso, y los niños llamando al timbre. */
 export function holidayHour(w: World) {
   const h = w.hour;
-  if (hasEvent(w, 'reyes')) {
-    if (h === HOLIDAY_HOURS.cabalgata) {
+  // La cabalgata, la tarde del 5 de enero (la víspera de Reyes).
+  if (w.facts.cabalgata || hasEvent(w, 'cabalgata')) {
+    if (w.facts.cabalgata && h === HOLIDAY_HOURS.cabalgata) {
       startEvent(w, 'cabalgata', 3 * 60);
       crowd(w, 0.6);
       w.toast(`¡La cabalgata de Reyes! Melchor, Gaspar y Baltasar tiran caramelos en el parque hasta las ${HOLIDAY_HOURS.cabalgata + 3}:00`, '🐪');

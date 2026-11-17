@@ -2,6 +2,7 @@
 // sean lo que dicen ser. Así un fichero manipulado no puede colar HTML por un id o un número
 // (los textos libres, como los nombres, se escapan siempre al pintarlos).
 
+import { isISODate } from '../sim/date';
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { FLOOR_BY_ID } from '../data/paint';
@@ -35,6 +36,7 @@ const arr = (v: unknown, what: string): unknown[] => {
 
 /** Lanza un error con un mensaje claro si la partida no tiene la forma esperada. */
 export function validateState(s: WorldState) {
+  if (!isISODate(s.calendarStart)) throw new Broken('fecha de la partida');
   num(s.minutes, 'reloj');
   num(s.nextId, 'contador');
   optNum(s.speed, 'velocidad');

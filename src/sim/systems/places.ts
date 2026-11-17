@@ -18,9 +18,8 @@ import { startTravel } from './travel';
 export const MARKET_BUYS = new Set(['market_food', 'market_clothes', 'rummage']);
 
 /** Horario de cada sitio nuevo (o nada si no es uno de ellos). */
-export function placeClosedReason(layout: string | undefined, minutes: number): string | undefined {
+export function placeClosedReason(layout: string | undefined, minutes: number, wd: number): string | undefined {
   const m = minutes % MINUTES_PER_DAY;
-  const wd = Math.floor(minutes / MINUTES_PER_DAY) % 7;
   if (layout === 'library') {
     if (wd === 6) return 'Los domingos, la biblioteca está cerrada';
     if (m < 9 * 60 || m >= 21 * 60) return 'Está cerrada (abre de 9:00 a 21:00)';

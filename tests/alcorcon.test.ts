@@ -4,6 +4,7 @@ import { hasEmotion } from '../src/sim/emotions';
 import { migrate, serialize } from '../src/save/serialize';
 import { getRel, isAdult, setRel } from '../src/sim/social';
 import { isolate } from './helpers';
+import { goToDate } from './helpers';
 
 describe('Alcorcón, el metro, la calle, el salseo y las juergas', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -168,17 +169,17 @@ describe('Alcorcón, el metro, la calle, el salseo y las juergas', () => {
     expect(hasEmotion(lucia, 'glovo')).toBe(true);
   });
 
-  it('campaña electoral y San Isidro en primavera', () => {
+  it('San Isidro el 15 de mayo, y campaña electoral antes de las elecciones del último domingo de mayo', () => {
     const w = World.createNew();
-    w.state.minutes = 1440 - 1; // martes
-    w.tick(2);
-    expect(w.hasEvent('campana')).toBe(true);
-    w.state.minutes = 1440 + 11 * 60 - 1;
-    w.tick(2);
-    expect(w.state.agents.filter((a) => a.role === 'militante' && !a.hidden).length).toBeGreaterThan(0);
-    w.state.minutes = 5 * 1440 - 1; // sábado
-    w.tick(2);
+    goToDate(w, '2027-05-15');
     expect(w.hasEvent('sanisidro')).toBe(true);
+    goToDate(w, '2027-05-25'); // martes: empieza la campaña (elecciones el domingo 30)
+    expect(w.hasEvent('campana')).toBe(true);
+    goToDate(w, '2027-05-25', 11);
+    expect(w.state.agents.filter((a) => a.role === 'militante' && !a.hidden).length).toBeGreaterThan(0);
+    expect(w.facts.elections).toBe(false);
+    goToDate(w, '2027-05-30');
+    expect(w.facts.elections).toBe(true);
   });
 
   it('los okupas no pagan facturas', () => {

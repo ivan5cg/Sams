@@ -9,7 +9,8 @@ describe('agenda de la familia', () => {
     const w = World.createNew();
     w.setJob(w.agent('a2')!, 'oficina');
     const today = agendaFor(w, 0);
-    expect(today.some((i) => i.kind === 'season')).toBe(true);
+    // El cambio de estación sale en su día (21 de junio: empieza el verano).
+    expect(calendarEvents(w.dateOf(92)).map((e) => e.text)).toContain('Empieza el verano');
     expect(today.some((i) => i.kind === 'work' && i.agentId === 'a2')).toBe(true);
     expect(today.some((i) => i.kind === 'bills')).toBe(false); // el primer lunes no hay facturas
     // Una semana después, el lunes llegan las facturas.
@@ -20,23 +21,34 @@ describe('agenda de la familia', () => {
     expect([...mins].sort((a, b) => a - b)).toEqual(mins);
   });
 
-  it('los eventos que anuncia la agenda pasan de verdad ese día', () => {
-    const w = World.createNew();
-    w.state.activeAgentId = 'nadie';
-    const checked = ['campana', 'sanisidro', 'verbena', 'ofertas', 'navidad', 'carnaval', 'desfile', 'halloween'];
-    const seen = new Map<number, Set<string>>();
-    for (let h = 0; h < 28 * 24; h++) {
-      w.tick(60);
-      const day = w.day;
-      const s = seen.get(day) ?? new Set<string>();
-      for (const e of w.activeEvents()) s.add(e.id);
-      seen.set(day, s);
-    }
-    for (let day = 1; day <= 28; day++) {
-      const predicted = calendarEvents(day).map((e) => e.id).filter((id) => checked.includes(id));
-      for (const id of predicted) expect(seen.get(day)?.has(id), `día ${day}: ${id}`).toBe(true);
-    }
-  }, 60_000);
+  // Tres temporadas con fiestas: mayo y junio, otoño, y Navidad y Reyes.
+  for (const [from, days, ids] of [
+    ['2027-05-10', 46, ['campana', 'sanisidro', 'verbena']],
+    ['2027-10-01', 32, ['ofertas', 'halloween']],
+    ['2027-12-20', 19, ['navidad', 'cabalgata', 'reyes']],
+  ] as const) {
+    it(`los eventos que anuncia la agenda pasan de verdad ese día (desde el ${from})`, () => {
+      const w = World.createNew(undefined, { start: from });
+      w.state.activeAgentId = 'nadie';
+      const seen = new Map<number, Set<string>>();
+      for (let h = 0; h < days * 24; h++) {
+        w.tick(60);
+        const s = seen.get(w.day) ?? new Set<string>();
+        for (const e of w.activeEvents()) s.add(e.id);
+        seen.set(w.day, s);
+      }
+      const all = new Set<string>();
+      for (let day = 1; day <= days; day++) {
+        const predicted = calendarEvents(w.dateOf(day)).map((e) => e.id).filter((id) => (ids as readonly string[]).includes(id));
+        for (const id of predicted) {
+          all.add(id);
+          expect(seen.get(day)?.has(id), `${from} + ${day - 1} días: ${id}`).toBe(true);
+        }
+      }
+      // Y todas las fiestas de la temporada salen en la agenda.
+      expect([...all].sort()).toEqual([...ids].sort());
+    }, 60_000);
+  }
 
   it('cumpleaños y bebés en camino', () => {
     const w = World.createNew();

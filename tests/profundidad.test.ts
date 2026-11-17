@@ -7,6 +7,7 @@ import { migrate, serialize } from '../src/save/serialize';
 import { getRel, isAdult, setRel } from '../src/sim/social';
 import { traitAffinity } from '../src/sim/traits';
 import { fullNeeds, isolate } from './helpers';
+import { goToDate } from './helpers';
 
 describe('más profundidad: emociones, metas, casa, rasgos, relaciones, trabajo, eventos y mascotas', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -238,8 +239,9 @@ describe('más profundidad: emociones, metas, casa, rasgos, relaciones, trabajo,
   it('estaciones, ofertas, apagón y lotería de Navidad', () => {
     const w = World.createNew();
     isolate(w, ['a1']);
+    // Hoy (22 de marzo) es primavera; el 21 de junio empieza el verano.
     expect(w.seasonDef.id).toBe('primavera');
-    w.state.minutes = 7 * 1440 + 600;
+    goToDate(w, '2027-06-21', 10);
     expect(w.seasonDef.id).toBe('verano');
     priv(w).startEvent('ofertas', 600);
     expect(w.costOf('shop_big')).toBe(67);
@@ -248,10 +250,13 @@ describe('más profundidad: emociones, metas, casa, rasgos, relaciones, trabajo,
     expect(w.checkObjectAction(w.agent('a1')!, sofa, 'watch_tv').reason).toBe('No hay luz');
     // Invierno: lotería
     const lucia = w.agent('a1')!;
-    expect(w.lotteryReason(lucia)).toContain('invierno');
-    w.state.minutes = 21 * 1440 + 600;
-    expect(w.seasonDef.id).toBe('invierno');
+    expect(w.lotteryReason(lucia)).toContain('noviembre');
+    goToDate(w, '2027-12-01', 10);
+    expect(w.seasonDef.id).toBe('otono');
     expect(w.lotteryReason(lucia)).toBeUndefined();
+    goToDate(w, '2027-12-22', 10);
+    expect(w.seasonDef.id).toBe('invierno');
+    expect(w.lotteryReason(lucia)).toContain('sorteo es hoy');
     w.state.lottery = ['a1'];
     const f0 = w.household.funds;
     withRandom(0.01, () => priv(w).lotteryDraw());
@@ -259,10 +264,11 @@ describe('más profundidad: emociones, metas, casa, rasgos, relaciones, trabajo,
     expect(hasEmotion(lucia, 'loteria')).toBe(true);
   });
 
-  it('verbena: el sábado de verano por la noche el parque se llena', () => {
+  it('verbena: los sábados de verano por la noche el parque se llena', () => {
     const w = World.createNew();
-    w.state.minutes = 12 * 1440 + 18 * 60 + 59; // sábado de la semana de verano, 18:59
+    goToDate(w, '2027-07-10'); // un sábado de julio
     expect(w.weekday).toBe(5);
+    w.state.minutes += 18 * 60 + 57; // 18:58
     w.tick(2);
     expect(w.hasEvent('verbena', 'P')).toBe(true);
     const going = w.state.agents.filter((a) => a.travel?.to === 'P' || a.lotId === 'P');

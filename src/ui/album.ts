@@ -2,6 +2,7 @@
 // borrarlas y exportar el álbum entero. Las fotos se hacen con ☰ → 📸 o desde aquí, y solas en
 // los grandes momentos (nacimientos y bodas).
 
+import { longDate } from '../sim/date';
 import { ALBUM_MAX, addPhoto, albumHtml, deletePhoto, groupPhotos, listPhotos, type Photo } from '../save/album';
 import { $, esc } from './dom';
 import { Part } from './part';
@@ -56,7 +57,7 @@ export class AlbumPanel extends Part {
     const w = this.world;
     const lot = w.lotById(w.viewLotId);
     const where = lot?.kind === 'home' ? (lot.householdId === w.household.id ? 'En casa' : `En casa de la ${w.state.households.find((h) => h.id === lot.householdId)?.name ?? 'vecina'}`) : lot?.name ?? '';
-    return `${w.household.name} · ${where} · ${w.seasonDef.label}, día ${w.day}`;
+    return `${w.household.name} · ${where} · ${longDate(w.date)} de ${w.date.y}`;
   }
 
   /** Generación de la familia ahora (la más alta de quien vive en casa). */

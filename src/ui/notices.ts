@@ -2,6 +2,7 @@
 // los de la familia salen un momento (agrupando repetidos) y los del barrio van a la
 // bandeja 🔔 con su contador. Todos quedan en el Diario.
 
+import { shortDate } from '../sim/date';
 import { WEEKDAY_NAMES } from '../data/careers';
 import type { Toast } from '../sim/world';
 import { $, esc } from './dom';
@@ -38,7 +39,7 @@ export class Notices extends Part {
 
   private when(): string {
     const w = this.world;
-    return `${WEEKDAY_NAMES[w.weekday]} ${w.day} · ${w.clock}`;
+    return `${WEEKDAY_NAMES[w.weekday]} ${shortDate(w.date)} · ${w.clock}`;
   }
 
   /** Un aviso de la simulación (o de la interfaz, que siempre es de nivel «familia»). */

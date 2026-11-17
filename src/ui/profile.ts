@@ -1,5 +1,6 @@
 // Perfil del personaje activo: ánimo, meta de vida, trabajo, rasgos, habilidades, mascota y relaciones.
 
+import { longDate } from '../sim/date';
 import { MONEY_CATEGORIES } from '../data/economy';
 import { BAR_MENUS, BAR_STAFF, CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
 import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
@@ -111,7 +112,7 @@ export class ProfilePanel extends Part {
     if (h?.expecting && h.expecting.parents.includes(a.id)) {
       const due = h.expecting.due;
       const day = Math.floor(due / 1440) + 1;
-      jobHtml += `<div class="prof-sec"><div class="prof-h">🍼 Bebé en camino</div><div class="muted small">Llegará el ${WEEKDAY_LONG[(day - 1) % 7]} (día ${day}).</div></div>`;
+      jobHtml += `<div class="prof-sec"><div class="prof-h">🍼 Bebé en camino</div><div class="muted small">Llegará el ${WEEKDAY_LONG[w.dateOf(day).wd]}, ${longDate(w.dateOf(day))}.</div></div>`;
     }
     // Habilidades
     let skillsHtml = '';
@@ -187,7 +188,7 @@ export class ProfilePanel extends Part {
   /** El bar: carta, camarero y domingos (se cambia una vez por semana). */
   barHtml(a: Agent): string {
     const plan = a.job?.bar ?? { menu: 'normal' as const };
-    const locked = plan.week === Math.floor((this.world.day - 1) / 7);
+    const locked = plan.week === this.world.weekIndex;
     const dis = locked ? 'disabled' : '';
     const menus = (Object.keys(BAR_MENUS) as (keyof typeof BAR_MENUS)[])
       .map((k) => `<button class="comp ${plan.menu === k ? 'on' : ''}" data-barmenu="${k}" ${dis} title="${esc(BAR_MENUS[k].desc)}">${esc(BAR_MENUS[k].label)}</button>`)
@@ -207,7 +208,7 @@ export class ProfilePanel extends Part {
   ledgerHtml(): string {
     const w = this.world;
     const ledger = w.household.ledger ?? [];
-    const week = Math.floor((w.day - 1) / 7);
+    const week = w.weekIndex;
     const cur = ledger.find((l) => l.week === week);
     const prev = ledger.find((l) => l.week === week - 1);
     const sum = (r: Record<string, number> = {}) => Object.values(r).reduce((s, v) => s + v, 0);

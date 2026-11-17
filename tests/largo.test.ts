@@ -4,16 +4,20 @@ import { madridHomes, problems } from './helpers';
 
 const DAY = 1440;
 
-describe('resistencia: 8 semanas de juego sin renderizar', () => {
-  it('pasan todas las estaciones (dos veces), Navidad y elecciones, y todo sigue sano', () => {
-    const w = World.createNew();
+describe('resistencia: semanas de juego sin renderizar', () => {
+  for (const [start, weeks, expected] of [
+    ['2027-05-01', 8, ['estacion0', 'estacion1', 'campana', 'sanisidro', 'verbena']],
+    ['2027-12-15', 4, ['estacion2', 'estacion3', 'navidad', 'cabalgata', 'reyes']],
+  ] as const) {
+  it(`${weeks} semanas desde el ${start}: pasan sus estaciones y fiestas, y todo sigue sano`, () => {
+    const w = World.createNew(undefined, { start });
     // Nadie a los mandos: toda la familia va por su cuenta, como los vecinos.
     w.state.activeAgentId = 'nadie';
     const seen = new Set<string>();
     const errors: string[] = [];
     /** Desde cuándo hace cada uno lo que está haciendo. */
     const since = new Map<string, { task: string; from: number }>();
-    for (let hour = 0; hour < 56 * 24; hour++) {
+    for (let hour = 0; hour < weeks * 7 * 24; hour++) {
       w.tick(60);
       const now = w.state.minutes;
       for (const e of w.activeEvents()) seen.add(e.id);
@@ -42,7 +46,8 @@ describe('resistencia: 8 semanas de juego sin renderizar', () => {
       if (errors.length > 20) break;
     }
     expect(errors.slice(0, 20)).toEqual([]);
-    expect(w.day).toBeGreaterThanOrEqual(57);
-    for (const id of ['estacion0', 'estacion1', 'estacion2', 'estacion3', 'navidad', 'campana', 'sanisidro', 'verbena']) expect(seen.has(id), id).toBe(true);
+    expect(w.day).toBeGreaterThanOrEqual(weeks * 7 + 1);
+    for (const id of expected) expect(seen.has(id), id).toBe(true);
   }, 120_000);
+  }
 });

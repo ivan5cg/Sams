@@ -120,25 +120,34 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 - **Negocio propio** (bar de tapas, §2.500 para montarlo): las ganancias cambian cada día (a veces no entra ni el
   tato) y cada lunes toca pagar la **cuota de autónomos**.
 
-## Estaciones y eventos
+## Estaciones y eventos (con el calendario de verdad)
 
-- Cada semana es una estación (🌸 primavera, ☀️ verano, 🍂 otoño, ❄️ invierno): cambia el color del césped y en
-  invierno hay nieve.
-- **Ola de calor** en verano (la higiene baja más, apetecen duchas y batidos), **verbena** el sábado de verano por
-  la noche en el parque (guirnaldas, todo el barrio bailando), **días de la huerta** en otoño (la compra un 30% más
-  barata), algún **apagón** por la noche (sin tele ni ordenador, y a oscuras) y **Navidad** al final del invierno:
-  lotería (décimos a §20 en la caja del Mercadona, sorteo el último día, con Gordo, pedrea y reintegro) y cena con
-  el cuñado arreglando el país.
-- **Reyes** (el lunes que abre la primavera, desde el segundo año): regalos para los pequeños, carbón dulce para
-  el cuñado o el gruñón, **roscón** en la nevera (en cada trozo puede salir la figurita, con corona para todo el
-  día, o el haba, y entonces toca pagarlo) y **cabalgata** en el parque a las 17:00 con caramelos para todos.
-- **Carnaval** (el jueves de primavera): tócate a ti mismo para **disfrazarte** (§15, antifaz y gorro de fiesta)
-  y ve al **desfile** del parque a las 18:00. A las 20:00, **concurso de disfraces** (§100 de premio, más fácil
-  con gracia y arte).
-- **Halloween** (el viernes de otoño): de 18:00 a 22:00 los niños de la casa van de **truco o trato** con su
-  sombrero de bruja, y a las 19:00 los del barrio llaman a vuestra puerta: si hay algo en la despensa, trato;
-  si no, os llenan la puerta de papel higiénico.
-- Todo sale en la 📅 agenda.
+- **La partida empieza en la fecha de hoy y cada día de juego es un día del calendario.** Arriba se ve la hora y
+  la fecha (al tocar el reloj, el día entero). Los días de la semana son los de verdad: si hoy es martes, en el
+  juego también.
+- Las estaciones caen en su fecha: 🌸 primavera desde el 21 de marzo, ☀️ verano desde el 21 de junio, 🍂 otoño
+  desde el 23 de septiembre y ❄️ invierno desde el 21 de diciembre. Cambian el color del césped y el tiempo
+  (lluvia en primavera y otoño, alguna nevada en invierno, hojas cayendo en otoño).
+- Las fiestas, en su día:
+  - **Ola de calor** en julio y agosto (la higiene baja más, apetecen duchas y batidos).
+  - **Verbena** por la noche en el parque: San Juan (23 de junio), los sábados de julio y agosto y La Paloma
+    (15 de agosto).
+  - **San Isidro** el 15 de mayo; **elecciones** el último domingo de mayo, con campaña de martes a viernes.
+  - **Días de la huerta** el primer martes y miércoles de octubre (la compra, un 30% más barata).
+  - **Halloween** el 31 de octubre: de 18:00 a 22:00 los niños van de **truco o trato** con su sombrero de bruja, y
+    a las 19:00 los del barrio llaman a vuestra puerta: si hay algo en la despensa, trato; si no, papel higiénico.
+  - **Lotería de Navidad**: décimos a §20 en la caja del Mercadona del 1 de noviembre al 21 de diciembre, y el
+    **sorteo el 22 de diciembre** a mediodía (Gordo, pedrea y reintegro).
+  - **Nochebuena** (24), **Navidad** (25) con el cuñado arreglando el país, y **Nochevieja** (31) con las
+    campanadas y fuegos artificiales.
+  - **Reyes**: **cabalgata** en el parque la tarde del 5 de enero (caramelos para todos) y el 6, regalos para los
+    pequeños, carbón dulce para el cuñado o el gruñón, y **roscón** en la nevera (en cada trozo puede salir la
+    figurita, con corona para todo el día, o el haba, y entonces toca pagarlo).
+  - **Carnaval** el sábado antes de Cuaresma (se mueve con la Pascua): tócate a ti mismo para **disfrazarte** (§15)
+    y ve al **desfile** del parque a las 18:00. A las 20:00, **concurso de disfraces** (§100 de premio).
+- Algún **apagón** por la noche (sin tele ni ordenador, y a oscuras), en cualquier época.
+- Todo sale en la 📅 agenda, con su fecha.
+- Las partidas de antes pasan solas al calendario de verdad: el día en que ibais pasa a ser hoy.
 
 ## Alcorcón y el metro
 

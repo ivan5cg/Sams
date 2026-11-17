@@ -12,6 +12,8 @@ export function watchErrors(page: Page): string[] {
 
 /** Abre el juego en una partida nueva y espera a que la escena esté lista. */
 export async function openGame(page: Page, opts: { tutorial?: boolean; creator?: boolean } = {}) {
+  // La partida empieza «hoy»: en las pruebas, hoy es siempre el lunes 22 de marzo de 2027 (el reloj sigue corriendo).
+  await page.clock.setSystemTime(new Date('2027-03-22T10:00:00'));
   await page.addInitScript((tuto) => {
     // Partida limpia en cada prueba.
     if (!sessionStorage.getItem('sams:e2e')) {

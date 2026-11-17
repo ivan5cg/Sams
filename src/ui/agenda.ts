@@ -1,5 +1,6 @@
 // Agenda de la familia: lo que viene hoy y mañana, y las órdenes programadas (con ✕ para quitarlas).
 
+import { longDate } from '../sim/date';
 import { WEEKDAY_LONG } from '../data/careers';
 import { agendaFor, agendaTime, type AgendaItem } from '../sim/agenda';
 import { $, esc } from './dom';
@@ -33,7 +34,8 @@ export class AgendaPanel extends Part {
     const w = this.world;
     const items = agendaFor(w, offset);
     const day = w.day + offset;
-    const title = `${offset === 0 ? 'Hoy' : 'Mañana'}, ${WEEKDAY_LONG[(day - 1) % 7]} (día ${day})`;
+    const date = w.dateOf(day);
+    const title = `${offset === 0 ? 'Hoy' : 'Mañana'}, ${WEEKDAY_LONG[date.wd]} ${longDate(date)}`;
     const now = w.state.minutes % 1440;
     const row = (i: AgendaItem) => {
       const past = offset === 0 && i.minute >= 0 && i.minute < now && i.kind !== 'order';

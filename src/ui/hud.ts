@@ -1,7 +1,8 @@
 // Interfaz en HTML por encima del canvas: reloj, velocidad, retratos de la
 // familia, necesidades del personaje activo, cola de acciones y menú contextual.
 
-import { WEEKDAY_NAMES } from '../data/careers';
+import { longDate, shortDate } from '../sim/date';
+import { WEEKDAY_LONG } from '../data/careers';
 import { EVENTS } from '../data/seasons';
 import type { AudioEngine } from '../audio/engine';
 import type { HouseScene } from '../render/HouseScene';
@@ -169,8 +170,10 @@ export class Hud {
     }
     // Un solo icono: el del evento en marcha o, si no hay, el de la estación.
     const ev = w.activeEvents().filter((e) => !e.lotId || e.lotId === w.viewLotId)[0];
-    $('#clock').textContent = `${(ev && EVENTS[ev.id]?.icon) || w.seasonDef.icon} ${WEEKDAY_NAMES[w.weekday]} ${w.day} · ${w.clock}`;
-    $('#clock').title = `${w.seasonDef.label}${w.activeEvents().length ? ` · ${w.activeEvents().map((e) => EVENTS[e.id]?.label).join(', ')}` : ''}`;
+    // La hora, lo primero (si no cabe todo, se recorta la fecha).
+    const clockHtml = `${(ev && EVENTS[ev.id]?.icon) || w.seasonDef.icon} ${w.clock} <small>${shortDate(w.date)}</small>`;
+    if ($('#clock').innerHTML !== clockHtml) $('#clock').innerHTML = clockHtml;
+    $('#clock').title = `${WEEKDAY_LONG[w.weekday]}, ${longDate(w.date)} de ${w.date.y} · ${w.seasonDef.label}${w.activeEvents().length ? ` · ${w.activeEvents().map((e) => EVENTS[e.id]?.label).join(', ')}` : ''}`;
     $('#funds').textContent = `§ ${w.household.funds.toLocaleString('es-ES')}`;
     $('#funds').classList.toggle('neg', w.household.funds < 0);
     $('#family').textContent = `📍 ${this.placeName(w.viewLotId)} · ${w.household.name}`;

@@ -53,7 +53,7 @@ describe('sitios nuevos: biblioteca, gimnasio y mercadillo', () => {
     expect(when(1, 10, 'MK')).toMatch(/domingos/);
     expect(when(7, 10, 'MK')).toBeUndefined();
     expect(when(7, 15, 'MK')).toMatch(/14:30/);
-    expect(calendarEvents(7).some((e) => e.id === 'mercadillo')).toBe(true);
+    expect(calendarEvents(w.dateOf(7)).some((e) => e.id === 'mercadillo')).toBe(true);
   });
 
   it('en la biblioteca los deberes cunden el doble; estudiar sube la lógica', () => {

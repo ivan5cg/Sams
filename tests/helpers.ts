@@ -1,4 +1,5 @@
 /** Utilidades comunes de las pruebas. */
+import { dayOfDate } from '../src/sim/date';
 import { World } from '../src/sim/world';
 import { serialize } from '../src/save/serialize';
 import type { Agent } from '../src/sim/types';
@@ -52,6 +53,8 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v17: calendario de verdad.
+  if (version <= 16) delete st.calendarStart;
   // v16: pantalón y complementos de la cara.
   if (version <= 15) for (const a of st.agents) if (a.look) { delete a.look.pants; delete a.look.extra; }
   // v15: Getafe (sus parcelas, sus vecinos y lo que tengan colocado).
@@ -169,4 +172,17 @@ export function problems(w: World): string[] {
   }
   for (const o of w.state.objects) if (!lots.has(o.lotId)) out.push(`objeto ${o.id} (${o.def}): parcela ${o.lotId} no existe`);
   return out;
+}
+
+/** Lleva el reloj a una fecha de verdad («AAAA-MM-DD»), pasando por el cambio de día (y por la hora, si se da). */
+export function goToDate(w: World, iso: string, hour = 0): number {
+  const day = dayOfDate(w.state.calendarStart, +iso.slice(0, 4), +iso.slice(5, 7), +iso.slice(8, 10));
+  if (day < 1) throw new Error(`${iso} es antes de que empiece la partida`);
+  w.state.minutes = (day - 1) * 1440 - 1;
+  w.tick(2);
+  if (hour) {
+    w.state.minutes = (day - 1) * 1440 + hour * 60 - 1;
+    w.tick(2);
+  }
+  return day;
 }

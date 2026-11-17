@@ -8,9 +8,9 @@ test('agenda: hoy y mañana, y programar una orden desde el menú de acciones', 
 
   // La agenda enseña hoy y mañana.
   await page.locator('#agenda-btn').click();
-  await expect(page.locator('#agenda')).toContainText('Hoy, lunes (día 1)');
-  await expect(page.locator('#agenda')).toContainText('Mañana, martes (día 2)');
-  await expect(page.locator('#agenda')).toContainText('Campaña electoral');
+  await expect(page.locator('#agenda')).toContainText('Hoy, lunes 22 de marzo');
+  await expect(page.locator('#agenda')).toContainText('Mañana, martes 23 de marzo');
+  await expect(page.locator('#agenda')).toContainText('Nada especial');
   await page.locator('#agenda [data-close]').click();
 
   // Programar: tocar la nevera, ⏰, «Comer» y la hora.

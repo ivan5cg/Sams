@@ -1116,7 +1116,7 @@ export class HouseScene extends Phaser.Scene {
       this.fx.emit('confetti', p.x, p.y - 40);
     }
     const night = w.hour >= 21 || w.hour < 1;
-    const fireworks = (w.hasEvent('verbena', this.shownLot) && night) || (w.seasonDef.id === 'invierno' && w.weekday === 6 && w.hour === 23 && (this.state_minute() % 60) >= 50);
+    const fireworks = (w.hasEvent('verbena', this.shownLot) && night) || (w.facts.newYearsEve && w.hour === 23 && (this.state_minute() % 60) >= 50);
     if (fireworks && Math.random() < 0.7) {
       const v = this.cameras.main.worldView;
       this.fx.emit('firework', v.x + v.width * (0.2 + Math.random() * 0.6), v.y + v.height * (0.12 + Math.random() * 0.2));

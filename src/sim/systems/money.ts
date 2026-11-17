@@ -10,7 +10,7 @@ import type { World } from '../world';
 export function money(w: World, h: Household | undefined, amount: number, cat: string) {
   if (!h || !amount) return;
   h.funds += amount;
-  const week = Math.floor((w.day - 1) / 7);
+  const week = w.weekIndex;
   const ledger = (h.ledger = h.ledger ?? []);
   let cur = ledger[ledger.length - 1];
   if (!cur || cur.week !== week) {

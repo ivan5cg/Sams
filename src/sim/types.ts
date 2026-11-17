@@ -289,6 +289,8 @@ export interface WorldState {
   events?: { id: string; until: number; lotId?: string }[];
   /** Décimos de lotería de Navidad comprados este año (ids de quien los compró). */
   lottery?: string[];
+  /** Fecha («AAAA-MM-DD») del día 1 de la partida: el calendario es el de verdad. Desde la versión 17. */
+  calendarStart: string;
   /** Dilema del trabajo esperando respuesta del jugador. */
   dilemma?: { id: string; agentId: string; until: number };
   /** Noticias del barrio (lo último primero): de qué se habla y se cotillea. */

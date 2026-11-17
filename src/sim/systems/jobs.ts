@@ -207,7 +207,7 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
 export function setBarPlan(w: World, a: Agent, patch: { menu?: BarPlan['menu']; staff?: boolean; sunday?: boolean }): string | undefined {
   const job = a.job;
   if (!job || !CAREERS[job.career]?.business) return 'No tiene bar';
-  const week = Math.floor((w.day - 1) / 7);
+  const week = w.weekIndex;
   const plan: BarPlan = job.bar ?? { menu: 'normal' };
   if (plan.week === week) return 'Esta semana ya se ha cambiado: hasta el lunes, nada';
   const next: BarPlan = { ...plan, week };
