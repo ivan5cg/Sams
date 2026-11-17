@@ -19,6 +19,7 @@ import { canMediate, canSnitch } from './arcs';
 import { tripReason } from './trips';
 import { HOLIDAY_ACTIONS, holidayReason } from './holidays';
 import { STREET_ACTIONS, billsReason, hasPower } from './bills';
+import { isPregnant } from './fertility';
 
 export function speciesOk(w: World, a: Agent, def: ActionDef) {
   if (!def.actors.includes(a.kind) || (def.species && !def.species.includes(a.species))) return false;
@@ -35,6 +36,7 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (o.lotId !== a.lotId || a.travel) return { def, ok: false, reason: 'No está aquí' };
   if (a.home && a.home !== o.id) return { def, ok: false, reason: 'No puede salir de su jaula' };
   if (!def.guestOk && w.isGuest(a)) return { def, ok: false, reason: 'Estás de visita' };
+  if (ALCOHOL[actionId] && isPregnant(w, a)) return { def, ok: false, reason: 'Embarazada: nada de alcohol' };
   // Sin agua (cortada), ni ducha ni cisterna, esté o no ocupada; y lo de la calle, solo sin casa.
   const street = billsReason(w, a, actionId, o.lotId);
   if (street) return { def, ...street };

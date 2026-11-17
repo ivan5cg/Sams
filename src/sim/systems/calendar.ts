@@ -25,6 +25,7 @@ import { dailyArcs } from './arcs';
 import { holidayDay, holidayHour } from './holidays';
 import { marketPrice } from './places';
 import { dailyBills } from './bills';
+import { PREGNANCY_DAYS, dailyCycle } from './fertility';
 import { longDate } from '../date';
 import { WEEKDAY_LONG } from '../../data/careers';
 
@@ -239,6 +240,7 @@ export function newDay(w: World) {
     }
   }
   dailyBills(w);
+  dailyCycle(w);
   dailyEvents(w);
   seasonalDay(w);
   dailyGossip(w);
@@ -298,7 +300,11 @@ export function newDay(w: World) {
     if (h.id === w.household.id || h.expecting || h.memberIds.length >= 6) continue;
     const people = h.memberIds.map((id) => w.agent(id)!).filter((m) => m && m.kind === 'person' && ['young', 'adult'].includes(w.stageOf(m)));
     const couple = people.flatMap((p, i) => people.slice(i + 1).map((q) => [p, q] as const)).find(([p, q]) => getRel(w.state, p.id, q.id).status);
-    if (couple && freeCrib(w, h.lotId) && Math.random() < 0.12) h.expecting = { parents: [couple[0].id, couple[1].id], due: w.state.minutes + 3 * MINUTES_PER_DAY };
+    if (couple && freeCrib(w, h.lotId) && Math.random() < 0.12) {
+      const mother = couple.find((x) => x.sex === 'f');
+      const both = mother && couple.some((x) => x.sex === 'm');
+      h.expecting = { parents: [couple[0].id, couple[1].id], due: w.state.minutes + PREGNANCY_DAYS * MINUTES_PER_DAY, ...(both ? { mother: mother.id, known: true } : {}) };
+    }
   }
   // Mascotas en el barrio: si falta alguna especie, una familia la adopta; y de vez en cuando, por gusto.
   const ALL: SpeciesId[] = ['dog', 'cat', 'guineapig', 'ferret', 'capybara'];

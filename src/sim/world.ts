@@ -165,6 +165,7 @@ export class World {
     const people = family.people.slice(0, MAX_START_PEOPLE).map((p, i) => {
       const a = mk(p.name.trim(), 'human', p.ageDays ?? STAGE_AGE[p.stage], p.color, spots[i].x, spots[i].y);
       if (p.look) a.look = { ...p.look };
+      if (p.sex) a.sex = p.sex;
       return a;
     });
     const pets = family.pets.map((p) => {

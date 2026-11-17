@@ -2211,3 +2211,4 @@ html.reduce-motion .photo-flash { display: none; }
 .bill-main { flex: 1; min-width: 0; }
 .bill-alert { margin: 8px 0; padding: 10px; border-radius: 12px; background: rgba(232, 85, 61, 0.16); border: 1px solid rgba(232, 85, 61, 0.45); font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
 .bill-alert .small-btn { align-self: flex-start; }
+.cycle-line { margin: 4px 0 8px; }

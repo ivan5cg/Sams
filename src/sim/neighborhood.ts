@@ -1,4 +1,5 @@
 import { PET_TRAITS } from '../data/pets';
+import { sexOfName } from '../data/names';
 import { STREET_NPCS } from '../data/street';
 // Creación del barrio: las 9 familias vecinas, sus casas y el parque.
 
@@ -83,7 +84,7 @@ export function makeAgent(p: { id: string; name: string; species: SpeciesId; age
     current: null,
     facing: 1,
     hidden: false,
-    ...(SPECIES[p.species].kind === 'pet' ? { petTrait: PET_TRAITS[Math.floor(Math.random() * PET_TRAITS.length)].id } : {}),
+    ...(SPECIES[p.species].kind === 'pet' ? { petTrait: PET_TRAITS[Math.floor(Math.random() * PET_TRAITS.length)].id } : { sex: sexOfName(p.name) }),
   };
 }
 

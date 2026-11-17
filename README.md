@@ -277,6 +277,19 @@ forma física. Los vecinos también van. Las esterillas también se pueden compr
 Las parejas adultas (o quien tenga mucho romance, sin ser familia) pueden hacer ñiqui ñiqui en una cama de casa.
 Sube la diversión y el romance. Se representa con discreción: corazones y la cama moviéndose un poco.
 
+## Ciclo menstrual y embarazos
+
+- Cada persona es **mujer u hombre** (se elige en el creador y en ✏️ Cambiar de look; en las partidas de antes,
+  según el nombre).
+- Las mujeres, de adolescentes a adultas, tienen un **ciclo de 28 días** que se ve en su perfil:
+  - **regla** (5 días; los dos primeros con dolor: menos energía y ganas de mantita, baño y chocolate);
+  - **ovulación** (radiantes, con ganas de ligar);
+  - **días de antes de la regla** (más sensibles, con antojos y ganas de abrazos).
+- El **ñiqui ñiqui** entre una mujer joven o adulta y un hombre puede acabar en **embarazo**. Hay
+  probabilidades: un 35 % en la ovulación y casi nada con la regla. Se sabe al día siguiente; luego vienen
+  náuseas y antojos, y nada de alcohol. El bebé llega a los 3 días (hace falta una cuna libre).
+- Si el padre es el amante, el barrio acaba enterándose.
+
 ## Construir y decorar
 
 - **🛋️ Catálogo de muebles** (☰, o 📖 en la obra): cada mueble con su dibujo, para qué sirve (y qué

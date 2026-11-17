@@ -2,6 +2,7 @@
 
 import { CLOTHES, EXTRAS, HAIR, HAIR_STYLES, SKIN } from '../data/looks';
 import { SPECIES } from '../data/species';
+import { sexOfName } from '../data/names';
 import { TRAITS } from '../data/traits';
 import type { Agent, SpeciesId } from './types';
 
@@ -9,6 +10,8 @@ export type StartStage = 'child' | 'teen' | 'young' | 'adult' | 'elder';
 
 export interface PersonSpec {
   name: string;
+  /** Mujer u hombre (si no se dice, según el nombre). */
+  sex?: 'f' | 'm';
   stage: StartStage;
   traits: [string, string];
   /** Color de la ropa. */
@@ -71,8 +74,10 @@ function randomTraits(): [string, string] {
 
 export function randomPerson(stage: StartStage, used: string[] = []): PersonSpec {
   const free = NAMES.filter((n) => !used.includes(n));
+  const name = pick(free.length ? free : NAMES);
   return {
-    name: pick(free.length ? free : NAMES),
+    name,
+    sex: sexOfName(name),
     stage,
     traits: randomTraits(),
     color: pick(CLOTHES),
@@ -118,6 +123,7 @@ export function familyProblems(f: FamilySpec): string[] {
 /** Lo que se puede cambiar de una persona ya creada (☰ perfil → ✏️ Editar). */
 export interface PersonEdit {
   name: string;
+  sex?: 'f' | 'm';
   /** Color de la ropa (camiseta). */
   color: number;
   look: { skin: number; hair: number; hairStyle: string; pants: number; extra: string };
@@ -138,6 +144,10 @@ export function applyEdit(a: Agent, e: PersonEdit): string | undefined {
   const why = editProblem(e);
   if (why || a.kind !== 'person') return why ?? 'Solo las personas';
   a.name = e.name.trim();
+  if (e.sex && e.sex !== a.sex) {
+    a.sex = e.sex;
+    a.cycle = undefined;
+  }
   a.color = e.color;
   a.look = { ...e.look };
   return undefined;

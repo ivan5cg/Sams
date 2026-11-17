@@ -1,6 +1,7 @@
 // Ciclo de vida: mudanzas, nacimientos, crecer, morir, herencias, rasgos y metas de vida.
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
+import { afterBirth } from './fertility';
 import { HABITS, HABIT_TEXT } from '../../data/habits';
 import { isOutdoor } from '../../data/lot';
 import { SPECIES } from '../../data/species';
@@ -97,6 +98,7 @@ export function births(w: World) {
       continue;
     }
     const parents = h.expecting.parents.map((id) => w.agent(id)).filter((x): x is Agent => !!x);
+    afterBirth(w, h.expecting.mother ? w.agent(h.expecting.mother) : undefined);
     h.expecting = undefined;
     const { name, color } = newbornLooks(w.state);
     const baby = makeAgent({ id: w.newId('a'), name, species: 'human', ageDays: 0, color, householdId: h.id, lotId: h.lotId, x: crib.x, y: crib.y });

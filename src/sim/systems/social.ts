@@ -21,6 +21,7 @@ import { skillLevel } from './skills';
 import { streetOutcome } from './street';
 import { completeTask, endTask } from './tasks';
 import { mediate, snitch } from './arcs';
+import { PREGNANCY_DAYS, maybeConceive } from './fertility';
 
 export function canEngage(_w: World, actor: Agent, actorTask: Task, t: Agent): boolean {
   if (t.hidden || t.travel || t.lotId !== actor.lotId) return false;
@@ -255,10 +256,14 @@ export function socialOutcome(w: World, a: Agent, t: Agent, actionId: string) {
     w.feel(t, 'calabazas', a.name);
     if (loud) w.toast(`${a.name} deja el lío con ${t.name}`, '🚪');
   }
+  // Ñiqui ñiqui: puede haber embarazo (se sabe al día siguiente).
+  if (actionId === 'niqui') maybeConceive(w, a, t);
   if (actionId === 'try_baby') {
     const h = w.householdOf(a);
     if (h && !h.expecting && Math.random() < 0.7) {
-      h.expecting = { parents: [a.id, t.id], due: w.state.minutes + 3 * MINUTES_PER_DAY };
+      const mother = [a, t].find((x) => x.sex === 'f');
+      h.expecting = { parents: [a.id, t.id], due: w.state.minutes + PREGNANCY_DAYS * MINUTES_PER_DAY, ...(mother && [a, t].some((x) => x.sex === 'm') ? { mother: mother.id, known: true } : {}) };
+      if (mother && h.expecting.mother) w.feel(mother, 'embarazada');
       if (loud) w.toast(`¡${a.name} y ${t.name} van a tener un bebé! Llegará en 3 días`, '🍼');
     } else if (loud) w.toast('Esta vez no ha habido suerte. ¡Otra vez será!', '🍀');
   }

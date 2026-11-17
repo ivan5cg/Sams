@@ -6,6 +6,7 @@ import { PLAYER_LOT, addAlcorcon, addGetafe, addPlaces, addShops, addStudio, gen
 import { setRel } from '../sim/social';
 import type { PlacedObject, WorldState } from '../sim/types';
 import { validateState } from './validate';
+import { sexOfName } from '../data/names';
 import { startFor, todayISO } from '../sim/date';
 
 export function serialize(state: WorldState): string {
@@ -58,6 +59,10 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       }
       setupFamilyLife(s, members, { jobs: !player });
     }
+  },
+  // v18 → v19: sexo de cada persona (según el nombre) y ciclo menstrual (empieza solo, al vuelo).
+  18: (s) => {
+    for (const a of s.agents) if (a.kind === 'person' && !a.sex) a.sex = sexOfName(a.name);
   },
   // v17 → v18: la familia paga recibos al mes (alquiler, luz y agua) y puede deber: campo nuevo opcional.
   17: () => {},

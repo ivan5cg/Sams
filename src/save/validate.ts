@@ -99,6 +99,8 @@ export function validateState(s: WorldState) {
     num(a.pos?.y, `posición de ${a.id}`);
     for (const v of Object.values(a.needs ?? {})) num(v, `necesidades de ${a.id}`);
     optId(a.home, `casa de ${a.id}`);
+    if (a.sex !== undefined && a.sex !== 'f' && a.sex !== 'm') throw new Broken(`sexo de ${a.id}`);
+    optNum(a.cycle, `ciclo de ${a.id}`);
     if (a.look) {
       optNum(a.look.skin, `aspecto de ${a.id}`);
       optNum(a.look.hair, `aspecto de ${a.id}`);

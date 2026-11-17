@@ -86,6 +86,10 @@ export interface Agent {
   aspirationsDone?: string[];
   /** Aspecto elegido en el creador de familia (si no, sale del nombre). Desde la versión 13. */
   look?: { skin?: number; hair?: number; hairStyle?: string; pants?: number; extra?: string };
+  /** Sexo de las personas (desde la versión 19). */
+  sex?: 'f' | 'm';
+  /** Día en que empezó su ciclo menstrual (las mujeres; desde la versión 19). */
+  cycle?: number;
   /** Generación en la familia del jugador (1 = la fundadora). */
   gen?: number;
   /** Padres (para saber quién es hijo/nieto de quién). */
@@ -203,7 +207,7 @@ export interface Household {
   /** Su casa. */
   lotId: string;
   /** Bebé en camino. */
-  expecting?: { parents: string[]; due: number };
+  expecting?: { parents: string[]; due: number; mother?: string; known?: boolean };
   /** Raciones de comida en la nevera de casa. */
   pantry?: number;
   /** Compra a domicilio en camino. */

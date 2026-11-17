@@ -32,7 +32,7 @@ export class PersonEditor extends Part {
         case 'hair': d.look.hair = v; break;
         case 'random': {
           const pick = <T>(xs: readonly T[]) => xs[Math.floor(Math.random() * xs.length)];
-          this.draft = { name: d.name, color: pick(CLOTHES), look: { skin: d.look.skin, hair: pick(HAIR), hairStyle: pick(HAIR_STYLES), pants: pick(PANTS), extra: pick(EXTRAS) } };
+          this.draft = { name: d.name, sex: d.sex, color: pick(CLOTHES), look: { skin: d.look.skin, hair: pick(HAIR), hairStyle: pick(HAIR_STYLES), pants: pick(PANTS), extra: pick(EXTRAS) } };
           break;
         }
         case 'cancel': return this.close();
@@ -61,6 +61,7 @@ export class PersonEditor extends Part {
       const el = e.target as HTMLSelectElement;
       if (!this.draft) return;
       if (el.dataset.ed === 'style') this.draft.look.hairStyle = el.value;
+      else if (el.dataset.ed === 'sex') this.draft.sex = el.value as 'f' | 'm';
       else if (el.dataset.ed === 'extra') this.draft.look.extra = el.value;
       else return;
       this.render();
@@ -74,7 +75,7 @@ export class PersonEditor extends Part {
     this.agentId = agentId;
     this.elder = this.world.stageOf(a) === 'elder';
     const now = personLook(a, false);
-    this.draft = { name: a.name, color: a.color, look: { skin: now.skin, hair: now.hair, hairStyle: now.hairStyle, pants: now.pants, extra: now.extra } };
+    this.draft = { name: a.name, sex: a.sex ?? 'f', color: a.color, look: { skin: now.skin, hair: now.hair, hairStyle: now.hairStyle, pants: now.pants, extra: now.extra } };
     $('#editor').hidden = false;
     this.render();
   }
@@ -106,7 +107,8 @@ export class PersonEditor extends Part {
           <span class="cr-legs" style="background:${hexColor(d.look.pants)}"></span>
           <span class="cr-name">${esc(d.name || '¿?')}</span>
         </div>
-        <div class="cr-fields"><input data-ed="name" value="${esc(d.name)}" maxlength="20" placeholder="Nombre" aria-label="Nombre" /></div>
+        <div class="cr-fields"><input data-ed="name" value="${esc(d.name)}" maxlength="20" placeholder="Nombre" aria-label="Nombre" />
+          <select data-ed="sex" aria-label="Mujer u hombre"><option value="f"${d.sex === 'f' ? ' selected' : ''}>Mujer</option><option value="m"${d.sex === 'm' ? ' selected' : ''}>Hombre</option></select></div>
       </div>
       ${this.swatches('clothes', CLOTHES, d.color, 'Ropa')}
       ${this.swatches('pants', PANTS, d.look.pants, 'Pantalón')}

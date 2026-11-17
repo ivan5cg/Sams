@@ -1,6 +1,7 @@
 // Perfil del personaje activo: ánimo, meta de vida, trabajo, rasgos, habilidades, mascota y relaciones.
 
 import { longDate } from '../sim/date';
+import { CYCLE_DAYS, PHASE_INFO, cycleDay, isPregnant, phase } from '../sim/systems/fertility';
 import { MONEY_CATEGORIES } from '../data/economy';
 import { BAR_MENUS, BAR_STAFF, CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
 import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
@@ -179,6 +180,7 @@ export class ProfilePanel extends Part {
         <button class="icon-btn" data-close>✕</button>
       </div>
       ${this.emotionsHtml(a)}
+      ${this.cycleHtml(a, mine)}
       ${this.aspirationHtml(a)}
       ${jobHtml}
       ${mine ? this.ledgerHtml() : ''}
@@ -279,6 +281,22 @@ export class ProfilePanel extends Part {
     return `<div class="prof-h" style="margin-top:8px">✨ ¿Por cuál?</div><div class="chips-wrap">${TRAITS.filter((t) => !mine.includes(t.id))
       .map((t) => `<button class="comp" data-tin="${t.id}">${t.icon} ${esc(t.label)}</button>`)
       .join('')}</div>`;
+  }
+
+  /** El ciclo (o el embarazo) de las mujeres de la familia. */
+  private cycleHtml(a: Agent, mine: boolean): string {
+    const w = this.world;
+    if (!mine || a.kind !== 'person') return '';
+    if (isPregnant(w, a)) {
+      const due = w.householdOf(a)?.expecting?.due ?? 0;
+      const days = Math.max(0, Math.ceil((due - w.state.minutes) / 1440));
+      return `<div class="muted small cycle-line">🤰 Embarazada: el bebé llega ${days <= 1 ? 'mañana o pasado' : `en unos ${days} días`}. Hace falta una cuna libre.</div>`;
+    }
+    const p = phase(w, a);
+    if (!p) return '';
+    const day = cycleDay(w, a) + 1;
+    const next = CYCLE_DAYS - day + 1;
+    return `<div class="muted small cycle-line">${PHASE_INFO[p].icon} Ciclo: día ${day} de ${CYCLE_DAYS} · ${PHASE_INFO[p].label.toLowerCase()}${p !== 'regla' ? ` · la regla, en unos ${next} días` : ''}</div>`;
   }
 
   emotionsHtml(a: Agent): string {

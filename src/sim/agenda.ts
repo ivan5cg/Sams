@@ -107,7 +107,7 @@ export function agendaFor(w: World, offset: 0 | 1): AgendaItem[] {
     }
   }
   // Bebés en camino
-  if (h.expecting) {
+  if (h.expecting && h.expecting.known !== false) {
     const due = h.expecting.due;
     if (Math.floor(due / MINUTES_PER_DAY) + 1 === day) {
       const parents = h.expecting.parents.map((id) => w.agent(id)?.name).filter(Boolean).join(' y ');

@@ -4,6 +4,7 @@
 
 import { CLOTHES, HAIR, HAIR_STYLES, HAIR_STYLE_LABEL, SKIN } from '../data/looks';
 import { SPECIES } from '../data/species';
+import { sexOfName } from '../data/names';
 import { TRAITS } from '../data/traits';
 import { GARCIA, MAX_START_PEOPLE, STAGE_LABEL, familyProblems, randomFamily, randomPerson, type FamilySpec, type PersonSpec, type StartStage } from '../sim/family';
 import type { SpeciesId } from '../sim/types';
@@ -68,6 +69,7 @@ export class FamilyCreator extends Part {
       const p = this.draft.people[Number(el.dataset.i)];
       switch (el.dataset.f) {
         case 'stage': if (p) p.stage = el.value as StartStage; delete p?.ageDays; break;
+        case 'sex': if (p) p.sex = el.value as 'f' | 'm'; break;
         case 'trait0': if (p) p.traits = [el.value, p.traits[1]]; break;
         case 'trait1': if (p) p.traits = [p.traits[0], el.value]; break;
         case 'style': if (p) p.look = { ...p.look, hairStyle: el.value }; break;
@@ -143,6 +145,7 @@ export class FamilyCreator extends Part {
         <div class="cr-fields">
           <input data-f="name" data-i="${i}" value="${esc(p.name)}" maxlength="20" placeholder="Nombre" aria-label="Nombre" />
           <select data-f="stage" data-i="${i}" aria-label="Edad">${stages}</select>
+          <select data-f="sex" data-i="${i}" aria-label="Mujer u hombre"><option value="f"${(p.sex ?? sexOfName(p.name)) === 'f' ? ' selected' : ''}>Mujer</option><option value="m"${(p.sex ?? sexOfName(p.name)) === 'm' ? ' selected' : ''}>Hombre</option></select>
         </div>
         <div class="cr-tools">
           <button class="icon-btn" data-cr="reroll" data-i="${i}" aria-label="Rasgos y aspecto al azar">🎲</button>
