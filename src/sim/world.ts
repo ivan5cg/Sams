@@ -39,7 +39,7 @@ import * as Social from './systems/social';
 import * as Feats from './systems/feats';
 import * as Arcs from './systems/arcs';
 import * as Trips from './systems/trips';
-import { GARCIA, MAX_START_PEOPLE, STAGE_AGE, type FamilySpec } from './family';
+import { GARCIA, MAX_START_PEOPLE, STAGE_AGE, applyEdit, type FamilySpec, type PersonEdit } from './family';
 
 export { SAVE_VERSION, MINUTES_PER_DAY, MAX_MEMBERS, TRAVEL_MINUTES, RIDE_MINUTES, PANTRY_MAX } from './constants';
 export { moodScore, objectCenter } from './util';
@@ -911,6 +911,15 @@ export class World {
   }
   setAspiration(a: Agent, id: string) {
     return Lifecycle.setAspiration(this, a, id);
+  }
+  /** Cambia el aspecto (y el nombre) de una persona de la familia. Devuelve el motivo si no se puede. */
+  editPerson(agentId: string, e: PersonEdit): string | undefined {
+    const a = this.agent(agentId);
+    if (!a || !this.isPlayerMember(a)) return 'Solo se puede cambiar a los de la familia';
+    const old = a.name;
+    const why = applyEdit(a, e);
+    if (!why && old !== a.name) this.toast(`${old} ahora se llama ${a.name}`, '✏️', a.id);
+    return why;
   }
 
   // Travel

@@ -1,9 +1,9 @@
 // La familia con la que se empieza: la García de siempre o la que diseñe el jugador.
 
-import { CLOTHES, HAIR, HAIR_STYLES, SKIN } from '../data/looks';
+import { CLOTHES, EXTRAS, HAIR, HAIR_STYLES, SKIN } from '../data/looks';
 import { SPECIES } from '../data/species';
 import { TRAITS } from '../data/traits';
-import type { SpeciesId } from './types';
+import type { Agent, SpeciesId } from './types';
 
 export type StartStage = 'child' | 'teen' | 'young' | 'adult' | 'elder';
 
@@ -113,4 +113,32 @@ export function familyProblems(f: FamilySpec): string[] {
     if (!pet.name.trim()) out.push('La mascota necesita un nombre');
   }
   return out;
+}
+
+/** Lo que se puede cambiar de una persona ya creada (☰ perfil → ✏️ Editar). */
+export interface PersonEdit {
+  name: string;
+  /** Color de la ropa (camiseta). */
+  color: number;
+  look: { skin: number; hair: number; hairStyle: string; pants: number; extra: string };
+}
+
+/** Por qué no vale un cambio (o nada si vale). */
+export function editProblem(e: PersonEdit): string | undefined {
+  if (!e.name.trim()) return 'Hace falta un nombre';
+  if (e.name.trim().length > 20) return 'El nombre es demasiado largo';
+  if (!(HAIR_STYLES as readonly string[]).includes(e.look.hairStyle)) return 'Ese peinado no existe';
+  if (!(EXTRAS as readonly string[]).includes(e.look.extra)) return 'Eso no se puede llevar en la cara';
+  for (const n of [e.color, e.look.skin, e.look.hair, e.look.pants]) if (!Number.isInteger(n) || n < 0 || n > 0xffffff) return 'Ese color no vale';
+  return undefined;
+}
+
+/** Aplica el cambio de aspecto (y de nombre). Todo queda guardado tal cual, aunque cambie el nombre. */
+export function applyEdit(a: Agent, e: PersonEdit): string | undefined {
+  const why = editProblem(e);
+  if (why || a.kind !== 'person') return why ?? 'Solo las personas';
+  a.name = e.name.trim();
+  a.color = e.color;
+  a.look = { ...e.look };
+  return undefined;
 }

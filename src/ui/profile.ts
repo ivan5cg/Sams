@@ -29,6 +29,7 @@ export class ProfilePanel extends Part {
       const b = el.closest('button');
       if (!b) return;
       if (b.dataset.close !== undefined) return this.closeProfile();
+      if (b.dataset.edit !== undefined) return this.hud.editor.open(this.subject().id);
       if (b.dataset.quit !== undefined && confirm('¿Seguro que quieres dejar el trabajo?')) {
         this.world.quitJob(this.subject());
         this.renderProfile();
@@ -169,6 +170,7 @@ export class ProfilePanel extends Part {
       <div class="sheet-head">
         <div><div class="sheet-title">${a.kind === 'person' ? '🧑' : SPECIES[a.species].icon} ${esc(a.name)}</div>
         <div class="sheet-sub">${esc(SPECIES[a.species].label)} · ${esc(stage.label)} · ${a.ageDays} ${a.ageDays === 1 ? 'día' : 'días'}${mine ? '' : ` · ${esc(w.householdOf(a)?.name ?? 'vecino/a')}`}</div></div>
+        ${mine && a.kind === 'person' && w.stageOf(a) !== 'baby' ? '<button class="icon-btn" data-edit aria-label="Cambiar de look">✏️</button>' : ''}
         <button class="icon-btn" data-close>✕</button>
       </div>
       ${this.emotionsHtml(a)}

@@ -52,6 +52,8 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v16: pantalón y complementos de la cara.
+  if (version <= 15) for (const a of st.agents) if (a.look) { delete a.look.pants; delete a.look.extra; }
   // v15: Getafe (sus parcelas, sus vecinos y lo que tengan colocado).
   if (version <= 14) {
     const gtf = ['GP', 'PD', 'GE1', 'GE2', 'GE3'];

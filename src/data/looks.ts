@@ -7,3 +7,7 @@ export const CLOTHES = [0xe0607e, 0x4f8fd9, 0x52b788, 0xf4a261, 0x9b5de5, 0xe76f
 export const HAIR_STYLES = ['short', 'long', 'bun', 'curly', 'ponytail'] as const;
 export type HairStyle = (typeof HAIR_STYLES)[number];
 export const HAIR_STYLE_LABEL: Record<HairStyle, string> = { short: 'Corto', long: 'Largo', bun: 'Moño', curly: 'Rizado', ponytail: 'Coleta' };
+/** Lo que se lleva en la cara. */
+export const EXTRAS = ['none', 'glasses', 'beard', 'mustache'] as const;
+export type Extra = (typeof EXTRAS)[number];
+export const EXTRA_LABEL: Record<Extra, string> = { none: 'Nada', glasses: 'Gafas', beard: 'Barba', mustache: 'Bigote' };

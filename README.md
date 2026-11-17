@@ -12,6 +12,8 @@ Es una PWA: funciona en el navegador, se instala en la pantalla de inicio
   y peinado), si los dos primeros adultos son pareja y una mascota. Con 🎲 sale una al azar, y la
   **Familia García** de siempre (Lucía, Mateo, Toby y Misi) sigue a un toque. Los niños van al colegio desde
   el primer día. ☰ → Nueva partida vuelve a abrir el creador.
+- **✏️ Cambiar de look**: en el perfil de cualquiera de la familia (👥), el lápiz deja cambiarle el nombre, la
+  ropa, el pantalón, la piel, el pelo, el peinado y ponerle gafas, barba o bigote.
 - La partida no termina nunca. El tiempo avanza solo; arriba puedes pausar o acelerar (×1, ×3, ×8).
 - Controlas a **un miembro de tu familia cada vez**, incluidas las mascotas. Toca su retrato abajo para cambiar.
 - **Toca algo de la casa** (nevera, cama, otra persona, el perro…) para ver qué puede hacer el personaje activo.

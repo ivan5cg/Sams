@@ -58,6 +58,8 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v15 → v16: más aspecto editable (pantalón y gafas, barba o bigote): campos nuevos opcionales.
+  15: () => {},
   // v14 → v15: Getafe (tercer barrio, en MetroSur).
   14: (s) => addGetafe(s),
   // v13 → v14: biblioteca, gimnasio y mercadillo del domingo.

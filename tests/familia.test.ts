@@ -65,3 +65,25 @@ describe('crear tu familia', () => {
     }
   });
 });
+
+describe('editar a una persona', () => {
+  it('cambia nombre, ropa y aspecto; se guarda; y cambiar el nombre no le cambia la cara', () => {
+    const w = World.createNew();
+    const lucia = w.agent('a1')!;
+    const why = w.editPerson('a1', { name: 'Lu', color: 0x2a9d8f, look: { skin: 0x8d5524, hair: 0xe6c35c, hairStyle: 'bun', pants: 0x5c4033, extra: 'glasses' } });
+    expect(why).toBeUndefined();
+    expect(lucia.name).toBe('Lu');
+    expect(lucia.color).toBe(0x2a9d8f);
+    expect(lucia.look).toEqual({ skin: 0x8d5524, hair: 0xe6c35c, hairStyle: 'bun', pants: 0x5c4033, extra: 'glasses' });
+    const again = new World(migrate(JSON.parse(serialize(w.state))));
+    expect(again.agent('a1')?.look?.extra).toBe('glasses');
+    // Lo que no vale, no se aplica.
+    expect(w.editPerson('a1', { name: '  ', color: 1, look: { skin: 1, hair: 1, hairStyle: 'bun', pants: 1, extra: 'none' } })).toMatch(/nombre/);
+    expect(w.editPerson('a1', { name: 'Lu', color: 1, look: { skin: 1, hair: 1, hairStyle: 'cresta', pants: 1, extra: 'none' } })).toMatch(/peinado/);
+    expect(lucia.name).toBe('Lu');
+    // A los vecinos no se les cambia el look.
+    const vecino = w.state.agents.find((a) => a.kind === 'person' && !w.isPlayerMember(a))!;
+    expect(w.editPerson(vecino.id, { name: 'X', color: 1, look: { skin: 1, hair: 1, hairStyle: 'bun', pants: 1, extra: 'none' } })).toMatch(/familia/);
+    expect(problems(w)).toEqual([]);
+  });
+});

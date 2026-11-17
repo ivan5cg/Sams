@@ -85,6 +85,9 @@ export function validateState(s: WorldState) {
       optNum(a.look.skin, `aspecto de ${a.id}`);
       optNum(a.look.hair, `aspecto de ${a.id}`);
       optStr(a.look.hairStyle, `aspecto de ${a.id}`);
+      optNum(a.look.pants, `aspecto de ${a.id}`);
+      optStr(a.look.extra, `aspecto de ${a.id}`);
+      if (a.look.extra !== undefined && !['none', 'glasses', 'beard', 'mustache'].includes(a.look.extra)) throw new Broken(`aspecto de ${a.id}`);
     }
     if (a.job?.bar) {
       if (!['barata', 'normal', 'cara'].includes(a.job.bar.menu)) throw new Broken(`bar de ${a.id}`);

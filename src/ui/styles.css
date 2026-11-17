@@ -2126,3 +2126,20 @@ html.big-text .creator-card { font-size: 17px; }
 .photo-flash { position: fixed; inset: 0; z-index: 200; background: #fff; pointer-events: none; animation: photo-flash 0.45s ease-out forwards; }
 @keyframes photo-flash { from { opacity: 0.85; } to { opacity: 0; } }
 html.reduce-motion .photo-flash { display: none; }
+
+/* --- Editar a una persona --- */
+#editor {
+  position: fixed;
+  inset: 0;
+  z-index: 72;
+  overflow-y: auto;
+  padding: calc(12px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
+  background: rgba(10, 12, 20, 0.82);
+}
+#editor[hidden] { display: none; }
+.cr-legs { width: 26px; height: 9px; border-radius: 0 0 4px 4px; }
+.cr-x { position: absolute; display: block; }
+.cr-x-glasses { left: 4px; right: 4px; top: 13px; height: 6px; border: 2px solid #222; border-radius: 4px; }
+.cr-x-beard { left: 3px; right: 3px; bottom: -1px; height: 11px; border-radius: 0 0 14px 14px; background: var(--hair); }
+.cr-x-mustache { left: 9px; right: 9px; top: 20px; height: 3px; border-radius: 3px; background: var(--hair); }
+.sheet-head .icon-btn[data-edit] { margin-left: auto; margin-right: 6px; }

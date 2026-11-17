@@ -582,7 +582,7 @@ export class HouseScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   private agentKey(a: Agent) {
-    return `${lifeStage(a.species, a.ageDays).id}:${a.color}:${this.accessoryOf(a)}`;
+    return `${lifeStage(a.species, a.ageDays).id}:${a.color}:${this.accessoryOf(a)}:${a.name}:${JSON.stringify(a.look ?? {})}`;
   }
 
   /** Lo que lleva encima: lo de su oficio, o lo de la fiesta (gorra de chulapo, disfraz, corona...). */

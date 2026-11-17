@@ -33,10 +33,10 @@ export function personLook(a: Agent, elder: boolean): PersonLook {
     skin: look?.skin ?? SKIN[h % SKIN.length],
     hair: elder ? 0xd9d9d9 : (look?.hair ?? HAIR[(h >>> 3) % HAIR.length]),
     hairStyle: (look?.hairStyle as PersonLook['hairStyle'] | undefined) ?? styles[(h >>> 6) % styles.length],
-    pants: PANTS[(h >>> 9) % PANTS.length],
+    pants: look?.pants ?? PANTS[(h >>> 9) % PANTS.length],
     shirt: a.color,
     build: [0.88, 1, 1, 1.15][(h >>> 12) % 4],
-    extra: (['none', 'none', 'glasses', 'beard', 'mustache', 'none'] as const)[(h >>> 15) % 6],
+    extra: (look?.extra as PersonLook['extra'] | undefined) ?? (['none', 'none', 'glasses', 'beard', 'mustache', 'none'] as const)[(h >>> 15) % 6],
     elder,
   };
 }
