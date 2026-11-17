@@ -35,6 +35,10 @@ export const ILLNESSES: Record<string, IllnessDef> = {
     id: 'neumonia', label: 'Neumonía', icon: '🫁', days: 6, decay: { energy: 2.2, hunger: 0.8, fun: 1.5 }, contagion: 0,
     deadly: { baby: 0.08, child: 0.02, teen: 0.02, young: 0.02, adult: 0.04, elder: 0.1 }, thought: 'Me cuesta hasta respirar',
   },
+  envenenamiento: {
+    id: 'envenenamiento', label: 'Envenenamiento', icon: '☠️', days: 2, decay: { energy: 2, hunger: 1.5, bladder: 1.8 }, contagion: 0,
+    deadly: { baby: 0.6, child: 0.6, teen: 0.6, young: 0.6, adult: 0.6, elder: 0.6 }, thought: 'Algo de lo que he comido no me ha sentado nada bien...',
+  },
   intoxicacion: { id: 'intoxicacion', label: 'Intoxicación alimentaria', icon: '🦠', days: 1, decay: { bladder: 2.5, hunger: 1.5, energy: 1.2 }, contagion: 0, thought: 'Esa paella no estaba bien...' },
 };
 

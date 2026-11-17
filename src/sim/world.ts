@@ -42,6 +42,7 @@ import * as Trips from './systems/trips';
 import * as Bills from './systems/bills';
 import * as Illness from './systems/illness';
 import { illnessDecay } from './systems/illness';
+import { hourlyGrudges } from './systems/violence';
 import { dateOfDay, todayISO, type GameDate } from './date';
 import { factsOf, type DayFacts } from './feasts';
 import { GARCIA, MAX_START_PEOPLE, STAGE_AGE, applyEdit, type FamilySpec, type PersonEdit } from './family';
@@ -519,6 +520,7 @@ export class World {
     Party.partyHour(this);
     Calendar.eventsHour(this);
     Illness.hourlyContagion(this);
+    hourlyGrudges(this);
     Street.streetHours(this);
     Street.campaignHour(this);
     Body.bodyHour(this);

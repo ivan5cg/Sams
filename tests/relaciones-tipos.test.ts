@@ -69,10 +69,14 @@ describe('tipos de relación', () => {
     const w = World.createNew();
     isolate(w, ['a1']);
     const lucia = w.agent('a1')!;
-    const amiga = w.state.agents.find((a) => a.kind === 'person' && !w.isPlayerMember(a) && !a.role && w.stageOf(a) !== 'child')!;
+    const amiga = w.state.agents.find((a) => a.kind === 'person' && !w.isPlayerMember(a) && !a.role && ['young', 'adult'].includes(w.stageOf(a)))!;
     amiga.travel = undefined;
     amiga.lotId = 'L0';
     amiga.pos = { x: 7, y: 6 };
+    amiga.current = null;
+    amiga.queue = [];
+    amiga.job = undefined;
+    fullNeeds(amiga);
     fullNeeds(lucia);
     setRel(w.state, 'a1', amiga.id, { f: 80, r: 0 });
     const orig = Math.random;

@@ -32,7 +32,7 @@ cambió al hacerlas está en la columna «Notas».
 | 5.4 Sitios nuevos | ✅ | Biblioteca, gimnasio y mercadillo (`systems/places.ts`), con horarios, regateo y vecinos que van. SAVE_VERSION 14 (las tres parcelas) |
 | 5.5 Tercer barrio | ✅ | Getafe (MetroSur): Cerro de los Ángeles, club de pádel y tres casas. Barrios generalizados (`squareOf`, `stationOf`, mapa por distritos). SAVE_VERSION 15 |
 
-**Lo siguiente:** la fase 5 está completa, y también los encargos de después (ver «Encargos de la jefa de desarrollo»). La partida va por la **versión 18**: si algo nuevo cambia lo que se guarda, toca la 19 con su migración.
+**Lo siguiente:** la fase 5 está completa, y también los encargos de después (ver «Encargos de la jefa de desarrollo»). La partida va por la **versión 22**: si algo nuevo cambia lo que se guarda, toca la 23 con su migración.
 
 ---
 
@@ -456,3 +456,15 @@ opcionales (regalos, ropa, cursos y un fin de semana fuera). Las cifras, en `src
 | Alquiler, luz, agua; cortes y desahucio | ✅ | `systems/bills.ts`: recibos al mes (alquiler el 1, luz y agua el 5), pendientes si no hay dinero, corte a los 10 días, carta/burofax/desahucio a los 10/20/30. En la calle: banco, comedor social, baños públicos; bebés y mascotas con la abuela. Volver = deuda del alquiler + un mes de fianza. Servicios sociales: §400 al mes. Los vecinos siguen pagando cada semana. SAVE_VERSION 18 |
 
 De paso: la oscuridad de los apagones solo cubría el centro de la pantalla con la cámara alejada (como la lluvia); se compensa el zoom con `fitToScreen`.
+
+## Segundo encargo de la jefa de desarrollo ✅
+
+| Encargo | Estado | Notas |
+|---|---|---|
+| Mujeres y hombres, ciclo menstrual | ✅ | `data/names.ts` (sexo por nombre), `systems/fertility.ts`: ciclo de 28 días con fases y emociones. SAVE_VERSION 19 |
+| Embarazo tras el ñiqui (con probabilidades) | ✅ | `maybeConceive`: 35 % en la ovulación, casi nada con la regla; se sabe al día siguiente (`expecting.known`), con madre, náuseas y antojos |
+| Enfermedades y formas de morir | ✅ | `data/illnesses.ts`, `systems/illness.ts`: resfriado, gripe, gastro, varicela, intoxicación, neumonía; contagio, medicinas (una al día) y médico. Infarto, electrocutado, de risa. `DeathCause` en `die()`. SAVE_VERSION 20 |
+| Tipos de relación y desgaste | ✅ | `sim/relations.ts`: etiquetas (familia, pareja, amantes, ex, interés, amigos, mejores amigos, enemigos, non grata, compañeros...), atención (`rel.last`), crisis y rupturas. SAVE_VERSION 21 |
+| Matar o que te maten | ✅ | `systems/violence.ts`: mamporros y envenenar (solo enemigos; nunca niños ni los de casa), policía y cárcel, defensa propia, enemigos que buscan bronca. SAVE_VERSION 22 |
+
+Para no tener sorpresas en el CI, las pruebas nuevas se han repetido con 60-150 semillas de azar.

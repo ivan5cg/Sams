@@ -60,6 +60,8 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v21 → v22: peleas, envenenamientos y cárcel (campos nuevos opcionales).
+  21: () => {},
   // v20 → v21: tipos de relación y desgaste. Se empieza a contar desde hoy (nadie rompe de golpe).
   20: (s) => {
     const today = Math.floor(s.minutes / 1440) + 1;

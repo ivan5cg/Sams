@@ -20,6 +20,7 @@ import { tripReason } from './trips';
 import { HOLIDAY_ACTIONS, holidayReason } from './holidays';
 import { STREET_ACTIONS, billsReason, hasPower } from './bills';
 import { isPregnant } from './fertility';
+import { HATE } from './violence';
 
 export function speciesOk(w: World, a: Agent, def: ActionDef) {
   if (!def.actors.includes(a.kind) || (def.species && !def.species.includes(a.species))) return false;
@@ -117,6 +118,14 @@ export function checkSocialAction(w: World, a: Agent, t: Agent, actionId: string
     if (actionId === 'best_friends' && (r0.best || r0.f < 60)) return { def, ok: false };
     if (actionId === 'ban' && (r0.banned || t.householdId === a.householdId || r0.status || !w.isPlayerMember(a))) return { def, ok: false };
     if (actionId === 'unban' && r0.banned !== a.id) return { def, ok: false };
+    // Las enemistades que acaban mal: nunca con niños ni con los de la propia casa.
+    if (actionId === 'fight' || actionId === 'poison') {
+      const young = (x: Agent) => ['baby', 'child'].includes(w.stageOf(x));
+      if (young(a) || young(t) || t.householdId === a.householdId || t.role) return { def, ok: false };
+      if (actionId === 'fight' && (w.stageOf(a) === 'teen' && w.stageOf(t) !== 'teen')) return { def, ok: false };
+      if (actionId === 'fight' && r0.f > HATE.fight) return { def, ok: false };
+      if (actionId === 'poison' && (r0.f > HATE.poison || !isAdult(a))) return { def, ok: false };
+    }
   }
   const tStage = t.kind === 'person' ? w.stageOf(t) : '';
   if (def.targetStages ? !def.targetStages.includes(tStage) : tStage === 'baby') return { def, ok: false };

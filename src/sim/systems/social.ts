@@ -24,6 +24,7 @@ import { mediate, snitch } from './arcs';
 import { PREGNANCY_DAYS, maybeConceive } from './fertility';
 import { jokeRisk } from './illness';
 import { attend } from '../relations';
+import { fight, poison } from './violence';
 
 export function canEngage(_w: World, actor: Agent, actorTask: Task, t: Agent): boolean {
   if (t.hidden || t.travel || t.lotId !== actor.lotId) return false;
@@ -232,6 +233,8 @@ export function socialOutcome(w: World, a: Agent, t: Agent, actionId: string) {
     if (t.lotId === w.householdOf(a)?.lotId) t.visitUntil = w.state.minutes;
     if (loud) w.toast(`${a.name} ha declarado a ${t.name} persona non grata: no vuelve a pisar su casa`, '🚫');
   }
+  if (actionId === 'fight') fight(w, a, t);
+  if (actionId === 'poison') poison(w, a, t);
   if (actionId === 'unban' && rel) {
     rel.banned = undefined;
     if (loud) w.toast(`${a.name} le levanta el veto a ${t.name}. Ya puede volver a casa`, '🕊️');

@@ -55,7 +55,7 @@ export interface Agent {
   /** Parcela en la que está. */
   lotId: string;
   /** De camino a otra parcela (o en el trabajo / el colegio, que no se ven). */
-  travel?: { from: string; to: string; arrive: number; reason?: 'work' | 'school' | 'trip'; mood?: number };
+  travel?: { from: string; to: string; arrive: number; reason?: 'work' | 'school' | 'trip' | 'jail'; mood?: number };
   /** Trabajo o colegio. */
   job?: Job;
   /** Minutos seguidos con el hambre a cero. */
@@ -93,7 +93,7 @@ export interface Agent {
   /** De qué murió (solo mientras se despide: el agente ya no está en la partida). */
   causeOfDeath?: string;
   /** Enfermedad que tiene ahora (desde la versión 20). */
-  illness?: { id: string; since: number; until: number; treated?: boolean; /** Día de la última medicina (una al día). */ medicated?: number };
+  illness?: { id: string; since: number; until: number; treated?: boolean; /** Día de la última medicina (una al día). */ medicated?: number; /** Quién le envenenó. */ by?: string };
   /** Generación en la familia del jugador (1 = la fundadora). */
   gen?: number;
   /** Padres (para saber quién es hijo/nieto de quién). */

@@ -183,7 +183,8 @@ export function die(w: World, a: Agent, cause: DeathCause, detail = '') {
     poison: `${a.name} ha muerto envenenado/a${detail ? `. Las sospechas apuntan a ${detail}` : ''}`,
     accident: `${a.name} ha muerto en un accidente${detail ? ` (${detail})` : ''}`,
   };
-  const knownByPlayer = w.members.some((m) => m !== a && (getRel(w.state, m.id, a.id).f >= 15 || getRel(w.state, m.id, a.id).status));
+  // Se entera la familia si era alguien conocido: amigo o enemigo.
+  const knownByPlayer = w.members.some((m) => m !== a && (Math.abs(getRel(w.state, m.id, a.id).f) >= 15 || getRel(w.state, m.id, a.id).status));
   if (mine || knownByPlayer) w.toast(mine ? texts[cause] : `${texts[cause]} (${h?.name ?? ''})`, REAL_DEATHS.has(cause) ? '🕊️' : '💔', a.id);
   a.causeOfDeath = cause;
   // Luto: su familia y quien le quería.

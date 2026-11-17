@@ -53,6 +53,7 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v22: violencia (quién envenenó, la cárcel): nada que quitar en una partida normal.
   // v21: relaciones (detalles, pactos y crisis).
   if (version <= 20) for (const rel of Object.values(st.rels ?? {}) as Raw[]) { delete rel.last; delete rel.best; delete rel.banned; delete rel.crisis; }
   // v20: enfermedades.

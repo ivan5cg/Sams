@@ -327,6 +327,19 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   - **morirse de risa** con un chiste muy bueno (sobre todo los mayores).
 - Toda muerte trae luto a la familia y a los amigos, lápida en el jardín y noticia en el barrio.
 
+## Enemistades que acaban mal
+
+- Con un **enemigo** (amistad muy baja) se puede uno **liar a mamporros**. Gana quien está más en forma, y el
+  que pierde acaba magullado. Rara vez, la pelea acaba en muerte (más si es mayor).
+- Con un **enemigo acérrimo**, **echarle algo en la comida**: sale mejor cuanto más se sabe de cocina. Si sale
+  mal, le sabe raro y sospecha. Si sale bien, el envenenado puede morir; el médico le salva casi siempre.
+- Si muere alguien, la **policía** puede pillar al culpable (más con testigos). Entonces le caen **10 días de
+  cárcel**, pierde el trabajo y su familia pasa vergüenza. Si no le pillan, le quedan los remordimientos y el
+  barrio murmura.
+- Los enemigos del barrio también te pueden **buscar bronca** (es raro). Si te defiendes y el otro acaba mal,
+  es **defensa propia**.
+- Nunca con niños ni con los de la propia casa.
+
 ## Construir y decorar
 
 - **🛋️ Catálogo de muebles** (☰, o 📖 en la obra): cada mueble con su dibujo, para qué sirve (y qué

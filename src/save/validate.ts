@@ -107,6 +107,7 @@ export function validateState(s: WorldState) {
       num(a.illness.since, `enfermedad de ${a.id}`);
       num(a.illness.until, `enfermedad de ${a.id}`);
       optNum(a.illness.medicated, `enfermedad de ${a.id}`);
+      optId(a.illness.by, `enfermedad de ${a.id}`);
     }
     if (a.look) {
       optNum(a.look.skin, `aspecto de ${a.id}`);

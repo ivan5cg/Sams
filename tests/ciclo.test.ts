@@ -7,11 +7,17 @@ import { CYCLE_DAYS, FERTILITY, cycleDay, hasCycle, isPregnant, maybeConceive, p
 import { setRel } from '../src/sim/social';
 import { fullNeeds, isolate, problems, saveAt } from './helpers';
 
-/** Avanza día a día, pasando por cada mañana. */
+/** Avanza día a día, pasando por cada mañana, sin sucesos al azar (nadie se pone malo por el camino). */
 function days(w: World, n: number) {
-  for (let i = 0; i < n; i++) {
-    w.state.minutes = Math.floor(w.state.minutes / 1440 + 1) * 1440 - 1;
-    w.tick(2);
+  const orig = Math.random;
+  Math.random = () => 0.99;
+  try {
+    for (let i = 0; i < n; i++) {
+      w.state.minutes = Math.floor(w.state.minutes / 1440 + 1) * 1440 - 1;
+      w.tick(2);
+    }
+  } finally {
+    Math.random = orig;
   }
 }
 
@@ -45,15 +51,21 @@ describe('sexo, ciclo menstrual y embarazos', () => {
     const toasts: string[] = [];
     w.onToast((t) => toasts.push(t.text));
     fullNeeds(lucia);
+    // (Solo se recuerdan seis emociones a la vez: se empieza sin ninguna para ver las del ciclo.)
+    lucia.emotions = [];
     days(w, 1);
     expect(cycleDay(w, lucia)).toBe(0);
     expect(phase(w, lucia)).toBe('regla');
     expect(hasEmotion(lucia, 'dolor_regla')).toBe(true);
     expect(toasts.some((t) => t.includes('le ha bajado la regla'))).toBe(true);
-    days(w, 13);
+    days(w, 12);
+    lucia.emotions = [];
+    days(w, 1);
     expect(phase(w, lucia)).toBe('ovulacion');
     expect(hasEmotion(lucia, 'radiante')).toBe(true);
-    days(w, 10);
+    days(w, 9);
+    lucia.emotions = [];
+    days(w, 1);
     expect(phase(w, lucia)).toBe('premenstrual');
     expect(hasEmotion(lucia, 'sensible')).toBe(true);
   });

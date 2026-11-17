@@ -2,6 +2,7 @@
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
 import { isBanned } from '../relations';
+import { backFromJail } from './violence';
 import { ACTIONS } from '../../data/actions';
 import { CAREERS, workDays } from '../../data/careers';
 import { lifeStage } from '../../data/species';
@@ -87,6 +88,7 @@ export function arrive(w: World, a: Agent) {
   const to = homeRedirect(w, a, a.travel!.to);
   a.travel = undefined;
   if (reason === 'trip') backFromTrip(w, a);
+  else if (reason === 'jail') backFromJail(w, a);
   else if (reason) finishShift(w, a, reason, mood ?? 50);
   a.lotId = to;
   w.emit({ type: 'door', lotId: to });

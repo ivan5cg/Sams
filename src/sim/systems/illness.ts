@@ -13,6 +13,7 @@ import type { Agent, NeedKey } from '../types';
 import type { World } from '../world';
 import { die } from './lifecycle';
 import { skillLevel } from './skills';
+import { poisonDeath } from './violence';
 
 /** Cuánto más rápido baja una necesidad por estar malo. */
 export function illnessDecay(a: Agent, k: NeedKey): number {
@@ -77,7 +78,8 @@ export function dailyHealth(w: World) {
       // Los vecinos también van al médico (no siempre a tiempo).
       if (!w.isPlayerMember(a) && risk && !ill.treated && Math.random() < 0.5) seeDoctor(w, a);
       if (risk && Math.random() < risk) {
-        die(w, a, 'illness', def.label.toLowerCase());
+        if (ill.id === 'envenenamiento') poisonDeath(w, a, ill.by);
+        else die(w, a, 'illness', def.label.toLowerCase());
         continue;
       }
       if (w.state.minutes >= ill.until) heal(w, a);
