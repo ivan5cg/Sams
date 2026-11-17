@@ -24,6 +24,7 @@ import { availableVisitors, districtOf, sendVisit, startTravel } from './travel'
 import { dailyArcs } from './arcs';
 import { holidayDay, holidayHour } from './holidays';
 import { marketPrice } from './places';
+import { dailyBills } from './bills';
 import { longDate } from '../date';
 import { WEEKDAY_LONG } from '../../data/careers';
 
@@ -219,9 +220,10 @@ export function newDay(w: World) {
     if (!rel.kin && Math.abs(rel.f) > 5) rel.f -= Math.sign(rel.f) * 0.5;
     rel.r = Math.max(0, rel.r - (rel.status ? 0.5 : 1));
   }
-  // Facturas e hipoteca, cada lunes (y los vecinos pagan su compra de la semana).
+  // Los vecinos pagan facturas, hipoteca y la compra cada lunes. La familia del jugador, sus recibos del mes (bills.ts).
   if (w.weekday === 0 && w.day > 1) {
     for (const h of w.state.households) {
+      if (h.id === w.household.id) continue;
       const ms = h.memberIds.map((id) => w.agent(id)!).filter(Boolean);
       const bill = weeklyBill(w, h);
       const mortgage = weeklyMortgage(w, h);
@@ -232,15 +234,11 @@ export function newDay(w: World) {
         if (m.job && CAREERS[m.job.career]?.business) {
           money(w, h, -ECONOMY.autonomos, 'autonomos');
           w.feel(m, 'cuota');
-          if (h.id === w.household.id) w.toast(`Cuota de autónomos de ${m.name}: −§${ECONOMY.autonomos}`, '🧾');
         }
-      }
-      if (h.id === w.household.id) {
-        w.toast(`Han llegado las facturas de la semana: §${bill} y la hipoteca: §${mortgage}`, '🧾');
-        if (h.funds < 0) w.toast('¡Estáis en números rojos!', '⚠️');
       }
     }
   }
+  dailyBills(w);
   dailyEvents(w);
   seasonalDay(w);
   dailyGossip(w);

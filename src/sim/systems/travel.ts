@@ -6,6 +6,7 @@ import { CAREERS, workDays } from '../../data/careers';
 import { lifeStage } from '../../data/species';
 import { MINUTES_PER_DAY, RIDE_MINUTES, TRAVEL_MINUTES } from '../constants';
 import { METRO_LOT, PARK_LOT, stationOf } from '../neighborhood';
+import { homeRedirect, isEvicted } from './bills';
 import { findPath, isWalkable } from '../pathfinding';
 import type { Agent, Household, Vec } from '../types';
 import { rand } from '../util';
@@ -26,6 +27,7 @@ export function canTravel(w: World, a: Agent, lotId: string): { ok: boolean; rea
   if (a.current && ACTIONS[a.current.actionId].forced) return { ok: false, reason: 'No puede moverse ahora' };
   const closed = closedReason(w, lotId);
   if (closed) return { ok: false, reason: closed };
+  if (lotId === w.household.lotId && isEvicted(w) && w.isPlayerMember(a)) return { ok: false, reason: 'La casa está precintada: hay que pagar el alquiler atrasado y la fianza' };
   return { ok: true };
 }
 
@@ -77,7 +79,9 @@ export function travelMinutes(w: World, from: string, to: string): number {
 }
 
 export function arrive(w: World, a: Agent) {
-  const { to, reason, mood } = a.travel!;
+  const { reason, mood } = a.travel!;
+  // Desahuciados: la puerta de casa está precintada.
+  const to = homeRedirect(w, a, a.travel!.to);
   a.travel = undefined;
   if (reason === 'trip') backFromTrip(w, a);
   else if (reason) finishShift(w, a, reason, mood ?? 50);
@@ -125,6 +129,7 @@ export function freeSpotNear(w: World, lotId: string, p: Vec): Vec {
 export function canInvite(w: World, householdId: string): { ok: boolean; reason?: string } {
   const h = w.state.households.find((x) => x.id === householdId);
   if (!h || h.id === w.household.id) return { ok: false };
+  if (isEvicted(w)) return { ok: false, reason: 'No tenéis casa' };
   if (!w.members.some((m) => m.lotId === w.household.lotId && !m.travel && m.kind === 'person')) return { ok: false, reason: 'No hay nadie en casa' };
   if (w.hour >= 21 || w.hour < 8) return { ok: false, reason: 'Es muy tarde' };
   const free = availableVisitors(w, h);

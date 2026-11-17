@@ -59,6 +59,8 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v17 → v18: la familia paga recibos al mes (alquiler, luz y agua) y puede deber: campo nuevo opcional.
+  17: () => {},
   // v16 → v17: calendario de verdad. La partida sigue «hoy»: el día en que se va coincide con la fecha real.
   16: (s) => {
     s.calendarStart = startFor(todayISO(), Math.floor(s.minutes / 1440) + 1);

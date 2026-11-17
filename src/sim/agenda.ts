@@ -8,8 +8,7 @@ import { ACTIONS } from '../data/actions';
 import { SEASONS } from '../data/seasons';
 import { lifeStage } from '../data/species';
 import { MINUTES_PER_DAY } from './constants';
-import { ECONOMY } from '../data/economy';
-import { weeklyBill, weeklyMortgage } from './systems/money';
+import { BILL_INFO, BILL_KINDS, billAmount, isEvicted, totalDebt } from './systems/bills';
 import type { World } from './world';
 import { HOLIDAY_HOURS } from './systems/holidays';
 import { factsOf } from './feasts';
@@ -85,10 +84,12 @@ export function agendaFor(w: World, offset: 0 | 1): AgendaItem[] {
       agentId: m.id,
     });
   }
-  // Facturas (los lunes, menos el primero)
-  if (wd === 0 && day > 1) {
-    const business = w.members.filter((m) => m.job && CAREERS[m.job.career]?.business).length * ECONOMY.autonomos;
-    items.push({ minute: 0, icon: '🧾', text: `Facturas: §${weeklyBill(w, h) + business}${business ? ' (con la cuota de autónomos)' : ''} · hipoteca: §${weeklyMortgage(w, h)}`, kind: 'bills' });
+  // Recibos del mes (alquiler el 1; luz y agua el 5) y lo que se debe.
+  if (offset === 0 && totalDebt(h)) items.push({ minute: -1, icon: '⚠️', text: `Recibos sin pagar: §${totalDebt(h)}${isEvicted(w) ? ' · ¡estáis en la calle!' : ''}`, kind: 'bills' });
+  for (const k of BILL_KINDS) {
+    if (BILL_INFO[k].day !== date.d) continue;
+    const amount = billAmount(w, h, k);
+    if (amount > 0) items.push({ minute: 0, icon: BILL_INFO[k].icon, text: `Recibo: ${BILL_INFO[k].label.toLowerCase()}, §${amount}`, kind: 'bills' });
   }
   // Calendario del barrio
   for (const e of calendarEvents(date)) {

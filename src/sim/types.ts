@@ -214,6 +214,29 @@ export interface Household {
   trip?: { start: number; end: number; dest: string };
   /** Movimientos de dinero por categoría: esta semana y la anterior (desde la versión 11). */
   ledger?: LedgerWeek[];
+  /** Recibos de la familia del jugador: pendientes, cortes y desahucio (desde la versión 18). */
+  bills?: {
+    debts: Debt[];
+    /** Día en que cortaron cada servicio. */
+    cut?: { luz?: number; agua?: number };
+    /** Desahuciados desde ese día; `away`: los que están con la abuela (bebés y mascotas). */
+    evicted?: { since: number; away: string[] };
+    /** Día de la última ayuda de los servicios sociales. */
+    aid?: number;
+    /** Avisos ya dados (y el día). */
+    warned?: Record<string, number>;
+  };
+}
+
+export type BillKind = 'alquiler' | 'luz' | 'agua' | 'autonomos';
+
+/** Un recibo sin pagar. */
+export interface Debt {
+  id: string;
+  kind: BillKind;
+  amount: number;
+  /** Día en que venció. */
+  due: number;
 }
 
 export interface LedgerWeek {

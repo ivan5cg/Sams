@@ -87,7 +87,7 @@ export function contextPairs(world: World, a: Agent, t: Agent): [string, string]
   if (se === 3) pairs.push(['¿Has comprado lotería?', 'Sí, la de la peña del bar. Este año toca, seguro']);
   if (se === 2) pairs.push(['Ya se nota el otoño', 'A mí me encanta: castañas y mantita']);
   if (se === 0) pairs.push(['Huele a primavera', '¡Y a alergia! Achís']);
-  if (world.hasEvent('apagon', a.lotId)) pairs.push(['¿Dónde están las velas?', 'En el cajón de las pilas que no funcionan']);
+  if (!world.hasPower(a.lotId)) pairs.push(['¿Dónde están las velas?', 'En el cajón de las pilas que no funcionan']);
 
   // Madrid, Alcorcón y lo que se cuece
   pairs.push(MADRID_PAIRS[Math.floor(Math.random() * MADRID_PAIRS.length)]);

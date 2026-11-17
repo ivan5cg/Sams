@@ -4,7 +4,8 @@ import { ELECTRIC } from '../src/data/seasons';
 import { migrate, serialize } from '../src/save/serialize';
 import type { Agent } from '../src/sim/types';
 import { canRomance, getRel, isAdult, setRel } from '../src/sim/social';
-import { fullNeeds, isolate, madridHomes } from './helpers';
+import { fullNeeds, goToDate, isolate, madridHomes } from './helpers';
+import { billAmount } from '../src/sim/systems/bills';
 
 describe('relaciones, trabajo y economía (fase 4)', () => {
   const withRandom = <T>(value: number, fn: () => T): T => {
@@ -175,7 +176,7 @@ describe('relaciones, trabajo y economía (fase 4)', () => {
     for (const k of kids) expect(k.travel?.reason ?? 'en casa', k.name).toBe('school');
   });
 
-  it('cada lunes llegan las facturas y comer cuesta dinero', () => {
+  it('cada mes llegan los recibos (alquiler el 1; luz y agua el 5) y comer gasta la despensa', () => {
     const w = World.createNew();
     freezeOthers(w, ['a1']);
     const fridge = w.objectsIn('L0').find((o) => o.def === 'fridge')!;
@@ -188,19 +189,26 @@ describe('relaciones, trabajo y economía (fase 4)', () => {
     expect(w.household.funds).toBe(f0);
     expect(w.household.pantry).toBe(p0 - 1);
     const f1 = w.household.funds;
-    w.state.minutes = 7 * 1440 - 1; // domingo 23:59 → lunes
-    // Sin sucesos al azar (dinero encontrado, lotería) ese día.
+    // Sin sucesos al azar (dinero encontrado, lotería) esos días.
     const orig = Math.random;
     Math.random = () => 0.99;
+    const h = w.household;
+    const rent = billAmount(w, h, 'alquiler');
+    const luz = billAmount(w, h, 'luz');
+    const agua = billAmount(w, h, 'agua');
     try {
-      w.tick(1);
+      goToDate(w, '2027-04-01');
+      expect(h.funds).toBe(f1 - rent);
+      goToDate(w, '2027-04-05');
+      expect(h.funds).toBe(f1 - rent - luz - agua);
     } finally {
       Math.random = orig;
     }
-    // Facturas según la casa (fijo, personas, mascotas y electrodomésticos) más la hipoteca.
+    // Lo mismo que antes cada semana (facturas e hipoteca), pero al mes: unas 30/7 veces.
     const appliances = w.objectsIn('L0').filter((o) => ELECTRIC.has(o.def)).length;
-    expect(w.household.funds).toBe(f1 - (60 + 2 * 20 + 2 * 10 + 3 * appliances) - 80);
-    expect(w.household.ledger?.at(-1)?.out).toMatchObject({ facturas: 60 + 2 * 20 + 2 * 10 + 3 * appliances, hipoteca: 80 });
+    expect(luz + agua).toBeCloseTo((60 + 2 * 20 + 2 * 10 + 3 * appliances) * (30 / 7), -1);
+    expect(rent).toBe(Math.round(80 * (30 / 7)));
+    expect(h.ledger?.at(-1)?.out).toMatchObject({ facturas: luz + agua });
   });
 
   it('una partida de la fase 3 recibe relaciones y trabajos al migrar', () => {

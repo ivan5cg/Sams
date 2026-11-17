@@ -5,17 +5,19 @@ import { SPECIES, lifeStage } from '../src/data/species';
 import { isolate } from './helpers';
 
 describe('agenda de la familia', () => {
-  it('turnos, facturas del lunes y el calendario del barrio', () => {
+  it('turnos, recibos del mes y el calendario del barrio', () => {
     const w = World.createNew();
     w.setJob(w.agent('a2')!, 'oficina');
     const today = agendaFor(w, 0);
     // El cambio de estación sale en su día (21 de junio: empieza el verano).
     expect(calendarEvents(w.dateOf(92)).map((e) => e.text)).toContain('Empieza el verano');
     expect(today.some((i) => i.kind === 'work' && i.agentId === 'a2')).toBe(true);
-    expect(today.some((i) => i.kind === 'bills')).toBe(false); // el primer lunes no hay facturas
-    // Una semana después, el lunes llegan las facturas.
-    w.state.minutes += 7 * 1440;
-    expect(agendaFor(w, 0).some((i) => i.kind === 'bills')).toBe(true);
+    expect(today.some((i) => i.kind === 'bills')).toBe(false); // hoy (22 de marzo) no toca ningún recibo
+    // El 1 de abril, el alquiler; el 5, la luz y el agua.
+    w.state.minutes += 10 * 1440;
+    expect(agendaFor(w, 0).filter((i) => i.kind === 'bills').map((i) => i.text)).toEqual([expect.stringContaining('alquiler')]);
+    w.state.minutes += 4 * 1440;
+    expect(agendaFor(w, 0).filter((i) => i.kind === 'bills').length).toBe(2);
     // Ordenado por hora, con lo de todo el día primero.
     const mins = agendaFor(w, 0).map((i) => i.minute);
     expect([...mins].sort((a, b) => a - b)).toEqual(mins);

@@ -9,7 +9,7 @@ import { FRIDGE_FOOD, MAX_MEMBERS } from '../constants';
 import { ROMANTIC, canRomance, getRel, isAdult, partnerOf } from '../social';
 import type { Agent, PlacedObject } from '../types';
 import type { ActionOption, Target, World } from '../world';
-import { costOf, hasEvent, lotteryReason } from './calendar';
+import { costOf, lotteryReason } from './calendar';
 import { cantMoveOut, freeBed, freeCrib } from './lifecycle';
 import { nearHammock } from './pets';
 import { closedReason, pantryOwner } from './shopping';
@@ -18,6 +18,7 @@ import { grudge } from './social';
 import { canMediate, canSnitch } from './arcs';
 import { tripReason } from './trips';
 import { HOLIDAY_ACTIONS, holidayReason } from './holidays';
+import { STREET_ACTIONS, billsReason, hasPower } from './bills';
 
 export function speciesOk(w: World, a: Agent, def: ActionDef) {
   if (!def.actors.includes(a.kind) || (def.species && !def.species.includes(a.species))) return false;
@@ -55,7 +56,10 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (actionId === 'find_job' && !isAdult(a)) return { def, ok: false, reason: 'Primero, el colegio' };
   const funds = w.householdOf(a)?.funds ?? 0;
   if (def.cost && funds < costOf(w, actionId, a)) return { def, ok: false, reason: 'No hay dinero' };
-  if ((ELECTRIC.has(o.def) || POWERED_ACTIONS.has(actionId)) && hasEvent(w, 'apagon', o.lotId)) return { def, ok: false, reason: 'No hay luz' };
+  if ((ELECTRIC.has(o.def) || POWERED_ACTIONS.has(actionId)) && !hasPower(w, o.lotId)) return { def, ok: false, reason: w.hasEvent('apagon', o.lotId) ? 'No hay luz' : 'No hay luz: os la han cortado' };
+  const street = billsReason(w, a, actionId, o.lotId);
+  if (street) return { def, ...street };
+  if (actionId === 'wash_up' && w.lotById(o.lotId)?.householdId === a.householdId) return { def, ok: false };
   // Comer de la nevera gasta raciones de la despensa de esa casa.
   if (FRIDGE_FOOD.has(actionId)) {
     const owner = pantryOwner(w, o.lotId);
@@ -190,8 +194,8 @@ export function optionsFor(w: World, agentId: string, target: Target): ActionOpt
     return w.objDef(o)
       .actions.filter((id) => speciesOk(w, a, ACTIONS[id]) && (id !== 'repair' || o.broken))
       .map((id) => checkObjectAction(w, a, o, id))
-      // Las cosas de fiesta, fuera de su día, ni se ven.
-      .filter((op) => op.ok || op.reason || !HOLIDAY_ACTIONS[op.def.id]);
+      // Las cosas de fiesta (fuera de su día), las de la calle y lavarse en el lavabo de casa, ni se ven.
+      .filter((op) => op.ok || op.reason || (!HOLIDAY_ACTIONS[op.def.id] && !STREET_ACTIONS.has(op.def.id) && op.def.id !== 'wash_up'));
   }
   if (target.kind === 'agent') {
     if (target.id === a.id) {

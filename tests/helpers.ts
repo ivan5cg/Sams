@@ -53,6 +53,8 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v18: recibos, cortes y desahucio.
+  if (version <= 17) for (const h of st.households) delete h.bills;
   // v17: calendario de verdad.
   if (version <= 16) delete st.calendarStart;
   // v16: pantalón y complementos de la cara.

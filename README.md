@@ -319,8 +319,18 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
 
 ## Dinero
 
-- Los lunes llegan las **facturas**, que dependen de la casa (tamaño, electrodomésticos y muebles de lujo) y de
-  quién vive en ella, y la **hipoteca**, que sube con cada reforma.
+- **Recibos al mes** (☰ → 🧾 Recibos y casa): el **alquiler** el día 1 (sube con cada reforma) y la **luz** y el
+  **agua** el día 5 (según el tamaño de la casa, los electrodomésticos, los muebles de lujo y quién vive en ella).
+  Con negocio propio, también la **cuota de autónomos** el día 1. La **comida** se paga al hacer la compra.
+- Se pagan solos si hay dinero. Si no, quedan **pendientes** (y agobian) y el banco lo vuelve a intentar cada día;
+  también se pueden pagar a mano en cuanto haya dinero.
+- **Si no se pagan**: a los 10 días **cortan la luz** (sin tele, ni ordenador, y la casa a oscuras) o **el agua**
+  (ni ducha, ni bañera, ni cisterna). Al pagar, vuelven (con §30 de reenganche).
+- **El alquiler**: a los 10 días llega carta del casero; a los 20, un burofax; a los 30, el **desahucio**. La
+  familia se queda en la **calle**: vive en el parque, duerme en un banco, come en el comedor social y se lava en
+  los baños públicos. Los bebés y las mascotas se van con la abuela. Al trabajo y al cole se sigue yendo.
+- Para volver: pagar lo que se debe del alquiler y un mes de fianza («Volver a alquilar la casa»). Los muebles os
+  esperan. Y si hay apuros, los **servicios sociales** echan una mano (§400, una vez al mes).
 - **Hacienda** retiene parte del sueldo por tramos (los sueldos bajos, nada).
 - En el perfil, **💶 Cuentas de la semana**: ingresos y gastos por categoría y el saldo (y el de la semana pasada).
 - Gastos con sentido: **🎁 hacer un regalo** (sube mucho la amistad), **👕 ropa nueva** y **🎓 cursos online**

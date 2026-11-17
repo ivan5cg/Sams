@@ -280,6 +280,18 @@ export class HouseScene extends Phaser.Scene {
   }
 
   /** Si el móvil pierde los gráficos (al volver a la app), se vuelve a dibujar todo. */
+  /**
+   * Lo que va pegado a la pantalla (lluvia, noche, apagón): aunque no se mueva con la cámara, el zoom sí
+   * le afecta. Se compensa para que cubra toda la pantalla (si no, con la cámara alejada solo cubría un
+   * recuadro en el centro).
+   */
+  private fitToScreen(o: Phaser.GameObjects.Components.Transform) {
+    const cam = this.cameras.main;
+    const z = cam.zoom || 1;
+    o.setScale(1 / z);
+    o.setPosition(cam.width * cam.originX * (1 - 1 / z), cam.height * cam.originY * (1 - 1 / z));
+  }
+
   private thumbs = new Map<string, Promise<string>>();
 
   /** Dibujo de un mueble suelto, como imagen («data:»), para el catálogo. Se guarda en caché. */
@@ -1068,11 +1080,7 @@ export class HouseScene extends Phaser.Scene {
     }
     const g = this.weatherGfx;
     if (!g) return;
-    // Aunque no se mueva con la cámara, el zoom sí le afecta: se compensa para que llueva en toda la
-    // pantalla (si no, con la cámara alejada solo llovía en un recuadro en el centro).
-    const cam = this.cameras.main;
-    const z = cam.zoom || 1;
-    g.setScale(1 / z).setPosition(cam.width * cam.originX * (1 - 1 / z), cam.height * cam.originY * (1 - 1 / z));
+    this.fitToScreen(g);
     g.clear();
     const dt = Math.min(delta, 60) / 16;
     for (const p of this.weatherParts) {
@@ -1173,12 +1181,13 @@ export class HouseScene extends Phaser.Scene {
     else if (h < 8) a = NIGHT_MAX * (1 - (h - 6) / 2);
     else if (h > 22) a = NIGHT_MAX;
     else if (h > 19) a = NIGHT_MAX * ((h - 19) / 3);
-    const blackout = this.world.hasEvent('apagon', this.shownLot);
+    const blackout = !this.world.hasPower(this.shownLot);
     if (blackout) a = Math.min(0.75, a * 1.35 + 0.1 + Math.sin(this.time.now / 90) * 0.015);
     // Color del cielo y tinte de la luz: amanecer rosa, día limpio, atardecer naranja, noche azul.
     const sky = skyAt(h);
     const tinted = !blackout && sky.alpha > 0 && h >= 6 && h < 21;
     this.night.setFillStyle(tinted ? sky.tint : 0x0b1640, tinted ? Math.max(sky.alpha, a * 0.6) : a);
+    this.fitToScreen(this.night);
     const skyHex = `#${sky.sky.toString(16).padStart(6, '0')}`;
     if (skyHex !== this.skyHex) {
       this.skyHex = skyHex;

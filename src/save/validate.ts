@@ -66,6 +66,22 @@ export function validateState(s: WorldState) {
       str(h.trip.dest, `viaje de ${h.id}`);
     }
     for (const m of arr(h.memberIds, `miembros de ${h.id}`)) id(m, `miembro de ${h.id}`);
+    if (h.bills) {
+      for (const d of arr(h.bills.debts, `recibos de ${h.id}`) as NonNullable<typeof h.bills>['debts']) {
+        id(d.id, `recibo de ${h.id}`);
+        if (!['alquiler', 'luz', 'agua', 'autonomos'].includes(d.kind)) throw new Broken(`recibo de ${h.id}`);
+        num(d.amount, `recibo de ${h.id}`);
+        num(d.due, `recibo de ${h.id}`);
+      }
+      optNum(h.bills.cut?.luz, `cortes de ${h.id}`);
+      optNum(h.bills.cut?.agua, `cortes de ${h.id}`);
+      optNum(h.bills.aid, `ayudas de ${h.id}`);
+      if (h.bills.evicted) {
+        num(h.bills.evicted.since, `desahucio de ${h.id}`);
+        for (const a of arr(h.bills.evicted.away, `desahucio de ${h.id}`)) id(a, `desahucio de ${h.id}`);
+      }
+      for (const v of Object.values(h.bills.warned ?? {})) num(v, `avisos de ${h.id}`);
+    }
     for (const l of h.ledger ?? []) {
       num(l.week, `cuentas de ${h.id}`);
       for (const v of [...Object.values(l.in ?? {}), ...Object.values(l.out ?? {})]) num(v, `cuentas de ${h.id}`);

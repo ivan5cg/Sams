@@ -39,6 +39,7 @@ import * as Social from './systems/social';
 import * as Feats from './systems/feats';
 import * as Arcs from './systems/arcs';
 import * as Trips from './systems/trips';
+import * as Bills from './systems/bills';
 import { dateOfDay, todayISO, type GameDate } from './date';
 import { factsOf, type DayFacts } from './feasts';
 import { GARCIA, MAX_START_PEOPLE, STAGE_AGE, applyEdit, type FamilySpec, type PersonEdit } from './family';
@@ -940,6 +941,29 @@ export class World {
   setAspiration(a: Agent, id: string) {
     return Lifecycle.setAspiration(this, a, id);
   }
+  // Recibos (bills.ts)
+  hasPower(lotId: string): boolean {
+    return Bills.hasPower(this, lotId);
+  }
+  hasWater(lotId: string): boolean {
+    return Bills.hasWater(this, lotId);
+  }
+  get evicted(): boolean {
+    return Bills.isEvicted(this);
+  }
+  payDebt(id: string): string | undefined {
+    return Bills.payDebt(this, id);
+  }
+  payAllDebts(): number {
+    return Bills.payAll(this);
+  }
+  rentBack(): string | undefined {
+    return Bills.rentBack(this);
+  }
+  askAid(): string | undefined {
+    return Bills.askAid(this);
+  }
+
   /** Cambia el aspecto (y el nombre) de una persona de la familia. Devuelve el motivo si no se puede. */
   editPerson(agentId: string, e: PersonEdit): string | undefined {
     const a = this.agent(agentId);

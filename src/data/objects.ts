@@ -75,7 +75,7 @@ const D: ObjectDef[] = [
   { id: 'crib', name: 'Cuna', icon: '', w: 1, h: 1, height: 20, color: 0xf2a7c3, shape: 'cage', capacity: 3, actions: ['baby_sleep'], price: 150, category: 'descanso' },
 
   { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'eat', 'snack', 'eat_roscon', 'drink_beer', 'repair'], price: 250, category: 'cocina', breakable: true, tiers: true },
-  { id: 'toilet', name: 'Váter', icon: '🚽', w: 1, h: 1, height: 14, color: 0xf4f4f4, capacity: 1, snap: true, actions: ['toilet', 'repair'], price: 120, category: 'cocina', breakable: true, tiers: true },
+  { id: 'toilet', name: 'Váter', icon: '🚽', w: 1, h: 1, height: 14, color: 0xf4f4f4, capacity: 1, snap: true, actions: ['toilet', 'wash_up', 'repair'], price: 120, category: 'cocina', breakable: true, tiers: true },
   { id: 'shower', name: 'Ducha', icon: '🚿', w: 1, h: 1, height: 6, color: 0x9fd3e6, capacity: 1, snap: true, actions: ['shower', 'repair'], price: 200, category: 'cocina', breakable: true, tiers: true },
   { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true, tiers: true },
 
@@ -155,7 +155,7 @@ const D: ObjectDef[] = [
   { id: 'mus_table', name: 'Mesa de mus', icon: '', w: 1, h: 1, height: 16, color: 0x6b8e4e, capacity: 4, actions: ['play_mus', 'sit'] },
 
   // Parque (algunas cosas también se pueden comprar)
-  { id: 'bench', name: 'Banco', icon: '', w: 1, h: 1, height: 12, color: 0x8b5a2b, shape: 'bench', capacity: 2, snap: true, actions: ['sit_bench'], price: 70, category: 'deco' },
+  { id: 'bench', name: 'Banco', icon: '', w: 1, h: 1, height: 12, color: 0x8b5a2b, shape: 'bench', capacity: 2, snap: true, actions: ['sit_bench', 'sleep_bench'], price: 70, category: 'deco' },
   { id: 'swings', name: 'Columpios', icon: '', w: 2, h: 1, height: 40, color: 0xd9534f, shape: 'swings', capacity: 2, snap: true, actions: ['swing'], price: 250, category: 'ocio' },
   // --- Biblioteca, gimnasio y mercadillo ---
   { id: 'study_table', name: 'Mesa de estudio', icon: '📚', w: 1, h: 1, height: 16, color: 0x8b6a45, capacity: 2, actions: ['study', 'homework_lib'] },
@@ -165,7 +165,7 @@ const D: ObjectDef[] = [
   { id: 'stall_clothes', name: 'Puesto de ropa', icon: '👕', w: 1, h: 1, height: 34, color: 0x4f8fd9, capacity: 2, actions: ['market_clothes', 'haggle'] },
   { id: 'stall_junk', name: 'Trastos y antigüedades', icon: '🏺', w: 1, h: 1, height: 34, color: 0xc9a227, capacity: 2, actions: ['rummage', 'haggle'] },
   { id: 'padel_court', name: 'Pista de pádel', icon: '🎾', w: 7, h: 3, height: 26, color: 0x2f6db5, capacity: 4, walkable: true, actions: ['play_padel'] },
-  { id: 'foodcart', name: 'Puesto de perritos', icon: '🌭', w: 1, h: 1, height: 30, color: 0xe74c3c, capacity: 1, actions: ['buy_hotdog'] },
+  { id: 'foodcart', name: 'Puesto de perritos', icon: '🌭', w: 1, h: 1, height: 30, color: 0xe74c3c, capacity: 1, actions: ['buy_hotdog', 'free_meal'] },
   { id: 'flowers', name: 'Flores', icon: '🌷', w: 1, h: 1, height: 0, color: 0x6b8e4e, shape: 'none', capacity: 0, actions: [], price: 15, category: 'deco', decor: 1 },
 ];
 

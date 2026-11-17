@@ -7,7 +7,7 @@ import type { Toast, World } from '../sim/world';
 export type NoticeLevel = 'urgent' | 'family' | 'barrio';
 
 /** Cosas que no pueden esperar: alguien está fatal o hay un problema serio. */
-export const URGENT_ICONS = new Set(['😭', '🆘', '❗', '💦', '😵', '🥴', '🤮', '⚠️']);
+export const URGENT_ICONS = new Set(['😭', '🆘', '❗', '💦', '😵', '🥴', '🤮', '⚠️', '🚨', '🔌', '🚱', '📮']);
 
 /** Lo que pasa en el barrio (o en el calendario) y no exige hacer nada ahora. */
 export const BARRIO_ICONS = new Set([

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { ELECTRIC } from '../src/data/seasons';
 import { findPath } from '../src/sim/pathfinding';
 import { SAVE_VERSION, World, moodScore } from '../src/sim/world';
 import { hasEmotion } from '../src/sim/emotions';
@@ -8,6 +7,7 @@ import { getRel, isAdult, setRel } from '../src/sim/social';
 import { traitAffinity } from '../src/sim/traits';
 import { fullNeeds, isolate } from './helpers';
 import { goToDate } from './helpers';
+import { billAmount } from '../src/sim/systems/bills';
 
 describe('más profundidad: emociones, metas, casa, rasgos, relaciones, trabajo, eventos y mascotas', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -221,7 +221,7 @@ describe('más profundidad: emociones, metas, casa, rasgos, relaciones, trabajo,
     expect(hasEmotion(mateo, 'despedido')).toBe(true);
   });
 
-  it('negocio propio: cuesta montarlo y cada lunes hay cuota de autónomos', () => {
+  it('negocio propio: cuesta montarlo y cada mes hay cuota de autónomos', () => {
     const w = World.createNew();
     isolate(w, ['a2']);
     w.household.funds = 3000;
@@ -229,10 +229,13 @@ describe('más profundidad: emociones, metas, casa, rasgos, relaciones, trabajo,
     w.setJob(mateo, 'negocio');
     expect(mateo.job?.career).toBe('negocio');
     expect(w.household.funds).toBe(500);
-    w.state.minutes = 7 * 1440 - 1;
-    withRandom(0.99, () => w.tick(1));
-    const appliances = w.objectsIn('L0').filter((o) => ELECTRIC.has(o.def)).length;
-    expect(w.household.funds).toBe(500 - (60 + 2 * 20 + 2 * 10 + 3 * appliances) - 80 - 90);
+    // El 1 de abril: alquiler y cuota de autónomos (al mes).
+    const rent = billAmount(w, w.household, 'alquiler');
+    const cuota = billAmount(w, w.household, 'autonomos');
+    expect(cuota).toBe(386);
+    w.household.funds = 1000;
+    withRandom(0.99, () => goToDate(w, '2027-04-01'));
+    expect(w.household.funds).toBe(1000 - rent - cuota);
     expect(hasEmotion(mateo, 'cuota')).toBe(true);
   });
 

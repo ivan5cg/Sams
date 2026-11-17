@@ -32,7 +32,7 @@ cambió al hacerlas está en la columna «Notas».
 | 5.4 Sitios nuevos | ✅ | Biblioteca, gimnasio y mercadillo (`systems/places.ts`), con horarios, regateo y vecinos que van. SAVE_VERSION 14 (las tres parcelas) |
 | 5.5 Tercer barrio | ✅ | Getafe (MetroSur): Cerro de los Ángeles, club de pádel y tres casas. Barrios generalizados (`squareOf`, `stationOf`, mapa por distritos). SAVE_VERSION 15 |
 
-**Lo siguiente:** la fase 5 está completa (y con ella, todo el plan). La partida va por la **versión 15**: si algo nuevo cambia lo que se guarda, toca la 16 con su migración.
+**Lo siguiente:** la fase 5 está completa, y también los encargos de después (ver «Encargos de la jefa de desarrollo»). La partida va por la **versión 18**: si algo nuevo cambia lo que se guarda, toca la 19 con su migración.
 
 ---
 
@@ -442,3 +442,17 @@ Decisiones: facturas según la casa, hipoteca por tamaño, compra semanal de los
 por tramos (frena las carreras altas sin tocar los primeros niveles), registro de movimientos y gastos
 opcionales (regalos, ropa, cursos y un fin de semana fuera). Las cifras, en `src/data/economy.ts`.
 
+
+
+---
+
+## Encargos de la jefa de desarrollo (después de la fase 5) ✅
+
+| Encargo | Estado | Notas |
+|---|---|---|
+| Editar personajes (aspecto y ropa) | ✅ | Perfil → ✏️: nombre, ropa, pantalón, piel, pelo, peinado y gafas/barba/bigote (`ui/editor.ts`, `applyEdit` en `sim/family.ts`). SAVE_VERSION 16 |
+| Catálogo de muebles | ✅ | `ui/catalog.ts`: dibujo de cada mueble (`HouseScene.objectThumb`), para qué sirve, lo que sube, tamaño, calidades y precio; buscar, ordenar, filtrar y comprar-colocar. 11 muebles nuevos y descripción para todos |
+| Estaciones como en la vida real | ✅ | Calendario de verdad dentro del juego (`sim/date.ts`, `sim/feasts.ts`): la partida empieza hoy y cada día de juego es un día del calendario; estaciones y fiestas en su fecha. Las partidas de antes siguen «hoy». SAVE_VERSION 17. Las pruebas fijan la fecha (`tests/setup.ts`, y el reloj del navegador en e2e) |
+| Alquiler, luz, agua; cortes y desahucio | ✅ | `systems/bills.ts`: recibos al mes (alquiler el 1, luz y agua el 5), pendientes si no hay dinero, corte a los 10 días, carta/burofax/desahucio a los 10/20/30. En la calle: banco, comedor social, baños públicos; bebés y mascotas con la abuela. Volver = deuda del alquiler + un mes de fianza. Servicios sociales: §400 al mes. Los vecinos siguen pagando cada semana. SAVE_VERSION 18 |
+
+De paso: la oscuridad de los apagones solo cubría el centro de la pantalla con la cámara alejada (como la lluvia); se compensa el zoom con `fitToScreen`.

@@ -151,6 +151,10 @@ const A: ActionDef[] = [
 
   // Mercadona
   { id: 'shop_small', label: 'Compra pequeña (§45 · 8 raciones)', verb: 'Haciendo la compra', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 45, duration: 20, effects: { social: 0.1 }, playerOnly: true },
+  // --- La calle (sin casa, tras un desahucio; ver systems/bills.ts) ---
+  { id: 'sleep_bench', guestOk: true, label: 'Dormir en el banco', verb: 'Durmiendo en el banco', icon: '🪑', target: 'object', actors: ['person'], duration: 480, effects: { energy: 0.14, hygiene: -0.03 }, until: 'full', decayMult: 0.6 },
+  { id: 'free_meal', guestOk: true, label: 'Bocadillo del comedor social (gratis)', verb: 'Comiendo un bocadillo', icon: '🥪', target: 'object', actors: ['person'], duration: 15, effects: { hunger: 2.4, social: 0.1 }, until: 'full' },
+  { id: 'wash_up', guestOk: true, label: 'Lavarse en el lavabo', verb: 'Lavándose', icon: '🧼', target: 'object', actors: ['person'], duration: 10, effects: { hygiene: 3 }, until: { hygiene: 75 } },
   // --- Muebles del catálogo grande ---
   { id: 'change_clothes', label: 'Cambiarse de ropa', verb: 'Cambiándose', icon: '👚', target: 'object', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], duration: 6, effects: { fun: 0.5 }, playerOnly: true },
   { id: 'play_cards', guestOk: true, label: 'Echar unas cartas', verb: 'Jugando a las cartas', icon: '🃏', target: 'object', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], duration: 40, effects: { fun: 0.5, social: 0.4 }, interruptible: true, baseScore: 2 },

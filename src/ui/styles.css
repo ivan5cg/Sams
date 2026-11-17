@@ -2194,3 +2194,20 @@ html.reduce-motion .photo-flash { display: none; }
 #build-funds { display: block; white-space: nowrap; }
 .build-head b { white-space: nowrap; }
 #clock small { font-size: 11.5px; font-weight: 600; letter-spacing: -0.3px; opacity: 0.85; }
+
+/* --- Recibos y casa --- */
+#bills {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+#bills[hidden] { display: none; }
+.bill-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.bill-row > span:first-child { font-size: 20px; width: 26px; text-align: center; }
+.bill-main { flex: 1; min-width: 0; }
+.bill-alert { margin: 8px 0; padding: 10px; border-radius: 12px; background: rgba(232, 85, 61, 0.16); border: 1px solid rgba(232, 85, 61, 0.45); font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
+.bill-alert .small-btn { align-self: flex-start; }

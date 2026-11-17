@@ -31,6 +31,10 @@ export class ProfilePanel extends Part {
       if (!b) return;
       if (b.dataset.close !== undefined) return this.closeProfile();
       if (b.dataset.edit !== undefined) return this.hud.editor.open(this.subject().id);
+      if (b.dataset.bills !== undefined) {
+        this.closeProfile();
+        return this.hud.bills.open();
+      }
       if (b.dataset.quit !== undefined && confirm('¿Seguro que quieres dejar el trabajo?')) {
         this.world.quitJob(this.subject());
         this.renderProfile();
@@ -224,7 +228,7 @@ export class ProfilePanel extends Part {
     const fmt = (n: number) => `${n >= 0 ? '+' : '−'}§${Math.abs(Math.round(n)).toLocaleString('es-ES')}`;
     const prevTxt = prev ? `<div class="muted small">La semana pasada: ${fmt(sum(prev.in) - sum(prev.out))}</div>` : '';
     const body = cur && (sum(cur.in) || sum(cur.out)) ? `${rows(cur.in, '+')}${rows(cur.out, '−')}<div class="money-row total"><span>Saldo de la semana</span><b class="${balance >= 0 ? 'in' : 'out'}">${fmt(balance)}</b></div>` : '<div class="muted small">Esta semana aún no ha entrado ni salido dinero.</div>';
-    return `<div class="prof-sec"><div class="prof-h">💶 Cuentas de la semana</div>${body}${prevTxt}<div class="muted small">Los lunes se pagan las facturas (según la casa: tamaño, electrodomésticos y muebles de lujo) y la hipoteca.</div></div>`;
+    return `<div class="prof-sec"><div class="prof-h">💶 Cuentas de la semana</div>${body}${prevTxt}<div class="muted small">Recibos al mes: el alquiler el día 1; la luz y el agua el 5 (según la casa: tamaño, electrodomésticos y muebles de lujo). <button class="map-btn ghost small-btn" data-bills>🧾 Ver recibos</button></div></div>`;
   }
 
   petHtml(a: Agent): string {

@@ -36,6 +36,10 @@ export const ECONOMY = {
   costume: 15,
   costumePrize: 100,
   roscon: 25,
+  /** Volver a dar de alta la luz o el agua tras un corte. */
+  reconnect: 30,
+  /** Ayuda de los servicios sociales (una vez cada 30 días, con deudas o en la calle). */
+  socialAid: 400,
   /** Mercadillo: lo que se saca revendiendo una antigüedad, y la rebaja de regatear. */
   resale: 40,
   haggleDiscount: 0.5,
@@ -56,6 +60,8 @@ export const MONEY_CATEGORIES: Record<string, { icon: string; label: string }> =
   facturas: { icon: '🧾', label: 'Facturas' },
   hacienda: { icon: '🏛️', label: 'Hacienda' },
   hipoteca: { icon: '🏦', label: 'Hipoteca' },
+  alquiler: { icon: '🏠', label: 'Alquiler' },
+  ayudas: { icon: '🤝', label: 'Ayudas' },
   autonomos: { icon: '🧾', label: 'Autónomos' },
   compra: { icon: '🛒', label: 'Comida y compra' },
   ocio: { icon: '🍹', label: 'Ocio' },
