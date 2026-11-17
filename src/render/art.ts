@@ -468,6 +468,36 @@ const ART: Record<string, Art> = {
       g.fillCircle(p.x, p.y - 5, 1.7);
     }
   },
+  piano: (g, _f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 40, 0.16);
+    const body = R(X + 0.08, Y + 0.12, 0.84, 0.46);
+    prism(g, body, 0, 42, 0x2b1d14, { top: 0x3a281c });
+    // Teclado: repisa con teclas blancas y negras.
+    const shelf = R(X + 0.08, Y + 0.58, 0.84, 0.14);
+    prism(g, shelf, 18, 21, 0x2b1d14, { top: 0xf4f2ee });
+    for (let i = 0; i < 12; i++) {
+      if ([1, 3, 6, 8, 10].includes(i % 12)) flat(g, R(X + 0.1 + i * 0.067, Y + 0.58, 0.035, 0.07), 21.3, 0x111111);
+    }
+    // Atril con partitura y banqueta.
+    faceQuad(g, body, 'L', 0.3, 0.7, 26, 34, 0xf6efd9);
+    prism(g, R(X + 0.3, Y + 0.8, 0.4, 0.16), 0, 11, 0x3a281c);
+  },
+  workbench: (g, _f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 38, 0.14);
+    for (const [px, py] of [[0.12, 0.2], [0.88, 0.2], [0.12, 0.82], [0.88, 0.82]]) poleAt(g, X + px, Y + py, 0, 18, WOOD_DARK, 3);
+    prism(g, R(X + 0.15, Y + 0.25, 0.7, 0.52), 6, 8, WOOD_DARK);
+    prism(g, R(X + 0.06, Y + 0.14, 0.88, 0.74), 18, 22, WOOD, { top: 0xc8955a });
+    // Panel de herramientas detrás.
+    const board = R(X + 0.06, Y + 0.06, 0.88, 0.06);
+    prism(g, board, 22, 46, 0xd8c3a0);
+    faceQuad(g, board, 'L', 0.12, 0.3, 30, 42, 0x8a93a3);
+    faceQuad(g, board, 'L', 0.42, 0.47, 28, 44, 0xb5651d);
+    faceQuad(g, board, 'L', 0.6, 0.85, 34, 38, 0xd9534f);
+    // Martillo y tablón sobre la mesa.
+    flat(g, R(X + 0.2, Y + 0.45, 0.4, 0.12), 22.3, 0xe0b57a);
+    flat(g, R(X + 0.66, Y + 0.5, 0.06, 0.24), 22.4, 0x6e4a2e);
+    flat(g, R(X + 0.62, Y + 0.48, 0.14, 0.06), 22.6, 0x555c6b);
+  },
   mirror: (g, _f, X, Y) => {
     const r = R(X + 0.12, Y + 0.44, 0.76, 0.1);
     shadowUnder(g, X + 0.5, Y + 0.5, 30, 0.1);

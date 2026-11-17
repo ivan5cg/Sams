@@ -69,6 +69,9 @@ export function relLabel(rel: Rel, aKind: Agent['kind'], bKind: Agent['kind']): 
 /** Cambios de relación al terminar cada interacción social: [amistad, romance]. */
 export const REL_EFFECTS: Record<string, [number, number]> = {
   chat: [4, 0],
+  serenade: [6, 15],
+  portrait: [12, 2],
+  tell_story: [6, 0],
   joke: [5, 0],
   hug: [4, 1],
   give_gift: [15, 3],

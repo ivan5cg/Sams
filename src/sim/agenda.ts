@@ -3,6 +3,7 @@
 // Las reglas de los eventos son las mismas que en systems/calendar.ts (si cambian allí,
 // hay que cambiarlas aquí: la prueba de la agenda lo comprueba simulando semanas enteras).
 
+import { schoolName } from '../data/education';
 import { CAREERS, workDays } from '../data/careers';
 import { ACTIONS } from '../data/actions';
 import { SEASONS } from '../data/seasons';
@@ -79,7 +80,7 @@ export function agendaFor(w: World, offset: 0 | 1): AgendaItem[] {
     items.push({
       minute: c.start * 60,
       icon: c.icon,
-      text: `${m.name}: ${school ? 'colegio' : c.levels[job.level - 1].title.toLowerCase()} de ${c.start}:00 a ${c.end}:00${done ? ' (ya ha ido)' : ''}`,
+      text: `${m.name}: ${school ? schoolName(w.stageOf(m), job.career).toLowerCase() : c.levels[job.level - 1].title.toLowerCase()} de ${c.start}:00 a ${c.end}:00${done ? ' (ya ha ido)' : ''}`,
       kind: school ? 'school' : 'work',
       agentId: m.id,
     });

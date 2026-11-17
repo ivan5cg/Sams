@@ -2,6 +2,8 @@
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
 import { afterBirth } from './fertility';
+import { gradeLabel } from '../../data/careers';
+import { SCHOLARSHIP_GRADE } from '../../data/education';
 import { HABITS, HABIT_TEXT } from '../../data/habits';
 import { isOutdoor } from '../../data/lot';
 import { SPECIES } from '../../data/species';
@@ -136,9 +138,12 @@ export function onStageChange(w: World, a: Agent, after: string) {
     a.current = null;
     a.job = { career: 'school', level: 1, perf: 50 };
     if (mine) w.toast(`${a.name} ya camina y empieza el colegio`, '🎒');
+  } else if (after === 'teen' && a.job?.career === 'school') {
+    if (mine) w.toast(`${a.name} empieza el instituto. Adolescencia a la vista`, '🏫');
   } else if (after === 'young' && a.job?.career === 'school') {
+    a.lastGrade = a.job.perf;
     a.job = undefined;
-    if (mine) w.toast(`${a.name} ha terminado el colegio y ya puede buscar trabajo`, '🎓');
+    if (mine) w.toast(`${a.name} ha terminado el instituto (${gradeLabel(a.lastGrade)}). Puede ir a la universidad${a.lastGrade >= SCHOLARSHIP_GRADE ? ', ¡con beca!,' : ''} o buscar trabajo (ordenador)`, '🎓');
     if (mine) {
       a.traitPick = true;
       w.toast(`${a.name} ya es adulto/a: en su perfil puedes elegir uno de sus rasgos`, '🧬');

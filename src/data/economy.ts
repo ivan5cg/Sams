@@ -71,6 +71,10 @@ export const MONEY_CATEGORIES: Record<string, { icon: string; label: string }> =
   regalos: { icon: '🎁', label: 'Regalos' },
   ropa: { icon: '👕', label: 'Ropa' },
   cursos: { icon: '🎓', label: 'Cursos' },
+  libros: { icon: '📚', label: 'Libros' },
+  encargos: { icon: '🛠️', label: 'Encargos y clases' },
+  bolsa: { icon: '📈', label: 'Bolsa (compras y ventas)' },
+  dividendos: { icon: '💰', label: 'Dividendos' },
   viajes: { icon: '🧳', label: 'Viajes' },
   calle: { icon: '🛍️', label: 'En la calle' },
 };
@@ -85,6 +89,7 @@ export const SPEND_CATEGORY: Record<string, string> = {
   give_gift: 'regalos',
   buy_clothes: 'ropa',
   take_course: 'cursos',
+  upgrade: 'reformas',
 };
 
 /** Lo que se queda Hacienda de un sueldo de una jornada (por tramos). */

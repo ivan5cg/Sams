@@ -22,6 +22,8 @@ export interface Career {
   business?: boolean;
   /** Se puede teletrabajar (informes en el ordenador de casa). */
   remote?: boolean;
+  /** Hace falta esta carrera universitaria (ver data/education.ts). */
+  degree?: string;
   startup?: number;
 }
 
@@ -137,6 +139,103 @@ export const CAREERS: Record<string, Career> = {
       { title: 'Franquicia por toda España', pay: 520 },
     ],
   },
+  // Profesiones que piden carrera.
+  banca: {
+    id: 'banca',
+    name: 'Banca',
+    icon: '🏦',
+    start: 8,
+    end: 15,
+    days: WEEKDAYS,
+    levels: [
+      { title: 'Cajero/a', pay: 75 },
+      { title: 'Gestor/a comercial', pay: 105 },
+      { title: 'Asesor/a financiero/a', pay: 145 },
+      { title: 'Director/a de sucursal', pay: 200 },
+      { title: 'Director/a de zona', pay: 280 },
+    ],
+  },
+  bolsa: {
+    id: 'bolsa',
+    name: 'Bolsa',
+    icon: '📈',
+    degree: 'economia',
+    start: 8,
+    end: 17,
+    days: WEEKDAYS,
+    levels: [
+      { title: 'Becario/a de la mesa', pay: 70 },
+      { title: 'Analista', pay: 140 },
+      { title: 'Bróker', pay: 210 },
+      { title: 'Gestor/a de fondos', pay: 290 },
+      { title: 'Socio/a del fondo', pay: 400 },
+    ],
+  },
+  medicina: {
+    id: 'medicina',
+    name: 'Medicina',
+    icon: '👩‍⚕️',
+    degree: 'medicina',
+    start: 8,
+    end: 15,
+    days: WEEKDAYS,
+    levels: [
+      { title: 'Médico/a residente (MIR)', pay: 110 },
+      { title: 'Médico/a de familia', pay: 160 },
+      { title: 'Especialista', pay: 220 },
+      { title: 'Jefe/a de servicio', pay: 290 },
+      { title: 'Director/a del hospital', pay: 370 },
+    ],
+  },
+  abogacia: {
+    id: 'abogacia',
+    name: 'Abogacía',
+    icon: '⚖️',
+    degree: 'derecho',
+    start: 9,
+    end: 18,
+    days: WEEKDAYS,
+    levels: [
+      { title: 'Pasante', pay: 80 },
+      { title: 'Abogado/a júnior', pay: 130 },
+      { title: 'Abogado/a asociado/a', pay: 190 },
+      { title: 'Socio/a del bufete', pay: 280 },
+      { title: 'Magistrado/a del Supremo', pay: 360 },
+    ],
+  },
+  informatica: {
+    id: 'informatica',
+    name: 'Informática',
+    icon: '👨‍💻',
+    degree: 'informatica',
+    remote: true,
+    start: 9,
+    end: 17,
+    days: WEEKDAYS,
+    levels: [
+      { title: 'Programador/a júnior', pay: 95 },
+      { title: 'Programador/a', pay: 140 },
+      { title: 'Programador/a sénior', pay: 195 },
+      { title: 'Jefe/a de proyecto', pay: 260 },
+      { title: 'Director/a de tecnología', pay: 340 },
+    ],
+  },
+  docencia: {
+    id: 'docencia',
+    name: 'Enseñanza',
+    icon: '👩‍🏫',
+    degree: 'magisterio',
+    start: 8,
+    end: 15,
+    days: WEEKDAYS,
+    levels: [
+      { title: 'Profesor/a interino/a', pay: 85 },
+      { title: 'Maestro/a', pay: 120 },
+      { title: 'Jefe/a de estudios', pay: 160 },
+      { title: 'Director/a del colegio', pay: 210 },
+      { title: 'Inspector/a de educación', pay: 270 },
+    ],
+  },
   school: {
     id: 'school',
     name: 'Colegio',
@@ -146,6 +245,16 @@ export const CAREERS: Record<string, Career> = {
     days: WEEKDAYS,
     school: true,
     levels: [{ title: 'Estudiante', pay: 0 }],
+  },
+  uni: {
+    id: 'uni',
+    name: 'Universidad',
+    icon: '🎓',
+    start: 9,
+    end: 14,
+    days: WEEKDAYS,
+    school: true,
+    levels: [{ title: 'Universitario/a', pay: 0 }],
   },
 };
 

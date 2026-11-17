@@ -1,5 +1,11 @@
 // Menú de acciones al tocar algo de la escena: qué puede hacer el personaje activo.
 
+import { DEGREES } from '../data/education';
+import { BOOK_TIERS, BOOKS, RECIPES } from '../data/skillTree';
+import { booksAt, bookReason, buyBookReason, recipeReason } from '../sim/systems/skillWorks';
+import { pricedLabel } from '../sim/systems/economy';
+import { SKILL_BY_ID } from '../data/skills';
+import { degreeReason, enrollReason, hasScholarship, startLevel } from '../sim/systems/education';
 import { CAREERS, JOB_CAREERS, scheduleText } from '../data/careers';
 import { OBJECTS, QUALITY } from '../data/objects';
 import { PET_TRAIT_BY_ID } from '../data/pets';
@@ -10,8 +16,6 @@ import { mainTag } from '../sim/relations';
 import { traitsOf } from '../sim/traits';
 import type { SpeciesId } from '../sim/types';
 import { MAX_MEMBERS, type Target } from '../sim/world';
-import { ACTIONS } from '../data/actions';
-import { MAX_SKILL, SKILLS } from '../data/skills';
 import { $, esc } from './dom';
 import { Part } from './part';
 
@@ -66,8 +70,26 @@ export class ActionSheet extends Part {
         this.hud.render();
         return;
       }
-      if (b.dataset.course) {
-        this.world.command(this.world.activeAgent.id, 'take_course', this.sheetTarget, b.dataset.course);
+      if (b.dataset.degree) {
+        this.world.command(this.world.activeAgent.id, 'enroll', this.sheetTarget, b.dataset.degree);
+        this.closeSheet();
+        this.hud.render();
+        return;
+      }
+      if (b.dataset.recipe) {
+        this.world.command(this.world.activeAgent.id, b.dataset.recipeAction ?? 'cook', this.sheetTarget, b.dataset.recipe);
+        this.closeSheet();
+        this.hud.render();
+        return;
+      }
+      if (b.dataset.buybook) {
+        this.world.command(this.world.activeAgent.id, 'buy_book', this.sheetTarget, b.dataset.buybook);
+        this.closeSheet();
+        this.hud.render();
+        return;
+      }
+      if (b.dataset.readbook) {
+        this.world.command(this.world.activeAgent.id, 'read_skill_book', this.sheetTarget, b.dataset.readbook);
         this.closeSheet();
         this.hud.render();
         return;
@@ -81,7 +103,11 @@ export class ActionSheet extends Part {
       const action = b.dataset.action;
       if (action === 'adopt') return this.showAdoption();
       if (action === 'find_job') return this.showJobs();
-      if (action === 'take_course' && !this.scheduling) return this.showCourses();
+      if (action === 'enroll') return this.showDegrees();
+      if ((action === 'cook' || action === 'bake') && !this.scheduling) return this.showRecipes(action);
+      if (action === 'buy_book') return this.showBookShop();
+      if (action === 'invest') return this.hud.market.open(true);
+      if (action === 'read_skill_book' && !this.scheduling) return this.showBooks();
       if (action && this.scheduling) return this.askTime(action);
       if (action) {
         this.world.command(this.world.activeAgent.id, action, this.sheetTarget);
@@ -149,7 +175,7 @@ export class ActionSheet extends Part {
         (o) =>
           `<button class="act" data-action="${o.def.id}" ${o.ok ? '' : 'disabled'}>
             <span class="act-icon">${o.def.icon}</span>
-            <span class="act-label">${esc(o.def.label)}${o.reason ? `<small>${esc(o.reason)}</small>` : ''}</span>
+            <span class="act-label">${esc(pricedLabel(this.world, o.def.label))}${o.reason ? `<small>${esc(o.reason)}</small>` : ''}</span>
           </button>`,
       )
       .join('');
@@ -199,23 +225,79 @@ export class ActionSheet extends Part {
     row.querySelector('input')?.focus();
   }
 
-  /** Curso online: elegir qué habilidad mejorar (sube un nivel de golpe). */
-  private showCourses() {
-    const a = this.world.activeAgent;
-    const items = SKILLS.map((s) => {
-      const lvl = Math.floor(a.skills?.[s.id] ?? 0);
-      const max = lvl >= MAX_SKILL;
-      return `<button class="act" data-course="${s.id}" ${max ? 'disabled' : ''}>
-        <span class="act-icon">${s.icon}</span>
-        <span class="act-label">${esc(s.label)}<small class="info">Ahora: nivel ${lvl}${max ? ' (el máximo)' : ` → ${lvl + 1}`}</small></span>
-      </button>`;
-    }).join('');
+  /** Cocinar u hornear: elegir receta (las de más nivel, con candado hasta llegar). */
+  private showRecipes(actionId: 'cook' | 'bake') {
+    const w = this.world;
+    const a = w.activeAgent;
+    const skill = actionId === 'bake' ? 'reposteria' : 'cocina';
+    const lotId = (this.sheetTarget?.kind === 'object' && w.object(this.sheetTarget.id)?.lotId) || a.lotId;
+    const lvl = Math.floor(a.skills?.[skill] ?? 0);
+    const items = RECIPES.filter((r) => r.skill === skill)
+      .map((r) => {
+        const locked = lvl < r.level;
+        const why = recipeReason(w, a, r, lotId);
+        const extra = [r.portions > 1 ? `${r.portions} raciones` : '1 ración', r.family ? 'da de comer a la familia' : '', r.sell ? `se vende por §${r.sell + 15 * lvl}` : ''].filter(Boolean).join(' · ');
+        return `<button class="act" data-recipe="${r.id}" data-recipe-action="${actionId}" ${why ? 'disabled' : ''}>
+          <span class="act-icon">${locked ? '🔒' : r.icon}</span>
+          <span class="act-label">${esc(r.label)}<small class="info">${locked ? `Se desbloquea con ${esc(SKILL_BY_ID[skill].label.toLowerCase())} ${r.level}` : `${esc(r.desc)} · ${esc(extra)}${why ? ` · ${esc(why)}` : ''}`}</small></span>
+        </button>`;
+      })
+      .join('');
     $('#sheet').querySelector('.sheet-card')!.innerHTML = `
       <div class="sheet-head">
-        <div><div class="sheet-title">🎓 Cursos online</div><div class="sheet-sub">§${ACTIONS.take_course.cost} · dos horas delante del ordenador · sube un nivel</div></div>
+        <div><div class="sheet-title">${actionId === 'bake' ? '🧁 ¿Qué horneamos?' : '🍳 ¿Qué cocinamos?'}</div><div class="sheet-sub">${esc(a.name)}: ${esc(SKILL_BY_ID[skill].label.toLowerCase())} nivel ${lvl}. Con más nivel, más recetas</div></div>
         <button class="icon-btn" data-close>✕</button>
       </div>
       <div class="sheet-actions one-col">${items}</div>`;
+  }
+
+  /** Libros de habilidad por internet: dos tomos por habilidad. */
+  private showBookShop() {
+    const w = this.world;
+    const a = w.activeAgent;
+    const h = w.householdOf(a);
+    const items = Object.values(BOOKS)
+      .map((b) => {
+        const s = SKILL_BY_ID[b.skill];
+        const why = buyBookReason(w, a, b.id);
+        const owned = h?.books?.includes(b.id);
+        return `<button class="act" data-buybook="${b.id}" ${why ? 'disabled' : ''}>
+          <span class="act-icon">${s.icon}</span>
+          <span class="act-label">«${esc(b.title)}» · §${this.world.priced(b.price)}<small class="info">${esc(s.label)}, ${esc(BOOK_TIERS[b.tier].label.toLowerCase())}: enseña ${b.from ? `del nivel ${b.from} ` : ''}hasta el ${b.upTo}${owned ? ' · ✅ Ya lo tenéis' : why ? ` · ${esc(why)}` : ''}</small></span>
+        </button>`;
+      })
+      .join('');
+    $('#sheet').querySelector('.sheet-card')!.innerHTML = `
+      <div class="sheet-head">
+        <div><div class="sheet-title">📚 Libros de habilidad</div><div class="sheet-sub">Llegan a la estantería de casa y sirven para toda la familia</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      <p class="sheet-note">Los libros enseñan lo básico (hasta el nivel 4) y lo avanzado (hasta el 7). De ahí para arriba, solo practicando. En la biblioteca están todos, gratis.</p>
+      <div class="sheet-actions one-col">${items}</div>`;
+  }
+
+  /** Estantería: qué libro de habilidad estudiar. */
+  private showBooks() {
+    const w = this.world;
+    const a = w.activeAgent;
+    const lotId = (this.sheetTarget?.kind === 'object' && w.object(this.sheetTarget.id)?.lotId) || a.lotId;
+    const books = booksAt(w, lotId);
+    const items = books
+      .map((b) => {
+        const s = SKILL_BY_ID[b.skill];
+        const why = bookReason(w, a, b.id, lotId);
+        return `<button class="act" data-readbook="${b.id}" ${why ? 'disabled' : ''}>
+          <span class="act-icon">${s.icon}</span>
+          <span class="act-label">«${esc(b.title)}»<small class="info">${esc(s.label)} · hasta el nivel ${b.upTo} · ahora: ${Math.floor(a.skills?.[b.skill] ?? 0)}${why ? ` · ${esc(why)}` : ''}</small></span>
+        </button>`;
+      })
+      .join('');
+    $('#sheet').querySelector('.sheet-card')!.innerHTML = `
+      <div class="sheet-head">
+        <div><div class="sheet-title">📘 Estudiar un libro</div><div class="sheet-sub">${books.length} libro${books.length === 1 ? '' : 's'} de habilidad aquí</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      <div class="sheet-actions one-col">${items || '<p class="muted small">No hay libros de habilidad. Se compran en el ordenador.</p>'}</div>`;
   }
 
   /** Buscar trabajo: elegir carrera. */
@@ -223,9 +305,11 @@ export class ActionSheet extends Part {
     const a = this.world.activeAgent;
     const items = JOB_CAREERS.map((c) => {
       const current = a.job?.career === c.id;
-      return `<button class="act" data-career="${c.id}" ${current ? 'disabled' : ''}>
+      const needs = degreeReason(a, c.id);
+      const lvl = startLevel(a, c.id);
+      return `<button class="act" data-career="${c.id}" ${current || needs ? 'disabled' : ''}>
         <span class="act-icon">${c.icon}</span>
-        <span class="act-label">${esc(c.name)} · ${esc(c.levels[0].title)}<small class="info">${c.business ? `Montarlo: §${c.startup?.toLocaleString('es-ES')} · ganancias variables · cuota §90/semana` : `§${c.levels[0].pay}/jornada`} · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
+        <span class="act-label">${esc(c.name)} · ${esc(c.levels[lvl - 1].title)}<small class="info">${needs ? `${esc(needs)} · ` : c.degree ? '🎓 Con tu título · ' : lvl > 1 ? '🎓 Empiezas más arriba por tu carrera · ' : ''}${c.business ? `Montarlo: §${this.world.priced(c.startup ?? 0).toLocaleString('es-ES')} · ganancias variables · cuota §${this.world.priced(90)}/semana` : `§${this.world.wage(c.levels[lvl - 1].pay)}/jornada`} · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
       </button>`;
     }).join('');
     $('#sheet').querySelector('.sheet-card')!.innerHTML = `
@@ -234,6 +318,29 @@ export class ActionSheet extends Part {
         <button class="icon-btn" data-close>✕</button>
       </div>
       <p class="sheet-note">Se va solo a su hora y vuelve al salir. Si va de buen humor, rinde más y asciende antes.</p>
+      <div class="sheet-actions one-col">${items}</div>`;
+  }
+
+  /** Universidad: elegir carrera (con beca, gratis). */
+  showDegrees() {
+    const a = this.world.activeAgent;
+    const beca = hasScholarship(a);
+    const items = Object.values(DEGREES)
+      .map((d) => {
+        const why = enrollReason(this.world, a, d.id);
+        const c = CAREERS[d.career];
+        return `<button class="act" data-degree="${d.id}" ${why ? 'disabled' : ''}>
+          <span class="act-icon">${d.icon}</span>
+          <span class="act-label">${esc(d.label)} · ${d.days} días<small class="info">${why ? `${esc(why)} · ` : ''}${beca ? 'Con beca: gratis' : `Matrícula §${d.cost}`} · lleva a ${esc(c.name.toLowerCase())}${d.startLevel ? ` (empiezas de ${esc(c.levels[d.startLevel - 1].title.toLowerCase())})` : ''} · aprende ${esc(SKILL_BY_ID[d.skill]?.label.toLowerCase() ?? '')}</small></span>
+        </button>`;
+      })
+      .join('');
+    $('#sheet').querySelector('.sheet-card')!.innerHTML = `
+      <div class="sheet-head">
+        <div><div class="sheet-title">🎓 Universidad</div><div class="sheet-sub">${beca ? `${esc(a.name)} tiene beca por sus notas del instituto` : 'Clase de lunes a viernes, de 9:00 a 14:00 (sin sueldo)'}</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      <p class="sheet-note">Con buenas notas se acaba antes. Estudiar en casa o en la biblioteca sube las notas. Si trabaja, lo deja para estudiar.</p>
       <div class="sheet-actions one-col">${items}</div>`;
   }
 

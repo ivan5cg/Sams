@@ -28,6 +28,11 @@ import { bookTrip } from './trips';
 import { holidayTask } from './holidays';
 import { placeTask } from './places';
 import { riskyTask, seeDoctor } from './illness';
+import { moveOut } from './breakups';
+import { enroll, studyAtHome } from './education';
+import { noteDaily, readBook, skillTask } from './skillWorks';
+import { econ, hiringFailChance } from './economy';
+import { CAREERS } from '../../data/careers';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -89,7 +94,8 @@ export function beginTask(w: World, a: Agent, task: Task): boolean {
   if (def.target === 'self') {
     if (!speciesOk(w, a, def)) return fail('no puede hacer eso');
     task.phase = 'acting';
-    task.remaining = def.duration;
+    // Quien es manitas arregla antes (con 6, en la mitad de tiempo).
+    task.remaining = task.actionId === 'repair' ? def.duration * (skillLevel(w, a, 'manitas') >= 6 ? 0.5 : 1 - 0.05 * skillLevel(w, a, 'manitas')) : def.duration;
     w.emit({ type: 'act', agentId: a.id, actionId: task.actionId });
     return true;
   }
@@ -195,12 +201,13 @@ export function completeTask(w: World, a: Agent, task: Task) {
   // Medicinas y médico.
   if (task.actionId === 'take_medicine' && a.illness && a.illness.medicated !== w.day) {
     a.illness.medicated = w.day;
-    money(w, w.householdOf(a), -(ACTIONS.take_medicine.cost ?? 0), 'compra');
+    money(w, w.householdOf(a), -costOf(w, 'take_medicine', a), 'compra');
     a.illness.until = Math.max(w.state.minutes + 60, a.illness.until - MINUTES_PER_DAY / 2);
     a.emotions = (a.emotions ?? []).filter((e) => e.id !== 'enfermo');
     if (w.isPlayerMember(a)) w.toast(`${a.name} se ha tomado algo: se encuentra un poco mejor`, '💊', a.id);
   }
   if (task.actionId === 'call_doctor') seeDoctor(w, a);
+  if (task.actionId === 'move_out') moveOut(w, a);
   if (task.actionId === 'change_clothes') {
     // Del armario: otra ropa de las de siempre (sin pasar por caja).
     const options = CLOTHES.filter((c) => c !== a.color);
@@ -224,8 +231,21 @@ export function completeTask(w: World, a: Agent, task: Task) {
   w.bump(a, task.actionId);
   taskFeelings(w, a, task, o);
   skillPayoff(w, a, task.actionId);
+  skillTask(w, a, task, o);
+  noteDaily(w, a, def);
   shopping(w, a, task.actionId);
-  if (task.actionId === 'find_job' && task.param) setJob(w, a, task.param);
+  if (task.actionId === 'find_job' && task.param) {
+    // Con mucho paro, a veces no te cogen (y hasta mañana no hay más entrevistas).
+    if (!CAREERS[task.param]?.business && Math.random() < hiringFailChance(w)) {
+      a.done = { ...(a.done ?? {}), find_job: w.day };
+      if (w.isPlayerMember(a)) w.toast(`A ${a.name} no le han cogido: con un ${Math.round(econ(w).unemployment)} % de paro hay cola para cada puesto. Mañana, más currículums`, '📰', a.id);
+    } else setJob(w, a, task.param);
+  }
+  if (task.actionId === 'enroll' && task.param) {
+    const why = enroll(w, a, task.param);
+    if (why && w.isPlayerMember(a)) w.toast(`${a.name}: ${why}`, '🎓');
+  }
+  if (task.actionId === 'study_exams') studyAtHome(w, a);
   if (ACTIONS[task.actionId].target === 'agent' && task.actionId !== 'say_goodbye') {
     const t = w.agent(task.targetAgentId);
     if (t) socialOutcome(w, a, t, task.actionId);
@@ -297,6 +317,7 @@ export function runTask(w: World, a: Agent, task: Task, dt: number) {
   const tq = def.target === 'object' ? w.object(task.targetObjectId)?.q : undefined;
   applyEffects(w, a, def.effects, dt, tq ? QUALITY[tq].mult : 1);
   if (def.skill) practice(w, a, def.skill, dt);
+  if (task.actionId === 'read_skill_book' && !readBook(w, a, task, dt)) return completeTask(w, a, task);
   if (partner && def.partnerEffects) applyEffects(w, partner, def.partnerEffects, dt);
   task.remaining -= dt;
   if (task.remaining <= 0 || isSatisfied(w, a, def)) {

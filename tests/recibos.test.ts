@@ -4,6 +4,7 @@ import { migrate, serialize } from '../src/save/serialize';
 import { hasEmotion } from '../src/sim/emotions';
 import { DEADLINES, billAmount, debtsOf, rentBackCost, totalDebt, upcomingBills } from '../src/sim/systems/bills';
 import { fullNeeds, goToDate, isolate, problems } from './helpers';
+import { econ } from '../src/sim/systems/economy';
 
 /** Partida aislada (sin sucesos al azar que den dinero) y sin un duro. */
 function broke() {
@@ -116,7 +117,9 @@ describe('recibos: alquiler, luz y agua', () => {
     expect(lucia.needs.hunger).toBeGreaterThan(20);
     expect(w.household.funds).toBe(before); // el comedor social es gratis
     w.household.funds = 0;
-    // Los servicios sociales ayudan una vez al mes.
+    // Los servicios sociales ayudan una vez al mes (§400 con un Gobierno de centro y sin inflación acumulada).
+    Object.assign(econ(w), { priceIndex: 1 });
+    econ(w).gov.party = 'uc';
     expect(w.askAid()).toBeUndefined();
     expect(w.household.funds).toBe(400);
     expect(w.askAid()).toMatch(/hace poco/);
@@ -138,6 +141,10 @@ describe('recibos: alquiler, luz y agua', () => {
     const again = new World(migrate(JSON.parse(serialize(w.state))));
     expect(debtsOf(again.household).length).toBe(3);
     expect(w.state.households.filter((h) => h.id !== w.household.id).every((h) => !h.bills)).toBe(true);
+    // El alquiler, a precios de partida y con los tipos al 2 %: §343 al mes. Con inflación y tipos altos, más.
+    Object.assign(econ(w), { priceIndex: 1, rate: 2 });
     expect(billAmount(w, w.household, 'alquiler')).toBe(343);
+    Object.assign(econ(w), { priceIndex: 1.1, rate: 4 });
+    expect(billAmount(w, w.household, 'alquiler')).toBe(Math.round(88 * 1.1 * 30 / 7));
   });
 });

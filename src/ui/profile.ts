@@ -1,5 +1,6 @@
 // Perfil del personaje activo: ánimo, meta de vida, trabajo, rasgos, habilidades, mascota y relaciones.
 
+import { DEGREES, SCHOLARSHIP_GRADE, schoolName } from '../data/education';
 import { longDate } from '../sim/date';
 import { ILLNESSES } from '../data/illnesses';
 import { CYCLE_DAYS, PHASE_INFO, cycleDay, isPregnant, phase } from '../sim/systems/fertility';
@@ -7,6 +8,7 @@ import { MONEY_CATEGORIES } from '../data/economy';
 import { BAR_MENUS, BAR_STAFF, CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
 import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
 import { MAX_SKILL, SKILLS } from '../data/skills';
+import { unlocksOf } from '../data/skillTree';
 import { SPECIES, lifeStage } from '../data/species';
 import { TRAITS } from '../data/traits';
 import { ASPIRATIONS, ASPIRATION_BY_ID } from '../sim/aspirations';
@@ -104,16 +106,19 @@ export class ProfilePanel extends Part {
         const lvl = c.levels[a.job.level - 1];
         const perfLabel = c.school ? `Notas: ${gradeLabel(a.job.perf)}` : `Rendimiento (al 100%, ascenso)`;
         jobHtml = `<div class="prof-sec">
-          <div class="prof-h">${c.icon} ${c.school ? 'Colegio' : esc(lvl.title)}</div>
-          <div class="muted small">${c.school ? '' : `${esc(c.name)} · nivel ${a.job.level}/${c.levels.length} · §${lvl.pay} por jornada · `}${esc(scheduleText(c))}</div>
+          <div class="prof-h">${c.icon} ${c.school ? esc(schoolName(stage.id, a.job.career)) : esc(lvl.title)}</div>
+          <div class="muted small">${c.school ? '' : `${esc(c.name)} · nivel ${a.job.level}/${c.levels.length} · §${w.wage(lvl.pay)} por jornada · `}${esc(scheduleText(c))}</div>
+          ${a.study && DEGREES[a.study.degree] ? `<div class="small">${DEGREES[a.study.degree].icon} ${esc(DEGREES[a.study.degree].label)}: ${Math.min(100, Math.round((a.study.progress / DEGREES[a.study.degree].days) * 100))}% de la carrera</div>` : ''}
+          ${c.school && mine ? '<div class="muted small">📖 Estudiar (en el ordenador o en la biblioteca) sube las notas. En clase se aprende lo que solo se aprende estudiando.</div>' : ''}
           <div class="perf"><span class="small">${perfLabel}</span><div class="bar"><div class="fill" style="width:${Math.round(a.job.perf)}%;background:#4f8fd9"></div></div></div>
           ${c.business && mine ? this.barHtml(a) : ''}
           ${c.remote && mine ? '<div class="muted small">🧑‍💻 Se puede teletrabajar: toca el ordenador de casa y elige «Teletrabajar».</div>' : ''}
           ${c.school || !mine ? '' : '<button class="map-btn ghost small-btn" data-quit>Dejar el trabajo</button>'}
         </div>`;
       } else if (isAdult(a)) {
-        jobHtml = `<div class="prof-sec"><div class="prof-h">💼 Sin trabajo</div><div class="muted small">Busca trabajo en el ordenador de casa.</div></div>`;
+        jobHtml = `<div class="prof-sec"><div class="prof-h">💼 Sin trabajo</div><div class="muted small">Busca trabajo en el ordenador de casa${w.stageOf(a) !== 'elder' ? ', o matricúlate en la universidad' : ''}.${a.lastGrade !== undefined && a.lastGrade >= SCHOLARSHIP_GRADE ? ' ¡Tiene beca por sus notas!' : ''}</div></div>`;
       }
+      if (a.degrees?.length) jobHtml += `<div class="muted small">🎓 Títulos: ${a.degrees.map((d) => `${DEGREES[d]?.icon ?? ''} ${esc(DEGREES[d]?.label ?? d)}`).join(', ')}</div>`;
     }
     const h = w.householdOf(a);
     if (h?.expecting && h.expecting.parents.includes(a.id)) {
@@ -124,13 +129,23 @@ export class ProfilePanel extends Part {
     // Habilidades
     let skillsHtml = '';
     if (a.kind === 'person' && this.world.stageOf(a) !== 'baby') {
-      const rows = SKILLS.map((sk) => {
-        const v = a.skills?.[sk.id] ?? 0;
-        const lvl = Math.floor(v);
-        const pct = Math.round((v / MAX_SKILL) * 100);
-        return `<div class="skill-row"><span>${sk.icon} ${esc(sk.label)}</span><div class="bar"><div class="fill" style="width:${pct}%;background:#f0a830"></div></div><b>${lvl}</b></div>`;
-      }).join('');
-      skillsHtml = `<div class="prof-sec"><div class="prof-h">⭐ Habilidades</div>${rows}<div class="muted small">Se practican cocinando, tocando la guitarra, pintando, haciendo deporte o pilates, jugando al ajedrez o charlando.</div></div>`;
+      // Las que ha empezado: barra hasta el siguiente nivel, lo desbloqueado y lo próximo.
+      const started = SKILLS.filter((sk) => (a.skills?.[sk.id] ?? 0) > 0);
+      const rows = started
+        .map((sk) => {
+          const v = a.skills?.[sk.id] ?? 0;
+          const lvl = Math.floor(v);
+          const pct = lvl >= MAX_SKILL ? 100 : Math.round((v - lvl) * 100);
+          const all = unlocksOf(sk.id);
+          const got = all.filter((u) => u.level <= lvl);
+          const next = all.find((u) => u.level > lvl);
+          const info = [got.length ? `🔓 ${got.map((u) => `${u.icon} ${esc(u.label)}`).join(', ')}` : '', next ? `🔒 Nivel ${next.level}: ${next.icon} ${esc(next.label)}` : ''].filter(Boolean).join(' · ');
+          return `<div class="skill-row"><span>${sk.icon} ${esc(sk.label)}</span><div class="bar" title="${lvl >= MAX_SKILL ? 'Nivel máximo' : `${pct} % hacia el nivel ${lvl + 1}`}"><div class="fill" style="width:${pct}%;background:#f0a830"></div></div><b>${lvl}</b></div>${info ? `<div class="muted small skill-unlocks">${info}</div>` : ''}`;
+        })
+        .join('');
+      const rest = SKILLS.filter((sk) => !started.includes(sk) && !sk.studyOnly);
+      const restHtml = rest.length ? `<div class="muted small">Sin empezar: ${rest.map((sk) => `${sk.icon} ${esc(sk.label)} <span class="skill-how">(${esc(sk.how ?? '')})</span>`).join(' · ')}</div>` : '';
+      skillsHtml = `<div class="prof-sec"><div class="prof-h">⭐ Habilidades</div>${rows || '<div class="muted small">Aún no ha practicado nada.</div>'}${restHtml}<div class="muted small">Solo suben practicando o estudiando libros de habilidad (en la estantería; se compran en el ordenador, y en la biblioteca están todos). Cada nivel cuesta más que el anterior y algunos desbloquean recetas y cosas nuevas.</div></div>`;
     }
     // Relaciones con quien conoce
     const rows = Object.entries(w.state.rels)

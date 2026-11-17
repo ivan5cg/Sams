@@ -468,3 +468,12 @@ De paso: la oscuridad de los apagones solo cubría el centro de la pantalla con 
 | Matar o que te maten | ✅ | `systems/violence.ts`: mamporros y envenenar (solo enemigos; nunca niños ni los de casa), policía y cárcel, defensa propia, enemigos que buscan bronca. SAVE_VERSION 22 |
 
 Para no tener sorpresas en el CI, las pruebas nuevas se han repetido con 60-150 semillas de azar.
+
+## Tercer encargo ✅
+
+| Encargo | Estado | Notas |
+|---|---|---|
+| Rupturas: irse de casa, parejas nuevas, celos y drama | ✅ | `systems/breakups.ts`: los ex que viven juntos se separan a los 3 días (o lo eliges tú en el ordenador); piso de alquiler nuevo en el barrio (`addRentalFlat`) con el 30 % del dinero. Quien no lo supera (`longing`): escenas, celos de la nueva pareja del ex, a veces vuelven. Los solteros del barrio se emparejan. SAVE_VERSION 23 |
+| Colegio, instituto, universidad y profesiones | ✅ | `data/education.ts`, `systems/education.ts`: idiomas en clase; seis carreras con matrícula o beca (nota del instituto ≥ 70), habilidades que solo se aprenden estudiando y títulos que abren medicina, abogacía, informática y enseñanza (o hacen empezar más arriba en ciencia y veterinaria). SAVE_VERSION 24 |
+| Habilidades que se van mejorando y desbloquean cosas | ✅ | `data/skillTree.ts` (libros, recetas, desbloqueos), `systems/skillWorks.ts`: seis habilidades nuevas (repostería, manitas, piano, canto, ajedrez, programación), libros de habilidad (hasta el 4 y hasta el 7; en la biblioteca, todos), acciones con `requires` que no salen hasta tener el nivel, recetas por nivel y encargos una vez al día. Piano y banco de bricolaje nuevos. Fuera los cursos online. SAVE_VERSION 25 |
+| Economía, bolsa, banca e inversión | ✅ | `data/finance.ts`, `systems/economy.ts`, `ui/market.ts`: inflación que sube todos los precios (y los sueldos detrás), paro con EREs y entrevistas fallidas, crecimiento, tipos del Banco Central (hipoteca), deuda y prima de riesgo. Tres partidos de mentira con políticas distintas; cualquiera puede salir corrupto; moción de censura y elecciones. Nueve activos, sucesos que mueven la bolsa, dividendos, comisiones e impuestos. Habilidad de inversión, carreras de banca y bolsa, carrera de Economía y ADE. Los militantes pasan a ser de un partido de mentira. SAVE_VERSION 26 |

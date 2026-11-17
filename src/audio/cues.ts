@@ -15,7 +15,7 @@ export const ACTION_SOUNDS: Partial<Record<string, SoundId | 'pet'>> = {
   eat: 'fridge', snack: 'munch', cook: 'sizzle', pet_eat: 'munch', cage_eat: 'munch', acai_bowl: 'munch', calamares: 'munch',
   bravas: 'munch', tortilla: 'munch', churros: 'munch', rosquillas: 'munch', buy_hotdog: 'munch', buy_fruit: 'munch',
   shower: 'shower', bath: 'shower', bathe_pet: 'splash', swim: 'splash', toilet: 'flush',
-  watch_tv: 'tv', watch_football: 'tv', play_games: 'tv', play_guitar: 'guitar', busk: 'guitar',
+  watch_tv: 'tv', watch_football: 'tv', play_games: 'tv', play_guitar: 'guitar', busk: 'guitar', play_piano: 'guitar', piano_family: 'guitar', compose: 'guitar', concert: 'guitar', bake: 'sizzle',
   sleep: 'yawn', nap_bed: 'yawn', nap_sofa: 'yawn', baby_sleep: 'yawn', pass_out: 'thud', vomit: 'thud',
   fart: 'fart', kiss: 'kiss', hug: 'kiss', cry: 'baby', squeak: 'squeak', war_dance: 'dook', steal: 'dook',
   tragaperras: 'slot', cana: 'pop', vermut: 'pop', chupito: 'pop', drink_beer: 'pop', throw_coin: 'splash',

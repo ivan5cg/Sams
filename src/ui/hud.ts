@@ -28,6 +28,7 @@ import { AlbumPanel } from './album';
 import { PersonEditor } from './editor';
 import { CatalogPanel } from './catalog';
 import { BillsPanel } from './bills';
+import { MarketPanel } from './market';
 import type { FamilySpec } from '../sim/family';
 
 export interface HudCallbacks {
@@ -58,6 +59,7 @@ export class Hud {
   readonly editor = new PersonEditor(this);
   readonly catalog = new CatalogPanel(this);
   readonly bills = new BillsPanel(this);
+  readonly market = new MarketPanel(this);
 
   world: World;
   /** El sonido (se carga después del arranque). */
@@ -107,6 +109,7 @@ export class Hud {
     this.editor.bind();
     this.catalog.bind();
     this.bills.bind();
+    this.market.bind();
   }
 
   /** Toque en la escena: en modo construcción lo gestiona la obra; si no, el menú de acciones. */

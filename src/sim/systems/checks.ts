@@ -1,7 +1,7 @@
 // Qué se puede hacer: comprobaciones de cada acción y opciones del menú.
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
-import { ACTIONS, SELF_ACTIONS, type ActionDef } from '../../data/actions';
+import { ACTIONS, PLAYER_SELF_ACTIONS, SELF_ACTIONS, type ActionDef } from '../../data/actions';
 import { CAREERS } from '../../data/careers';
 import { ELECTRIC, POWERED_ACTIONS } from '../../data/seasons';
 import { ALCOHOL } from '../../data/street';
@@ -21,6 +21,18 @@ import { HOLIDAY_ACTIONS, holidayReason } from './holidays';
 import { STREET_ACTIONS, billsReason, hasPower } from './bills';
 import { isPregnant } from './fertility';
 import { HATE } from './violence';
+import { moveOutReason } from './breakups';
+import { dailyReason, skillCheck, skillLocked } from './skillWorks';
+
+/** Lo de las habilidades: el nivel (si no, ni aparece), lo de cada acción y el «una vez al día». */
+function skillGate(w: World, a: Agent, def: ActionDef, o?: PlacedObject): ActionOption | undefined {
+  if (skillLocked(w, a, def)) return { def, ok: false, hidden: true };
+  const c = skillCheck(w, a, def, o);
+  if (c) return { def, ok: false, ...c };
+  const daily = dailyReason(w, a, def);
+  if (daily) return { def, ok: false, reason: daily };
+  return undefined;
+}
 
 export function speciesOk(w: World, a: Agent, def: ActionDef) {
   if (!def.actors.includes(a.kind) || (def.species && !def.species.includes(a.species))) return false;
@@ -37,6 +49,20 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (o.lotId !== a.lotId || a.travel) return { def, ok: false, reason: 'No está aquí' };
   if (a.home && a.home !== o.id) return { def, ok: false, reason: 'No puede salir de su jaula' };
   if (!def.guestOk && w.isGuest(a)) return { def, ok: false, reason: 'Estás de visita' };
+  if (actionId === 'take_course') return { def, ok: false, hidden: true };
+  const gate = skillGate(w, a, def, o);
+  if (gate) return gate;
+  if (actionId === 'enroll') {
+    if (!w.isPlayerMember(a) || a.study || w.stageOf(a) === 'elder') return { def, ok: false };
+  }
+  if (actionId === 'study_exams' && !(a.job && CAREERS[a.job.career]?.school)) return { def, ok: false, reason: 'Solo para quien estudia' };
+  if (actionId === 'move_out') {
+    // Solo tiene sentido tras romper con alguien de la casa.
+    const exAtHome = w.state.agents.some((o) => o.householdId === a.householdId && o !== a && getRel(w.state, a.id, o.id).ex);
+    if (!exAtHome || !w.isPlayerMember(a)) return { def, ok: false };
+    const why = moveOutReason(w, a);
+    if (why) return { def, ok: false, reason: why };
+  }
   if (actionId === 'call_doctor') {
     if (!a.illness) return { def, ok: false };
     if (a.illness.treated) return { def, ok: false, reason: 'Ya tiene tratamiento' };
@@ -65,6 +91,7 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (actionId === 'steal' && nearHammock(w, o)) return { def, ok: false, reason: 'Ya está escondido' };
   if (actionId === 'adopt' && w.members.length >= MAX_MEMBERS) return { def, ok: false, reason: 'La casa está llena' };
   if (actionId === 'find_job' && !isAdult(a)) return { def, ok: false, reason: 'Primero, el colegio' };
+  if (actionId === 'find_job' && a.done?.find_job === w.day) return { def, ok: false, reason: 'Hoy ya ha echado currículums: mañana más' };
   const funds = w.householdOf(a)?.funds ?? 0;
   if (def.cost && funds < costOf(w, actionId, a)) return { def, ok: false, reason: 'No hay dinero' };
   if ((ELECTRIC.has(o.def) || POWERED_ACTIONS.has(actionId)) && !hasPower(w, o.lotId)) return { def, ok: false, reason: w.hasEvent('apagon', o.lotId) ? 'No hay luz' : 'No hay luz: os la han cortado' };
@@ -111,6 +138,10 @@ export function checkSocialAction(w: World, a: Agent, t: Agent, actionId: string
   const def = ACTIONS[actionId];
   if (!speciesOk(w, a, def) || !def.targetKinds?.includes(t.kind)) return { def, ok: false };
   if (def.targetSpecies && !def.targetSpecies.includes(t.species)) return { def, ok: false };
+  const gate = skillGate(w, a, def);
+  if (gate) return gate;
+  if (actionId === 'serenade' && (!canRomance(w.state, a, t) || (!getRel(w.state, a.id, t.id).status && getRel(w.state, a.id, t.id).r < 20))) return { def, ok: false };
+  if (actionId === 'portrait' && w.stageOf(t) === 'baby') return { def, ok: false };
   // Despedir solo a invitados de otra familia que están en tu casa.
   if (actionId === 'say_goodbye' && (t.householdId === a.householdId || !t.visitUntil || w.isGuest(a))) return { def, ok: false };
   {
@@ -198,6 +229,8 @@ export function checkSelfAction(w: World, a: Agent, actionId: string): ActionOpt
   if (def.roles ? !def.roles.includes(a.role ?? '') : !!a.role && actionId !== 'idle') return { def, ok: false };
   if (actionId === 'fart' && a.kind === 'person' && w.stageOf(a) === 'baby') return { def, ok: false };
   if (actionId === 'homework' && a.job?.career !== 'school') return { def, ok: false };
+  const gate = skillGate(w, a, def);
+  if (gate) return gate;
   const fiesta = holidayReason(w, a, actionId);
   if (fiesta) return fiesta;
   if (actionId === 'busk') {
@@ -207,7 +240,7 @@ export function checkSelfAction(w: World, a: Agent, actionId: string): ActionOpt
   if (actionId === 'take_medicine') {
     if (!a.illness) return { def, ok: false };
     if (a.illness.medicated === w.day) return { def, ok: false, reason: 'Ya se ha tomado algo hoy' };
-    if ((w.householdOf(a)?.funds ?? 0) < (def.cost ?? 0)) return { def, ok: false, reason: 'No hay dinero' };
+    if ((w.householdOf(a)?.funds ?? 0) < costOf(w, actionId, a)) return { def, ok: false, reason: 'No hay dinero' };
   }
   return { def, ok: true };
 }
@@ -223,19 +256,20 @@ export function optionsFor(w: World, agentId: string, target: Target): ActionOpt
       .actions.filter((id) => speciesOk(w, a, ACTIONS[id]) && (id !== 'repair' || o.broken))
       .map((id) => checkObjectAction(w, a, o, id))
       // Las cosas de fiesta (fuera de su día), las de la calle y lavarse en el lavabo de casa, ni se ven.
-      .filter((op) => op.ok || op.reason || (!HOLIDAY_ACTIONS[op.def.id] && !STREET_ACTIONS.has(op.def.id) && op.def.id !== 'wash_up' && op.def.id !== 'call_doctor'));
+      .filter((op) => !op.hidden)
+      .filter((op) => op.ok || op.reason || (!HOLIDAY_ACTIONS[op.def.id] && !STREET_ACTIONS.has(op.def.id) && op.def.id !== 'wash_up' && op.def.id !== 'call_doctor' && op.def.id !== 'move_out' && op.def.id !== 'enroll'));
   }
   if (target.kind === 'agent') {
     if (target.id === a.id) {
-      const self = [...SELF_ACTIONS, ACTIONS.busk];
-      return self.map((d) => checkSelfAction(w, a, d.id)).filter((o) => o.ok || o.reason);
+      const self = [...SELF_ACTIONS, ...PLAYER_SELF_ACTIONS];
+      return self.map((d) => checkSelfAction(w, a, d.id)).filter((o) => !o.hidden && (o.ok || o.reason));
     }
     const t = w.agent(target.id);
     if (!t) return [];
     return Object.values(ACTIONS)
       .filter((d) => d.target === 'agent')
       .map((d) => checkSocialAction(w, a, t, d.id))
-      .filter((o) => o.ok || o.reason);
+      .filter((o) => !o.hidden && (o.ok || o.reason));
   }
   return [];
 }

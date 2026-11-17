@@ -5,6 +5,7 @@ import { ECONOMY } from '../../data/economy';
 import { ELECTRIC } from '../../data/seasons';
 import type { Household } from '../types';
 import type { World } from '../world';
+import { econ, priced } from './economy';
 
 /** Suma (o resta, si `amount` es negativo) dinero a una familia y lo apunta. */
 export function money(w: World, h: Household | undefined, amount: number, cat: string) {
@@ -35,16 +36,22 @@ export function weeklyBill(w: World, h: Household): number {
   const objs = w.objectsIn(h.lotId);
   const appliances = objs.filter((o) => ELECTRIC.has(o.def)).length;
   const luxury = objs.filter((o) => o.q === 3).length;
-  return (
+  return priced(
+    w,
     b.base[houseSize(w, h) - 1] +
     b.perPerson * ms.filter((m) => m.kind === 'person').length +
     b.perPet * ms.filter((m) => m.kind === 'pet').length +
     b.perAppliance * appliances +
-    b.perLuxury * luxury
+    b.perLuxury * luxury,
   );
 }
 
 /** Hipoteca de la semana (las reformas la suben; los okupas no pagan). */
 export function weeklyMortgage(w: World, h: Household): number {
-  return h.okupa ? 0 : ECONOMY.mortgage[houseSize(w, h) - 1];
+  return h.okupa ? 0 : Math.round(priced(w, ECONOMY.mortgage[houseSize(w, h) - 1]) * mortgageRate(w));
+}
+
+/** Lo que encarecen la hipoteca los tipos de interés (un 5 % por cada punto por encima del 2 %). */
+export function mortgageRate(w: World): number {
+  return Math.max(0.85, 1 + 0.05 * (econ(w).rate - 2));
 }

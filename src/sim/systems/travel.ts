@@ -109,7 +109,7 @@ export function arrive(w: World, a: Agent) {
     if (w.isPlayerMember(a) && a.kind === 'person' && Math.random() < 0.7) w.rapQueue.push(a.id);
   }
   if (a.role === 'glovo') deliverFood(w, a);
-  if (a.role === 'militante' && to === w.household.lotId) w.toastOnce('militantes', `¡Llaman a la puerta! Es ${a.name}, militante del PSOE, que viene a pedir el voto`, '🌹', 600);
+  if (a.role === 'militante' && to === w.household.lotId) w.toastOnce('militantes', `¡Llaman a la puerta! Es ${a.name}, militante del Partido Obrero Castizo, que viene a pedir el voto`, '🌹', 600);
 }
 
 /** Una casilla libre (sin nadie encima) cerca de un punto, para no aparecer unos encima de otros. */

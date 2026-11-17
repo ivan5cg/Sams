@@ -28,7 +28,7 @@ describe('habilidades, ñiqui ñiqui y pilates', () => {
     w.tick(70);
     const lucia = w.agent('a1')!;
     expect(lucia.skills?.arte ?? 0).toBeGreaterThan(0.9);
-    expect(msgs.some((m) => m.includes('arte nivel 1'))).toBe(true);
+    expect(msgs.some((m) => m.includes('pintura nivel 1'))).toBe(true);
     // El cuadro se vende
     expect(w.household.funds).toBeGreaterThan(f0);
     expect(msgs.some((m) => m.includes('vendido un cuadro'))).toBe(true);

@@ -7,6 +7,7 @@ import { CAREERS } from '../data/careers';
 import { getRel, isAdult, partnerOf, relKey } from './social';
 import type { Agent, Rel } from './types';
 import type { World } from './world';
+import { onBreakUp } from './systems/breakups';
 
 export interface RelTag {
   id: string;
@@ -49,7 +50,9 @@ export function relTags(w: World, a: Agent, b: Agent): RelTag[] {
   if (rel.status === 'married') out.push(tag('esposos', '💍', b.sex === 'f' ? 'Su mujer' : b.sex === 'm' ? 'Su marido' : 'Casados'));
   else if (rel.status === 'partner') out.push(tag('novios', '❤️', b.sex === 'f' ? 'Su novia' : b.sex === 'm' ? 'Su novio' : 'Pareja'));
   if (rel.affair) out.push(tag('amantes', '🔥', 'Amantes'));
-  if (rel.ex) out.push(tag('ex', '💔', 'Ex'));
+  if (rel.ex || rel.split !== undefined) out.push(tag('ex', '💔', a.longing?.who === b.id ? 'Ex (no lo ha superado)' : 'Ex'));
+  // La nueva pareja de su ex (y si aún no lo ha superado, rival).
+  if (a.longing && partnerOf(w.state, a.longing.who) === b.id) out.push(tag('rival', '😤', 'La nueva pareja de su ex'));
   if (!rel.status && !rel.affair && !rel.kin && rel.r >= 25) out.push(tag('interes', '😍', 'Interés romántico'));
   if (rel.banned) out.push(tag('nongrata', '🚫', rel.banned === a.id ? 'Persona non grata (vetada por ti)' : 'Te tiene vetado/a en su casa'));
   if (rel.best) out.push(tag('mejores', '🫶', 'Mejores amigos'));
@@ -131,6 +134,7 @@ export function breakUp(w: World, x: Agent, y: Agent, rel: Rel) {
   rel.r = Math.min(rel.r, 10);
   rel.f = Math.min(rel.f, 10);
   if (x.householdId === y.householdId) rel.ex = true;
+  onBreakUp(w, x, y, rel);
   for (const p of [x, y]) if (p.kind === 'person') w.feel(p, 'corazon_roto', p === x ? y.name : x.name);
   w.toast(married ? `${x.name} y ${y.name} se divorcian: el amor se ha ido apagando de no cuidarlo` : `${x.name} y ${y.name} lo han dejado: tanto tiempo sin un detalle pasa factura`, '💔');
   w.addNews(married ? `${x.name} y ${y.name} se han divorciado` : `${x.name} y ${y.name} lo han dejado`, [x.id, y.id]);

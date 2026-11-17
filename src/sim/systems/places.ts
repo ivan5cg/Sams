@@ -13,6 +13,7 @@ import type { World } from '../world';
 import { money } from './money';
 import { skillLevel } from './skills';
 import { startTravel } from './travel';
+import { priced } from './economy';
 
 /** Lo que se compra en el mercadillo (y se puede regatear). */
 export const MARKET_BUYS = new Set(['market_food', 'market_clothes', 'rummage']);
@@ -42,11 +43,11 @@ export function haggleChance(w: World, a: Agent): number {
 }
 
 const FINDS: { p: number; text: string; icon: string; effect: (w: World, a: Agent) => void }[] = [
-  { p: 0.3, text: 'un libro viejo de ajedrez. Ya sabe dos aperturas más', icon: '📕', effect: (_w, a) => (a.skills = { ...a.skills, logica: Math.min(10, (a.skills?.logica ?? 0) + 0.5) }) },
+  { p: 0.3, text: 'un libro viejo de ajedrez. Ya sabe dos aperturas más', icon: '📕', effect: (_w, a) => (a.skills = { ...a.skills, ajedrez: Math.min(10, (a.skills?.ajedrez ?? 0) + 0.5) }) },
   { p: 0.25, text: 'un vinilo de Raphael en perfecto estado', icon: '💿', effect: (w, a) => w.feel(a, 'chollo') },
   { p: 0.15, text: 'un jarrón que parecía de la abuela... y lo ha revendido en Wallapop', icon: '🏺', effect: (w, a) => {
     const h = w.householdOf(a);
-    if (h) money(w, h, ECONOMY.resale, 'ventas');
+    if (h) money(w, h, priced(w, ECONOMY.resale), 'ventas');
     w.feel(a, 'chollo');
   } },
   { p: 0.3, text: 'nada: solo cables de un Nokia y un cenicero de Benidorm', icon: '🙃', effect: () => {} },

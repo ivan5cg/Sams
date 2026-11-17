@@ -10,6 +10,7 @@ import type { World } from '../world';
 import { checkObjectAction } from './checks';
 import { command } from './tasks';
 import { busySoon, goHome, startTravel, travel } from './travel';
+import { priced } from './economy';
 
 /** La familia dueña de la nevera de esa parcela (si es una casa). */
 export function pantryOwner(w: World, lotId: string): Household | undefined {
@@ -93,7 +94,7 @@ export function groceryErrand(w: World) {
   const h = w.household;
   if ((h.pantry ?? 0) > 3 || h.delivery || closedReason(w, SUPER_LOT) || w.state.familyGone) return;
   if (w.members.some((m) => m.errand || m.carrying || m.travel?.to === SUPER_LOT)) return;
-  if (h.funds < (ACTIONS.shop_small.cost ?? 0)) {
+  if (h.funds < priced(w, ACTIONS.shop_small.cost ?? 0)) {
     // Sin dinero no hay compra: se avisa una vez al día, no cada hora.
     if ((h.pantry ?? 0) <= 0 && w.noMoneyWarned !== w.day) {
       w.noMoneyWarned = w.day;

@@ -8,6 +8,7 @@ import type { PlacedObject, WorldState } from '../sim/types';
 import { validateState } from './validate';
 import { sexOfName } from '../data/names';
 import { startFor, todayISO } from '../sim/date';
+import { newEconomy } from '../sim/systems/economy';
 
 export function serialize(state: WorldState): string {
   return JSON.stringify(state);
@@ -60,6 +61,20 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v25 → v26: la economía del país (IPC, paro, Gobierno, bolsa) y las inversiones de cada familia.
+  25: (s) => {
+    s.economy = newEconomy(Math.floor(s.minutes / 1440) + 1);
+  },
+  // v24 → v25: habilidades nuevas (repostería, manitas, piano, canto, ajedrez, programación), libros de
+  // habilidad en casa y encargos de una vez al día. Lo que se sabía de ajedrez estaba en «lógica»: se copia.
+  24: (s) => {
+    for (const a of s.agents) if (a.skills?.logica && a.skills.ajedrez === undefined) a.skills.ajedrez = Math.min(a.skills.logica, 3);
+  },
+  // v23 → v24: estudios (títulos, carrera en curso, notas del instituto) y profesiones con carrera.
+  // A los vecinos que ya trabajaban, nada (sus trabajos no pedían título).
+  23: () => {},
+  // v22 → v23: rupturas (quién no lo supera, cuándo lo dejaron): campos nuevos opcionales.
+  22: () => {},
   // v21 → v22: peleas, envenenamientos y cárcel (campos nuevos opcionales).
   21: () => {},
   // v20 → v21: tipos de relación y desgaste. Se empieza a contar desde hoy (nadie rompe de golpe).

@@ -143,7 +143,8 @@ describe('ciclo de vida (fase 5)', () => {
     w.setAging('fast');
     w.state.activeAgentId = 'nadie';
     w.tick(10 * 1440);
-    expect(madridHomes(w.state.households)).toHaveLength(10);
+    // Diez casas siempre con familia (y algún piso más si alguien se ha ido de casa tras romper).
+    expect(madridHomes(w.state.households).length).toBeGreaterThanOrEqual(10);
     for (const h of w.state.households) {
       for (const id of h.memberIds) expect(w.agent(id), `${h.name} ${id}`).toBeTruthy();
     }

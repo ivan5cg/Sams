@@ -4,6 +4,7 @@
 import { ECONOMY } from '../data/economy';
 import { BILL_INFO, aidReason, billAmount, debtsOf, rentBackCost, totalDebt, upcomingBills } from '../sim/systems/bills';
 import { shortDate } from '../sim/date';
+import { aidAmount } from '../sim/systems/economy';
 import { $, esc } from './dom';
 import { Part } from './part';
 
@@ -50,12 +51,12 @@ export class BillsPanel extends Part {
     } else {
       status.push(`<div class="muted small">🏠 Casa de alquiler: §${rent.toLocaleString('es-ES')} al mes.</div>`);
     }
-    if (s?.cut?.luz) status.push(`<div class="bill-alert"><div>🔌 <b>Luz cortada</b>: sin tele, ni ordenador, ni luz. Paga el recibo (+§${ECONOMY.reconnect} de reenganche).</div></div>`);
-    if (s?.cut?.agua) status.push(`<div class="bill-alert"><div>🚱 <b>Agua cortada</b>: ni ducha, ni bañera, ni cisterna. Paga el recibo (+§${ECONOMY.reconnect} de reenganche).</div></div>`);
+    if (s?.cut?.luz) status.push(`<div class="bill-alert"><div>🔌 <b>Luz cortada</b>: sin tele, ni ordenador, ni luz. Paga el recibo (+§${this.world.priced(ECONOMY.reconnect)} de reenganche).</div></div>`);
+    if (s?.cut?.agua) status.push(`<div class="bill-alert"><div>🚱 <b>Agua cortada</b>: ni ducha, ni bañera, ni cisterna. Paga el recibo (+§${this.world.priced(ECONOMY.reconnect)} de reenganche).</div></div>`);
     const debtRows = debts
       .map((d) => {
         const late = w.day - d.due;
-        const fee = (d.kind === 'luz' && s?.cut?.luz) || (d.kind === 'agua' && s?.cut?.agua) ? ECONOMY.reconnect : 0;
+        const fee = (d.kind === 'luz' && s?.cut?.luz) || (d.kind === 'agua' && s?.cut?.agua) ? this.world.priced(ECONOMY.reconnect) : 0;
         return `<div class="bill-row"><span>${BILL_INFO[d.kind].icon}</span><div class="bill-main"><b>${esc(BILL_INFO[d.kind].label)}</b> · §${d.amount}${fee ? ` +§${fee}` : ''}<div class="muted small">Venció ${late === 0 ? 'hoy' : `hace ${late} ${late === 1 ? 'día' : 'días'}`}</div></div>
           <button class="map-btn small-btn" data-pay="${d.id}" ${h.funds < d.amount + fee ? 'disabled' : ''}>Pagar</button></div>`;
       })
@@ -72,7 +73,7 @@ export class BillsPanel extends Part {
       <div class="prof-sec"><div class="prof-h">Próximos recibos</div>${next || '<div class="muted small">Nada este mes.</div>'}
         <div class="muted small">Se pagan solos si hay dinero. Si no, quedan pendientes: a los 10 días cortan la luz o el agua; el alquiler trae carta del casero (10 días), burofax (20) y desahucio (30).</div></div>
       <div class="prof-sec"><div class="prof-h">¿Apuros?</div>
-        <button class="map-btn ghost small-btn" data-aid ${aid ? 'disabled' : ''}>🤝 Pedir ayuda a los servicios sociales (§${ECONOMY.socialAid})</button>
+        <button class="map-btn ghost small-btn" data-aid ${aid ? 'disabled' : ''}>🤝 Pedir ayuda a los servicios sociales (§${aidAmount(this.world, ECONOMY.socialAid)})</button>
         ${aid ? `<div class="muted small">${esc(aid)}</div>` : ''}
         <div class="muted small">La comida se paga al hacer la compra (Mercadona, mercadillo o a domicilio): sin comida en la nevera, en casa no se come.</div></div>
     </div>`;

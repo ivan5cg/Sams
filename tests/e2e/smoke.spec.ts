@@ -18,7 +18,11 @@ test('humo: tutorial, nevera, mapa, parque y guardar, sin errores', async ({ pag
   await page.mouse.click(fridge.x, fridge.y);
   await expect(page.locator('#sheet')).toBeVisible();
   await expect(page.locator('#sheet .sheet-title')).toContainText('Nevera');
-  await page.locator('#sheet button.act:not([disabled])').first().click();
+  // Cocinar abre el recetario: con cocina 0, solo los huevos fritos (las demás, con candado).
+  await page.locator('#sheet [data-action="cook"]').click();
+  await expect(page.locator('#sheet .sheet-title')).toContainText('¿Qué cocinamos?');
+  await expect(page.locator('#sheet [data-recipe="cocido"]')).toBeDisabled();
+  await page.locator('#sheet [data-recipe="huevos"]').click();
   await expect(page.locator('#sheet')).toBeHidden();
   await expect(page.locator('#queue .chip')).not.toHaveCount(0);
 

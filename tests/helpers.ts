@@ -53,6 +53,20 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v26: economía e inversiones.
+  if (version <= 25) {
+    delete st.economy;
+    for (const h of st.households) delete h.portfolio;
+  }
+  // v25: libros de habilidad y encargos del día.
+  if (version <= 24) {
+    for (const h of st.households) delete h.books;
+    for (const a of st.agents) delete a.done;
+  }
+  // v24: estudios.
+  if (version <= 23) for (const a of st.agents) { delete a.degrees; delete a.study; delete a.lastGrade; }
+  // v23: rupturas.
+  if (version <= 22) for (const a of st.agents) delete a.longing;
   // v22: violencia (quién envenenó, la cárcel): nada que quitar en una partida normal.
   // v21: relaciones (detalles, pactos y crisis).
   if (version <= 20) for (const rel of Object.values(st.rels ?? {}) as Raw[]) { delete rel.last; delete rel.best; delete rel.banned; delete rel.crisis; }

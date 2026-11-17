@@ -6,7 +6,7 @@ import { STREET_NPCS } from '../data/street';
 import { ACAI_OBJECTS, HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, SUPER_OBJECTS, type ObjectPlacement, METRO_OBJECTS, PLAZA_OBJECTS, BAR_OBJECTS, LIBRARY_OBJECTS, GYM_OBJECTS, MARKET_OBJECTS, CERRO_OBJECTS, PADEL_OBJECTS } from '../data/lot';
 import { CAREER_SKILL } from '../data/skills';
 import { OBJECTS } from '../data/objects';
-import { JOB_CAREERS } from '../data/careers';
+import { CAREERS, JOB_CAREERS } from '../data/careers';
 import { SPECIES, lifeStage } from '../data/species';
 import { CLOTHES } from '../data/looks';
 import { isAdult, relKey, setRel } from './social';
@@ -201,6 +201,15 @@ export function addGetafe(state: WorldState) {
   });
 }
 
+/** Un piso de alquiler nuevo (amueblado) en el barrio, para quien se va de casa. Devuelve su parcela. */
+export function addRentalFlat(state: WorldState, district: string, owner: string): string {
+  const lotId = `PZ${state.nextId++}`;
+  const i = state.nextId % WALLS.length;
+  state.lots.push({ id: lotId, name: `Piso de ${owner}`, kind: 'home', layout: 'house', district: district as Lot['district'], style: { wall: WALLS[i], floor: FLOORS[(i + 3) % FLOORS.length] } });
+  placeObjects(state, lotId, HOUSE_OBJECTS);
+  return lotId;
+}
+
 /** Unos okupas en una casa que llevaba años vacía. */
 export function generateOkupas(state: WorldState, lotId: string): Household {
   const hid = `h${state.nextId++}`;
@@ -349,6 +358,9 @@ export function setupFamilyLife(state: WorldState, members: Agent[], opts: { job
     if (stage === 'child' || stage === 'teen') p.job = { career: 'school', level: 1, perf: Math.round(rand(30, 70)) };
     else if (stage !== 'elder' && stage !== 'baby' && Math.random() < 0.85) {
       p.job = { career: pick(JOB_CAREERS).id, level: 1 + Math.floor(Math.random() * Math.random() * 4), perf: Math.round(rand(0, 60)) };
+      // Si su profesión pide carrera, la tiene.
+      const deg = CAREERS[p.job.career]?.degree;
+      if (deg) p.degrees = [deg];
     }
     giveSkills(p);
   }
