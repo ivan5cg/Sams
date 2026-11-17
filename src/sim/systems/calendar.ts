@@ -31,6 +31,7 @@ import { onBreakUp, dailyBreakups } from './breakups';
 import { dailyRelations } from '../relations';
 import { longDate } from '../date';
 import { WEEKDAY_LONG } from '../../data/careers';
+import { dailyEconomy, holdElections, pensionAmount, priced } from './economy';
 
 /** ¿Está en marcha este evento (en esa parcela, si se dice)? */
 export function hasEvent(w: World, id: string, lotId?: string): boolean {
@@ -47,7 +48,7 @@ export function startEvent(w: World, id: string, minutes: number, lotId?: string
 
 /** Lo que cuesta una acción ahora (con ofertas, más barato). */
 export function costOf(w: World, actionId: string, a?: Agent): number {
-  const c = marketPrice(a, actionId, ACTIONS[actionId]?.cost ?? 0);
+  const c = marketPrice(a, actionId, priced(w, ACTIONS[actionId]?.cost ?? 0));
   if (hasEvent(w, 'ofertas') && (actionId === 'shop_small' || actionId === 'shop_big')) return Math.round(c * 0.7);
   return c;
 }
@@ -91,6 +92,7 @@ export function seasonalDay(w: World) {
   if (f.elections) {
     const cunado = w.members.find((m) => hasTrait(m, 'cunado'));
     w.toast(cunado ? `Hoy hay elecciones. ${cunado.name} dice que él ya sabía el resultado desde hace un mes` : 'Hoy hay elecciones: colas en el colegio electoral y tertulias en el bar', '🗳️');
+    holdElections(w);
   }
   if (f.christmasEve) w.toast('¡Nochebuena! Cena en familia, langostinos y el discurso de la tele', '🎄');
   if (f.christmas) {
@@ -231,15 +233,16 @@ export function newDay(w: World) {
       const mortgage = weeklyMortgage(w, h);
       money(w, h, -bill, 'facturas');
       money(w, h, -mortgage, 'hipoteca');
-      if (h.id !== w.household.id && !h.okupa) money(w, h, -ECONOMY.neighbourFood * ms.filter((m) => m.kind === 'person').length, 'compra');
+      if (h.id !== w.household.id && !h.okupa) money(w, h, -priced(w, ECONOMY.neighbourFood) * ms.filter((m) => m.kind === 'person').length, 'compra');
       for (const m of ms) {
         if (m.job && CAREERS[m.job.career]?.business) {
-          money(w, h, -ECONOMY.autonomos, 'autonomos');
+          money(w, h, -priced(w, ECONOMY.autonomos), 'autonomos');
           w.feel(m, 'cuota');
         }
       }
     }
   }
+  dailyEconomy(w);
   dailyBills(w);
   dailyCycle(w);
   dailyHealth(w);
@@ -262,7 +265,7 @@ export function newDay(w: World) {
   for (const h of w.state.households) {
     for (const id of h.memberIds) {
       const m = w.agent(id);
-      if (m?.kind === 'person' && w.stageOf(m) === 'elder' && !m.job) money(w, h, ECONOMY.pension, 'pension');
+      if (m?.kind === 'person' && w.stageOf(m) === 'elder' && !m.job) money(w, h, pensionAmount(w, ECONOMY.pension), 'pension');
     }
   }
   // Envejecer

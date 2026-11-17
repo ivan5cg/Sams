@@ -73,7 +73,8 @@ export const MONEY_CATEGORIES: Record<string, { icon: string; label: string }> =
   cursos: { icon: '🎓', label: 'Cursos' },
   libros: { icon: '📚', label: 'Libros' },
   encargos: { icon: '🛠️', label: 'Encargos y clases' },
-  bolsa: { icon: '📈', label: 'Bolsa' },
+  bolsa: { icon: '📈', label: 'Bolsa (compras y ventas)' },
+  dividendos: { icon: '💰', label: 'Dividendos' },
   viajes: { icon: '🧳', label: 'Viajes' },
   calle: { icon: '🛍️', label: 'En la calle' },
 };
@@ -88,7 +89,6 @@ export const SPEND_CATEGORY: Record<string, string> = {
   give_gift: 'regalos',
   buy_clothes: 'ropa',
   take_course: 'cursos',
-  stocks: 'bolsa',
   upgrade: 'reformas',
 };
 

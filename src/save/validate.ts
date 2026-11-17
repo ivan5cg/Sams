@@ -7,6 +7,7 @@ import { ILLNESSES } from '../data/illnesses';
 import { DEGREES } from '../data/education';
 import { SKILL_BY_ID } from '../data/skills';
 import { BOOKS } from '../data/skillTree';
+import { ASSET_BY_ID, PARTY_BY_ID } from '../data/finance';
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { FLOOR_BY_ID } from '../data/paint';
@@ -46,6 +47,30 @@ export function validateState(s: WorldState) {
   optNum(s.speed, 'velocidad');
   id(s.playerHouseholdId, 'familia del jugador');
   id(s.activeAgentId, 'personaje activo');
+  if (s.economy) {
+    const e = s.economy;
+    for (const k of ['priceIndex', 'wageIndex', 'inflation', 'unemployment', 'growth', 'rate', 'debt'] as const) num(e[k], `economía (${k})`);
+    if (e.priceIndex <= 0 || e.wageIndex <= 0) throw new Broken('economía (índices)');
+    if (!PARTY_BY_ID[e.gov?.party]) throw new Broken('Gobierno');
+    num(e.gov.since, 'Gobierno');
+    num(e.gov.approval, 'Gobierno');
+    optNum(e.gov.elections, 'Gobierno');
+    for (const [k, a] of Object.entries(e.assets ?? {})) {
+      if (!ASSET_BY_ID[k]) throw new Broken(`bolsa (${k})`);
+      num(a.price, `bolsa (${k})`);
+      num(a.trend, `bolsa (${k})`);
+      if (a.price <= 0) throw new Broken(`bolsa (${k})`);
+      for (const v of a.hist ?? []) num(v, `bolsa (${k})`);
+    }
+    for (const sh of e.shocks ?? []) {
+      if (!ASSET_BY_ID[sh.asset]) throw new Broken('sucesos de la bolsa');
+      num(sh.drift, 'sucesos de la bolsa');
+      num(sh.until, 'sucesos de la bolsa');
+    }
+    num(e.pressure?.inflation, 'economía');
+    num(e.pressure?.unemployment, 'economía');
+    num(e.pressure?.growth, 'economía');
+  }
   for (const l of arr(s.lots, 'parcelas') as WorldState['lots']) {
     id(l.id, 'parcela');
     str(l.name, `nombre de ${l.id}`);
@@ -65,6 +90,11 @@ export function validateState(s: WorldState) {
     num(h.funds, `dinero de ${h.id}`);
     optNum(h.pantry, `despensa de ${h.id}`);
     for (const b of h.books ?? []) if (!BOOKS[b]) throw new Broken(`libros de ${h.id}`);
+    for (const [k, p] of Object.entries(h.portfolio ?? {})) {
+      if (!ASSET_BY_ID[k]) throw new Broken(`inversiones de ${h.id}`);
+      num(p.units, `inversiones de ${h.id}`);
+      num(p.cost, `inversiones de ${h.id}`);
+    }
     if (h.trip) {
       num(h.trip.start, `viaje de ${h.id}`);
       num(h.trip.end, `viaje de ${h.id}`);

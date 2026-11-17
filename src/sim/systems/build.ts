@@ -10,6 +10,7 @@ import type { Agent, PlacedObject, RoomPaint } from '../types';
 import type { World } from '../world';
 import { endTask } from './tasks';
 import { money } from './money';
+import { priced } from './economy';
 
 /** Solo se construye en la casa de la familia, estando allí. */
 export function canBuildHere(w: World): boolean {
@@ -75,7 +76,7 @@ export function canPlace(w: World, defId: string, x: number, y: number, ignoreId
 export function buy(w: World, defId: string, x: number, y: number, q: 1 | 2 | 3 = 2, rot?: 1): boolean {
   const d = OBJECTS[defId];
   if (!d?.price || !canBuildHere(w)) return false;
-  const price = priceOf(d, q);
+  const price = priced(w, priceOf(d, q));
   if (w.household.funds < price) {
     w.toast('No hay dinero suficiente', '💸');
     return false;
@@ -204,7 +205,7 @@ export function sellObject(w: World, id: string): boolean {
     w.toast(why, '🚫');
     return false;
   }
-  const refund = Math.floor(priceOf(d, o.q ?? 2) * SELL_RATIO);
+  const refund = Math.floor(priced(w, priceOf(d, o.q ?? 2)) * SELL_RATIO);
   money(w, w.household, refund, 'ventas');
   pushUndo(w, { kind: 'sell', obj: { ...o }, refund, label: d.name });
   w.state.objects = w.state.objects.filter((x) => x !== o);

@@ -81,11 +81,11 @@ export class CatalogPanel extends Part {
       (d) =>
         (this.cat === 'all' || d.category === this.cat) &&
         (!q || `${d.name} ${d.desc ?? ''} ${usesOf(d).people.join(' ')} ${usesOf(d).pets.join(' ')}`.toLowerCase().includes(q)) &&
-        (!this.affordable || priceOf(d, this.tier) <= funds),
+        (!this.affordable || this.world.priced(priceOf(d, this.tier)) <= funds),
     );
     const by: Record<Sort, (a: ObjectDef, b: ObjectDef) => number> = {
-      cheap: (a, b) => priceOf(a, this.tier) - priceOf(b, this.tier),
-      dear: (a, b) => priceOf(b, this.tier) - priceOf(a, this.tier),
+      cheap: (a, b) => this.world.priced(priceOf(a, this.tier)) - this.world.priced(priceOf(b, this.tier)),
+      dear: (a, b) => this.world.priced(priceOf(b, this.tier)) - this.world.priced(priceOf(a, this.tier)),
       name: (a, b) => a.name.localeCompare(b.name, 'es'),
     };
     return list.sort(by[this.sort]);
@@ -127,7 +127,7 @@ export class CatalogPanel extends Part {
     $('#cat-grid').innerHTML = list.length
       ? list
           .map((d) => {
-            const cost = priceOf(d, this.tier);
+            const cost = this.world.priced(priceOf(d, this.tier));
             const u = usesOf(d);
             const tags = [
               `📐 ${d.w}×${d.h}`,

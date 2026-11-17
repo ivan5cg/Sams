@@ -53,6 +53,11 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v26: economía e inversiones.
+  if (version <= 25) {
+    delete st.economy;
+    for (const h of st.households) delete h.portfolio;
+  }
   // v25: libros de habilidad y encargos del día.
   if (version <= 24) {
     for (const h of st.households) delete h.books;

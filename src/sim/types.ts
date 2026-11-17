@@ -236,6 +236,8 @@ export interface Household {
   pantry?: number;
   /** Libros de habilidad que tienen en casa (`cocina:1`...; desde la versión 25). */
   books?: string[];
+  /** Inversiones: participaciones de cada activo y lo que costaron (desde la versión 26). */
+  portfolio?: Record<string, { units: number; cost: number }>;
   /** Compra a domicilio en camino. */
   delivery?: { at: number; amount: number };
   /** Okupas (no pagan facturas, pero tampoco tienen trabajo). */
@@ -354,6 +356,8 @@ export interface WorldState {
   feats?: Feats;
   /** Culebrones del barrio: historias de varios días entre vecinos (desde la versión 12). */
   arcs?: Arc[];
+  /** La economía del país y la bolsa (desde la versión 26). */
+  economy?: EconomyState;
   objects: PlacedObject[];
 }
 
@@ -391,4 +395,29 @@ export interface Arc {
   day: number;
   /** Cómo acabó (si ha acabado). */
   end?: { day: number; how: string };
+}
+
+/** La economía: índices de precios y sueldos, indicadores, Gobierno, bolsa y lo que ha pasado. */
+export interface EconomyState {
+  /** Cuánto ha subido todo desde el principio (1 = como al empezar). */
+  priceIndex: number;
+  /** Lo mismo con los sueldos (van detrás de los precios). */
+  wageIndex: number;
+  /** Indicadores, en %: inflación interanual, paro, crecimiento, tipo de interés y deuda pública (% del PIB). */
+  inflation: number;
+  unemployment: number;
+  growth: number;
+  rate: number;
+  debt: number;
+  gov: { party: string; since: number; corrupt: boolean; exposed?: boolean; approval: number; elections?: number };
+  /** Cotización de cada activo, tendencia de fondo (oculta) y precios de los últimos días. */
+  assets: Record<string, { price: number; trend: number; hist: number[] }>;
+  /** Tendencias de los sucesos que aún duran. */
+  shocks: { asset: string; drift: number; until: number }[];
+  /** Empujones a la economía de los sucesos (se van diluyendo). */
+  pressure: { inflation: number; unemployment: number; growth: number };
+  /** Titulares recientes de economía. */
+  news: { day: number; text: string; icon: string }[];
+  /** Una foto cada semana (para las gráficas). */
+  history: { day: number; ipc: number; inflation: number; unemployment: number; indice: number }[];
 }

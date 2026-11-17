@@ -31,6 +31,8 @@ import { riskyTask, seeDoctor } from './illness';
 import { moveOut } from './breakups';
 import { enroll, studyAtHome } from './education';
 import { noteDaily, readBook, skillTask } from './skillWorks';
+import { econ, hiringFailChance } from './economy';
+import { CAREERS } from '../../data/careers';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -199,7 +201,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
   // Medicinas y médico.
   if (task.actionId === 'take_medicine' && a.illness && a.illness.medicated !== w.day) {
     a.illness.medicated = w.day;
-    money(w, w.householdOf(a), -(ACTIONS.take_medicine.cost ?? 0), 'compra');
+    money(w, w.householdOf(a), -costOf(w, 'take_medicine', a), 'compra');
     a.illness.until = Math.max(w.state.minutes + 60, a.illness.until - MINUTES_PER_DAY / 2);
     a.emotions = (a.emotions ?? []).filter((e) => e.id !== 'enfermo');
     if (w.isPlayerMember(a)) w.toast(`${a.name} se ha tomado algo: se encuentra un poco mejor`, '💊', a.id);
@@ -232,7 +234,13 @@ export function completeTask(w: World, a: Agent, task: Task) {
   skillTask(w, a, task, o);
   noteDaily(w, a, def);
   shopping(w, a, task.actionId);
-  if (task.actionId === 'find_job' && task.param) setJob(w, a, task.param);
+  if (task.actionId === 'find_job' && task.param) {
+    // Con mucho paro, a veces no te cogen (y hasta mañana no hay más entrevistas).
+    if (!CAREERS[task.param]?.business && Math.random() < hiringFailChance(w)) {
+      a.done = { ...(a.done ?? {}), find_job: w.day };
+      if (w.isPlayerMember(a)) w.toast(`A ${a.name} no le han cogido: con un ${Math.round(econ(w).unemployment)} % de paro hay cola para cada puesto. Mañana, más currículums`, '📰', a.id);
+    } else setJob(w, a, task.param);
+  }
   if (task.actionId === 'enroll' && task.param) {
     const why = enroll(w, a, task.param);
     if (why && w.isPlayerMember(a)) w.toast(`${a.name}: ${why}`, '🎓');

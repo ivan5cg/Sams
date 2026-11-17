@@ -2216,6 +2216,29 @@ html.reduce-motion .photo-flash { display: none; }
   background: rgba(0, 0, 0, 0.35);
 }
 #bills[hidden] { display: none; }
+
+/* --- Economía y bolsa --- */
+#market {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+#market[hidden] { display: none; }
+.eco-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0; }
+.eco-tile { padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.eco-tile b { font-size: 18px; }
+.spark { width: 100%; height: 28px; display: block; }
+.eco-asset-head .spark { width: 72px; flex: none; }
+.eco-asset { padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); display: flex; flex-direction: column; gap: 4px; }
+.eco-asset-head { display: flex; align-items: center; gap: 10px; }
+.eco-asset-head > span:first-child { font-size: 22px; width: 28px; text-align: center; }
+.eco-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.eco-up { color: #4cd964; font-weight: 700; }
+.eco-down { color: #ff6b5a; font-weight: 700; }
 .bill-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
 .bill-row > span:first-child { font-size: 20px; width: 26px; text-align: center; }
 .bill-main { flex: 1; min-width: 0; }

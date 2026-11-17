@@ -140,6 +140,37 @@ export const CAREERS: Record<string, Career> = {
     ],
   },
   // Profesiones que piden carrera.
+  banca: {
+    id: 'banca',
+    name: 'Banca',
+    icon: '🏦',
+    start: 8,
+    end: 15,
+    days: WEEKDAYS,
+    levels: [
+      { title: 'Cajero/a', pay: 75 },
+      { title: 'Gestor/a comercial', pay: 105 },
+      { title: 'Asesor/a financiero/a', pay: 145 },
+      { title: 'Director/a de sucursal', pay: 200 },
+      { title: 'Director/a de zona', pay: 280 },
+    ],
+  },
+  bolsa: {
+    id: 'bolsa',
+    name: 'Bolsa',
+    icon: '📈',
+    degree: 'economia',
+    start: 8,
+    end: 17,
+    days: WEEKDAYS,
+    levels: [
+      { title: 'Becario/a de la mesa', pay: 70 },
+      { title: 'Analista', pay: 140 },
+      { title: 'Bróker', pay: 210 },
+      { title: 'Gestor/a de fondos', pay: 290 },
+      { title: 'Socio/a del fondo', pay: 400 },
+    ],
+  },
   medicina: {
     id: 'medicina',
     name: 'Medicina',

@@ -46,6 +46,8 @@ import { hourlyGrudges } from './systems/violence';
 import { dateOfDay, todayISO, type GameDate } from './date';
 import { factsOf, type DayFacts } from './feasts';
 import { GARCIA, MAX_START_PEOPLE, STAGE_AGE, applyEdit, type FamilySpec, type PersonEdit } from './family';
+import * as Economy from './systems/economy';
+import { newEconomy } from './systems/economy';
 
 export { SAVE_VERSION, MINUTES_PER_DAY, MAX_MEMBERS, TRAVEL_MINUTES, RIDE_MINUTES, PANTRY_MAX } from './constants';
 export { moodScore, objectCenter } from './util';
@@ -160,6 +162,7 @@ export class World {
       schedule: [],
       feats: { got: {}, counts: {}, challenges: {} },
       arcs: [],
+      economy: newEconomy(1),
     };
     let n = 0;
     const mk = (name: string, species: SpeciesId, ageDays: number, color: number, x: number, y: number) =>
@@ -965,6 +968,25 @@ export class World {
   get evicted(): boolean {
     return Bills.isEvicted(this);
   }
+  // --- Economía y bolsa ---
+  get economy() {
+    return Economy.econ(this);
+  }
+  priced(n: number): number {
+    return Economy.priced(this, n);
+  }
+  wage(n: number): number {
+    return Economy.wage(this, n);
+  }
+  buyAsset(agentId: string, assetId: string, amount: number): string | undefined {
+    const a = this.agent(agentId);
+    return a ? Economy.buyAsset(this, a, assetId, amount) : 'No hay nadie';
+  }
+  sellAsset(agentId: string, assetId: string, fraction = 1): string | undefined {
+    const a = this.agent(agentId);
+    return a ? Economy.sellAsset(this, a, assetId, fraction) : 'No hay nadie';
+  }
+
   payDebt(id: string): string | undefined {
     return Bills.payDebt(this, id);
   }

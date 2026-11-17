@@ -54,8 +54,8 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
   Si la relación no está madura, te pueden rechazar (y hacerte la cobra). Coquetear delante de tu pareja da celos.
 - Con tu pareja de otra familia podéis **vivir juntos**: se muda a tu casa y pasa a ser controlable.
   Si su casa se queda vacía, llega una familia nueva al barrio.
-- **Trabajo**: búscalo en el ordenador (cocina, oficina, veterinaria, música, ciencia... y, con carrera, medicina,
-  abogacía, informática o enseñanza). Cada uno se va solo a su hora y vuelve al salir, cansado y con el sueldo. Si
+- **Trabajo**: búscalo en el ordenador (cocina, oficina, veterinaria, música, ciencia, banca... y, con carrera,
+  medicina, abogacía, informática, enseñanza o bolsa). Cada uno se va solo a su hora y vuelve al salir, cansado y con el sueldo. Si
   va de buen humor rinde más y asciende (5 niveles por carrera).
 - Los niños van al **colegio** y los adolescentes al **instituto** por la mañana; su ánimo se nota en las notas
   (más en [Estudios](#estudios)).
@@ -157,6 +157,7 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 
   | Carrera | Aprende | Lleva a |
   |---|---|---|
+  | 📈 Economía y ADE (8 días) | inversión | bolsa (solo con el título) |
   | 🩺 Medicina (10 días) | medicina | médico/a (solo con el título) |
   | ⚖️ Derecho (8 días) | leyes | abogacía (solo con el título) |
   | 💻 Ingeniería Informática (8 días) | informática | informática, con teletrabajo (solo con el título) |
@@ -217,7 +218,7 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 - En el bar: cañas, vermut, chupitos, bocata de calamares, bravas, tortilla, tragaperras, mus y el derbi del
   domingo en la tele. En la plaza: churros con chocolate, rosquillas y echar una moneda a la fuente.
 - Por la calle: **repartidores de Glovo** (pide comida desde el ordenador) y, en campaña electoral,
-  **militantes del PSOE** que te paran en el parque o llaman a la puerta para pedirte el voto.
+  **militantes del POC** (el Partido Obrero Castizo) que te paran en el parque o llaman a la puerta para pedirte el voto.
 
 ## Getafe
 
@@ -292,8 +293,8 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 
 ## Habilidades y actividades
 
-- **Doce habilidades** que se practican, del 0 al 10: cocina, repostería, manitas, guitarra, piano, canto,
-  ajedrez, programación, pintura, forma física, lógica y carisma. Más las seis que solo se aprenden estudiando
+- **Trece habilidades** que se practican, del 0 al 10: cocina, repostería, manitas, guitarra, piano, canto,
+  ajedrez, programación, inversión, pintura, forma física, lógica y carisma. Más las seis que solo se aprenden estudiando
   (ver [Estudios](#estudios)).
 - **Solo suben de dos maneras**: haciendo cosas de lo suyo o estudiando **libros de habilidad**.
   - Cocinar o hacer barbacoa, hornear, arreglar cosas rotas o hacer bricolaje en el **banco de bricolaje** 🪚,
@@ -319,7 +320,7 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
   | 👩‍💻 Programación | Webs por encargo (3), crear un videojuego, que puede ser un éxito (6) |
   | 🎨 Pintura | Pintarle un retrato a alguien (4), exponer en una galería (7). Los cuadros se venden desde el principio |
   | 💪 Forma física | Media maratón en el parque (5), clases de entrenador/a personal en el gimnasio (7) |
-  | 🧠 Lógica | Invertir en bolsa (5): con más lógica, mejor sale |
+  | 💹 Inversión | Ver el análisis de cada valor (2), comisión del 0,5 % y productos complejos como la cripto (4), asesorar a vecinos (5), gestionar carteras de clientes (7) |
   | 🗣️ Carisma | Contar batallitas (3), pedir un aumento (5; una vez por semana) |
 
 - Lo que da dinero se puede hacer **una vez al día**. Las recetas, el bricolaje, los problemas de ajedrez, programar
@@ -452,6 +453,8 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
 - **Recibos al mes** (☰ → 🧾 Recibos y casa): el **alquiler** el día 1 (sube con cada reforma) y la **luz** y el
   **agua** el día 5 (según el tamaño de la casa, los electrodomésticos, los muebles de lujo y quién vive en ella).
   Con negocio propio, también la **cuota de autónomos** el día 1. La **comida** se paga al hacer la compra.
+- Todos los precios (compra, muebles, recibos, ocio...) suben con la **inflación**, y los sueldos detrás (ver
+  [Economía y bolsa](#economía-y-bolsa)).
 - Se pagan solos si hay dinero. Si no, quedan **pendientes** (y agobian) y el banco lo vuelve a intentar cada día;
   también se pueden pagar a mano en cuanto haya dinero.
 - **Si no se pagan**: a los 10 días **cortan la luz** (sin tele, ni ordenador, y la casa a oscuras) o **el agua**
@@ -460,12 +463,54 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   familia se queda en la **calle**: vive en el parque, duerme en un banco, come en el comedor social y se lava en
   los baños públicos. Los bebés y las mascotas se van con la abuela. Al trabajo y al cole se sigue yendo.
 - Para volver: pagar lo que se debe del alquiler y un mes de fianza («Volver a alquilar la casa»). Los muebles os
-  esperan. Y si hay apuros, los **servicios sociales** echan una mano (§400, una vez al mes).
-- **Hacienda** retiene parte del sueldo por tramos (los sueldos bajos, nada).
+  esperan. Y si hay apuros, los **servicios sociales** echan una mano (§400 a precios de partida, una vez al mes;
+  más o menos según el Gobierno).
+- **Hacienda** retiene parte del sueldo por tramos (los sueldos bajos, nada). Los tramos no suben con la inflación:
+  si los sueldos suben, se paga más.
 - En el perfil, **💶 Cuentas de la semana**: ingresos y gastos por categoría y el saldo (y el de la semana pasada).
 - Gastos con sentido: **🎁 hacer un regalo** (sube mucho la amistad), **👕 ropa nueva** y **📚 libros de
   habilidad**, además de muebles, reformas y caprichos.
 - Todas las cifras están en `src/data/economy.ts`.
+
+## Economía y bolsa
+
+En el menú ☰ → **📈 Economía y bolsa** se ve cómo va el país, y en el ordenador, «**💹 Invertir en bolsa**», se compra
+y se vende. La economía va acelerada: cada semana de juego son dos meses económicos y cada día, una semana de bolsa.
+
+- **Inflación**: los precios de todo (Mercadona, muebles, recibos, alquiler, ocio, viajes...) suben un poco cada
+  día. Cada lunes llega el **IPC**, y los **sueldos** suben para compensar, pero por detrás. Con poco paro, los
+  sindicatos consiguen más; con mucho paro, menos. Las pensiones y las ayudas también se actualizan.
+- **Tipos de interés**: el Banco Central los sube si hay inflación y los baja si no. Con tipos altos, la hipoteca
+  sale más cara (y a la banca le va mejor).
+- **Paro**: a partir del 12 %, cuesta encontrar trabajo (a veces no te cogen y toca esperar a mañana) y hay
+  **EREs**, también para la familia. Los vecinos en paro encuentran algo cuando la economía tira.
+- **Crecimiento y deuda pública**: con deuda por encima del 120 % del PIB, se dispara la **prima de riesgo**.
+- **Gobierno**: tres partidos de mentira, cada uno con su política.
+
+  | Partido | Política | Lo que pasa |
+  |---|---|---|
+  | 🌹 Partido Obrero Castizo (POC) | Mucho gasto público | Menos paro, más inflación y más deuda; más impuestos, ayudas y pensiones |
+  | 🟠 Unión Castiza (UC) | Equilibrio | Ni fu ni fa |
+  | 🔵 Partido Liberal Madrileño (PLM) | Recortes y bajada de impuestos | Menos inflación y deuda, más paro; menos impuestos y menos ayudas |
+
+  - **Cualquier Gobierno puede salir corrupto** (sea del partido que sea): la economía va peor (más inflación, más
+    paro, menos crecimiento) y, tarde o temprano, estalla el **escándalo**, que hunde su popularidad y la bolsa.
+  - Si la popularidad cae por debajo del 25 %, **moción de censura** y elecciones anticipadas a la semana. También
+    hay elecciones el último domingo de mayo. Quien gobierna bien suele repetir.
+- **La bolsa**: nueve valores para invertir, del fondo índice a la Criptopeseta.
+  - Cada valor reacciona a su manera a la economía: la banca, con los tipos; el ladrillo, con el crédito; el oro,
+    con la inflación.
+  - Hay **sucesos** que mueven las cotizaciones y la economía: crisis bancaria, burbuja inmobiliaria, boom
+    tecnológico, ola de calor, récord de turistas, guerra comercial, petróleo por las nubes, fiebre o hundimiento
+    de la cripto, huelga general, prima de riesgo...
+  - Se cobran **dividendos** cada lunes. Al vender con ganancias, Hacienda se queda el 19 %. Comisión del 2 %
+    (0,5 % sabiendo de inversión).
+- **Habilidad de inversión** 💹: se practica analizando el mercado en el ordenador, trabajando en la banca o en la
+  bolsa, o con libros. Con 2 se ve el **análisis** de cada valor (si va alcista o bajista); con 4, comisión más baja y
+  productos complejos (la cripto); con 5, asesorar a vecinos; con 7, gestionar carteras de clientes.
+- **Carreras nuevas**: **Banca** (de cajero/a a director/a de zona) y **Bolsa** (de becario/a de la mesa a socio/a
+  del fondo; hace falta la carrera de **Economía y ADE**).
+- Todo está en `src/data/finance.ts` y `src/sim/systems/economy.ts`.
 
 ## Culebrones del barrio
 

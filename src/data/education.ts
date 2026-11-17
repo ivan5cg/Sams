@@ -19,6 +19,7 @@ export interface DegreeDef {
 }
 
 export const DEGREES: Record<string, DegreeDef> = {
+  economia: { id: 'economia', label: 'Economía y ADE', icon: '📈', skill: 'inversion', days: 8, cost: 500, career: 'bolsa' },
   medicina: { id: 'medicina', label: 'Medicina', icon: '🩺', skill: 'medicina', days: 10, cost: 600, career: 'medicina' },
   derecho: { id: 'derecho', label: 'Derecho', icon: '⚖️', skill: 'leyes', days: 8, cost: 400, career: 'abogacia' },
   informatica: { id: 'informatica', label: 'Ingeniería Informática', icon: '💻', skill: 'informatica', days: 8, cost: 400, career: 'informatica' },

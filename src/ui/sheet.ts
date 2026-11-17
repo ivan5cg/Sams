@@ -3,6 +3,7 @@
 import { DEGREES } from '../data/education';
 import { BOOK_TIERS, BOOKS, RECIPES } from '../data/skillTree';
 import { booksAt, bookReason, buyBookReason, recipeReason } from '../sim/systems/skillWorks';
+import { pricedLabel } from '../sim/systems/economy';
 import { SKILL_BY_ID } from '../data/skills';
 import { degreeReason, enrollReason, hasScholarship, startLevel } from '../sim/systems/education';
 import { CAREERS, JOB_CAREERS, scheduleText } from '../data/careers';
@@ -105,6 +106,7 @@ export class ActionSheet extends Part {
       if (action === 'enroll') return this.showDegrees();
       if ((action === 'cook' || action === 'bake') && !this.scheduling) return this.showRecipes(action);
       if (action === 'buy_book') return this.showBookShop();
+      if (action === 'invest') return this.hud.market.open(true);
       if (action === 'read_skill_book' && !this.scheduling) return this.showBooks();
       if (action && this.scheduling) return this.askTime(action);
       if (action) {
@@ -173,7 +175,7 @@ export class ActionSheet extends Part {
         (o) =>
           `<button class="act" data-action="${o.def.id}" ${o.ok ? '' : 'disabled'}>
             <span class="act-icon">${o.def.icon}</span>
-            <span class="act-label">${esc(o.def.label)}${o.reason ? `<small>${esc(o.reason)}</small>` : ''}</span>
+            <span class="act-label">${esc(pricedLabel(this.world, o.def.label))}${o.reason ? `<small>${esc(o.reason)}</small>` : ''}</span>
           </button>`,
       )
       .join('');
@@ -261,7 +263,7 @@ export class ActionSheet extends Part {
         const owned = h?.books?.includes(b.id);
         return `<button class="act" data-buybook="${b.id}" ${why ? 'disabled' : ''}>
           <span class="act-icon">${s.icon}</span>
-          <span class="act-label">«${esc(b.title)}» · §${b.price}<small class="info">${esc(s.label)}, ${esc(BOOK_TIERS[b.tier].label.toLowerCase())}: enseña ${b.from ? `del nivel ${b.from} ` : ''}hasta el ${b.upTo}${owned ? ' · ✅ Ya lo tenéis' : why ? ` · ${esc(why)}` : ''}</small></span>
+          <span class="act-label">«${esc(b.title)}» · §${this.world.priced(b.price)}<small class="info">${esc(s.label)}, ${esc(BOOK_TIERS[b.tier].label.toLowerCase())}: enseña ${b.from ? `del nivel ${b.from} ` : ''}hasta el ${b.upTo}${owned ? ' · ✅ Ya lo tenéis' : why ? ` · ${esc(why)}` : ''}</small></span>
         </button>`;
       })
       .join('');
@@ -307,7 +309,7 @@ export class ActionSheet extends Part {
       const lvl = startLevel(a, c.id);
       return `<button class="act" data-career="${c.id}" ${current || needs ? 'disabled' : ''}>
         <span class="act-icon">${c.icon}</span>
-        <span class="act-label">${esc(c.name)} · ${esc(c.levels[lvl - 1].title)}<small class="info">${needs ? `${esc(needs)} · ` : c.degree ? '🎓 Con tu título · ' : lvl > 1 ? '🎓 Empiezas más arriba por tu carrera · ' : ''}${c.business ? `Montarlo: §${c.startup?.toLocaleString('es-ES')} · ganancias variables · cuota §90/semana` : `§${c.levels[lvl - 1].pay}/jornada`} · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
+        <span class="act-label">${esc(c.name)} · ${esc(c.levels[lvl - 1].title)}<small class="info">${needs ? `${esc(needs)} · ` : c.degree ? '🎓 Con tu título · ' : lvl > 1 ? '🎓 Empiezas más arriba por tu carrera · ' : ''}${c.business ? `Montarlo: §${this.world.priced(c.startup ?? 0).toLocaleString('es-ES')} · ganancias variables · cuota §${this.world.priced(90)}/semana` : `§${this.world.wage(c.levels[lvl - 1].pay)}/jornada`} · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
       </button>`;
     }).join('');
     $('#sheet').querySelector('.sheet-card')!.innerHTML = `

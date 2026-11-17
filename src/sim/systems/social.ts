@@ -26,6 +26,7 @@ import { jokeRisk } from './illness';
 import { attend } from '../relations';
 import { fight, poison } from './violence';
 import { onBreakUp } from './breakups';
+import { costOf } from './calendar';
 
 export function canEngage(_w: World, actor: Agent, actorTask: Task, t: Agent): boolean {
   if (t.hidden || t.travel || t.lotId !== actor.lotId) return false;
@@ -62,7 +63,7 @@ export function walkToAgent(w: World, a: Agent, task: Task, dt: number) {
       if (!accepts(w, a, t, task.actionId)) return endTask(w, a);
       if (def.cost) {
         const hh = w.householdOf(a);
-        money(w, hh, -def.cost, SPEND_CATEGORY[task.actionId] ?? 'calle');
+        money(w, hh, -costOf(w, task.actionId, a), SPEND_CATEGORY[task.actionId] ?? 'calle');
       }
       if (task.actionId === 'flirt' || task.actionId === 'kiss' || task.actionId === 'niqui' || task.actionId === 'ask_affair') jealousy(w, a, t, task.actionId);
       let bedId: string | undefined;

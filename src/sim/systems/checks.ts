@@ -91,6 +91,7 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (actionId === 'steal' && nearHammock(w, o)) return { def, ok: false, reason: 'Ya está escondido' };
   if (actionId === 'adopt' && w.members.length >= MAX_MEMBERS) return { def, ok: false, reason: 'La casa está llena' };
   if (actionId === 'find_job' && !isAdult(a)) return { def, ok: false, reason: 'Primero, el colegio' };
+  if (actionId === 'find_job' && a.done?.find_job === w.day) return { def, ok: false, reason: 'Hoy ya ha echado currículums: mañana más' };
   const funds = w.householdOf(a)?.funds ?? 0;
   if (def.cost && funds < costOf(w, actionId, a)) return { def, ok: false, reason: 'No hay dinero' };
   if ((ELECTRIC.has(o.def) || POWERED_ACTIONS.has(actionId)) && !hasPower(w, o.lotId)) return { def, ok: false, reason: w.hasEvent('apagon', o.lotId) ? 'No hay luz' : 'No hay luz: os la han cortado' };
@@ -239,7 +240,7 @@ export function checkSelfAction(w: World, a: Agent, actionId: string): ActionOpt
   if (actionId === 'take_medicine') {
     if (!a.illness) return { def, ok: false };
     if (a.illness.medicated === w.day) return { def, ok: false, reason: 'Ya se ha tomado algo hoy' };
-    if ((w.householdOf(a)?.funds ?? 0) < (def.cost ?? 0)) return { def, ok: false, reason: 'No hay dinero' };
+    if ((w.householdOf(a)?.funds ?? 0) < costOf(w, actionId, a)) return { def, ok: false, reason: 'No hay dinero' };
   }
   return { def, ok: true };
 }

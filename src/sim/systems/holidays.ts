@@ -18,6 +18,7 @@ import { ECONOMY } from '../../data/economy';
 import { money } from './money';
 import { hasEvent, startEvent } from './calendar';
 import { districtOf, sendVisit } from './travel';
+import { priced } from './economy';
 
 export type HolidayId = 'reyes' | 'carnaval' | 'halloween';
 
@@ -47,7 +48,7 @@ export function holidayReason(w: World, a: Agent, actionId: string): ActionOptio
   if (!hasEvent(w, fiesta)) return { def, ok: false };
   if (actionId === 'costume') {
     if (hasEmotion(a, 'disfrazado')) return { def, ok: false, reason: 'Ya va disfrazado/a' };
-    if ((w.householdOf(a)?.funds ?? 0) < ECONOMY.costume) return { def, ok: false, reason: 'No hay dinero' };
+    if ((w.householdOf(a)?.funds ?? 0) < priced(w, ECONOMY.costume)) return { def, ok: false, reason: 'No hay dinero' };
   }
   if (actionId === 'trick_or_treat') {
     if (w.hour < HOLIDAY_HOURS.trucoDesde || w.hour >= HOLIDAY_HOURS.trucoHasta) return { def, ok: false, reason: `De ${HOLIDAY_HOURS.trucoDesde}:00 a ${HOLIDAY_HOURS.trucoHasta}:00` };
@@ -79,7 +80,7 @@ export function holidayDay(w: World) {
     w.addNews('el barrio entero ha desayunado roscón de Reyes', []);
   }
   if (fiesta === 'carnaval') {
-    w.toast(`¡Es Carnaval! Disfrázate (§${ECONOMY.costume}, tocándote a ti mismo) y a las ${HOLIDAY_HOURS.desfile}:00, desfile en el parque con concurso de disfraces`, '🎭');
+    w.toast(`¡Es Carnaval! Disfrázate (§${priced(w, ECONOMY.costume)}, tocándote a ti mismo) y a las ${HOLIDAY_HOURS.desfile}:00, desfile en el parque con concurso de disfraces`, '🎭');
     w.addNews('hay gente disfrazada de cualquier cosa por todo el barrio', []);
   }
   if (fiesta === 'halloween') {
@@ -131,9 +132,9 @@ export function costumeContest(w: World) {
   // Cuanta más gracia (y más arte), más fácil ganar.
   const best = entrants.reduce((x, y) => (score(w, y) > score(w, x) ? y : x));
   if (Math.random() < 0.3 + 0.08 * entrants.length + (hasTrait(best, 'bromista') ? 0.15 : 0)) {
-    money(w, w.household, ECONOMY.costumePrize, 'premios');
+    money(w, w.household, priced(w, ECONOMY.costumePrize), 'premios');
     w.feel(best, 'premio_disfraz');
-    w.toast(`¡${best.name} gana el concurso de disfraces! Premio de §${ECONOMY.costumePrize} y foto en el periódico del barrio`, '🏆', best.id);
+    w.toast(`¡${best.name} gana el concurso de disfraces! Premio de §${priced(w, ECONOMY.costumePrize)} y foto en el periódico del barrio`, '🏆', best.id);
     w.addNews(`${best.name} ha ganado el concurso de disfraces de Carnaval`, [best.id]);
   } else {
     w.toast(`El jurado ha dado el premio a unos de Alcorcón disfrazados de paella. ${best.name} dice que estaba comprado`, '🥈', best.id);
@@ -168,7 +169,7 @@ export function holidayTask(w: World, a: Agent, actionId: string) {
   const mine = w.isPlayerMember(a);
   if (actionId === 'costume') {
     const hh = w.householdOf(a);
-    if (hh) money(w, hh, -ECONOMY.costume, 'ropa');
+    if (hh) money(w, hh, -priced(w, ECONOMY.costume), 'ropa');
     w.feel(a, 'disfrazado');
     const what = COSTUMES[Math.floor(Math.random() * COSTUMES.length)];
     if (mine) w.toast(`${a.name} se ha disfrazado de ${what}`, '🎭', a.id);
@@ -186,8 +187,8 @@ export function holidayTask(w: World, a: Agent, actionId: string) {
       if (mine) w.toast(`¡A ${a.name} le ha salido la figurita! Rey/reina de la casa por hoy, con corona y todo`, '👑', a.id);
     } else if (r < 0.4) {
       const hh = w.householdOf(a);
-      if (hh) money(w, hh, -ECONOMY.roscon, 'compra');
-      if (mine) w.toast(`A ${a.name} le ha salido el haba: le toca pagar el roscón (−§${ECONOMY.roscon})`, '🫘', a.id);
+      if (hh) money(w, hh, -priced(w, ECONOMY.roscon), 'compra');
+      if (mine) w.toast(`A ${a.name} le ha salido el haba: le toca pagar el roscón (−§${priced(w, ECONOMY.roscon)})`, '🫘', a.id);
     }
   }
 }

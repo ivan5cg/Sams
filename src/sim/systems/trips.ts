@@ -7,6 +7,7 @@ import type { Agent } from '../types';
 import type { World } from '../world';
 import { money } from './money';
 import { endTask } from './tasks';
+import { priced } from './economy';
 
 export const DESTINATIONS = ['Benidorm', 'la sierra de Madrid', 'Cuenca', 'la playa de Gandía', 'un pueblo de Ávila', 'Toledo', 'Peñíscola'];
 
@@ -14,7 +15,7 @@ export const DESTINATIONS = ['Benidorm', 'la sierra de Madrid', 'Cuenca', 'la pl
 export function tripReason(w: World): string | undefined {
   if (w.household.trip) return 'Ya tenéis un viaje reservado';
   if (w.weekday > 3) return 'Se reserva de lunes a jueves, para el fin de semana';
-  if (w.household.funds < ECONOMY.trip) return 'No hay dinero';
+  if (w.household.funds < priced(w, ECONOMY.trip)) return 'No hay dinero';
   return undefined;
 }
 
@@ -28,7 +29,7 @@ export function bookTrip(w: World, a: Agent): boolean {
   const weekStart = (w.day - 1 - w.weekday) * MINUTES_PER_DAY;
   const dest = DESTINATIONS[Math.floor(Math.random() * DESTINATIONS.length)];
   w.household.trip = { start: weekStart + 5 * MINUTES_PER_DAY + 9 * 60, end: weekStart + 6 * MINUTES_PER_DAY + 21 * 60, dest };
-  money(w, w.household, -ECONOMY.trip, 'viajes');
+  money(w, w.household, -priced(w, ECONOMY.trip), 'viajes');
   w.toast(`¡Reservado! Este fin de semana, a ${dest}. Salís el sábado a las 9:00`, '🧳');
   return true;
 }

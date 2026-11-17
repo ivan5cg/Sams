@@ -16,6 +16,7 @@ import { money } from './money';
 import { incomeTax } from '../../data/economy';
 import { skillLevel } from './skills';
 import { startTravel } from './travel';
+import { priced, taxMult, wage } from './economy';
 
 export function setJob(w: World, a: Agent, careerId: string) {
   const c = CAREERS[careerId];
@@ -28,20 +29,20 @@ export function setJob(w: World, a: Agent, careerId: string) {
   if (a.study) a.study = undefined;
   const h = w.householdOf(a);
   if (c.startup) {
-    if (!h || h.funds < c.startup) {
-      w.toast(`Montar el negocio cuesta §${c.startup}: no hay dinero suficiente`, '💸');
+    if (!h || h.funds < priced(w, c.startup)) {
+      w.toast(`Montar el negocio cuesta §${priced(w, c.startup)}: no hay dinero suficiente`, '💸');
       return;
     }
-    money(w, h, -c.startup, 'negocio');
+    money(w, h, -priced(w, c.startup), 'negocio');
     a.job = { career: careerId, level: 1, perf: 0 };
     w.feel(a, 'jefe_propio');
-    w.toast(`¡${a.name} monta su propio negocio: ${c.levels[0].title}! (−§${c.startup}). Ojo: cada lunes, cuota de autónomos`, c.icon);
+    w.toast(`¡${a.name} monta su propio negocio: ${c.levels[0].title}! (−§${priced(w, c.startup)}). Ojo: cada lunes, cuota de autónomos`, c.icon);
     w.addNews(`${a.name} ha abierto un bar en el barrio. Dicen que las bravas pican de verdad`, [a.id]);
     return;
   }
   const lvl = startLevel(a, careerId);
   a.job = { career: careerId, level: lvl, perf: 0 };
-  w.toast(`¡${a.name} tiene trabajo! ${c.levels[lvl - 1].title} (§${c.levels[lvl - 1].pay} por jornada)${lvl > 1 ? ', gracias a su carrera' : ''}`, c.icon);
+  w.toast(`¡${a.name} tiene trabajo! ${c.levels[lvl - 1].title} (§${wage(w, c.levels[lvl - 1].pay)} por jornada)${lvl > 1 ? ', gracias a su carrera' : ''}`, c.icon);
 }
 
 /** Despido: tres jornadas seguidas rindiendo fatal. */
@@ -175,7 +176,7 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
   }
   if (w.state.dilemma?.agentId === a.id) resolveDilemma(w, 99);
   coworkerDay(w, a);
-  let pay = c.levels[job.level - 1].pay;
+  let pay = wage(w, c.levels[job.level - 1].pay);
   if (c.business) {
     // En el negocio propio unos días se gana mucho y otros, nada (o se pierde). Depende de la carta.
     const plan = job.bar;
@@ -191,7 +192,7 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
   const h = w.householdOf(a);
   money(w, h, pay, c.business ? 'negocio' : 'sueldo');
   // Hacienda se lleva su parte del sueldo (en el negocio propio ya está la cuota de autónomos).
-  const tax = c.business ? 0 : incomeTax(pay);
+  const tax = c.business ? 0 : Math.round(incomeTax(pay) * taxMult(w));
   money(w, h, -tax, 'hacienda');
   const delta = job.perf - before;
   if (delta >= 12) w.feel(a, 'buen_dia_curro');
@@ -207,7 +208,7 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
     const lvl = c.levels[job.level - 1];
     w.addNews(`han ascendido a ${a.name} a ${lvl.title.toLowerCase()}`, [a.id]);
     w.feel(a, 'ascenso');
-    if (mine) w.toast(`¡Ascenso! ${a.name} ahora es ${lvl.title} (§${lvl.pay} por jornada)`, '🎉');
+    if (mine) w.toast(`¡Ascenso! ${a.name} ahora es ${lvl.title} (§${wage(w, lvl.pay)} por jornada)`, '🎉');
   } else if (mine) {
     if (c.business && pay < 0) w.toast(`Hoy en el bar de ${a.name} no ha entrado ni el tato: −§${-pay} de gastos`, '🦗');
     else w.toast(`${a.name} vuelve del ${c.business ? 'bar' : 'trabajo'}: +§${pay - tax}${tax ? ` (Hacienda se queda §${tax})` : ''}`, '💰');

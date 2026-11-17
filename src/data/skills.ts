@@ -20,6 +20,7 @@ export const SKILLS: SkillDef[] = [
   { id: 'piano', label: 'Piano', icon: '🎹', how: 'tocando el piano' },
   { id: 'canto', label: 'Canto', icon: '🎤', how: 'cantando en el karaoke' },
   { id: 'ajedrez', label: 'Ajedrez', icon: '♟️', how: 'jugando al ajedrez o resolviendo problemas' },
+  { id: 'inversion', label: 'Inversión', icon: '💹', how: 'analizando el mercado en el ordenador, en la banca o en la bolsa' },
   { id: 'programacion', label: 'Programación', icon: '👩‍💻', how: 'programando en el ordenador' },
   { id: 'arte', label: 'Pintura', icon: '🎨', how: 'pintando en el caballete' },
   { id: 'forma', label: 'Forma física', icon: '💪', how: 'corriendo, en el gimnasio, pilates o pádel' },
@@ -52,4 +53,6 @@ export const CAREER_SKILL: Record<string, string> = {
   abogacia: 'leyes',
   informatica: 'informatica',
   docencia: 'docencia',
+  banca: 'inversion',
+  bolsa: 'inversion',
 };

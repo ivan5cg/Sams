@@ -18,6 +18,7 @@ import type { World } from '../world';
 import { money } from './money';
 import { pantryOwner } from './shopping';
 import { practice, skillLevel } from './skills';
+import { indexChange, priced } from './economy';
 
 /** Días entre una petición de aumento y la siguiente. */
 export const RAISE_EVERY = 7;
@@ -70,7 +71,7 @@ export function buyBookReason(w: World, a: Agent, bookId: string): string | unde
   const h = w.householdOf(a);
   if (!b || !h) return 'Ese libro no existe';
   if (h.books?.includes(bookId)) return 'Ya lo tenéis en la estantería';
-  if (h.funds < b.price) return `Cuesta §${b.price}`;
+  if (h.funds < priced(w, b.price)) return `Cuesta §${priced(w, b.price)}`;
   return undefined;
 }
 
@@ -80,7 +81,7 @@ export function buyBook(w: World, a: Agent, bookId: string): string | undefined 
   if (why) return why;
   const b = BOOKS[bookId];
   const h = w.householdOf(a)!;
-  money(w, h, -b.price, 'libros');
+  money(w, h, -priced(w, b.price), 'libros');
   h.books = [...(h.books ?? []), bookId];
   if (w.isPlayerMember(a)) w.toast(`Ha llegado «${b.title}» (${SKILL_BY_ID[b.skill].label.toLowerCase()}, hasta el nivel ${b.upTo}). Ya está en la estantería`, '📚', a.id);
   return undefined;
@@ -218,10 +219,13 @@ export function skillTask(w: World, a: Agent, task: Task, o: PlacedObject | unde
       } else earn(w, a, 30, 'ventas', `${a.name} ha publicado su videojuego... y lo han descargado su madre y tres amigos`, '🕹️');
       break;
     }
-    case 'stocks': {
-      const back = Math.round(100 * (0.55 + Math.random() * 0.7 + 0.05 * lvl('logica')));
-      money(w, w.householdOf(a), back, 'bolsa');
-      if (mine) w.toast(back >= 100 ? `${a.name} ha acertado en bolsa: los §100 son ahora §${back}` : `${a.name} ha perdido en bolsa: de los §100 quedan §${back}`, back >= 100 ? '📈' : '📉', a.id);
+    case 'advise':
+      earn(w, a, 40 + 12 * lvl('inversion'), 'encargos', `${a.name} le ha ordenado los ahorros a la vecina del tercero`, '🧾');
+      break;
+    case 'manage_portfolios': {
+      // Lo que se cobra depende de cómo va la bolsa esta semana.
+      const up = indexChange(w, 5);
+      earn(w, a, Math.max(30, Math.round((100 + 30 * lvl('inversion')) * (1 + up * 4))), 'encargos', `${a.name} ha gestionado las carteras de sus clientes (la bolsa, ${up >= 0 ? 'a favor' : 'en contra'})`, '💼');
       break;
     }
     case 'ask_raise':

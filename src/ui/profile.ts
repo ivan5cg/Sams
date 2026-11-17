@@ -107,7 +107,7 @@ export class ProfilePanel extends Part {
         const perfLabel = c.school ? `Notas: ${gradeLabel(a.job.perf)}` : `Rendimiento (al 100%, ascenso)`;
         jobHtml = `<div class="prof-sec">
           <div class="prof-h">${c.icon} ${c.school ? esc(schoolName(stage.id, a.job.career)) : esc(lvl.title)}</div>
-          <div class="muted small">${c.school ? '' : `${esc(c.name)} · nivel ${a.job.level}/${c.levels.length} · §${lvl.pay} por jornada · `}${esc(scheduleText(c))}</div>
+          <div class="muted small">${c.school ? '' : `${esc(c.name)} · nivel ${a.job.level}/${c.levels.length} · §${w.wage(lvl.pay)} por jornada · `}${esc(scheduleText(c))}</div>
           ${a.study && DEGREES[a.study.degree] ? `<div class="small">${DEGREES[a.study.degree].icon} ${esc(DEGREES[a.study.degree].label)}: ${Math.min(100, Math.round((a.study.progress / DEGREES[a.study.degree].days) * 100))}% de la carrera</div>` : ''}
           ${c.school && mine ? '<div class="muted small">📖 Estudiar (en el ordenador o en la biblioteca) sube las notas. En clase se aprende lo que solo se aprende estudiando.</div>' : ''}
           <div class="perf"><span class="small">${perfLabel}</span><div class="bar"><div class="fill" style="width:${Math.round(a.job.perf)}%;background:#4f8fd9"></div></div></div>

@@ -31,7 +31,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   rapero: 'Rapero del metro',
   musico: 'Músico del metro',
   chismosa: 'Vecina cotilla',
-  militante: 'Militante del PSOE',
+  militante: 'Militante del POC',
   glovo: 'Repartidor de Glovo',
 };
 

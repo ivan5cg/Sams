@@ -145,7 +145,7 @@ export class BuildMode extends Part {
       const can = sel.kind === 'move' ? w.canPlace(sel.def, tile.x, tile.y, sel.id, sel.rot) : w.canPlace(sel.def, tile.x, tile.y, undefined, sel.rot);
       w.ui.ghost = { def: sel.def, x: tile.x, y: tile.y, ok: can.ok, ...(sel.rot ? { rot: sel.rot } : {}) };
       const d = OBJECTS[sel.def];
-      const cost = priceOf(d, this.buildTier);
+      const cost = this.world.priced(priceOf(d, this.buildTier));
       const price = sel.kind === 'buy' ? ` (§${cost})` : '';
       const poor = sel.kind === 'buy' && w.household.funds < cost;
       const label = !can.ok ? `🚫 ${esc(can.reason ?? 'No cabe')}` : poor ? '💸 No hay dinero' : `✓ ${sel.kind === 'move' ? 'Mover aquí' : `Colocar aquí${price}`}`;
@@ -157,7 +157,7 @@ export class BuildMode extends Part {
     if (!o || o.lotId !== w.household.lotId) return;
     const d = OBJECTS[o.def];
     const why = w.cantTouch(o);
-    const paid = priceOf(d, o.q ?? 2);
+    const paid = this.world.priced(priceOf(d, o.q ?? 2));
     const refund = d.price ? Math.floor(paid * SELL_RATIO) : 0;
     const ql = d.tiers ? ` · ${QUALITY[o.q ?? 2].label}` : '';
     $('#sheet').innerHTML = `<div class="sheet-card">
@@ -233,7 +233,7 @@ export class BuildMode extends Part {
     $('#build-items').innerHTML =
       CATALOG.filter((d) => d.category === this.buildCat)
         .map((d) => {
-          const cost = priceOf(d, this.buildTier);
+          const cost = this.world.priced(priceOf(d, this.buildTier));
           const poor = w.household.funds < cost;
           const chosen = sel?.kind === 'buy' && sel.def === d.id;
           const face = d.icon || `<span class="swatch" style="background:#${d.color.toString(16).padStart(6, '0')}"></span>`;

@@ -24,6 +24,7 @@ const TITLES: Record<string, [string, string]> = {
   canto: ['Cantar en la ducha... y fuera', 'Técnica vocal de coplera'],
   ajedrez: ['Las aperturas de toda la vida', 'Finales de torre del abuelo Ramón'],
   programacion: ['Programar desde cero', 'Patrones, bugs y café'],
+  inversion: ['Tus ahorros sin miedo', 'Gestión de carteras para valientes'],
   arte: ['Dibujar es fácil', 'Del boceto al óleo'],
   forma: ['Calistenia en el salón', 'Entrena como un maratoniano'],
   logica: ['Sudokus y acertijos', 'Lógica para mentes inquietas'],
@@ -101,6 +102,8 @@ const PERKS: { skill: string; level: number; icon: string; label: string }[] = [
   { skill: 'manitas', level: 3, icon: '⚡', label: 'Arregla aparatos sin calambrazos' },
   { skill: 'manitas', level: 6, icon: '⏱️', label: 'Arregla las cosas en la mitad de tiempo' },
   { skill: 'musica', level: 3, icon: '🪕', label: 'Tocar por propinas en el parque' },
+  { skill: 'inversion', level: 2, icon: '🔎', label: 'Ver el análisis de cada valor (tendencia)' },
+  { skill: 'inversion', level: 4, icon: '💠', label: 'Comisión del 0,5 % y productos complejos (cripto)' },
 ];
 
 export interface Unlock {

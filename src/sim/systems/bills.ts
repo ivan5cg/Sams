@@ -11,7 +11,8 @@ import { ELECTRIC } from '../../data/seasons';
 import { squareOf } from '../neighborhood';
 import type { Agent, BillKind, Debt, Household } from '../types';
 import type { World } from '../world';
-import { money } from './money';
+import { money, mortgageRate } from './money';
+import { aidAmount, priced } from './economy';
 import { endTask } from './tasks';
 import { districtOf, startTravel } from './travel';
 
@@ -46,16 +47,16 @@ export function billAmount(w: World, h: Household, kind: BillKind): number {
   const base = b.base[houseSize(w, h) - 1];
   switch (kind) {
     case 'alquiler':
-      return Math.round(ECONOMY.mortgage[houseSize(w, h) - 1] * MONTH);
+      return Math.round(priced(w, ECONOMY.mortgage[houseSize(w, h) - 1]) * mortgageRate(w) * MONTH);
     case 'autonomos':
-      return Math.round(ECONOMY.autonomos * MONTH) * ms.filter((m) => m.job && CAREERS[m.job.career]?.business).length;
+      return Math.round(priced(w, ECONOMY.autonomos) * MONTH) * ms.filter((m) => m.job && CAREERS[m.job.career]?.business).length;
     case 'luz': {
       const apps = objs.filter((o) => ELECTRIC.has(o.def)).length;
       const lux = objs.filter((o) => o.q === 3).length;
-      return Math.round((base * 0.6 + b.perAppliance * apps + b.perLuxury * lux + 12 * people) * MONTH);
+      return priced(w, Math.round((base * 0.6 + b.perAppliance * apps + b.perLuxury * lux + 12 * people) * MONTH));
     }
     case 'agua':
-      return Math.round((base * 0.4 + (b.perPerson - 12) * people + b.perPet * pets) * MONTH);
+      return priced(w, Math.round((base * 0.4 + (b.perPerson - 12) * people + b.perPet * pets) * MONTH));
   }
 }
 
@@ -132,7 +133,7 @@ export function dailyBills(w: World) {
 /** Lo que cuesta volver a dar de alta un servicio cortado. */
 function reconnectFee(w: World, kind: BillKind): number {
   const cut = w.household.bills?.cut;
-  return (kind === 'luz' && cut?.luz) || (kind === 'agua' && cut?.agua) ? ECONOMY.reconnect : 0;
+  return (kind === 'luz' && cut?.luz) || (kind === 'agua' && cut?.agua) ? priced(w, ECONOMY.reconnect) : 0;
 }
 
 function consequences(w: World) {
@@ -283,8 +284,9 @@ export function askAid(w: World): string | undefined {
   if (why) return why;
   const h = w.household;
   state(h).aid = w.day;
-  money(w, h, ECONOMY.socialAid, 'ayudas');
-  w.toast(`Los servicios sociales os dan una ayuda de §${ECONOMY.socialAid}. Algo es algo`, '🤝');
+  const aid = aidAmount(w, ECONOMY.socialAid);
+  money(w, h, aid, 'ayudas');
+  w.toast(`Los servicios sociales os dan una ayuda de §${aid}. Algo es algo`, '🤝');
   return undefined;
 }
 
