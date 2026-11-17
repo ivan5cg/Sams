@@ -150,3 +150,12 @@ export const ALCOHOL: Record<string, number> = { cana: 20, vermut: 20, drink_bee
 
 /** Comidas que dan gases (luego, pedos). */
 export const GASSY = new Set(['eat', 'cook', 'calamares', 'bravas', 'tortilla', 'churros', 'buy_hotdog', 'acai_bowl', 'cana', 'drink_beer']);
+
+/** Conversaciones de Getafe (el Cerro, el pádel, el Geta). */
+export const GETAFE_PAIRS: [string, string][] = [
+  ['Desde el Cerro se ve todo Madrid', 'Y el Bernabéu, si guiñas un ojo'],
+  ['¿Vienes el domingo al Coliseum?', '¡Aúpa Geta! Aunque pierda'],
+  ['¿Echamos un pádel?', 'Vale, pero el que pierda paga las cañas'],
+  ['Aquí en Getafe se vive de lujo', 'Y con el MetroSur, a Madrid en nada'],
+  ['¿Tú has subido al Cerro de los Ángeles en bici?', 'Una vez. Y bajé andando'],
+];

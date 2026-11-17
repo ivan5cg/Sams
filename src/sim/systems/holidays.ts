@@ -5,7 +5,7 @@
 
 import { MINUTES_PER_DAY } from '../constants';
 import { hasEmotion } from '../emotions';
-import { PARK_LOT, PLAZA_LOT } from '../neighborhood';
+import { CERRO_LOT, PARK_LOT, PLAZA_LOT, squareOf } from '../neighborhood';
 import { isAdult } from '../social';
 import { hasTrait } from '../traits';
 import type { Agent } from '../types';
@@ -93,11 +93,11 @@ export function holidayDay(w: World) {
 function crowd(w: World, share: number) {
   for (const hh of w.state.households) {
     if (hh.id === w.household.id || Math.random() > share) continue;
-    sendVisit(w, hh, districtOf(w, hh.lotId) === 'alcorcon' ? PLAZA_LOT : PARK_LOT, false);
+    sendVisit(w, hh, squareOf(districtOf(w, hh.lotId)), false);
   }
 }
 
-const atParty = (a: Agent) => !a.travel && (a.lotId === PARK_LOT || a.lotId === PLAZA_LOT);
+const atParty = (a: Agent) => !a.travel && (a.lotId === PARK_LOT || a.lotId === PLAZA_LOT || a.lotId === CERRO_LOT);
 
 /** Cada hora: cabalgata, desfile y concurso, y los niños llamando al timbre. */
 export function holidayHour(w: World) {

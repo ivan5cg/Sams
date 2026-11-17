@@ -9,7 +9,7 @@ describe('barrio (fase 3)', () => {
   it('hay 10 familias, sus casas y el parque, con todas las especies', () => {
     const w = World.createNew();
     expect(madridHomes(w.state.households)).toHaveLength(10);
-    expect(w.state.lots.filter((l) => l.kind === 'home' && l.district !== 'alcorcon')).toHaveLength(10);
+    expect(w.state.lots.filter((l) => l.kind === 'home' && l.district === 'madrid')).toHaveLength(10);
     expect(w.state.lots.some((l) => l.kind === 'park')).toBe(true);
     const species = new Set(w.state.agents.filter((a) => a.householdId !== 'h1').map((a) => a.species));
     for (const s of ['human', 'dog', 'cat', 'guineapig', 'ferret', 'capybara']) expect(species.has(s as never), s).toBe(true);

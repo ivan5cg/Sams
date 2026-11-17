@@ -55,7 +55,7 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   dog: {
     id: 'dog',
     price: 150,
-    names: ['Toby', 'Luna', 'Rocky', 'Kira', 'Bruno', 'Nala', 'Thor', 'Lola'],
+    names: ['Toby', 'Luna', 'Rocky', 'Kira', 'Bruno', 'Nala', 'Thor', 'Lola', 'Max', 'Bimba', 'Rufo', 'Pancho', 'Golfo', 'Lúa'],
     kind: 'pet',
     label: 'Perro',
     icon: '🐕',
@@ -71,7 +71,7 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   cat: {
     id: 'cat',
     price: 120,
-    names: ['Misi', 'Garfield', 'Nube', 'Simba', 'Pelusa', 'Salem', 'Mimi', 'Tigre'],
+    names: ['Misi', 'Garfield', 'Nube', 'Simba', 'Pelusa', 'Salem', 'Mimi', 'Tigre', 'Michi', 'Kiwi', 'Bigotes', 'Cleo', 'Félix'],
     aloof: 0.3,
     kind: 'pet',
     label: 'Gato',
@@ -88,7 +88,7 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   guineapig: {
     id: 'guineapig',
     price: 40,
-    names: ['Coco', 'Galleta', 'Canela', 'Pipa', 'Bolita', 'Churro', 'Fresa'],
+    names: ['Coco', 'Galleta', 'Canela', 'Pipa', 'Bolita', 'Churro', 'Fresa', 'Peluche', 'Bizcocho', 'Rulo', 'Pompón'],
     habitat: 'cage',
     kind: 'pet',
     label: 'Cobaya',
@@ -105,7 +105,7 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   ferret: {
     id: 'ferret',
     price: 90,
-    names: ['Pipo', 'Flash', 'Ninja', 'Chispa', 'Bandido', 'Fideo', 'Rayo'],
+    names: ['Pipo', 'Flash', 'Ninja', 'Chispa', 'Bandido', 'Fideo', 'Rayo', 'Zorro', 'Tofu', 'Gizmo'],
     kind: 'pet',
     label: 'Hurón',
     icon: '🦦', // no hay emoji de hurón
@@ -121,7 +121,7 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   capybara: {
     id: 'capybara',
     price: 300,
-    names: ['Capi', 'Zen', 'Paco', 'Tranqui', 'Bombón', 'Moka', 'Dalai'],
+    names: ['Capi', 'Zen', 'Paco', 'Tranqui', 'Bombón', 'Moka', 'Dalai', 'Lenteja', 'Siesta', 'Buda'],
     calmAura: 3,
     outdoor: true,
     kind: 'pet',

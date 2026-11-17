@@ -2,7 +2,7 @@ import { PET_TRAITS } from '../data/pets';
 import { STREET_NPCS } from '../data/street';
 // Creación del barrio: las 9 familias vecinas, sus casas y el parque.
 
-import { ACAI_OBJECTS, HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, SUPER_OBJECTS, type ObjectPlacement, METRO_OBJECTS, PLAZA_OBJECTS, BAR_OBJECTS, LIBRARY_OBJECTS, GYM_OBJECTS, MARKET_OBJECTS } from '../data/lot';
+import { ACAI_OBJECTS, HOUSE_OBJECTS, LAYOUTS, PARK_OBJECTS, STUDIO_OBJECTS, SUPER_OBJECTS, type ObjectPlacement, METRO_OBJECTS, PLAZA_OBJECTS, BAR_OBJECTS, LIBRARY_OBJECTS, GYM_OBJECTS, MARKET_OBJECTS, CERRO_OBJECTS, PADEL_OBJECTS } from '../data/lot';
 import { CAREER_SKILL } from '../data/skills';
 import { OBJECTS } from '../data/objects';
 import { JOB_CAREERS } from '../data/careers';
@@ -25,13 +25,29 @@ export const ALCORCON_HOMES = ['AL1', 'AL2', 'AL3'];
 export const LIBRARY_LOT = 'BI';
 export const GYM_LOT = 'GY';
 export const MARKET_LOT = 'MK';
+export const CERRO_LOT = 'GP';
+export const PADEL_LOT = 'PD';
+export const GETAFE_HOMES = ['GE1', 'GE2', 'GE3'];
+
+/** Dónde queda la gente de cada barrio (para una boda, San Isidro, la cabalgata...). */
+export function squareOf(district: string): string {
+  return district === 'alcorcon' ? PLAZA_LOT : district === 'getafe' ? CERRO_LOT : PARK_LOT;
+}
+
+/** Estación de metro de cada barrio. */
+export function stationOf(district: string | undefined): string {
+  return district === 'alcorcon' ? 'Alcorcón Central' : district === 'getafe' ? 'Getafe Central' : 'Madrid';
+}
 export const NEIGHBOUR_COUNT = 9;
 
-const SURNAMES = ['López', 'Martín', 'Sánchez', 'Romero', 'Navarro', 'Torres', 'Díaz', 'Moreno', 'Gil', 'Ruiz', 'Ortega', 'Molina'];
+const SURNAMES = ['López', 'Martín', 'Sánchez', 'Romero', 'Navarro', 'Torres', 'Díaz', 'Moreno', 'Gil', 'Ruiz', 'Ortega', 'Molina', 'Castro', 'Vega', 'Ramos', 'Herrera', 'Iglesias', 'Cano'];
 const FIRST_NAMES = [
   'Ana', 'Carlos', 'Elena', 'Javier', 'Marta', 'Pablo', 'Sara', 'Diego', 'Laura', 'Hugo', 'Irene', 'Álvaro',
   'Nerea', 'Raúl', 'Carmen', 'Adrián', 'Lucas', 'Paula', 'Andrés', 'Alba', 'Sergio', 'Noa', 'Iker', 'Julia',
   'Marcos', 'Rocío', 'Daniel', 'Vega', 'Teo', 'Olivia', 'Bruno', 'Clara', 'Gonzalo', 'Inés', 'Mario', 'Lola',
+  // Con Getafe hay más vecinos: más nombres (si no, acaban con un número detrás).
+  'Rubén', 'Patricia', 'Fernando', 'Beatriz', 'Jorge', 'Cristina', 'Alberto', 'Silvia', 'Óscar', 'Natalia',
+  'Víctor', 'Eva', 'Ignacio', 'Sonia', 'Tomás', 'Celia', 'Héctor', 'Maite',
 ];
 const WALLS = [0xe9e1d4, 0xf1d3c2, 0xd9e4dd, 0xe8dcc0, 0xd6d2e8, 0xf0e2b6, 0xcfe0e8, 0xe6cfd8, 0xdcdcdc];
 const FLOORS = [0xc89f6e, 0xb88a5a, 0xd4b48c, 0xa47551, 0xc7a27a, 0xb5936b, 0xd9bf99, 0x9c6f4a, 0xc49a6c];
@@ -164,6 +180,24 @@ export function addPlaces(state: WorldState) {
     state.lots.push({ id: p.id, name: p.name, kind: p.kind, layout: p.layout, district: 'madrid', ...(p.style ? { style: p.style } : {}) });
     placeObjects(state, p.id, p.objects);
   }
+}
+
+/** Getafe (MetroSur, como Alcorcón): el parque del Cerro de los Ángeles, el club de pádel y tres casas. */
+export function addGetafe(state: WorldState) {
+  if (!state.lots.some((l) => l.id === CERRO_LOT)) {
+    state.lots.push({ id: CERRO_LOT, name: 'Cerro de los Ángeles', kind: 'park', layout: 'park', district: 'getafe' });
+    placeObjects(state, CERRO_LOT, CERRO_OBJECTS);
+  }
+  if (!state.lots.some((l) => l.id === PADEL_LOT)) {
+    state.lots.push({ id: PADEL_LOT, name: 'Club de pádel El Cuñado', kind: 'venue', layout: 'padel', district: 'getafe' });
+    placeObjects(state, PADEL_LOT, PADEL_OBJECTS);
+  }
+  GETAFE_HOMES.forEach((lotId, i) => {
+    if (state.lots.some((l) => l.id === lotId)) return;
+    state.lots.push({ id: lotId, name: '', kind: 'home', layout: 'house', district: 'getafe', style: { wall: WALLS[(i + 6) % WALLS.length], floor: FLOORS[(i + 5) % FLOORS.length] } });
+    placeObjects(state, lotId, HOUSE_OBJECTS);
+    generateFamily(state, lotId);
+  });
 }
 
 /** Unos okupas en una casa que llevaba años vacía. */

@@ -4,7 +4,7 @@
 
 export type TileType = 'wall' | 'wood' | 'tile' | 'grass' | 'door' | 'path';
 
-export type LayoutId = 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market';
+export type LayoutId = 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market' | 'padel';
 
 const HOUSE_MAP = [
   'WWWWWWWWWWWggg',
@@ -153,6 +153,20 @@ const BAR_MAP = [
   'pppppppppppp',
 ];
 
+/** Club de pádel de Getafe: dos pistas al aire libre y una terraza. */
+const PADEL_MAP = [
+  'gggggggggggggg',
+  'gppppppppppppg',
+  'gppppppppppppg',
+  'gppppppppppppg',
+  'gppppppppppppg',
+  'gppppppppppppg',
+  'gppppppppppppg',
+  'gppppppppppppg',
+  'gppppppppppppg',
+  'ggggggpppggggg',
+];
+
 const CHAR: Record<string, TileType> = { W: 'wall', '.': 'wood', t: 'tile', g: 'grass', d: 'door', p: 'path' };
 
 export interface LotLayout {
@@ -185,6 +199,7 @@ export const LAYOUTS: Record<LayoutId, LotLayout> = {
   library: parseLot(STUDIO_MAP, { x: 5, y: 9 }),
   gym: parseLot(BAR_MAP, { x: 5, y: 8 }),
   market: parseLot(PLAZA_MAP, { x: 8, y: 11 }),
+  padel: parseLot(PADEL_MAP, { x: 7, y: 9 }),
 };
 
 /** Cambia algunas casillas de un plano: [x, y, carácter]. */
@@ -407,6 +422,36 @@ export const MARKET_OBJECTS: ObjectPlacement[] = [
   { def: 'tree', x: 14, y: 10 },
   { def: 'lamp', x: 2, y: 9 },
   { def: 'lamp', x: 13, y: 9 },
+];
+
+/** Getafe: el parque del Cerro de los Ángeles y el club de pádel. */
+export const CERRO_OBJECTS: ObjectPlacement[] = [
+  { def: 'toilet', x: 1, y: 1 },
+  { def: 'foodcart', x: 4, y: 6 },
+  { def: 'bench', x: 7, y: 3 },
+  { def: 'bench', x: 10, y: 6 },
+  { def: 'bench', x: 6, y: 10 },
+  { def: 'swings', x: 11, y: 11 },
+  { def: 'tree', x: 2, y: 3 },
+  { def: 'tree', x: 5, y: 1 },
+  { def: 'tree', x: 9, y: 1 },
+  { def: 'tree', x: 13, y: 2 },
+  { def: 'tree', x: 14, y: 7 },
+  { def: 'tree', x: 2, y: 12 },
+  { def: 'tree', x: 13, y: 13 },
+  { def: 'flowers', x: 8, y: 8 },
+  { def: 'flowers', x: 3, y: 8 },
+  { def: 'ball', x: 9, y: 11 },
+];
+
+export const PADEL_OBJECTS: ObjectPlacement[] = [
+  { def: 'padel_court', x: 1, y: 1 },
+  { def: 'padel_court', x: 1, y: 5 },
+  { def: 'bar_counter', x: 10, y: 1 },
+  { def: 'mus_table', x: 10, y: 4 },
+  { def: 'bench', x: 10, y: 7 },
+  { def: 'bench', x: 12, y: 7 },
+  { def: 'lamp', x: 9, y: 8 },
 ];
 
 export const BAR_OBJECTS: ObjectPlacement[] = [

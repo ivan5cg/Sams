@@ -4,7 +4,7 @@ import { serialize } from '../src/save/serialize';
 import type { Agent } from '../src/sim/types';
 
 /** Las familias de Madrid (las de Alcorcón van aparte). */
-export const madridHomes = (hs: { lotId: string }[]) => hs.filter((h) => !h.lotId.startsWith('AL'));
+export const madridHomes = (hs: { lotId: string }[]) => hs.filter((h) => !h.lotId.startsWith('AL') && !h.lotId.startsWith('GE'));
 
 /** Una partida con el formato de una versión anterior (sin barrio). */
 export function oldSave(version: number) {
@@ -52,6 +52,17 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v15: Getafe (sus parcelas, sus vecinos y lo que tengan colocado).
+  if (version <= 14) {
+    const gtf = ['GP', 'PD', 'GE1', 'GE2', 'GE3'];
+    const fams = new Set(st.households.filter((h: Raw) => gtf.includes(h.lotId)).map((h: Raw) => h.id));
+    st.lots = st.lots.filter((l: Raw) => !gtf.includes(l.id));
+    st.objects = st.objects.filter((o: Raw) => !gtf.includes(o.lotId));
+    st.households = st.households.filter((h: Raw) => !fams.has(h.id));
+    const gone = new Set(st.agents.filter((a: Raw) => fams.has(a.householdId)).map((a: Raw) => a.id));
+    st.agents = st.agents.filter((a: Raw) => !gone.has(a.id));
+    for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
+  }
   // v14: biblioteca, gimnasio y mercadillo.
   if (version <= 13) {
     const nuevos = ['BI', 'GY', 'MK'];

@@ -148,7 +148,7 @@ export class Hud {
   placeName(lotId: string): string {
     const lot = this.world.lotById(lotId);
     if (lot.householdId === this.world.household.id) return 'Casa';
-    return lot.layout === 'park' ? 'Parque' : lot.name;
+    return lot.id === 'P' ? 'Parque' : lot.name;
   }
 
   /** Repinta lo que cambia con el tiempo (cada 200 ms y tras cada orden). */

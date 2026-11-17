@@ -30,9 +30,9 @@ cambió al hacerlas está en la columna «Notas».
 | 5.2 Fiestas nuevas | ✅ | Reyes, Carnaval y Halloween en `systems/holidays.ts` (fechas en `holidayOf`, que lee también la agenda). Sin cambios en lo que se guarda |
 | 5.3 Álbum de fotos | ✅ | Base de IndexedDB aparte (`sams-album`): no toca la partida ni su versión. Fotos automáticas con el evento `moment` |
 | 5.4 Sitios nuevos | ✅ | Biblioteca, gimnasio y mercadillo (`systems/places.ts`), con horarios, regateo y vecinos que van. SAVE_VERSION 14 (las tres parcelas) |
-| Resto de la fase 5 | ⏳ | El tercer barrio |
+| 5.5 Tercer barrio | ✅ | Getafe (MetroSur): Cerro de los Ángeles, club de pádel y tres casas. Barrios generalizados (`squareOf`, `stationOf`, mapa por distritos). SAVE_VERSION 15 |
 
-**Lo siguiente:** el tercer barrio (lo último de la fase 5). La partida va por la **versión 14**: si algo nuevo cambia lo que se guarda, toca la 15 con su migración.
+**Lo siguiente:** la fase 5 está completa (y con ella, todo el plan). La partida va por la **versión 15**: si algo nuevo cambia lo que se guarda, toca la 16 con su migración.
 
 ---
 
@@ -362,8 +362,12 @@ datos.
   *Hecho:* `render/photo.ts` (captura reducida a 720 px de ancho, JPEG, con pie de foto), `save/album.ts` (60 fotos
   o 12 MB; sin IndexedDB, en memoria) y `ui/album.ts`. Compartir con `navigator.share` si el móvil lo admite.
   De paso: la lluvia y la nieve solo caían en un recuadro del centro con la cámara alejada (se compensa el zoom).
-- Un tercer barrio conectado por metro (seguir el patrón de Alcorcón en `src/data/street.ts` y
+- ✅ Un tercer barrio conectado por metro (seguir el patrón de Alcorcón en `src/data/street.ts` y
   `neighborhood.ts`).
+  *Hecho:* Getafe (`addGetafe`, también en la migración 14 → 15), con el pádel como sitio propio. Lo que antes
+  distinguía solo Madrid/Alcorcón ahora va por barrio: `squareOf` (dónde se reúne cada barrio), `stationOf`
+  (la estación del metro) y el mapa, que lista todos los barrios. Más nombres de vecinos y de mascotas: con
+  tanta gente se acababan y salían «Lola 704».
 
 ---
 

@@ -228,9 +228,9 @@ export interface Lot {
   name: string;
   /** home = casa de una familia; park/venue = sitios públicos (parque, estudio de pilates). */
   kind: 'home' | 'park' | 'venue';
-  layout: 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market';
+  layout: 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market' | 'padel';
   /** Barrio: Madrid (por defecto), Alcorcón o el propio metro. */
-  district?: 'madrid' | 'alcorcon' | 'metro';
+  district?: 'madrid' | 'alcorcon' | 'getafe' | 'metro';
   householdId?: string;
   /** Colores propios de cada casa. */
   style?: { wall: number; floor: number };

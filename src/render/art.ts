@@ -1038,6 +1038,27 @@ const ART: Record<string, Art> = {
     g.fillStyle(0xffffff, 0.25);
     g.fillRect(top.x - 4, top.y + 3, 2, 20);
   },
+  padel_court: (g, _f, X, Y) => {
+    // Pista azul con líneas blancas, red en medio y cristales a los lados (bajitos, para ver a los jugadores).
+    flat(g, R(X + 0.05, Y + 0.05, 6.9, 2.9), 0.5, 0x2f6db5);
+    const line = 0xffffff;
+    flat(g, R(X + 0.05, Y + 0.05, 6.9, 0.06), 0.7, line);
+    flat(g, R(X + 0.05, Y + 2.89, 6.9, 0.06), 0.7, line);
+    flat(g, R(X + 1.6, Y + 0.05, 0.06, 2.9), 0.7, line);
+    flat(g, R(X + 5.35, Y + 0.05, 0.06, 2.9), 0.7, line);
+    flat(g, R(X + 1.6, Y + 1.47, 3.8, 0.06), 0.7, line);
+    // Red
+    prism(g, R(X + 3.47, Y + 0.05, 0.06, 2.9), 0, 9, 0x222222, { alpha: 0.85 });
+    flat(g, R(X + 3.45, Y + 0.05, 0.1, 2.9), 9, 0xffffff);
+    // Cristales al fondo y en los extremos
+    prism(g, R(X, Y, 7, 0.05), 0, 26, 0xbfe6f5, { alpha: 0.25 });
+    prism(g, R(X, Y, 0.05, 3), 0, 26, 0xbfe6f5, { alpha: 0.25 });
+    prism(g, R(X + 6.95, Y, 0.05, 3), 0, 26, 0xbfe6f5, { alpha: 0.25 });
+    // Una pelota amarilla perdida
+    const b = P(X + 2.4, Y + 2.2, 1);
+    g.fillStyle(0xdfff4f, 1);
+    g.fillCircle(b.x, b.y - 1.5, 2);
+  },
   stall_fruit: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0x2e8b57, [0xf28c28, 0xd62828, 0x8ac926, 0xffd23f]),
   stall_clothes: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0x4f8fd9, [0xe0607e, 0x52b788, 0x9b5de5, 0xf4a261]),
   stall_junk: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0xc9a227, [0x8b5a2b, 0x6d6875, 0xc9a66b, 0x2a9d8f]),
@@ -1143,7 +1164,7 @@ export function drawObjectArt(g: G, f: G, o: ObjLike): boolean {
 }
 
 /** Objetos que se pintan bajo los personajes (a ras de suelo). */
-export const GROUND_ART = new Set(['pond', 'rug', 'pilates_mat', 'puddle', 'strawbed']);
+export const GROUND_ART = new Set(['pond', 'rug', 'pilates_mat', 'puddle', 'strawbed', 'padel_court']);
 
 
 /** Brillo de pantalla (tele, consola, ordenador, equipo de música) cuando alguien la usa. */

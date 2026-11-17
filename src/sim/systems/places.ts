@@ -26,6 +26,7 @@ export function placeClosedReason(layout: string | undefined, minutes: number): 
     if (m < 9 * 60 || m >= 21 * 60) return 'Está cerrada (abre de 9:00 a 21:00)';
   }
   if (layout === 'gym' && (m < 7 * 60 || m >= 23 * 60)) return 'Está cerrado (abre de 7:00 a 23:00)';
+  if (layout === 'padel' && (m < 8 * 60 || m >= 23 * 60)) return 'Las pistas, de 8:00 a 23:00';
   if (layout === 'market' && (wd !== 6 || m < 9 * 60 || m >= 14 * 60 + 30)) return 'El mercadillo solo se pone los domingos, de 9:00 a 14:30';
   return undefined;
 }
@@ -103,6 +104,19 @@ export function placeTask(w: World, a: Agent, actionId: string) {
         say(`«¡Que me quitas el pan de mis hijos!». A ${a.name} no le bajan ni un euro`, '😤');
       }
       break;
+    case 'play_padel': {
+      // El pádel: siempre hay un cuñado que lo comenta toda la semana.
+      const rivals = w.agentsIn(a.lotId).filter((x) => x !== a && x.kind === 'person' && !x.travel && x.current?.actionId === 'play_padel');
+      const won = Math.random() < 0.5 + 0.05 * skillLevel(w, a, 'forma');
+      if (won) w.feel(a, 'fiesta', undefined, 3);
+      say(
+        won
+          ? `${a.name} ha ganado al pádel 6-4${rivals[0] ? ` a ${rivals[0].name}` : ''}. Lo va a contar en todas las comidas familiares`
+          : `${a.name} ha perdido al pádel. Dice que la pala era mala y que el sol le daba de cara`,
+        '🎾',
+      );
+      break;
+    }
     case 'fart':
     case 'sing':
       if (w.lotById(a.lotId)?.layout === 'library') {

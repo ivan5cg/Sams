@@ -5,7 +5,7 @@ import { ACTIONS } from '../../data/actions';
 import { CAREERS, workDays } from '../../data/careers';
 import { lifeStage } from '../../data/species';
 import { MINUTES_PER_DAY, RIDE_MINUTES, TRAVEL_MINUTES } from '../constants';
-import { METRO_LOT, PARK_LOT } from '../neighborhood';
+import { METRO_LOT, PARK_LOT, stationOf } from '../neighborhood';
 import { findPath, isWalkable } from '../pathfinding';
 import type { Agent, Household, Vec } from '../types';
 import { rand } from '../util';
@@ -53,7 +53,7 @@ export function needsMetro(w: World, from: string, to: string): boolean {
   return a !== b && a !== 'metro' && b !== 'metro';
 }
 
-/** Echa a andar hacia otra parcela. Entre Madrid y Alcorcón se va en metro (salvo `direct`: trabajo, cole). */
+/** Echa a andar hacia otra parcela. Entre barrios (Madrid, Alcorcón, Getafe) se va en metro (salvo `direct`: trabajo, cole). */
 export function startTravel(w: World, a: Agent, to: string, direct = false) {
   endTask(w, a);
   a.queue = [];
@@ -96,7 +96,7 @@ export function arrive(w: World, a: Agent) {
   if (to === w.householdOf(a)?.lotId) petGreeting(w, a);
   if (to === METRO_LOT && a.via) {
     a.rideUntil = w.state.minutes + RIDE_MINUTES;
-    if (w.isPlayerMember(a) && a.kind === 'person') w.toastOnce(`${a.id}:metro`, `${a.name} sube al metro: Línea 10 hasta Puerta del Sur y MetroSur hasta ${w.lotById(a.via).district === 'alcorcon' ? 'Alcorcón Central' : 'Madrid'}`, '🚇', 30);
+    if (w.isPlayerMember(a) && a.kind === 'person') w.toastOnce(`${a.id}:metro`, `${a.name} sube al metro: Línea 10 hasta Puerta del Sur y MetroSur hasta ${stationOf(w.lotById(a.via).district)}`, '🚇', 30);
     if (w.isPlayerMember(a) && a.kind === 'person' && Math.random() < 0.7) w.rapQueue.push(a.id);
   }
   if (a.role === 'glovo') deliverFood(w, a);

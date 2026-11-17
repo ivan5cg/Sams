@@ -151,6 +151,14 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 - Por la calle: **repartidores de Glovo** (pide comida desde el ordenador) y, en campaña electoral,
   **militantes del PSOE** que te paran en el parque o llaman a la puerta para pedirte el voto.
 
+## Getafe
+
+- El tercer barrio, también en **MetroSur** (bajada en Getafe Central): el parque del **Cerro de los Ángeles**,
+  el **Club de pádel El Cuñado** (de 8:00 a 23:00; un partido, §8, sube la forma física y siempre hay alguien que
+  lo cuenta toda la semana) y tres casas con sus familias, que hacen vida en su barrio.
+- En el mapa del barrio, Getafe tiene su propia zona; las bodas, la cabalgata o San Isidro de los de Getafe se
+  celebran en su Cerro.
+
 ## Salseo, pedos, borracheras y cuernos
 
 - **Salseo**: entre los vecinos pasan cosas (líos, deudas, broncas, operaciones de nariz, el que dice que trabaja

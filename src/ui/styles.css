@@ -1366,13 +1366,14 @@ body.building #hud-bottom {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-.mm-madrid { left: 1%; width: 61%; background: rgba(240, 226, 200, 0.45); }
-.mm-alcorcon { left: 72%; width: 27%; background: rgba(181, 106, 67, 0.22); }
+.mm-madrid { left: 1%; width: 55%; background: rgba(240, 226, 200, 0.45); }
+.mm-alcorcon { left: 66%; width: 33%; bottom: calc(52% + 2px); background: rgba(181, 106, 67, 0.22); }
+.mm-getafe { left: 66%; width: 33%; top: calc(53% + 2px); background: rgba(120, 150, 200, 0.22); }
 .mm-line {
   position: absolute;
-  left: 58%;
-  width: 18%;
-  top: calc(42% - 3px);
+  left: 55%;
+  width: 12%;
+  top: calc(50% - 3px);
   height: 6px;
   border-radius: 3px;
   background: repeating-linear-gradient(90deg, #0074c8 0 10px, #9b5de5 10px 20px);

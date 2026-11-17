@@ -7,7 +7,7 @@ import { QUALITY } from '../../data/objects';
 import { ELECTRIC, EVENTS, POWERED_ACTIONS } from '../../data/seasons';
 import { lifeStage } from '../../data/species';
 import { MINUTES_PER_DAY } from '../constants';
-import { BAR_LOT, PARK_LOT, PLAZA_LOT, SUPER_LOT } from '../neighborhood';
+import { BAR_LOT, PARK_LOT, PLAZA_LOT, SUPER_LOT, squareOf } from '../neighborhood';
 import { getRel, isAdult, partnerOf } from '../social';
 import { hasTrait } from '../traits';
 import type { Agent, SpeciesId } from '../types';
@@ -145,7 +145,7 @@ export function eventsHour(w: World) {
   // San Isidro: en el parque y la plaza, todo el mundo castizo.
   if (hasEvent(w, 'sanisidro')) {
     for (const lotId of [PARK_LOT, PLAZA_LOT]) for (const a of w.agentsIn(lotId)) if (a.kind === 'person' && !a.travel && !a.role) w.feel(a, 'castizo');
-    if (h === 11) for (const hh of w.state.households) if (hh.id !== w.household.id && Math.random() < 0.5) sendVisit(w, hh, districtOf(w, hh.lotId) === 'alcorcon' ? PLAZA_LOT : PARK_LOT, false);
+    if (h === 11) for (const hh of w.state.households) if (hh.id !== w.household.id && Math.random() < 0.5) sendVisit(w, hh, squareOf(districtOf(w, hh.lotId)), false);
   }
   // Domingo por la tarde: derbi en la tele del bar.
   if (w.weekday === 6 && h === 19) {

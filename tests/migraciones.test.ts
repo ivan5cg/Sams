@@ -18,7 +18,7 @@ describe('migraciones: cada versión antigua llega a la actual y se juega', () =
       expect(w.members.map((a) => a.name)).toEqual(['Lucía', 'Mateo', 'Toby', 'Misi']);
       // Llega todo lo que se ha ido añadiendo: el barrio, las tiendas, Alcorcón...
       expect(madridHomes(w.state.households)).toHaveLength(10);
-      for (const layout of ['park', 'studio', 'super', 'acai', 'metro', 'plaza', 'bar']) {
+      for (const layout of ['park', 'studio', 'super', 'acai', 'metro', 'plaza', 'bar', 'library', 'gym', 'market', 'padel']) {
         expect(w.state.lots.some((l) => l.layout === layout), layout).toBe(true);
       }
       expect(w.state.agents.some((a) => a.role === 'rapero')).toBe(true);

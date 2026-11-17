@@ -8,7 +8,7 @@ import { getRel } from './social';
 import { hasTrait, traitsOf } from './traits';
 import { hasEmotion } from './emotions';
 import { ASPIRATION_BY_ID } from './aspirations';
-import { ALCORCON_PAIRS, MADRID_PAIRS, OKUPA_LINES } from '../data/street';
+import { ALCORCON_PAIRS, GETAFE_PAIRS, MADRID_PAIRS, OKUPA_LINES } from '../data/street';
 import { fresh, smallTalk, vary, varyPair } from './phrases';
 import type { Agent } from './types';
 import type { World } from './world';
@@ -92,6 +92,7 @@ export function contextPairs(world: World, a: Agent, t: Agent): [string, string]
   // Madrid, Alcorcón y lo que se cuece
   pairs.push(MADRID_PAIRS[Math.floor(Math.random() * MADRID_PAIRS.length)]);
   if (world.districtOf(a.lotId) === 'alcorcon') pairs.push(ALCORCON_PAIRS[Math.floor(Math.random() * ALCORCON_PAIRS.length)]);
+  if (world.districtOf(a.lotId) === 'getafe') pairs.push(GETAFE_PAIRS[Math.floor(Math.random() * GETAFE_PAIRS.length)]);
   if (world.householdOf(t)?.okupa || world.householdOf(a)?.okupa) pairs.push(OKUPA_LINES[Math.floor(Math.random() * OKUPA_LINES.length)]);
   if (layout === 'metro') pairs.push(['¿Esto para en Puerta del Sur?', 'Sí, y ahí cambias al MetroSur']);
   if (layout === 'bar') pairs.push(['¡Paco, otra caña!', '¡Y unas bravas, que pican de verdad!']);

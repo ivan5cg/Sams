@@ -7,8 +7,10 @@ import { $, esc } from './dom';
 import { Part } from './part';
 
 /** Icono y botón de «ir» de cada local. */
-const PLACE_ICON: Record<string, string> = { studio: '🧘', super: '🛒', acai: '🫐', bar: '🍺', metro: '🚇', library: '📚', gym: '🏋️', market: '🏺' };
+const PLACE_ICON: Record<string, string> = { studio: '🧘', super: '🛒', acai: '🫐', bar: '🍺', metro: '🚇', library: '📚', gym: '🏋️', market: '🏺', padel: '🎾' };
+const DISTRICT_LABEL: Record<string, string> = { madrid: '🏛️ Madrid', alcorcon: '🏙️ Alcorcón', getafe: '🌄 Getafe', metro: '🚇 Metro' };
 const PLACE_GO: Record<string, string> = {
+  padel: 'Echar un pádel',
   super: 'Ir a hacer la compra',
   acai: 'Ir a por un açaí',
   bar: 'Ir de cañas',
@@ -90,11 +92,11 @@ export class NeighbourhoodMap extends Part {
       ...w.state.lots.filter((l) => dist(l.id) === d && l.kind !== 'home').map((l) => l.id),
       ...w.state.lots.filter((l) => dist(l.id) === d && l.kind === 'home' && l.id !== w.household.lotId).map((l) => l.id),
     ];
-    const other = homeD === 'alcorcon' ? 'madrid' : 'alcorcon';
+    const others = ['madrid', 'alcorcon', 'getafe'].filter((d) => d !== homeD && section(d).length);
     const header = (d: string) =>
-      `<div class="map-district">${d === 'alcorcon' ? '🏙️ Alcorcón' : d === 'metro' ? '🚇 Metro' : '🏛️ Madrid'}${d !== homeD && d !== 'metro' ? ` <span class="muted small">· en metro, unos ${w.travelMinutes(a.lotId === w.household.lotId ? a.lotId : w.household.lotId, section(d)[0] ?? w.household.lotId)} min</span>` : ''}</div>`;
-    const order: string[] = [w.household.lotId, ...section(homeD), `#${other}`, ...section(other), '#metro', ...section('metro')];
-    const cards = [`<div class="map-district">${homeD === 'alcorcon' ? '🏙️ Alcorcón' : '🏛️ Madrid'}</div>`, ...order]
+      `<div class="map-district">${DISTRICT_LABEL[d] ?? d}${d !== homeD && d !== 'metro' ? ` <span class="muted small">· en metro, unos ${w.travelMinutes(a.lotId === w.household.lotId ? a.lotId : w.household.lotId, section(d)[0] ?? w.household.lotId)} min</span>` : ''}</div>`;
+    const order: string[] = [w.household.lotId, ...section(homeD), ...others.flatMap((d) => [`#${d}`, ...section(d)]), '#metro', ...section('metro')];
+    const cards = [`<div class="map-district">${DISTRICT_LABEL[homeD] ?? homeD}</div>`, ...order]
       .map((lotId) => {
         if (lotId.startsWith('<')) return lotId;
         if (lotId.startsWith('#')) return header(lotId.slice(1));
@@ -105,7 +107,7 @@ export class NeighbourhoodMap extends Part {
         const hh = lot.householdId ? w.state.households.find((h) => h.id === lot.householdId) : undefined;
         const venueIcon = PLACE_ICON[lot.layout] ?? '🧘';
         const closed = lot.kind === 'venue' ? w.closedReason(lotId) : undefined;
-        const title = mine ? `🏡 Vuestra casa` : lot.layout === 'plaza' ? `⛲ ${esc(lot.name)}` : hh?.okupa ? `🏚️ ${esc(lot.name)} <span class="muted small">· okupas</span>` : lot.kind === 'park' ? '🌳 Parque del barrio' : lot.kind === 'venue' ? `${venueIcon} ${esc(lot.name)}${closed ? ' <span class="muted small">· cerrado</span>' : ''}` : `🏠 ${esc(hh?.name ?? lot.name)}`;
+        const title = mine ? `🏡 Vuestra casa` : lot.layout === 'plaza' ? `⛲ ${esc(lot.name)}` : hh?.okupa ? `🏚️ ${esc(lot.name)} <span class="muted small">· okupas</span>` : lot.kind === 'park' ? `🌳 ${esc(lot.name)}` : lot.kind === 'venue' ? `${venueIcon} ${esc(lot.name)}${closed ? ' <span class="muted small">· cerrado</span>' : ''}` : `🏠 ${esc(hh?.name ?? lot.name)}`;
         // Quién vive ahí y no está
         const awayResidents = hh && !mine ? hh.memberIds.map((id) => w.agent(id)!).filter((x) => x.lotId !== lotId || x.travel) : [];
         const go = w.canTravel(a, lotId);
@@ -130,7 +132,7 @@ export class NeighbourhoodMap extends Part {
 
     $('#map').innerHTML = `<div class="map-card">
       <div class="sheet-head">
-        <div><div class="sheet-title">🗺️ El barrio</div><div class="sheet-sub">Andando, ${TRAVEL_MINUTES} minutos. Entre Madrid y Alcorcón se va en metro (Línea 10 + MetroSur)</div></div>
+        <div><div class="sheet-title">🗺️ El barrio</div><div class="sheet-sub">Andando, ${TRAVEL_MINUTES} minutos. Entre Madrid, Alcorcón y Getafe se va en metro (Línea 10 + MetroSur)</div></div>
         <button class="icon-btn" data-close>✕</button>
       </div>
       ${this.miniMap()}
@@ -144,11 +146,13 @@ export class NeighbourhoodMap extends Part {
     const w = this.world;
     const a = w.activeAgent;
     const pos: Record<string, [number, number]> = {
-      L0: [7, 21], L1: [19, 21], L2: [31, 21], L3: [43, 21], L4: [55, 21],
-      G: [7, 42], P: [19, 42], M: [31, 42], A1: [43, 42], A2: [55, 42],
-      L5: [7, 63], L6: [19, 63], L7: [31, 63], L8: [43, 63], L9: [55, 63],
-      BI: [13, 84], GY: [31, 84], MK: [49, 84],
-      MT: [66.5, 42], PL: [79, 21], BR: [93, 21], AL1: [79, 42], AL2: [93, 42], AL3: [86, 63],
+      L0: [6, 21], L1: [17, 21], L2: [28, 21], L3: [39, 21], L4: [50, 21],
+      G: [6, 42], P: [17, 42], M: [28, 42], A1: [39, 42], A2: [50, 42],
+      L5: [6, 63], L6: [17, 63], L7: [28, 63], L8: [39, 63], L9: [50, 63],
+      BI: [11.5, 84], GY: [28, 84], MK: [44.5, 84],
+      MT: [60.5, 50],
+      PL: [72, 19], BR: [94, 19], AL1: [72, 37], AL2: [83, 37], AL3: [94, 37],
+      GP: [72, 68], PD: [94, 68], GE1: [72, 86], GE2: [83, 86], GE3: [94, 86],
     };
     const icon = (id: string) => {
       const lot = w.lotById(id);
@@ -171,6 +175,7 @@ export class NeighbourhoodMap extends Part {
     return `<div class="mini-map">
       <div class="mm-zone mm-madrid"><span>Madrid</span></div>
       <div class="mm-zone mm-alcorcon"><span>Alcorcón</span></div>
+      <div class="mm-zone mm-getafe"><span>Getafe</span></div>
       <div class="mm-line"></div>
       ${pins}
     </div>`;

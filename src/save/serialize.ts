@@ -2,7 +2,7 @@ import { HOUSE_OBJECTS, START_OBJECTS } from '../data/lot';
 import { OBJECTS, sizeOf } from '../data/objects';
 import { PET_TRAITS } from '../data/pets';
 import { SAVE_VERSION } from '../sim/world';
-import { PLAYER_LOT, addAlcorcon, addPlaces, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
+import { PLAYER_LOT, addAlcorcon, addGetafe, addPlaces, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
 import { setRel } from '../sim/social';
 import type { PlacedObject, WorldState } from '../sim/types';
 import { validateState } from './validate';
@@ -58,6 +58,8 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v14 → v15: Getafe (tercer barrio, en MetroSur).
+  14: (s) => addGetafe(s),
   // v13 → v14: biblioteca, gimnasio y mercadillo del domingo.
   13: (s) => addPlaces(s),
   // v12 → v13: aspecto elegido en el creador de familia (campo nuevo opcional: nada que convertir).

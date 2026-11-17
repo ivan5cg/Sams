@@ -12,7 +12,7 @@ import { SPECIES, lifeStage } from '../data/species';
 import { chooseAutonomous } from './ai';
 import { canAspire, suggestAspiration } from './aspirations';
 import { feel as feelEmotion, pruneEmotions } from './emotions';
-import { ACAI_LOTS, BAR_LOT, GYM_LOT, LIBRARY_LOT, MARKET_LOT, METRO_LOT, PARK_LOT, PLAYER_LOT, PLAZA_LOT, STUDIO_LOT, SUPER_LOT, addAlcorcon, addPlaces, generateNeighborhood, makeAgent, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
+import { ACAI_LOTS, BAR_LOT, GYM_LOT, LIBRARY_LOT, MARKET_LOT, METRO_LOT, PARK_LOT, PLAYER_LOT, PLAZA_LOT, STUDIO_LOT, SUPER_LOT, CERRO_LOT, PADEL_LOT, addAlcorcon, addGetafe, addPlaces, stationOf, generateNeighborhood, makeAgent, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { isWalkable, type Grid } from './pathfinding';
 import { isAdult, setRel } from './social';
 import { randomPetTrait, traitDecay, traitsOf } from './traits';
@@ -188,6 +188,7 @@ export class World {
     generateNeighborhood(state);
     addAlcorcon(state);
     addPlaces(state);
+    addGetafe(state);
     return new World(state);
   }
 
@@ -454,7 +455,7 @@ export class World {
     for (const a of this.state.agents) {
       if (a.via && !a.travel && a.lotId === METRO_LOT && this.state.minutes >= (a.rideUntil ?? 0)) {
         const dest = a.via;
-        if (this.isPlayerMember(a) && a.kind === 'person') this.toastOnce(`${a.id}:bajada`, `Próxima estación: ${this.lotById(dest).district === 'alcorcon' ? 'Alcorcón Central' : 'Madrid'}. ${a.name} se baja`, '🚇', 30);
+        if (this.isPlayerMember(a) && a.kind === 'person') this.toastOnce(`${a.id}:bajada`, `Próxima estación: ${stationOf(this.lotById(dest).district)}. ${a.name} se baja`, '🚇', 30);
         Travel.startTravel(this, a, dest);
       }
     }
@@ -507,6 +508,12 @@ export class World {
     // Paseos al parque (los de Alcorcón, a su plaza y a su bar; y a veces se cruzan en metro)
     if (h >= 9 && h <= 22) {
       for (const nh of neighbours) {
+        // Los de Getafe, a su Cerro y a su pádel.
+        if (Travel.districtOf(this, nh.lotId) === 'getafe') {
+          if (h <= 20 && Math.random() < 0.1) Travel.sendVisit(this, nh, CERRO_LOT, false);
+          else if (h >= 9 && Math.random() < 0.06 && !Shopping.closedReason(this, PADEL_LOT)) Travel.sendVisit(this, nh, PADEL_LOT, false);
+          continue;
+        }
         const alc = Travel.districtOf(this, nh.lotId) === 'alcorcon';
         if (alc || Math.random() < 0.02) {
           if (h <= 20 && Math.random() < (alc ? 0.08 : 0.3)) Travel.sendVisit(this, nh, PLAZA_LOT, false);

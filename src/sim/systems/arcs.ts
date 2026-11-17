@@ -4,7 +4,7 @@
 
 import { addSecret } from '../gossip';
 import { MINUTES_PER_DAY } from '../constants';
-import { PARK_LOT, PLAZA_LOT } from '../neighborhood';
+import { PARK_LOT, squareOf } from '../neighborhood';
 import { canRomance, changeRel, getRel, isAdult, partnerOf, relKey } from '../social';
 import { forget } from '../emotions';
 import type { Agent, Arc } from '../types';
@@ -134,7 +134,7 @@ function runStep(w: World, arc: Arc) {
         arc.next = at(w, 1, 18);
         return;
       case 2: {
-        const lot = districtOf(w, partner.lotId) === 'alcorcon' ? PLAZA_LOT : PARK_LOT;
+        const lot = squareOf(districtOf(w, partner.lotId));
         meet(w, partner, x, lot);
         w.feel(partner, 'enfadado', x.name);
         w.feel(x, 'enfadado', partner.name);
@@ -186,7 +186,7 @@ function runStep(w: World, arc: Arc) {
         arc.next = at(w, 1, 18);
         return;
       case 2: {
-        const lot = districtOf(w, x.lotId) === 'alcorcon' ? PLAZA_LOT : PARK_LOT;
+        const lot = squareOf(districtOf(w, x.lotId));
         meet(w, x, y, lot);
         w.feel(x, 'enfadado', y.name);
         w.feel(y, 'enfadado', x.name);
