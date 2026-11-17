@@ -36,6 +36,10 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (o.lotId !== a.lotId || a.travel) return { def, ok: false, reason: 'No está aquí' };
   if (a.home && a.home !== o.id) return { def, ok: false, reason: 'No puede salir de su jaula' };
   if (!def.guestOk && w.isGuest(a)) return { def, ok: false, reason: 'Estás de visita' };
+  if (actionId === 'call_doctor') {
+    if (!a.illness) return { def, ok: false };
+    if (a.illness.treated) return { def, ok: false, reason: 'Ya tiene tratamiento' };
+  }
   if (ALCOHOL[actionId] && isPregnant(w, a)) return { def, ok: false, reason: 'Embarazada: nada de alcohol' };
   // Sin agua (cortada), ni ducha ni cisterna, esté o no ocupada; y lo de la calle, solo sin casa.
   const street = billsReason(w, a, actionId, o.lotId);
@@ -185,6 +189,11 @@ export function checkSelfAction(w: World, a: Agent, actionId: string): ActionOpt
     if (w.lotById(a.lotId)?.kind !== 'park') return { def, ok: false };
     if (skillLevel(w, a, 'musica') < 3) return { def, ok: false, reason: 'Hace falta música nivel 3' };
   }
+  if (actionId === 'take_medicine') {
+    if (!a.illness) return { def, ok: false };
+    if (a.illness.medicated === w.day) return { def, ok: false, reason: 'Ya se ha tomado algo hoy' };
+    if ((w.householdOf(a)?.funds ?? 0) < (def.cost ?? 0)) return { def, ok: false, reason: 'No hay dinero' };
+  }
   return { def, ok: true };
 }
 
@@ -199,7 +208,7 @@ export function optionsFor(w: World, agentId: string, target: Target): ActionOpt
       .actions.filter((id) => speciesOk(w, a, ACTIONS[id]) && (id !== 'repair' || o.broken))
       .map((id) => checkObjectAction(w, a, o, id))
       // Las cosas de fiesta (fuera de su día), las de la calle y lavarse en el lavabo de casa, ni se ven.
-      .filter((op) => op.ok || op.reason || (!HOLIDAY_ACTIONS[op.def.id] && !STREET_ACTIONS.has(op.def.id) && op.def.id !== 'wash_up'));
+      .filter((op) => op.ok || op.reason || (!HOLIDAY_ACTIONS[op.def.id] && !STREET_ACTIONS.has(op.def.id) && op.def.id !== 'wash_up' && op.def.id !== 'call_doctor'));
   }
   if (target.kind === 'agent') {
     if (target.id === a.id) {

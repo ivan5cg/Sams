@@ -40,6 +40,8 @@ import * as Feats from './systems/feats';
 import * as Arcs from './systems/arcs';
 import * as Trips from './systems/trips';
 import * as Bills from './systems/bills';
+import * as Illness from './systems/illness';
+import { illnessDecay } from './systems/illness';
 import { dateOfDay, todayISO, type GameDate } from './date';
 import { factsOf, type DayFacts } from './feasts';
 import { GARCIA, MAX_START_PEOPLE, STAGE_AGE, applyEdit, type FamilySpec, type PersonEdit } from './family';
@@ -516,6 +518,7 @@ export class World {
     for (const a of this.state.agents) pruneEmotions(a, this.state.minutes);
     Party.partyHour(this);
     Calendar.eventsHour(this);
+    Illness.hourlyContagion(this);
     Street.streetHours(this);
     Street.campaignHour(this);
     Body.bodyHour(this);
@@ -650,7 +653,7 @@ export class World {
     const homeDirt = a.home ? (this.object(a.home)?.dirt ?? 0) : 0;
     for (const k of NEED_KEYS) {
       const extra = k === 'hygiene' ? (1 + homeDirt * 0.6) * (a.kind === 'person' && this.heatNow ? 1.3 : 1) : 1;
-      a.needs[k] = clamp(a.needs[k] - decay[k] * dt * mult * extra * traitDecay(a, k));
+      a.needs[k] = clamp(a.needs[k] - decay[k] * dt * mult * extra * traitDecay(a, k) * illnessDecay(a, k));
     }
 
     this.checkFailures(a);
@@ -927,8 +930,14 @@ export class World {
   }
 
   // Lifecycle
-  die(a: Agent, cause: 'old' | 'hunger' | 'social' | 'runaway') {
-    return Lifecycle.die(this, a, cause);
+  die(a: Agent, cause: Lifecycle.DeathCause, detail?: string) {
+    return Lifecycle.die(this, a, cause, detail);
+  }
+  seeDoctor(a: Agent): string | undefined {
+    return Illness.seeDoctor(this, a);
+  }
+  catchIllness(a: Agent, id: string): boolean {
+    return Illness.catchIllness(this, a, id);
   }
   continueWith(householdId: string) {
     return Lifecycle.continueWith(this, householdId);

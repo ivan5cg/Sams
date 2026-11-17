@@ -22,6 +22,7 @@ import { streetOutcome } from './street';
 import { completeTask, endTask } from './tasks';
 import { mediate, snitch } from './arcs';
 import { PREGNANCY_DAYS, maybeConceive } from './fertility';
+import { jokeRisk } from './illness';
 
 export function canEngage(_w: World, actor: Agent, actorTask: Task, t: Agent): boolean {
   if (t.hidden || t.travel || t.lotId !== actor.lotId) return false;
@@ -181,7 +182,10 @@ export function socialFeelings(w: World, a: Agent, t: Agent, id: string) {
     w.feel(a, 'abrazo');
     w.feel(t, 'abrazo');
   }
-  if (id === 'joke') w.feel(t, 'risas');
+  if (id === 'joke') {
+    w.feel(t, 'risas');
+    jokeRisk(w, a, t);
+  }
   if (id === 'give_gift') w.feel(t, 'regalo', a.name);
   if (id === 'kiss' || id === 'ask_partner') {
     w.feel(a, 'enamorado', t.name);

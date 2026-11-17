@@ -151,6 +151,9 @@ const A: ActionDef[] = [
 
   // Mercadona
   { id: 'shop_small', label: 'Compra pequeña (§45 · 8 raciones)', verb: 'Haciendo la compra', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 45, duration: 20, effects: { social: 0.1 }, playerOnly: true },
+  // --- Enfermedades (ver systems/illness.ts) ---
+  { id: 'call_doctor', label: 'Llamar al centro de salud', verb: 'Al teléfono con la médica', icon: '🩺', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], duration: 15, effects: {}, playerOnly: true },
+  { id: 'take_medicine', label: 'Tomarse algo (§5)', verb: 'Tomándose la medicina', icon: '💊', target: 'self', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], cost: 5, duration: 5, effects: { energy: 0.5 }, baseScore: 20 },
   // --- La calle (sin casa, tras un desahucio; ver systems/bills.ts) ---
   { id: 'sleep_bench', guestOk: true, label: 'Dormir en el banco', verb: 'Durmiendo en el banco', icon: '🪑', target: 'object', actors: ['person'], duration: 480, effects: { energy: 0.14, hygiene: -0.03 }, until: 'full', decayMult: 0.6 },
   { id: 'free_meal', guestOk: true, label: 'Bocadillo del comedor social (gratis)', verb: 'Comiendo un bocadillo', icon: '🥪', target: 'object', actors: ['person'], duration: 15, effects: { hunger: 2.4, social: 0.1 }, until: 'full' },

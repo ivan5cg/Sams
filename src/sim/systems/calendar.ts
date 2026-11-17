@@ -26,6 +26,7 @@ import { holidayDay, holidayHour } from './holidays';
 import { marketPrice } from './places';
 import { dailyBills } from './bills';
 import { PREGNANCY_DAYS, dailyCycle } from './fertility';
+import { dailyHealth } from './illness';
 import { longDate } from '../date';
 import { WEEKDAY_LONG } from '../../data/careers';
 
@@ -241,6 +242,7 @@ export function newDay(w: World) {
   }
   dailyBills(w);
   dailyCycle(w);
+  dailyHealth(w);
   dailyEvents(w);
   seasonalDay(w);
   dailyGossip(w);

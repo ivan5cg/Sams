@@ -90,6 +90,10 @@ export interface Agent {
   sex?: 'f' | 'm';
   /** Día en que empezó su ciclo menstrual (las mujeres; desde la versión 19). */
   cycle?: number;
+  /** De qué murió (solo mientras se despide: el agente ya no está en la partida). */
+  causeOfDeath?: string;
+  /** Enfermedad que tiene ahora (desde la versión 20). */
+  illness?: { id: string; since: number; until: number; treated?: boolean; /** Día de la última medicina (una al día). */ medicated?: number };
   /** Generación en la familia del jugador (1 = la fundadora). */
   gen?: number;
   /** Padres (para saber quién es hijo/nieto de quién). */

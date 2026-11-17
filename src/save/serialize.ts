@@ -60,6 +60,8 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v19 → v20: enfermedades (campo nuevo opcional).
+  19: () => {},
   // v18 → v19: sexo de cada persona (según el nombre) y ciclo menstrual (empieza solo, al vuelo).
   18: (s) => {
     for (const a of s.agents) if (a.kind === 'person' && !a.sex) a.sex = sexOfName(a.name);

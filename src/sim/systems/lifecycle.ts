@@ -160,19 +160,34 @@ export function deathChance(_w: World, a: Agent): number {
 }
 
 /** Alguien deja la partida: muere, se escapa o se lo llevan. */
-export function die(w: World, a: Agent, cause: 'old' | 'hunger' | 'social' | 'runaway') {
+/** De qué se puede morir uno (o irse de casa). */
+export type DeathCause = 'old' | 'hunger' | 'social' | 'runaway' | 'illness' | 'heart' | 'electric' | 'laugh' | 'fight' | 'poison' | 'accident';
+
+/** Causas que son una muerte de verdad (con luto y lápida). */
+export const REAL_DEATHS = new Set<DeathCause>(['old', 'hunger', 'illness', 'heart', 'electric', 'laugh', 'fight', 'poison', 'accident']);
+
+/** Alguien deja la partida: muere, se escapa o se lo llevan. `detail`: la enfermedad, el aparato o quién fue. */
+export function die(w: World, a: Agent, cause: DeathCause, detail = '') {
   const h = w.householdOf(a);
   const mine = w.isPlayerMember(a);
-  const texts = {
+  const texts: Record<DeathCause, string> = {
     old: `${a.name} ha fallecido a los ${a.ageDays} días. Descanse en paz`,
     hunger: `${a.name} ha muerto de hambre`,
     social: `Los servicios sociales se han llevado a ${a.name} por falta de cuidados`,
     runaway: `${a.name} se ha escapado de casa en busca de comida`,
+    illness: `${a.name} ha muerto de ${detail || 'una enfermedad'}. Descanse en paz`,
+    heart: `A ${a.name} le ha dado un infarto. Se ha ido de repente`,
+    electric: `${a.name} se ha electrocutado arreglando ${detail ? `un aparato (${detail})` : 'un aparato'}. Para eso están los técnicos`,
+    laugh: `${a.name} se ha muerto de risa con un chiste de ${detail || 'alguien'}. Literalmente`,
+    fight: `${a.name} ha muerto en una pelea${detail ? ` con ${detail}` : ''}`,
+    poison: `${a.name} ha muerto envenenado/a${detail ? `. Las sospechas apuntan a ${detail}` : ''}`,
+    accident: `${a.name} ha muerto en un accidente${detail ? ` (${detail})` : ''}`,
   };
   const knownByPlayer = w.members.some((m) => m !== a && (getRel(w.state, m.id, a.id).f >= 15 || getRel(w.state, m.id, a.id).status));
-  if (mine || knownByPlayer) w.toast(mine ? texts[cause] : `${texts[cause]} (${h?.name ?? ''})`, cause === 'old' || cause === 'hunger' ? '🕊️' : '💔', a.id);
+  if (mine || knownByPlayer) w.toast(mine ? texts[cause] : `${texts[cause]} (${h?.name ?? ''})`, REAL_DEATHS.has(cause) ? '🕊️' : '💔', a.id);
+  a.causeOfDeath = cause;
   // Luto: su familia y quien le quería.
-  if (cause === 'old' || cause === 'hunger') {
+  if (REAL_DEATHS.has(cause)) {
     for (const o of w.state.agents) {
       if (o === a) continue;
       const rel = getRel(w.state, o.id, a.id);
@@ -185,6 +200,7 @@ export function die(w: World, a: Agent, cause: 'old' | 'hunger' | 'social' | 'ru
     if (h && mine) placeGrave(w, h.lotId, a);
   }
   if (cause === 'old' && a.kind === 'person') w.addNews(`ha fallecido ${a.name}, de la ${h?.name ?? 'vecindad'}. Que en paz descanse`, [a.id]);
+  else if (REAL_DEATHS.has(cause) && a.kind === 'person') w.addNews(texts[cause].toLowerCase().replace(/\. descanse en paz$/, ''), [a.id]);
   const lastPerson = !!h && a.kind === 'person' && !h.memberIds.some((id) => id !== a.id && w.agent(id)?.kind === 'person');
   if (lastPerson && h) inherit(w, h, a);
 

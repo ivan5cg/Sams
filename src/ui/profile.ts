@@ -1,6 +1,7 @@
 // Perfil del personaje activo: ánimo, meta de vida, trabajo, rasgos, habilidades, mascota y relaciones.
 
 import { longDate } from '../sim/date';
+import { ILLNESSES } from '../data/illnesses';
 import { CYCLE_DAYS, PHASE_INFO, cycleDay, isPregnant, phase } from '../sim/systems/fertility';
 import { MONEY_CATEGORIES } from '../data/economy';
 import { BAR_MENUS, BAR_STAFF, CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
@@ -180,6 +181,7 @@ export class ProfilePanel extends Part {
         <button class="icon-btn" data-close>✕</button>
       </div>
       ${this.emotionsHtml(a)}
+      ${this.illnessHtml(a)}
       ${this.cycleHtml(a, mine)}
       ${this.aspirationHtml(a)}
       ${jobHtml}
@@ -281,6 +283,16 @@ export class ProfilePanel extends Part {
     return `<div class="prof-h" style="margin-top:8px">✨ ¿Por cuál?</div><div class="chips-wrap">${TRAITS.filter((t) => !mine.includes(t.id))
       .map((t) => `<button class="comp" data-tin="${t.id}">${t.icon} ${esc(t.label)}</button>`)
       .join('')}</div>`;
+  }
+
+  /** Si está malo/a: qué tiene, cuánto le queda y si está tratado. */
+  private illnessHtml(a: Agent): string {
+    const ill = a.illness;
+    const def = ill && ILLNESSES[ill.id];
+    if (!ill || !def) return '';
+    const days = Math.max(1, Math.ceil((ill.until - this.world.state.minutes) / 1440));
+    const deadly = !!def.deadly;
+    return `<div class="bill-alert"><div>${def.icon} <b>${esc(def.label)}</b> · ${days === 1 ? 'mañana estará mejor' : `unos ${days} días más`}${ill.treated ? ' · con tratamiento 🩺' : deadly ? ' · <b>¡que le vea un médico!</b> (ordenador → Llamar al centro de salud)' : ''}</div><div class="muted small">Reposo, medicinas (tocándose a sí mismo) y nada de esfuerzos. Se pega a los de casa.</div></div>`;
   }
 
   /** El ciclo (o el embarazo) de las mujeres de la familia. */

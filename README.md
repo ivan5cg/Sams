@@ -290,6 +290,25 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   náuseas y antojos, y nada de alcohol. El bebé llega a los 3 días (hace falta una cuna libre).
 - Si el padre es el amante, el barrio acaba enterándose.
 
+## Enfermedades y formas de morir
+
+- La gente se pone mala, más o menos según la estación (en invierno, más gripes):
+  - **🤧 Resfriado**, **🤒 gripe**, **🤢 gastroenteritis** y **🔴 varicela** (solo los peques).
+  - **🦠 Intoxicación**, si cocina alguien que no sabe (o la barbacoa del cuñado).
+- Se nota: cansa más, da hambre o ganas de ir al baño, y quita las ganas de todo.
+- Se pega a quien esté en la misma casa (menos si va limpio).
+- Para curarse:
+  - se cura sola en unos días;
+  - **💊 medicinas** (§5, tocándose a sí mismo, una al día) alivian;
+  - **🩺 llamar al centro de salud** (desde el ordenador) cura en la mitad de tiempo.
+- Una gripe mal curada se puede complicar en **🫁 neumonía**, sobre todo en los mayores, y la neumonía (o la
+  gripe en bebés y mayores) **puede matar**, mucho menos con tratamiento.
+- Otras formas de palmarla, raras:
+  - **infarto**: mayores y adultos, más si son glotones y no hacen ejercicio;
+  - **electrocutado** arreglando un aparato sin saber (ojo con la lógica);
+  - **morirse de risa** con un chiste muy bueno (sobre todo los mayores).
+- Toda muerte trae luto a la familia y a los amigos, lápida en el jardín y noticia en el barrio.
+
 ## Construir y decorar
 
 - **🛋️ Catálogo de muebles** (☰, o 📖 en la obra): cada mueble con su dibujo, para qué sirve (y qué

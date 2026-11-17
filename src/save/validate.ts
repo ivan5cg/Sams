@@ -3,6 +3,7 @@
 // (los textos libres, como los nombres, se escapan siempre al pintarlos).
 
 import { isISODate } from '../sim/date';
+import { ILLNESSES } from '../data/illnesses';
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { FLOOR_BY_ID } from '../data/paint';
@@ -101,6 +102,12 @@ export function validateState(s: WorldState) {
     optId(a.home, `casa de ${a.id}`);
     if (a.sex !== undefined && a.sex !== 'f' && a.sex !== 'm') throw new Broken(`sexo de ${a.id}`);
     optNum(a.cycle, `ciclo de ${a.id}`);
+    if (a.illness) {
+      if (!ILLNESSES[a.illness.id]) throw new Broken(`enfermedad de ${a.id}`);
+      num(a.illness.since, `enfermedad de ${a.id}`);
+      num(a.illness.until, `enfermedad de ${a.id}`);
+      optNum(a.illness.medicated, `enfermedad de ${a.id}`);
+    }
     if (a.look) {
       optNum(a.look.skin, `aspecto de ${a.id}`);
       optNum(a.look.hair, `aspecto de ${a.id}`);

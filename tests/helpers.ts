@@ -53,6 +53,8 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v20: enfermedades.
+  if (version <= 19) for (const a of st.agents) delete a.illness;
   // v19: sexo y ciclo.
   if (version <= 18) for (const a of st.agents) { delete a.sex; delete a.cycle; }
   for (const h of st.households) if (version <= 18 && h.expecting) { delete h.expecting.mother; delete h.expecting.known; }

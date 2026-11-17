@@ -27,6 +27,7 @@ import { SPEND_CATEGORY } from '../../data/economy';
 import { bookTrip } from './trips';
 import { holidayTask } from './holidays';
 import { placeTask } from './places';
+import { riskyTask, seeDoctor } from './illness';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -147,6 +148,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
       if (resident) resident.needs.hygiene = Math.max(resident.needs.hygiene, 90);
     }
     if (def.removes) w.state.objects = w.state.objects.filter((x) => x.id !== o.id);
+    riskyTask(w, a, task.actionId, o.def);
     if (task.actionId === 'repair') {
       o.broken = false;
       if (w.isPlayerMember(a)) w.toast(`${a.name} ha arreglado: ${od.name.toLowerCase()}`, '🔧');
@@ -190,6 +192,15 @@ export function completeTask(w: World, a: Agent, task: Task) {
     w.feel(a, 'estreno');
     if (w.isPlayerMember(a)) w.toast(`${a.name} estrena ropa. ¡Va hecho un pincel!`, '👕');
   }
+  // Medicinas y médico.
+  if (task.actionId === 'take_medicine' && a.illness && a.illness.medicated !== w.day) {
+    a.illness.medicated = w.day;
+    money(w, w.householdOf(a), -(ACTIONS.take_medicine.cost ?? 0), 'compra');
+    a.illness.until = Math.max(w.state.minutes + 60, a.illness.until - MINUTES_PER_DAY / 2);
+    a.emotions = (a.emotions ?? []).filter((e) => e.id !== 'enfermo');
+    if (w.isPlayerMember(a)) w.toast(`${a.name} se ha tomado algo: se encuentra un poco mejor`, '💊', a.id);
+  }
+  if (task.actionId === 'call_doctor') seeDoctor(w, a);
   if (task.actionId === 'change_clothes') {
     // Del armario: otra ropa de las de siempre (sin pasar por caja).
     const options = CLOTHES.filter((c) => c !== a.color);
