@@ -35,6 +35,10 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (o.lotId !== a.lotId || a.travel) return { def, ok: false, reason: 'No está aquí' };
   if (a.home && a.home !== o.id) return { def, ok: false, reason: 'No puede salir de su jaula' };
   if (!def.guestOk && w.isGuest(a)) return { def, ok: false, reason: 'Estás de visita' };
+  // Sin agua (cortada), ni ducha ni cisterna, esté o no ocupada; y lo de la calle, solo sin casa.
+  const street = billsReason(w, a, actionId, o.lotId);
+  if (street) return { def, ...street };
+  if (actionId === 'wash_up' && w.lotById(o.lotId)?.householdId === a.householdId) return { def, ok: false };
   if (actionId === 'repair') {
     if (!o.broken) return { def, ok: false };
     if (!isAdult(a) && w.stageOf(a) !== 'teen') return { def, ok: false, reason: 'Es cosa de mayores' };
@@ -57,9 +61,7 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   const funds = w.householdOf(a)?.funds ?? 0;
   if (def.cost && funds < costOf(w, actionId, a)) return { def, ok: false, reason: 'No hay dinero' };
   if ((ELECTRIC.has(o.def) || POWERED_ACTIONS.has(actionId)) && !hasPower(w, o.lotId)) return { def, ok: false, reason: w.hasEvent('apagon', o.lotId) ? 'No hay luz' : 'No hay luz: os la han cortado' };
-  const street = billsReason(w, a, actionId, o.lotId);
-  if (street) return { def, ...street };
-  if (actionId === 'wash_up' && w.lotById(o.lotId)?.householdId === a.householdId) return { def, ok: false };
+
   // Comer de la nevera gasta raciones de la despensa de esa casa.
   if (FRIDGE_FOOD.has(actionId)) {
     const owner = pantryOwner(w, o.lotId);

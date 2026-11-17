@@ -13,19 +13,29 @@ function broke() {
   return w;
 }
 
-/** Avanza día a día (pasando por cada mañana), sin sucesos al azar que den dinero. */
-function days(w: World, n: number) {
+/** Sin sucesos al azar que den dinero (abrigos con §50, reintegros...): si no, las cuentas no cuadran. */
+function quiet<T>(fn: () => T): T {
   const orig = Math.random;
   Math.random = () => 0.99;
   try {
-    for (let i = 0; i < n; i++) {
-      w.state.minutes = Math.floor(w.state.minutes / 1440 + 1) * 1440 - 1;
-      w.tick(2);
-    }
+    return fn();
   } finally {
     Math.random = orig;
   }
 }
+
+/** Avanza día a día (pasando por cada mañana), sin sucesos al azar que den dinero. */
+function days(w: World, n: number) {
+  quiet(() => {
+    for (let i = 0; i < n; i++) {
+      w.state.minutes = Math.floor(w.state.minutes / 1440 + 1) * 1440 - 1;
+      w.tick(2);
+    }
+  });
+}
+
+/** Salta a una fecha sin sucesos al azar. */
+const jump = (w: World, iso: string) => quiet(() => goToDate(w, iso));
 
 describe('recibos: alquiler, luz y agua', () => {
   it('llegan cada mes en su día y salen en la agenda', () => {
@@ -38,7 +48,7 @@ describe('recibos: alquiler, luz y agua', () => {
 
   it('sin dinero, quedan pendientes; a los 10 días cortan la luz y el agua, y al pagar vuelven', () => {
     const w = broke();
-    goToDate(w, '2027-03-31');
+    jump(w, '2027-03-31');
     days(w, 5); // del 1 al 5 de abril
     expect(debtsOf(w.household).map((d) => d.kind).sort()).toEqual(['agua', 'alquiler', 'luz']);
     expect(hasEmotion(w.agent('a1')!, 'deudas')).toBe(true);
@@ -60,7 +70,7 @@ describe('recibos: alquiler, luz y agua', () => {
 
   it('se puede pagar a mano en cuanto hay dinero', () => {
     const w = broke();
-    goToDate(w, '2027-04-01');
+    jump(w, '2027-04-01');
     const [rent] = debtsOf(w.household);
     expect(w.payDebt(rent.id)).toMatch(/dinero/);
     w.household.funds = rent.amount;
@@ -73,7 +83,7 @@ describe('recibos: alquiler, luz y agua', () => {
     const w = broke();
     const toasts: string[] = [];
     w.onToast((t) => toasts.push(t.text));
-    goToDate(w, '2027-04-01');
+    jump(w, '2027-04-01');
     days(w, DEADLINES.landlordLetter);
     expect(toasts.some((t) => t.includes('Carta del casero'))).toBe(true);
     days(w, DEADLINES.burofax - DEADLINES.landlordLetter);
@@ -100,10 +110,12 @@ describe('recibos: alquiler, luz y agua', () => {
     const cart = w.objectsIn('P').find((o) => o.def === 'foodcart')!;
     lucia.current = null;
     lucia.needs.hunger = 20;
+    const before = w.household.funds;
     expect(w.command('a1', 'free_meal', { kind: 'object', id: cart.id })).toBe(true);
-    w.tick(40);
+    quiet(() => w.tick(40));
     expect(lucia.needs.hunger).toBeGreaterThan(20);
-    expect(w.household.funds).toBe(0);
+    expect(w.household.funds).toBe(before); // el comedor social es gratis
+    w.household.funds = 0;
     // Los servicios sociales ayudan una vez al mes.
     expect(w.askAid()).toBeUndefined();
     expect(w.household.funds).toBe(400);
@@ -121,7 +133,7 @@ describe('recibos: alquiler, luz y agua', () => {
 
   it('a los vecinos no les pasa nada de esto, y la partida se guarda con sus deudas', () => {
     const w = broke();
-    goToDate(w, '2027-03-31');
+    jump(w, '2027-03-31');
     days(w, 5);
     const again = new World(migrate(JSON.parse(serialize(w.state))));
     expect(debtsOf(again.household).length).toBe(3);
