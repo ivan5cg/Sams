@@ -92,6 +92,8 @@ export interface Agent {
   cycle?: number;
   /** De qué murió (solo mientras se despide: el agente ya no está en la partida). */
   causeOfDeath?: string;
+  /** Echa de menos a su ex (no lo ha superado): quién, desde cuándo y la nueva pareja del ex que ya conoce. */
+  longing?: { who: string; since: number; rival?: string };
   /** Enfermedad que tiene ahora (desde la versión 20). */
   illness?: { id: string; since: number; until: number; treated?: boolean; /** Día de la última medicina (una al día). */ medicated?: number; /** Quién le envenenó. */ by?: string };
   /** Generación en la familia del jugador (1 = la fundadora). */
@@ -189,6 +191,8 @@ export interface Rel {
   banned?: string;
   /** Día en que la pareja entró en crisis. */
   crisis?: number;
+  /** Día en que lo dejaron (para que el que se va de casa se vaya a los pocos días). */
+  split?: number;
 }
 
 export interface PlacedObject {

@@ -102,6 +102,11 @@ export function validateState(s: WorldState) {
     optId(a.home, `casa de ${a.id}`);
     if (a.sex !== undefined && a.sex !== 'f' && a.sex !== 'm') throw new Broken(`sexo de ${a.id}`);
     optNum(a.cycle, `ciclo de ${a.id}`);
+    if (a.longing) {
+      id(a.longing.who, `ex de ${a.id}`);
+      num(a.longing.since, `ex de ${a.id}`);
+      optId(a.longing.rival, `ex de ${a.id}`);
+    }
     if (a.illness) {
       if (!ILLNESSES[a.illness.id]) throw new Broken(`enfermedad de ${a.id}`);
       num(a.illness.since, `enfermedad de ${a.id}`);
@@ -144,6 +149,7 @@ export function validateState(s: WorldState) {
     for (const x of k.split('|')) id(x, 'relación');
     optNum(rel.last, `relación ${k}`);
     optNum(rel.crisis, `relación ${k}`);
+    optNum(rel.split, `relación ${k}`);
     optId(rel.banned, `relación ${k}`);
   }
   for (const sec of s.secrets ?? []) str(sec.text, 'salseo');

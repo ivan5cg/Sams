@@ -28,6 +28,7 @@ import { bookTrip } from './trips';
 import { holidayTask } from './holidays';
 import { placeTask } from './places';
 import { riskyTask, seeDoctor } from './illness';
+import { moveOut } from './breakups';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -201,6 +202,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
     if (w.isPlayerMember(a)) w.toast(`${a.name} se ha tomado algo: se encuentra un poco mejor`, '💊', a.id);
   }
   if (task.actionId === 'call_doctor') seeDoctor(w, a);
+  if (task.actionId === 'move_out') moveOut(w, a);
   if (task.actionId === 'change_clothes') {
     // Del armario: otra ropa de las de siempre (sin pasar por caja).
     const options = CLOTHES.filter((c) => c !== a.color);

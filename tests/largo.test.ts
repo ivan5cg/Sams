@@ -30,7 +30,8 @@ describe('resistencia: semanas de juego sin renderizar', () => {
         w.state.speed = 1;
       }
       for (const p of problems(w)) errors.push(`día ${w.day} ${w.clock}: ${p}`);
-      if (madridHomes(w.state.households).length !== 10) errors.push(`día ${w.day}: ${madridHomes(w.state.households).length} familias en Madrid`);
+      // Al menos las 10 de siempre (quien se va de casa tras romper suma la suya, en un piso).
+      if (madridHomes(w.state.households).length < 10) errors.push(`día ${w.day}: ${madridHomes(w.state.households).length} familias en Madrid`);
       for (const a of w.state.agents) {
         // Nadie se queda colgado en un viaje...
         if (a.travel && Number.isFinite(a.travel.arrive) && now - a.travel.arrive > 5) errors.push(`día ${w.day}: ${a.name} no llega nunca a ${a.travel.to}`);

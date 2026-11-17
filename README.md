@@ -128,6 +128,20 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
   - Las **parejas** sin detalles durante días van perdiendo romance: primero llega la **crisis** (con aviso, y
     en el perfil se ve cuántos días llevan sin un detalle) y, si nadie hace nada, **lo dejan** o **se divorcian**.
 
+## Después de romper
+
+- Si la pareja rompe y vive bajo el mismo techo, **uno de los dos se va a un piso de alquiler**: un piso nuevo
+  en el mismo barrio, con el 30 % del dinero de la casa. Se puede elegir quién desde el ordenador («Buscar piso
+  e irse de casa»); si no, a los 3 días se va el que no estás manejando. Quien se va pasa a ser del barrio.
+  Nadie se va dejando a los niños sin un adulto.
+- A quien **no lo supera** le dura días:
+  - mensajes a las tres de la mañana, hacerse el encontradizo, mirar fotos...;
+  - el ex acaba agobiado;
+  - si los dos se echan de menos y siguen solos, **a veces vuelven**.
+- Los solteros del barrio (y los recién separados, más) **encuentran pareja nueva**. Si tu ex sale con alguien
+  y no lo has superado, llegan los **celos**: esa persona pasa a ser «la nueva pareja de tu ex», le pones verde
+  delante del barrio y el salseo corre.
+
 ## Trabajo con decisiones
 
 - A veces, en mitad de la jornada, hay un **dilema** y el tiempo se para para que decidas: horas extra, un

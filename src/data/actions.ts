@@ -151,6 +151,8 @@ const A: ActionDef[] = [
 
   // Mercadona
   { id: 'shop_small', label: 'Compra pequeña (§45 · 8 raciones)', verb: 'Haciendo la compra', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 45, duration: 20, effects: { social: 0.1 }, playerOnly: true },
+  // --- Irse de casa tras romper (ver systems/breakups.ts) ---
+  { id: 'move_out', label: 'Buscar piso e irse de casa', verb: 'Buscando piso', icon: '📦', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], duration: 20, effects: {}, playerOnly: true },
   // --- Enfermedades (ver systems/illness.ts) ---
   { id: 'call_doctor', label: 'Llamar al centro de salud', verb: 'Al teléfono con la médica', icon: '🩺', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], duration: 15, effects: {}, playerOnly: true },
   { id: 'take_medicine', label: 'Tomarse algo (§5)', verb: 'Tomándose la medicina', icon: '💊', target: 'self', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], cost: 5, duration: 5, effects: { energy: 0.5 }, baseScore: 20 },

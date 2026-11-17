@@ -201,6 +201,15 @@ export function addGetafe(state: WorldState) {
   });
 }
 
+/** Un piso de alquiler nuevo (amueblado) en el barrio, para quien se va de casa. Devuelve su parcela. */
+export function addRentalFlat(state: WorldState, district: string, owner: string): string {
+  const lotId = `PZ${state.nextId++}`;
+  const i = state.nextId % WALLS.length;
+  state.lots.push({ id: lotId, name: `Piso de ${owner}`, kind: 'home', layout: 'house', district: district as Lot['district'], style: { wall: WALLS[i], floor: FLOORS[(i + 3) % FLOORS.length] } });
+  placeObjects(state, lotId, HOUSE_OBJECTS);
+  return lotId;
+}
+
 /** Unos okupas en una casa que llevaba años vacía. */
 export function generateOkupas(state: WorldState, lotId: string): Household {
   const hid = `h${state.nextId++}`;

@@ -27,6 +27,7 @@ import { marketPrice } from './places';
 import { dailyBills } from './bills';
 import { PREGNANCY_DAYS, dailyCycle } from './fertility';
 import { dailyHealth } from './illness';
+import { onBreakUp, dailyBreakups } from './breakups';
 import { dailyRelations } from '../relations';
 import { longDate } from '../date';
 import { WEEKDAY_LONG } from '../../data/careers';
@@ -220,6 +221,7 @@ export function newDay(w: World) {
   w.toast(`Buenos días: ${WEEKDAY_LONG[w.weekday]}, ${longDate(w.date)}`, '🌅');
   // Las relaciones se desgastan si no se cuidan (y las parejas sin detalles entran en crisis y rompen).
   dailyRelations(w);
+  dailyBreakups(w);
   // Los vecinos pagan facturas, hipoteca y la compra cada lunes. La familia del jugador, sus recibos del mes (bills.ts).
   if (w.weekday === 0 && w.day > 1) {
     for (const h of w.state.households) {
@@ -292,6 +294,7 @@ export function newDay(w: World) {
       rel.status = undefined;
       rel.r = Math.min(rel.r, 15);
       if (x.householdId === y.householdId) rel.ex = true;
+      onBreakUp(w, x, y, rel);
       w.addNews(married ? `${x.name} y ${y.name} se han divorciado. Dicen que por una herencia` : `${x.name} y ${y.name} lo han dejado`, [x.id, y.id]);
     }
   }
