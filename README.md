@@ -54,9 +54,11 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
   Si la relación no está madura, te pueden rechazar (y hacerte la cobra). Coquetear delante de tu pareja da celos.
 - Con tu pareja de otra familia podéis **vivir juntos**: se muda a tu casa y pasa a ser controlable.
   Si su casa se queda vacía, llega una familia nueva al barrio.
-- **Trabajo**: búscalo en el ordenador (cocina, oficina, veterinaria, música o ciencia). Cada uno se va solo a su
-  hora y vuelve al salir, cansado y con el sueldo. Si va de buen humor rinde más y asciende (5 niveles por carrera).
-- Los niños y adolescentes van al **colegio** por la mañana; su ánimo se nota en las notas.
+- **Trabajo**: búscalo en el ordenador (cocina, oficina, veterinaria, música, ciencia... y, con carrera, medicina,
+  abogacía, informática o enseñanza). Cada uno se va solo a su hora y vuelve al salir, cansado y con el sueldo. Si
+  va de buen humor rinde más y asciende (5 niveles por carrera).
+- Los niños van al **colegio** y los adolescentes al **instituto** por la mañana; su ánimo se nota en las notas
+  (más en [Estudios](#estudios)).
 - **Dinero**: la comida se compra en el Mercadona (ver más abajo) y cada lunes llegan las **facturas**
   (§60 + §20 por persona + §10 por mascota).
 
@@ -67,7 +69,8 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 - Una pareja de la familia puede **intentar tener un bebé** (hace falta una cuna libre; hay dos en cada casa).
   Nace a los 3 días. Vive en la cuna: hay que darle el biberón, cambiarle el pañal y mecerlo.
   Si llora, alguien de la familia va a ver qué le pasa. Si se le desatiende mucho tiempo, se lo llevan los servicios sociales.
-- Los niños salen de la cuna y van al colegio; al hacerse adultos lo dejan y pueden trabajar;
+- Los niños salen de la cuna y van al colegio (y luego al instituto); al hacerse adultos lo dejan y pueden
+  trabajar o ir a la universidad;
   los ancianos se jubilan y cobran una pensión.
 - Al final de su vida, los personajes mueren. Queda una lápida en el jardín para recordarles, y su familia
   y amigos pasan un mal rato. También se puede morir de hambre (o escaparse de casa, si eres una mascota).
@@ -141,6 +144,28 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 - Los solteros del barrio (y los recién separados, más) **encuentran pareja nueva**. Si tu ex sale con alguien
   y no lo has superado, llegan los **celos**: esa persona pasa a ser «la nueva pareja de tu ex», le pones verde
   delante del barrio y el salseo corre.
+
+## Estudios
+
+- Los niños van al **colegio** y los adolescentes al **instituto**. En clase aprenden **idiomas**, una habilidad
+  que solo se consigue estudiando (más en el instituto que en el colegio).
+- **📖 Estudiar para los exámenes** (en el ordenador o en la mesa de estudio) sube las notas.
+- Al acabar el instituto se apunta la **nota final**: con un 70 o más, **beca** para la universidad.
+- Desde el ordenador, «**🎓 Matricularse en la universidad**», se elige carrera. Matrícula de §300 a §600 (gratis con beca).
+  Hay clase de lunes a viernes de 9:00 a 14:00, sin sueldo, y quien trabajaba lo deja.
+- Cada carrera enseña su propia habilidad, que tampoco se aprende de otra forma, y lleva a una profesión:
+
+  | Carrera | Aprende | Lleva a |
+  |---|---|---|
+  | 🩺 Medicina (10 días) | medicina | médico/a (solo con el título) |
+  | ⚖️ Derecho (8 días) | leyes | abogacía (solo con el título) |
+  | 💻 Ingeniería Informática (8 días) | informática | informática, con teletrabajo (solo con el título) |
+  | 🍎 Magisterio (6 días) | docencia | enseñanza (solo con el título) |
+  | 🧬 Biología (7 días) | ciencias | ciencia, empezando de técnico/a de laboratorio |
+  | 🐾 Veterinaria (8 días) | ciencias | veterinaria, empezando de veterinario/a |
+
+- Con buenas notas se acaba antes; con malas, toca repetir asignaturas. Al graduarse sale en las noticias y en el
+  perfil se ven los títulos. Los vecinos médicos, abogados... también tienen el suyo.
 
 ## Trabajo con decisiones
 

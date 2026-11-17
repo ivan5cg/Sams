@@ -7,6 +7,7 @@ import { DILEMMAS, DILEMMA_BY_ID, type DilemmaOption } from '../../data/dilemmas
 import { hasTrait } from '../traits';
 import { CAREER_SKILL, MAX_SKILL } from '../../data/skills';
 import { MINUTES_PER_DAY } from '../constants';
+import { degreeReason, schoolDay, startLevel } from './education';
 import { isAdult } from '../social';
 import type { Agent, BarPlan } from '../types';
 import { clamp, moodScore, rand } from '../util';
@@ -19,6 +20,12 @@ import { startTravel } from './travel';
 export function setJob(w: World, a: Agent, careerId: string) {
   const c = CAREERS[careerId];
   if (!c || c.school || !isAdult(a)) return;
+  const needs = degreeReason(a, careerId);
+  if (needs) {
+    if (w.isPlayerMember(a)) w.toast(`${a.name} no puede trabajar de ${c.name.toLowerCase()}: ${needs.toLowerCase()}`, '🎓');
+    return;
+  }
+  if (a.study) a.study = undefined;
   const h = w.householdOf(a);
   if (c.startup) {
     if (!h || h.funds < c.startup) {
@@ -32,8 +39,9 @@ export function setJob(w: World, a: Agent, careerId: string) {
     w.addNews(`${a.name} ha abierto un bar en el barrio. Dicen que las bravas pican de verdad`, [a.id]);
     return;
   }
-  a.job = { career: careerId, level: 1, perf: 0 };
-  w.toast(`¡${a.name} tiene trabajo! ${c.levels[0].title} (§${c.levels[0].pay} por jornada)`, c.icon);
+  const lvl = startLevel(a, careerId);
+  a.job = { career: careerId, level: lvl, perf: 0 };
+  w.toast(`¡${a.name} tiene trabajo! ${c.levels[lvl - 1].title} (§${c.levels[lvl - 1].pay} por jornada)${lvl > 1 ? ', gracias a su carrera' : ''}`, c.icon);
 }
 
 /** Despido: tres jornadas seguidas rindiendo fatal. */
@@ -162,6 +170,7 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
   job.perf = Math.max(0, Math.min(100, job.perf + (mood - 45) / 4 + rand(-3, 5) + skillBonus));
   if (reason === 'school') {
     if (mine && gradeLabel(before) !== gradeLabel(job.perf)) w.toast(`Notas de ${a.name}: ${gradeLabel(job.perf)}`, '📚');
+    schoolDay(w, a);
     return;
   }
   if (w.state.dilemma?.agentId === a.id) resolveDilemma(w, 99);

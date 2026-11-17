@@ -1,5 +1,6 @@
 // Perfil del personaje activo: ánimo, meta de vida, trabajo, rasgos, habilidades, mascota y relaciones.
 
+import { DEGREES, SCHOLARSHIP_GRADE, schoolName } from '../data/education';
 import { longDate } from '../sim/date';
 import { ILLNESSES } from '../data/illnesses';
 import { CYCLE_DAYS, PHASE_INFO, cycleDay, isPregnant, phase } from '../sim/systems/fertility';
@@ -104,16 +105,19 @@ export class ProfilePanel extends Part {
         const lvl = c.levels[a.job.level - 1];
         const perfLabel = c.school ? `Notas: ${gradeLabel(a.job.perf)}` : `Rendimiento (al 100%, ascenso)`;
         jobHtml = `<div class="prof-sec">
-          <div class="prof-h">${c.icon} ${c.school ? 'Colegio' : esc(lvl.title)}</div>
+          <div class="prof-h">${c.icon} ${c.school ? esc(schoolName(stage.id, a.job.career)) : esc(lvl.title)}</div>
           <div class="muted small">${c.school ? '' : `${esc(c.name)} · nivel ${a.job.level}/${c.levels.length} · §${lvl.pay} por jornada · `}${esc(scheduleText(c))}</div>
+          ${a.study && DEGREES[a.study.degree] ? `<div class="small">${DEGREES[a.study.degree].icon} ${esc(DEGREES[a.study.degree].label)}: ${Math.min(100, Math.round((a.study.progress / DEGREES[a.study.degree].days) * 100))}% de la carrera</div>` : ''}
+          ${c.school && mine ? '<div class="muted small">📖 Estudiar (en el ordenador o en la biblioteca) sube las notas. En clase se aprende lo que solo se aprende estudiando.</div>' : ''}
           <div class="perf"><span class="small">${perfLabel}</span><div class="bar"><div class="fill" style="width:${Math.round(a.job.perf)}%;background:#4f8fd9"></div></div></div>
           ${c.business && mine ? this.barHtml(a) : ''}
           ${c.remote && mine ? '<div class="muted small">🧑‍💻 Se puede teletrabajar: toca el ordenador de casa y elige «Teletrabajar».</div>' : ''}
           ${c.school || !mine ? '' : '<button class="map-btn ghost small-btn" data-quit>Dejar el trabajo</button>'}
         </div>`;
       } else if (isAdult(a)) {
-        jobHtml = `<div class="prof-sec"><div class="prof-h">💼 Sin trabajo</div><div class="muted small">Busca trabajo en el ordenador de casa.</div></div>`;
+        jobHtml = `<div class="prof-sec"><div class="prof-h">💼 Sin trabajo</div><div class="muted small">Busca trabajo en el ordenador de casa${w.stageOf(a) !== 'elder' ? ', o matricúlate en la universidad' : ''}.${a.lastGrade !== undefined && a.lastGrade >= SCHOLARSHIP_GRADE ? ' ¡Tiene beca por sus notas!' : ''}</div></div>`;
       }
+      if (a.degrees?.length) jobHtml += `<div class="muted small">🎓 Títulos: ${a.degrees.map((d) => `${DEGREES[d]?.icon ?? ''} ${esc(DEGREES[d]?.label ?? d)}`).join(', ')}</div>`;
     }
     const h = w.householdOf(a);
     if (h?.expecting && h.expecting.parents.includes(a.id)) {

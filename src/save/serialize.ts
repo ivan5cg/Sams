@@ -60,6 +60,9 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v23 → v24: estudios (títulos, carrera en curso, notas del instituto) y profesiones con carrera.
+  // A los vecinos que ya trabajaban, nada (sus trabajos no pedían título).
+  23: () => {},
   // v22 → v23: rupturas (quién no lo supera, cuándo lo dejaron): campos nuevos opcionales.
   22: () => {},
   // v21 → v22: peleas, envenenamientos y cárcel (campos nuevos opcionales).

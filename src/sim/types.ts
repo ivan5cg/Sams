@@ -92,6 +92,12 @@ export interface Agent {
   cycle?: number;
   /** De qué murió (solo mientras se despide: el agente ya no está en la partida). */
   causeOfDeath?: string;
+  /** Títulos universitarios (desde la versión 24). */
+  degrees?: string[];
+  /** Carrera que está estudiando y cuánto lleva (días de clase). */
+  study?: { degree: string; progress: number };
+  /** Nota media al acabar el instituto (para la beca). */
+  lastGrade?: number;
   /** Echa de menos a su ex (no lo ha superado): quién, desde cuándo y la nueva pareja del ex que ya conoce. */
   longing?: { who: string; since: number; rival?: string };
   /** Enfermedad que tiene ahora (desde la versión 20). */

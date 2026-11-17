@@ -4,6 +4,7 @@
 
 import { isISODate } from '../sim/date';
 import { ILLNESSES } from '../data/illnesses';
+import { DEGREES } from '../data/education';
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { FLOOR_BY_ID } from '../data/paint';
@@ -102,6 +103,12 @@ export function validateState(s: WorldState) {
     optId(a.home, `casa de ${a.id}`);
     if (a.sex !== undefined && a.sex !== 'f' && a.sex !== 'm') throw new Broken(`sexo de ${a.id}`);
     optNum(a.cycle, `ciclo de ${a.id}`);
+    for (const d of a.degrees ?? []) if (!DEGREES[d]) throw new Broken(`título de ${a.id}`);
+    if (a.study) {
+      if (!DEGREES[a.study.degree]) throw new Broken(`carrera de ${a.id}`);
+      num(a.study.progress, `carrera de ${a.id}`);
+    }
+    optNum(a.lastGrade, `notas de ${a.id}`);
     if (a.longing) {
       id(a.longing.who, `ex de ${a.id}`);
       num(a.longing.since, `ex de ${a.id}`);

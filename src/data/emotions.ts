@@ -79,6 +79,7 @@ const E: EmotionDef[] = [
   { id: 'verguenza', label: 'Qué vergüenza', icon: '🫣', value: -10, hours: 72, likes: { watch_tv: 1.3, chat: 0.6 }, thoughts: ['¿Qué va a decir el barrio?'] },
   { id: 'no_superado', label: 'No lo ha superado', icon: '💭', value: -8, hours: 24, likes: { listen_music: 1.8, watch_tv: 1.5, eat: 1.4, whatsapp: 1.8, flirt: 0.5 }, thoughts: ['¿Qué estará haciendo ahora?', 'Igual le escribo... no, mejor no. Bueno, sí'] },
   { id: 'agobiado_ex', label: 'Su ex no le deja en paz', icon: '📵', value: -5, hours: 12, thoughts: ['Otra vez el pesado/la pesada de mi ex'] },
+  { id: 'graduado', label: '¡Graduado/a!', icon: '🎓', value: 20, hours: 48, thoughts: ['¡Tengo el título!', 'Todos esos exámenes valieron la pena'] },
   { id: 'castizo', label: 'Castizo/a', icon: '🎩', value: 10, hours: 12, likes: { chotis: 2.5, dance: 1.5 }, thoughts: ['¡Viva San Isidro!'] },
   { id: 'glovo', label: 'Comida a domicilio', icon: '🛵', value: 5, hours: 3 },
   { id: 'premio', label: '¡Premio en la tragaperras!', icon: '🎰', value: 12, hours: 6, likes: { tragaperras: 2 }, thoughts: ['¡Lo sabía! ¡Esta máquina me debía una!'] },

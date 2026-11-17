@@ -53,6 +53,8 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v24: estudios.
+  if (version <= 23) for (const a of st.agents) { delete a.degrees; delete a.study; delete a.lastGrade; }
   // v23: rupturas.
   if (version <= 22) for (const a of st.agents) delete a.longing;
   // v22: violencia (quién envenenó, la cárcel): nada que quitar en una partida normal.

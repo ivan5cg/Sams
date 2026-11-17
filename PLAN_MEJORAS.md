@@ -468,3 +468,10 @@ De paso: la oscuridad de los apagones solo cubría el centro de la pantalla con 
 | Matar o que te maten | ✅ | `systems/violence.ts`: mamporros y envenenar (solo enemigos; nunca niños ni los de casa), policía y cárcel, defensa propia, enemigos que buscan bronca. SAVE_VERSION 22 |
 
 Para no tener sorpresas en el CI, las pruebas nuevas se han repetido con 60-150 semillas de azar.
+
+## Tercer encargo ✅
+
+| Encargo | Estado | Notas |
+|---|---|---|
+| Rupturas: irse de casa, parejas nuevas, celos y drama | ✅ | `systems/breakups.ts`: los ex que viven juntos se separan a los 3 días (o lo eliges tú en el ordenador); piso de alquiler nuevo en el barrio (`addRentalFlat`) con el 30 % del dinero. Quien no lo supera (`longing`): escenas, celos de la nueva pareja del ex, a veces vuelven. Los solteros del barrio se emparejan. SAVE_VERSION 23 |
+| Colegio, instituto, universidad y profesiones | ✅ | `data/education.ts`, `systems/education.ts`: idiomas en clase; seis carreras con matrícula o beca (nota del instituto ≥ 70), habilidades que solo se aprenden estudiando y títulos que abren medicina, abogacía, informática y enseñanza (o hacen empezar más arriba en ciencia y veterinaria). SAVE_VERSION 24 |

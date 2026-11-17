@@ -29,6 +29,7 @@ import { holidayTask } from './holidays';
 import { placeTask } from './places';
 import { riskyTask, seeDoctor } from './illness';
 import { moveOut } from './breakups';
+import { enroll, studyAtHome } from './education';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -228,6 +229,11 @@ export function completeTask(w: World, a: Agent, task: Task) {
   skillPayoff(w, a, task.actionId);
   shopping(w, a, task.actionId);
   if (task.actionId === 'find_job' && task.param) setJob(w, a, task.param);
+  if (task.actionId === 'enroll' && task.param) {
+    const why = enroll(w, a, task.param);
+    if (why && w.isPlayerMember(a)) w.toast(`${a.name}: ${why}`, '🎓');
+  }
+  if (task.actionId === 'study_exams') studyAtHome(w, a);
   if (ACTIONS[task.actionId].target === 'agent' && task.actionId !== 'say_goodbye') {
     const t = w.agent(task.targetAgentId);
     if (t) socialOutcome(w, a, t, task.actionId);

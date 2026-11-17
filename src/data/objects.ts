@@ -80,7 +80,7 @@ const D: ObjectDef[] = [
   { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true, tiers: true },
 
   { id: 'tv', name: 'Televisión', icon: '📺', w: 1, h: 1, height: 30, color: 0x333a44, capacity: 0, actions: ['repair'], price: 220, category: 'ocio', breakable: true, tiers: true },
-  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'call_doctor', 'move_out', 'whatsapp', 'order_glovo', 'buy_clothes', 'take_course', 'book_trip', 'work_home', 'find_job', 'throw_party', 'day_off', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
+  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'study_exams', 'enroll', 'call_doctor', 'move_out', 'whatsapp', 'order_glovo', 'buy_clothes', 'take_course', 'book_trip', 'work_home', 'find_job', 'throw_party', 'day_off', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
   { id: 'bookshelf', name: 'Estantería', icon: '📚', w: 1, h: 1, height: 44, color: 0x8b5a2b, capacity: 1, actions: ['read'], price: 90, category: 'ocio', tiers: true },
   { id: 'stereo', name: 'Equipo de música', icon: '📻', w: 1, h: 1, height: 24, color: 0x2d2d3a, capacity: 3, actions: ['dance', 'listen_music', 'repair'], price: 150, category: 'ocio', breakable: true, tiers: true },
   { id: 'gamebox', name: 'Videoconsola', icon: '🎮', w: 1, h: 1, height: 18, color: 0x3a3f55, capacity: 2, actions: ['play_games', 'repair'], price: 280, category: 'ocio', breakable: true, tiers: true },
@@ -158,7 +158,7 @@ const D: ObjectDef[] = [
   { id: 'bench', name: 'Banco', icon: '', w: 1, h: 1, height: 12, color: 0x8b5a2b, shape: 'bench', capacity: 2, snap: true, actions: ['sit_bench', 'sleep_bench'], price: 70, category: 'deco' },
   { id: 'swings', name: 'Columpios', icon: '', w: 2, h: 1, height: 40, color: 0xd9534f, shape: 'swings', capacity: 2, snap: true, actions: ['swing'], price: 250, category: 'ocio' },
   // --- Biblioteca, gimnasio y mercadillo ---
-  { id: 'study_table', name: 'Mesa de estudio', icon: '📚', w: 1, h: 1, height: 16, color: 0x8b6a45, capacity: 2, actions: ['study', 'homework_lib'] },
+  { id: 'study_table', name: 'Mesa de estudio', icon: '📚', w: 1, h: 1, height: 16, color: 0x8b6a45, capacity: 2, actions: ['study', 'study_exams', 'homework_lib'] },
   { id: 'weights', name: 'Banco de pesas', icon: '🏋️', w: 1, h: 1, height: 20, color: 0x3c4150, capacity: 1, actions: ['lift_weights'] },
   { id: 'punching_bag', name: 'Saco de boxeo', icon: '🥊', w: 1, h: 1, height: 44, color: 0xb23a3a, capacity: 1, actions: ['box'] },
   { id: 'stall_fruit', name: 'Puesto de fruta', icon: '🍊', w: 1, h: 1, height: 34, color: 0x2e8b57, capacity: 2, actions: ['market_food', 'haggle'] },

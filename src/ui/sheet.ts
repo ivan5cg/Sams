@@ -1,5 +1,8 @@
 // Menú de acciones al tocar algo de la escena: qué puede hacer el personaje activo.
 
+import { DEGREES } from '../data/education';
+import { SKILL_BY_ID } from '../data/skills';
+import { degreeReason, enrollReason, hasScholarship, startLevel } from '../sim/systems/education';
 import { CAREERS, JOB_CAREERS, scheduleText } from '../data/careers';
 import { OBJECTS, QUALITY } from '../data/objects';
 import { PET_TRAIT_BY_ID } from '../data/pets';
@@ -66,6 +69,12 @@ export class ActionSheet extends Part {
         this.hud.render();
         return;
       }
+      if (b.dataset.degree) {
+        this.world.command(this.world.activeAgent.id, 'enroll', this.sheetTarget, b.dataset.degree);
+        this.closeSheet();
+        this.hud.render();
+        return;
+      }
       if (b.dataset.course) {
         this.world.command(this.world.activeAgent.id, 'take_course', this.sheetTarget, b.dataset.course);
         this.closeSheet();
@@ -81,6 +90,7 @@ export class ActionSheet extends Part {
       const action = b.dataset.action;
       if (action === 'adopt') return this.showAdoption();
       if (action === 'find_job') return this.showJobs();
+      if (action === 'enroll') return this.showDegrees();
       if (action === 'take_course' && !this.scheduling) return this.showCourses();
       if (action && this.scheduling) return this.askTime(action);
       if (action) {
@@ -223,9 +233,11 @@ export class ActionSheet extends Part {
     const a = this.world.activeAgent;
     const items = JOB_CAREERS.map((c) => {
       const current = a.job?.career === c.id;
-      return `<button class="act" data-career="${c.id}" ${current ? 'disabled' : ''}>
+      const needs = degreeReason(a, c.id);
+      const lvl = startLevel(a, c.id);
+      return `<button class="act" data-career="${c.id}" ${current || needs ? 'disabled' : ''}>
         <span class="act-icon">${c.icon}</span>
-        <span class="act-label">${esc(c.name)} · ${esc(c.levels[0].title)}<small class="info">${c.business ? `Montarlo: §${c.startup?.toLocaleString('es-ES')} · ganancias variables · cuota §90/semana` : `§${c.levels[0].pay}/jornada`} · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
+        <span class="act-label">${esc(c.name)} · ${esc(c.levels[lvl - 1].title)}<small class="info">${needs ? `${esc(needs)} · ` : c.degree ? '🎓 Con tu título · ' : lvl > 1 ? '🎓 Empiezas más arriba por tu carrera · ' : ''}${c.business ? `Montarlo: §${c.startup?.toLocaleString('es-ES')} · ganancias variables · cuota §90/semana` : `§${c.levels[lvl - 1].pay}/jornada`} · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
       </button>`;
     }).join('');
     $('#sheet').querySelector('.sheet-card')!.innerHTML = `
@@ -234,6 +246,29 @@ export class ActionSheet extends Part {
         <button class="icon-btn" data-close>✕</button>
       </div>
       <p class="sheet-note">Se va solo a su hora y vuelve al salir. Si va de buen humor, rinde más y asciende antes.</p>
+      <div class="sheet-actions one-col">${items}</div>`;
+  }
+
+  /** Universidad: elegir carrera (con beca, gratis). */
+  showDegrees() {
+    const a = this.world.activeAgent;
+    const beca = hasScholarship(a);
+    const items = Object.values(DEGREES)
+      .map((d) => {
+        const why = enrollReason(this.world, a, d.id);
+        const c = CAREERS[d.career];
+        return `<button class="act" data-degree="${d.id}" ${why ? 'disabled' : ''}>
+          <span class="act-icon">${d.icon}</span>
+          <span class="act-label">${esc(d.label)} · ${d.days} días<small class="info">${why ? `${esc(why)} · ` : ''}${beca ? 'Con beca: gratis' : `Matrícula §${d.cost}`} · lleva a ${esc(c.name.toLowerCase())}${d.startLevel ? ` (empiezas de ${esc(c.levels[d.startLevel - 1].title.toLowerCase())})` : ''} · aprende ${esc(SKILL_BY_ID[d.skill]?.label.toLowerCase() ?? '')}</small></span>
+        </button>`;
+      })
+      .join('');
+    $('#sheet').querySelector('.sheet-card')!.innerHTML = `
+      <div class="sheet-head">
+        <div><div class="sheet-title">🎓 Universidad</div><div class="sheet-sub">${beca ? `${esc(a.name)} tiene beca por sus notas del instituto` : 'Clase de lunes a viernes, de 9:00 a 14:00 (sin sueldo)'}</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      <p class="sheet-note">Con buenas notas se acaba antes. Estudiar en casa o en la biblioteca sube las notas. Si trabaja, lo deja para estudiar.</p>
       <div class="sheet-actions one-col">${items}</div>`;
   }
 

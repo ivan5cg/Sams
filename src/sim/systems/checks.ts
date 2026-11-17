@@ -38,6 +38,10 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (o.lotId !== a.lotId || a.travel) return { def, ok: false, reason: 'No está aquí' };
   if (a.home && a.home !== o.id) return { def, ok: false, reason: 'No puede salir de su jaula' };
   if (!def.guestOk && w.isGuest(a)) return { def, ok: false, reason: 'Estás de visita' };
+  if (actionId === 'enroll') {
+    if (!w.isPlayerMember(a) || a.study || w.stageOf(a) === 'elder') return { def, ok: false };
+  }
+  if (actionId === 'study_exams' && !(a.job && CAREERS[a.job.career]?.school)) return { def, ok: false, reason: 'Solo para quien estudia' };
   if (actionId === 'move_out') {
     // Solo tiene sentido tras romper con alguien de la casa.
     const exAtHome = w.state.agents.some((o) => o.householdId === a.householdId && o !== a && getRel(w.state, a.id, o.id).ex);
@@ -231,7 +235,7 @@ export function optionsFor(w: World, agentId: string, target: Target): ActionOpt
       .actions.filter((id) => speciesOk(w, a, ACTIONS[id]) && (id !== 'repair' || o.broken))
       .map((id) => checkObjectAction(w, a, o, id))
       // Las cosas de fiesta (fuera de su día), las de la calle y lavarse en el lavabo de casa, ni se ven.
-      .filter((op) => op.ok || op.reason || (!HOLIDAY_ACTIONS[op.def.id] && !STREET_ACTIONS.has(op.def.id) && op.def.id !== 'wash_up' && op.def.id !== 'call_doctor' && op.def.id !== 'move_out'));
+      .filter((op) => op.ok || op.reason || (!HOLIDAY_ACTIONS[op.def.id] && !STREET_ACTIONS.has(op.def.id) && op.def.id !== 'wash_up' && op.def.id !== 'call_doctor' && op.def.id !== 'move_out' && op.def.id !== 'enroll'));
   }
   if (target.kind === 'agent') {
     if (target.id === a.id) {

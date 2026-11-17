@@ -151,6 +151,9 @@ const A: ActionDef[] = [
 
   // Mercadona
   { id: 'shop_small', label: 'Compra pequeña (§45 · 8 raciones)', verb: 'Haciendo la compra', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 45, duration: 20, effects: { social: 0.1 }, playerOnly: true },
+  // --- Estudios (ver systems/education.ts) ---
+  { id: 'enroll', label: 'Matricularse en la universidad', verb: 'Haciendo la matrícula', icon: '🎓', target: 'object', actors: ['person'], actorStages: ['young', 'adult'], duration: 20, effects: {}, playerOnly: true },
+  { id: 'study_exams', guestOk: true, label: 'Estudiar para los exámenes', verb: 'Estudiando', icon: '📖', target: 'object', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult'], duration: 45, effects: { fun: -0.05 }, interruptible: true, baseScore: 3 },
   // --- Irse de casa tras romper (ver systems/breakups.ts) ---
   { id: 'move_out', label: 'Buscar piso e irse de casa', verb: 'Buscando piso', icon: '📦', target: 'object', actors: ['person'], actorStages: ['young', 'adult', 'elder'], duration: 20, effects: {}, playerOnly: true },
   // --- Enfermedades (ver systems/illness.ts) ---
