@@ -8,6 +8,7 @@ import { MONEY_CATEGORIES } from '../data/economy';
 import { BAR_MENUS, BAR_STAFF, CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
 import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
 import { MAX_SKILL, SKILLS } from '../data/skills';
+import { unlocksOf } from '../data/skillTree';
 import { SPECIES, lifeStage } from '../data/species';
 import { TRAITS } from '../data/traits';
 import { ASPIRATIONS, ASPIRATION_BY_ID } from '../sim/aspirations';
@@ -128,13 +129,23 @@ export class ProfilePanel extends Part {
     // Habilidades
     let skillsHtml = '';
     if (a.kind === 'person' && this.world.stageOf(a) !== 'baby') {
-      const rows = SKILLS.map((sk) => {
-        const v = a.skills?.[sk.id] ?? 0;
-        const lvl = Math.floor(v);
-        const pct = Math.round((v / MAX_SKILL) * 100);
-        return `<div class="skill-row"><span>${sk.icon} ${esc(sk.label)}</span><div class="bar"><div class="fill" style="width:${pct}%;background:#f0a830"></div></div><b>${lvl}</b></div>`;
-      }).join('');
-      skillsHtml = `<div class="prof-sec"><div class="prof-h">⭐ Habilidades</div>${rows}<div class="muted small">Se practican cocinando, tocando la guitarra, pintando, haciendo deporte o pilates, jugando al ajedrez o charlando.</div></div>`;
+      // Las que ha empezado: barra hasta el siguiente nivel, lo desbloqueado y lo próximo.
+      const started = SKILLS.filter((sk) => (a.skills?.[sk.id] ?? 0) > 0);
+      const rows = started
+        .map((sk) => {
+          const v = a.skills?.[sk.id] ?? 0;
+          const lvl = Math.floor(v);
+          const pct = lvl >= MAX_SKILL ? 100 : Math.round((v - lvl) * 100);
+          const all = unlocksOf(sk.id);
+          const got = all.filter((u) => u.level <= lvl);
+          const next = all.find((u) => u.level > lvl);
+          const info = [got.length ? `🔓 ${got.map((u) => `${u.icon} ${esc(u.label)}`).join(', ')}` : '', next ? `🔒 Nivel ${next.level}: ${next.icon} ${esc(next.label)}` : ''].filter(Boolean).join(' · ');
+          return `<div class="skill-row"><span>${sk.icon} ${esc(sk.label)}</span><div class="bar" title="${lvl >= MAX_SKILL ? 'Nivel máximo' : `${pct} % hacia el nivel ${lvl + 1}`}"><div class="fill" style="width:${pct}%;background:#f0a830"></div></div><b>${lvl}</b></div>${info ? `<div class="muted small skill-unlocks">${info}</div>` : ''}`;
+        })
+        .join('');
+      const rest = SKILLS.filter((sk) => !started.includes(sk) && !sk.studyOnly);
+      const restHtml = rest.length ? `<div class="muted small">Sin empezar: ${rest.map((sk) => `${sk.icon} ${esc(sk.label)} <span class="skill-how">(${esc(sk.how ?? '')})</span>`).join(' · ')}</div>` : '';
+      skillsHtml = `<div class="prof-sec"><div class="prof-h">⭐ Habilidades</div>${rows || '<div class="muted small">Aún no ha practicado nada.</div>'}${restHtml}<div class="muted small">Solo suben practicando o estudiando libros de habilidad (en la estantería; se compran en el ordenador, y en la biblioteca están todos). Cada nivel cuesta más que el anterior y algunos desbloquean recetas y cosas nuevas.</div></div>`;
     }
     // Relaciones con quien conoce
     const rows = Object.entries(w.state.rels)

@@ -5,6 +5,8 @@
 import { isISODate } from '../sim/date';
 import { ILLNESSES } from '../data/illnesses';
 import { DEGREES } from '../data/education';
+import { SKILL_BY_ID } from '../data/skills';
+import { BOOKS } from '../data/skillTree';
 import { ACTIONS } from '../data/actions';
 import { OBJECTS } from '../data/objects';
 import { FLOOR_BY_ID } from '../data/paint';
@@ -62,6 +64,7 @@ export function validateState(s: WorldState) {
     str(h.name, `nombre de ${h.id}`);
     num(h.funds, `dinero de ${h.id}`);
     optNum(h.pantry, `despensa de ${h.id}`);
+    for (const b of h.books ?? []) if (!BOOKS[b]) throw new Broken(`libros de ${h.id}`);
     if (h.trip) {
       num(h.trip.start, `viaje de ${h.id}`);
       num(h.trip.end, `viaje de ${h.id}`);
@@ -109,6 +112,8 @@ export function validateState(s: WorldState) {
       num(a.study.progress, `carrera de ${a.id}`);
     }
     optNum(a.lastGrade, `notas de ${a.id}`);
+    for (const v of Object.values(a.done ?? {})) num(v, `encargos de ${a.id}`);
+    for (const [k, v] of Object.entries(a.skills ?? {})) if (!SKILL_BY_ID[k] || typeof v !== 'number' || !Number.isFinite(v)) throw new Broken(`habilidad de ${a.id}`);
     if (a.longing) {
       id(a.longing.who, `ex de ${a.id}`);
       num(a.longing.since, `ex de ${a.id}`);

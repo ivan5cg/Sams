@@ -59,6 +59,8 @@ export interface ActionOption {
   def: ActionDef;
   ok: boolean;
   reason?: string;
+  /** No sale en el menú (aún no tiene el nivel, o no pinta nada aquí). */
+  hidden?: boolean;
 }
 
 export interface Toast {

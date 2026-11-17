@@ -119,7 +119,7 @@ export function riskyTask(w: World, a: Agent, actionId: string, objDef?: string)
     catchIllness(w, a, 'intoxicacion');
   }
   // Arreglar un aparato eléctrico sin saber: calambrazo; rara vez, mortal.
-  if (actionId === 'repair' && objDef && ELECTRIC.has(objDef) && skillLevel(w, a, 'logica') < 3) {
+  if (actionId === 'repair' && objDef && ELECTRIC.has(objDef) && skillLevel(w, a, 'manitas') < 3) {
     const r = Math.random();
     if (r < 0.004) die(w, a, 'electric', objDef);
     else if (r < 0.06 && w.isPlayerMember(a)) w.toast(`¡Calambrazo! A ${a.name} le ha dado la corriente arreglando el aparato. Para la próxima, un técnico`, '⚡', a.id);

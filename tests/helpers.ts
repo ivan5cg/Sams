@@ -53,6 +53,11 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v25: libros de habilidad y encargos del día.
+  if (version <= 24) {
+    for (const h of st.households) delete h.books;
+    for (const a of st.agents) delete a.done;
+  }
   // v24: estudios.
   if (version <= 23) for (const a of st.agents) { delete a.degrees; delete a.study; delete a.lastGrade; }
   // v23: rupturas.

@@ -72,10 +72,11 @@ describe('economía', () => {
     w.tick(40);
     expect(lucia.color).not.toBe(color);
     expect(w.household.funds).toBe(f0 - ECONOMY.clothes);
-    const before = Math.floor(lucia.skills?.cocina ?? 0);
-    w.command('a1', 'take_course', { kind: 'object', id: pc.id }, 'cocina');
-    w.tick(150);
-    expect(Math.floor(lucia.skills?.cocina ?? 0)).toBe(before + 1);
-    expect(w.household.ledger?.at(-1)?.out).toMatchObject({ ropa: ECONOMY.clothes, cursos: ECONOMY.course });
+    // Los cursos online ya no están: los niveles se ganan practicando o con libros de habilidad.
+    expect(w.optionsFor('a1', { kind: 'object', id: pc.id }).map((o) => o.def.id)).not.toContain('take_course');
+    w.command('a1', 'buy_book', { kind: 'object', id: pc.id }, 'cocina:1');
+    w.tick(20);
+    expect(w.household.books).toEqual(['cocina:1']);
+    expect(w.household.ledger?.at(-1)?.out).toMatchObject({ ropa: ECONOMY.clothes, libros: 25 });
   });
 });

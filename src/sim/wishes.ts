@@ -20,6 +20,11 @@ const OBJECT_WISHES: { action: string; label: string; icon: string; def: string 
   { action: 'play_chess', label: 'Jugar al ajedrez', icon: '♟️', def: 'chess' },
   { action: 'run', label: 'Salir a correr en la cinta', icon: '🏃', def: 'treadmill' },
   { action: 'play_toys', label: 'Jugar con los juguetes', icon: '🧸', def: 'toybox' },
+  { action: 'bake', label: 'Hornear algo dulce', icon: '🧁', def: 'fridge' },
+  { action: 'play_piano', label: 'Tocar el piano', icon: '🎹', def: 'piano' },
+  { action: 'diy', label: 'Hacer bricolaje', icon: '🪚', def: 'workbench' },
+  { action: 'program', label: 'Programar un rato', icon: '👩‍💻', def: 'computer' },
+  { action: 'chess_puzzles', label: 'Resolver un problema de ajedrez', icon: '♞', def: 'chess' },
 ];
 
 let seq = 0;
@@ -66,7 +71,7 @@ export function newWish(world: World, a: Agent): Wish | null {
     options.push({ id: wid(), kind: 'action', label: 'Enterarse de un cotilleo', icon: '🌶️', action: 'ask_gossip', reward: reward() });
     options.push({ id: wid(), kind: 'action', label: 'Comerse unos churros con chocolate', icon: '🥨', action: 'churros', reward: reward() });
     if (stage !== 'teen') options.push({ id: wid(), kind: 'action', label: 'Tomarse una caña en el bar', icon: '🍺', action: 'cana', reward: reward() });
-    const sk = pick(SKILLS);
+    const sk = pick(SKILLS.filter((s) => !s.studyOnly));
     const lvl = Math.floor(a.skills?.[sk.id] ?? 0) + 1;
     if (lvl <= 10) options.push({ id: wid(), kind: 'skill', label: `Llegar a ${sk.label.toLowerCase()} nivel ${lvl}`, icon: sk.icon, skill: sk.id, level: lvl, reward: 40 + lvl * 10 });
   }

@@ -30,6 +30,7 @@ import { placeTask } from './places';
 import { riskyTask, seeDoctor } from './illness';
 import { moveOut } from './breakups';
 import { enroll, studyAtHome } from './education';
+import { noteDaily, readBook, skillTask } from './skillWorks';
 
 export function command(w: World, agentId: string, actionId: string, target: Target, param?: string): boolean {
   const a = w.agent(agentId);
@@ -91,7 +92,8 @@ export function beginTask(w: World, a: Agent, task: Task): boolean {
   if (def.target === 'self') {
     if (!speciesOk(w, a, def)) return fail('no puede hacer eso');
     task.phase = 'acting';
-    task.remaining = def.duration;
+    // Quien es manitas arregla antes (con 6, en la mitad de tiempo).
+    task.remaining = task.actionId === 'repair' ? def.duration * (skillLevel(w, a, 'manitas') >= 6 ? 0.5 : 1 - 0.05 * skillLevel(w, a, 'manitas')) : def.duration;
     w.emit({ type: 'act', agentId: a.id, actionId: task.actionId });
     return true;
   }
@@ -227,6 +229,8 @@ export function completeTask(w: World, a: Agent, task: Task) {
   w.bump(a, task.actionId);
   taskFeelings(w, a, task, o);
   skillPayoff(w, a, task.actionId);
+  skillTask(w, a, task, o);
+  noteDaily(w, a, def);
   shopping(w, a, task.actionId);
   if (task.actionId === 'find_job' && task.param) setJob(w, a, task.param);
   if (task.actionId === 'enroll' && task.param) {
@@ -305,6 +309,7 @@ export function runTask(w: World, a: Agent, task: Task, dt: number) {
   const tq = def.target === 'object' ? w.object(task.targetObjectId)?.q : undefined;
   applyEffects(w, a, def.effects, dt, tq ? QUALITY[tq].mult : 1);
   if (def.skill) practice(w, a, def.skill, dt);
+  if (task.actionId === 'read_skill_book' && !readBook(w, a, task, dt)) return completeTask(w, a, task);
   if (partner && def.partnerEffects) applyEffects(w, partner, def.partnerEffects, dt);
   task.remaining -= dt;
   if (task.remaining <= 0 || isSatisfied(w, a, def)) {

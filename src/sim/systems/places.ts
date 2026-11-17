@@ -42,7 +42,7 @@ export function haggleChance(w: World, a: Agent): number {
 }
 
 const FINDS: { p: number; text: string; icon: string; effect: (w: World, a: Agent) => void }[] = [
-  { p: 0.3, text: 'un libro viejo de ajedrez. Ya sabe dos aperturas más', icon: '📕', effect: (_w, a) => (a.skills = { ...a.skills, logica: Math.min(10, (a.skills?.logica ?? 0) + 0.5) }) },
+  { p: 0.3, text: 'un libro viejo de ajedrez. Ya sabe dos aperturas más', icon: '📕', effect: (_w, a) => (a.skills = { ...a.skills, ajedrez: Math.min(10, (a.skills?.ajedrez ?? 0) + 0.5) }) },
   { p: 0.25, text: 'un vinilo de Raphael en perfecto estado', icon: '💿', effect: (w, a) => w.feel(a, 'chollo') },
   { p: 0.15, text: 'un jarrón que parecía de la abuela... y lo ha revendido en Wallapop', icon: '🏺', effect: (w, a) => {
     const h = w.householdOf(a);

@@ -1097,6 +1097,16 @@ body.building #hud-bottom {
   gap: 8px;
   align-items: center;
   font-size: 13px;
+  margin-top: 6px;
+}
+
+.skill-unlocks {
+  margin: 2px 0 2px 4px;
+  line-height: 1.35;
+}
+
+.skill-how {
+  opacity: 0.75;
 }
 
 /* --- Deseos ------------------------------------------------------------------ */

@@ -74,14 +74,14 @@ const D: ObjectDef[] = [
   { id: 'armchair', name: 'Sillón', icon: '💺', w: 1, h: 1, height: 14, color: 0x7b4fa0, capacity: 1, snap: true, actions: ['sit', 'watch_tv', 'sniff_sofa'], price: 120, category: 'descanso', tiers: true },
   { id: 'crib', name: 'Cuna', icon: '', w: 1, h: 1, height: 20, color: 0xf2a7c3, shape: 'cage', capacity: 3, actions: ['baby_sleep'], price: 150, category: 'descanso' },
 
-  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'eat', 'snack', 'eat_roscon', 'drink_beer', 'repair'], price: 250, category: 'cocina', breakable: true, tiers: true },
+  { id: 'fridge', name: 'Nevera', icon: '🧊', w: 1, h: 1, height: 46, color: 0xdfe6ea, capacity: 1, actions: ['cook', 'bake', 'catering', 'eat', 'snack', 'eat_roscon', 'drink_beer', 'repair'], price: 250, category: 'cocina', breakable: true, tiers: true },
   { id: 'toilet', name: 'Váter', icon: '🚽', w: 1, h: 1, height: 14, color: 0xf4f4f4, capacity: 1, snap: true, actions: ['toilet', 'wash_up', 'repair'], price: 120, category: 'cocina', breakable: true, tiers: true },
   { id: 'shower', name: 'Ducha', icon: '🚿', w: 1, h: 1, height: 6, color: 0x9fd3e6, capacity: 1, snap: true, actions: ['shower', 'repair'], price: 200, category: 'cocina', breakable: true, tiers: true },
   { id: 'bathtub', name: 'Bañera', icon: '🛁', w: 1, h: 1, height: 12, color: 0xf7fbff, capacity: 1, snap: true, actions: ['bath', 'repair'], price: 350, category: 'cocina', breakable: true, tiers: true },
 
   { id: 'tv', name: 'Televisión', icon: '📺', w: 1, h: 1, height: 30, color: 0x333a44, capacity: 0, actions: ['repair'], price: 220, category: 'ocio', breakable: true, tiers: true },
-  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'study_exams', 'enroll', 'call_doctor', 'move_out', 'whatsapp', 'order_glovo', 'buy_clothes', 'take_course', 'book_trip', 'work_home', 'find_job', 'throw_party', 'day_off', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
-  { id: 'bookshelf', name: 'Estantería', icon: '📚', w: 1, h: 1, height: 44, color: 0x8b5a2b, capacity: 1, actions: ['read'], price: 90, category: 'ocio', tiers: true },
+  { id: 'computer', name: 'Ordenador', icon: '💻', w: 1, h: 1, height: 22, color: 0x7a5230, capacity: 1, actions: ['browse', 'study_exams', 'enroll', 'call_doctor', 'move_out', 'whatsapp', 'order_glovo', 'buy_clothes', 'program', 'freelance_web', 'make_game', 'buy_book', 'stocks', 'ask_raise', 'book_trip', 'work_home', 'find_job', 'throw_party', 'day_off', 'order_groceries', 'adopt', 'repair'], price: 350, category: 'ocio', breakable: true },
+  { id: 'bookshelf', name: 'Estantería', icon: '📚', w: 1, h: 1, height: 44, color: 0x8b5a2b, capacity: 1, actions: ['read', 'read_skill_book'], price: 90, category: 'ocio', tiers: true },
   { id: 'stereo', name: 'Equipo de música', icon: '📻', w: 1, h: 1, height: 24, color: 0x2d2d3a, capacity: 3, actions: ['dance', 'listen_music', 'repair'], price: 150, category: 'ocio', breakable: true, tiers: true },
   { id: 'gamebox', name: 'Videoconsola', icon: '🎮', w: 1, h: 1, height: 18, color: 0x3a3f55, capacity: 2, actions: ['play_games', 'repair'], price: 280, category: 'ocio', breakable: true, tiers: true },
 
@@ -105,10 +105,12 @@ const D: ObjectDef[] = [
   { id: 'lounger', name: 'Tumbona', icon: '🏖️', w: 2, h: 1, height: 8, color: 0xf4a261, capacity: 1, snap: true, actions: ['sunbathe'], price: 90, category: 'deco', desc: 'Para tomar el sol en el jardín como si fuera Benidorm.' },
 
   // Habilidades
-  { id: 'guitar', name: 'Guitarra', icon: '🎸', w: 1, h: 1, height: 6, color: 0x8b5a2b, shape: 'none', capacity: 1, actions: ['play_guitar'], price: 120, category: 'ocio' },
-  { id: 'easel', name: 'Caballete', icon: '🎨', w: 1, h: 1, height: 30, color: 0xb08968, shape: 'post', capacity: 1, actions: ['paint'], price: 150, category: 'ocio' },
+  { id: 'guitar', name: 'Guitarra', icon: '🎸', w: 1, h: 1, height: 6, color: 0x8b5a2b, shape: 'none', capacity: 1, actions: ['play_guitar', 'compose'], price: 120, category: 'ocio' },
+  { id: 'easel', name: 'Caballete', icon: '🎨', w: 1, h: 1, height: 30, color: 0xb08968, shape: 'post', capacity: 1, actions: ['paint', 'exhibit'], price: 150, category: 'ocio' },
   { id: 'treadmill', name: 'Cinta de correr', icon: '🏃', w: 1, h: 1, height: 16, color: 0x3c4150, capacity: 1, snap: true, actions: ['run', 'repair'], price: 400, category: 'ocio', breakable: true },
-  { id: 'chess', name: 'Mesa de ajedrez', icon: '♟️', w: 1, h: 1, height: 16, color: 0xd2b48c, capacity: 2, actions: ['play_chess'], price: 90, category: 'ocio' },
+  { id: 'chess', name: 'Mesa de ajedrez', icon: '♟️', w: 1, h: 1, height: 16, color: 0xd2b48c, capacity: 2, actions: ['play_chess', 'chess_puzzles', 'chess_tournament', 'chess_lessons'], price: 90, category: 'ocio' },
+  { id: 'piano', name: 'Piano', icon: '🎹', w: 1, h: 1, height: 40, color: 0x2b1d14, capacity: 1, actions: ['play_piano', 'piano_family', 'piano_lessons'], price: 900, category: 'ocio', desc: 'De pared, con su banqueta. Sube el piano (y alegra a quien escucha, cuando ya se toca bien).' },
+  { id: 'workbench', name: 'Banco de bricolaje', icon: '🪚', w: 1, h: 1, height: 22, color: 0xa0703f, capacity: 1, actions: ['diy', 'odd_jobs', 'make_furniture'], price: 220, category: 'ocio', desc: 'Herramientas, tornillos y serrín: sube la habilidad de manitas.' },
   { id: 'mirror', name: 'Espejo', icon: '🪞', w: 1, h: 1, height: 40, color: 0xc9d6df, capacity: 1, actions: ['practice_speech'], price: 80, category: 'deco' },
   { id: 'toybox', name: 'Baúl de juguetes', icon: '🧸', w: 1, h: 1, height: 12, color: 0xe76f51, capacity: 2, actions: ['play_toys'], price: 60, category: 'ocio' },
   { id: 'pilates_mat', name: 'Esterilla de pilates', icon: '', w: 1, h: 1, height: 0, color: 0x9b5de5, shape: 'flat', capacity: 1, snap: true, walkable: true, actions: ['pilates'], price: 40, category: 'ocio' },
@@ -159,7 +161,7 @@ const D: ObjectDef[] = [
   { id: 'swings', name: 'Columpios', icon: '', w: 2, h: 1, height: 40, color: 0xd9534f, shape: 'swings', capacity: 2, snap: true, actions: ['swing'], price: 250, category: 'ocio' },
   // --- Biblioteca, gimnasio y mercadillo ---
   { id: 'study_table', name: 'Mesa de estudio', icon: '📚', w: 1, h: 1, height: 16, color: 0x8b6a45, capacity: 2, actions: ['study', 'study_exams', 'homework_lib'] },
-  { id: 'weights', name: 'Banco de pesas', icon: '🏋️', w: 1, h: 1, height: 20, color: 0x3c4150, capacity: 1, actions: ['lift_weights'] },
+  { id: 'weights', name: 'Banco de pesas', icon: '🏋️', w: 1, h: 1, height: 20, color: 0x3c4150, capacity: 1, actions: ['lift_weights', 'personal_trainer'] },
   { id: 'punching_bag', name: 'Saco de boxeo', icon: '🥊', w: 1, h: 1, height: 44, color: 0xb23a3a, capacity: 1, actions: ['box'] },
   { id: 'stall_fruit', name: 'Puesto de fruta', icon: '🍊', w: 1, h: 1, height: 34, color: 0x2e8b57, capacity: 2, actions: ['market_food', 'haggle'] },
   { id: 'stall_clothes', name: 'Puesto de ropa', icon: '👕', w: 1, h: 1, height: 34, color: 0x4f8fd9, capacity: 2, actions: ['market_clothes', 'haggle'] },
@@ -182,18 +184,18 @@ const DESC: Record<string, string> = {
   shower: 'Cinco minutos y como nuevo. Bueno, quince.',
   bathtub: 'Baño de espuma: higiene y un poco de diversión.',
   tv: 'Para ver la tele desde el sofá o el sillón. Y el fútbol.',
-  computer: 'Buscar trabajo, pedir comida, hacer cursos, teletrabajar...',
-  bookshelf: 'Libros para leer: sube la diversión sin hacer ruido.',
+  computer: 'Buscar trabajo, pedir comida, programar, comprar libros, teletrabajar...',
+  bookshelf: 'Novelas para pasar el rato y los libros de habilidad que compréis.',
   stereo: 'Música para bailar o escuchar. Los vecinos, menos contentos.',
   gamebox: 'Para dos jugadores. Diversión asegurada (y piques también).',
   plant: 'Barata y alegra la casa. Y no hay que sacarla a pasear.',
   lamp: 'Luz de lectura y ambiente acogedor.',
   rug: 'Da calidez y se puede pisar. Se puede pisar, ¿eh?',
   slippers: 'Las zapatillas de casa. El hurón las adora (para robarlas).',
-  guitar: 'Para aprender música. Al principio suena regular.',
-  easel: 'Pintar sube el arte. Lo que salga, ya se verá.',
+  guitar: 'Para aprender a tocar la guitarra. Al principio suena regular.',
+  easel: 'Pintar sube la pintura. Lo que salga, ya se verá.',
   treadmill: 'Correr sin salir de casa: forma física (y sudor).',
-  chess: 'Para dos: sube la lógica. El cuñado siempre gana (dice).',
+  chess: 'Para dos, o problemas para uno solo: sube el ajedrez. El cuñado siempre gana (dice).',
   mirror: 'Practicar discursos delante del espejo: sube el carisma.',
   toybox: 'Juguetes para los peques: diversión y amigos.',
   pilates_mat: 'Pilates en casa, sin cuota mensual.',
@@ -212,6 +214,8 @@ const DESC: Record<string, string> = {
   flowers: 'Flores para el jardín: alegran la vista.',
 };
 for (const d of D) if (!d.desc && DESC[d.id]) d.desc = DESC[d.id];
+// Con manitas 5, los muebles que vienen en calidades se pueden mejorar uno mismo.
+for (const d of D) if (d.tiers && !d.actions.includes('upgrade')) d.actions.push('upgrade');
 
 export const CATALOG = D.filter((d) => d.price !== undefined && d.category);
 

@@ -60,6 +60,11 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v24 → v25: habilidades nuevas (repostería, manitas, piano, canto, ajedrez, programación), libros de
+  // habilidad en casa y encargos de una vez al día. Lo que se sabía de ajedrez estaba en «lógica»: se copia.
+  24: (s) => {
+    for (const a of s.agents) if (a.skills?.logica && a.skills.ajedrez === undefined) a.skills.ajedrez = Math.min(a.skills.logica, 3);
+  },
   // v23 → v24: estudios (títulos, carrera en curso, notas del instituto) y profesiones con carrera.
   // A los vecinos que ya trabajaban, nada (sus trabajos no pedían título).
   23: () => {},

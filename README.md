@@ -292,11 +292,39 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 
 ## Habilidades y actividades
 
-- Seis **habilidades** (cocina, música, forma física, lógica, carisma y arte), del 0 al 10. Suben practicando:
-  cocinar en la nevera, tocar la guitarra, pintar en el caballete, correr en la cinta, hacer pilates,
-  jugar al ajedrez, ensayar ante el espejo o charlar. Las ves en el perfil (👥).
-- Sirven para algo: se asciende antes en la carrera relacionada, los cuadros se venden (mejor cuanto más arte),
-  con música 3 se puede tocar en el parque por propinas, y quien cocina bien alimenta más.
+- **Doce habilidades** que se practican, del 0 al 10: cocina, repostería, manitas, guitarra, piano, canto,
+  ajedrez, programación, pintura, forma física, lógica y carisma. Más las seis que solo se aprenden estudiando
+  (ver [Estudios](#estudios)).
+- **Solo suben de dos maneras**: haciendo cosas de lo suyo o estudiando **libros de habilidad**.
+  - Cocinar o hacer barbacoa, hornear, arreglar cosas rotas o hacer bricolaje en el **banco de bricolaje** 🪚,
+    tocar la guitarra o el **piano** 🎹, cantar en el karaoke, jugar al ajedrez o resolver problemas, programar
+    en el ordenador, pintar, hacer deporte, estudiar, ensayar ante el espejo, charlar o regatear.
+  - Los libros se compran en el ordenador («📚 Comprar libros de habilidad») y quedan en la estantería para toda
+    la familia. Hay dos por habilidad: **para principiantes** (§25, hasta el nivel 4) y **avanzado** (§70, desde
+    el 3 y hasta el 7). En la **biblioteca** están todos, gratis. Del 8 al 10, solo practicando.
+  - Cada nivel cuesta más que el anterior. Los cursos online de antes ya no están.
+- **Cada nivel desbloquea cosas.** Las acciones bloqueadas no salen en el menú y las recetas salen con candado; al
+  llegar al nivel avisa con un 🔓. En el perfil (👥) se ve qué se tiene y qué viene después, con una barra hasta
+  el siguiente nivel.
+
+  | Habilidad | Lo que se desbloquea |
+  |---|---|
+  | 🍳 Cocina | Recetas: tortilla (2), lentejas de la abuela (4), croquetas (5), cocido madrileño (6), paella (8), callos de concurso (10). Las buenas dan de comer a toda la familia y gastan más raciones. Con 2, ya no intoxica a nadie; con 7, caterings por encargo |
+  | 🧁 Repostería | Magdalenas, torrijas (2), rosquillas listas y tontas que se venden (3), tarta de queso (5), roscón (7), tarta nupcial por encargo (9) |
+  | 🔧 Manitas | Sin calambrazos al arreglar (3), chapuzas para los vecinos (3), mejorar un mueble a la calidad siguiente (5), arreglar en la mitad de tiempo (6), fabricar muebles para vender (7) |
+  | 🎸 Guitarra | Tocar por propinas en el parque (3), componer canciones (5), conciertos en el bar (8) |
+  | 🎹 Piano | Tocar para todos los que estén en casa (4), dar clases (7) |
+  | 🎤 Canto | Serenatas a quien te gusta (4), cantar en bodas por encargo (7) |
+  | ♟️ Ajedrez | Torneos con premio (4), dar clases (7) |
+  | 👩‍💻 Programación | Webs por encargo (3), crear un videojuego, que puede ser un éxito (6) |
+  | 🎨 Pintura | Pintarle un retrato a alguien (4), exponer en una galería (7). Los cuadros se venden desde el principio |
+  | 💪 Forma física | Media maratón en el parque (5), clases de entrenador/a personal en el gimnasio (7) |
+  | 🧠 Lógica | Invertir en bolsa (5): con más lógica, mejor sale |
+  | 🗣️ Carisma | Contar batallitas (3), pedir un aumento (5; una vez por semana) |
+
+- Lo que da dinero se puede hacer **una vez al día**. Las recetas, el bricolaje, los problemas de ajedrez, programar
+  o leer libros también los hacen los personajes por su cuenta.
+- Además, la habilidad de cada carrera ayuda a ascender, y en los dilemas del trabajo da opciones extra.
 - Los niños pueden hacer los deberes (mejoran las notas) y jugar con el baúl de juguetes.
 - Carrera nueva: **Deporte** (de monitor/a de sala a instructor/a de pilates y más allá).
 
@@ -435,8 +463,8 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
   esperan. Y si hay apuros, los **servicios sociales** echan una mano (§400, una vez al mes).
 - **Hacienda** retiene parte del sueldo por tramos (los sueldos bajos, nada).
 - En el perfil, **💶 Cuentas de la semana**: ingresos y gastos por categoría y el saldo (y el de la semana pasada).
-- Gastos con sentido: **🎁 hacer un regalo** (sube mucho la amistad), **👕 ropa nueva** y **🎓 cursos online**
-  (un nivel de golpe en la habilidad que elijas), además de muebles, reformas y caprichos.
+- Gastos con sentido: **🎁 hacer un regalo** (sube mucho la amistad), **👕 ropa nueva** y **📚 libros de
+  habilidad**, además de muebles, reformas y caprichos.
 - Todas las cifras están en `src/data/economy.ts`.
 
 ## Culebrones del barrio

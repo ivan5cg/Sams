@@ -98,6 +98,8 @@ export interface Agent {
   study?: { degree: string; progress: number };
   /** Nota media al acabar el instituto (para la beca). */
   lastGrade?: number;
+  /** Último día en que hizo cada encargo de «una vez al día» (desde la versión 25). */
+  done?: Record<string, number>;
   /** Echa de menos a su ex (no lo ha superado): quién, desde cuándo y la nueva pareja del ex que ya conoce. */
   longing?: { who: string; since: number; rival?: string };
   /** Enfermedad que tiene ahora (desde la versión 20). */
@@ -232,6 +234,8 @@ export interface Household {
   expecting?: { parents: string[]; due: number; mother?: string; known?: boolean };
   /** Raciones de comida en la nevera de casa. */
   pantry?: number;
+  /** Libros de habilidad que tienen en casa (`cocina:1`...; desde la versión 25). */
+  books?: string[];
   /** Compra a domicilio en camino. */
   delivery?: { at: number; amount: number };
   /** Okupas (no pagan facturas, pero tampoco tienen trabajo). */
