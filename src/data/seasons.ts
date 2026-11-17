@@ -42,7 +42,7 @@ export const EVENTS: Record<string, EventDef> = {
 };
 
 /** Aparatos que no funcionan sin luz. */
-export const ELECTRIC = new Set(['tv', 'computer', 'gamebox', 'stereo', 'treadmill', 'lamp']);
+export const ELECTRIC = new Set(['tv', 'computer', 'gamebox', 'stereo', 'treadmill', 'lamp', 'jukebox', 'karaoke', 'hot_tub', 'aquarium']);
 
 /** Acciones que necesitan luz aunque el objeto no sea un aparato (ver la tele desde el sofá). */
 export const POWERED_ACTIONS = new Set(['watch_tv', 'browse', 'play_games', 'dance', 'listen_music', 'run', 'find_job', 'throw_party', 'order_groceries']);

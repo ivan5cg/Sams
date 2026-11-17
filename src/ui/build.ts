@@ -22,6 +22,7 @@ export class BuildMode extends Part {
   bind() {
     $('#build-btn').addEventListener('click', () => this.enterBuild());
     $('#build-exit').addEventListener('click', () => this.exitBuild());
+    $('#build-catalog').addEventListener('click', () => this.hud.catalog.open(['pintura', 'reformas'].includes(this.buildCat) ? undefined : this.buildCat));
     $('#build-tabs').addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('button');
       if (!b?.dataset.cat) return;

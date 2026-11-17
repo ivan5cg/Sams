@@ -270,6 +270,12 @@ Sube la diversión y el romance. Se representa con discreción: corazones y la c
 
 ## Construir y decorar
 
+- **🛋️ Catálogo de muebles** (☰, o 📖 en la obra): cada mueble con su dibujo, para qué sirve (y qué
+  necesidades sube), su tamaño, las calidades y el precio. Se puede buscar («peces», «música», «mascotas»...),
+  ordenar por precio o nombre, ver solo lo que os podéis permitir, y comprarlo para colocarlo directamente.
+- Muebles nuevos: cama individual, litera, armario (para cambiarse de ropa gratis), mesa de comedor (para
+  echar unas cartas), barbacoa, acuario, chimenea, gramola, karaoke, jacuzzi y tumbona.
+
 - Con 🔨 (en el panel de abajo, estando en casa) entras en el **modo construcción**: el tiempo se para.
 - Elige un mueble del catálogo (descanso, cocina y baño, ocio, mascotas, jardín y deco) y toca el suelo:
   verás en verde dónde cabe y en rojo dónde no (paredes, puertas, otros muebles o si bloquearía el paso).

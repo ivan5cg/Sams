@@ -190,6 +190,12 @@ export function completeTask(w: World, a: Agent, task: Task) {
     w.feel(a, 'estreno');
     if (w.isPlayerMember(a)) w.toast(`${a.name} estrena ropa. ¡Va hecho un pincel!`, '👕');
   }
+  if (task.actionId === 'change_clothes') {
+    // Del armario: otra ropa de las de siempre (sin pasar por caja).
+    const options = CLOTHES.filter((c) => c !== a.color);
+    a.color = options[Math.floor(Math.random() * options.length)];
+    if (w.isPlayerMember(a)) w.toast(`${a.name} se ha cambiado de ropa`, '👚');
+  }
   if (task.actionId === 'take_course' && task.param && SKILL_BY_ID[task.param]) {
     // Un curso sube un nivel de golpe (sin pasar del máximo).
     const s = SKILL_BY_ID[task.param];

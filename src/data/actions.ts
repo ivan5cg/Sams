@@ -151,6 +151,15 @@ const A: ActionDef[] = [
 
   // Mercadona
   { id: 'shop_small', label: 'Compra pequeña (§45 · 8 raciones)', verb: 'Haciendo la compra', icon: '🛒', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], guestOk: true, cost: 45, duration: 20, effects: { social: 0.1 }, playerOnly: true },
+  // --- Muebles del catálogo grande ---
+  { id: 'change_clothes', label: 'Cambiarse de ropa', verb: 'Cambiándose', icon: '👚', target: 'object', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], duration: 6, effects: { fun: 0.5 }, playerOnly: true },
+  { id: 'play_cards', guestOk: true, label: 'Echar unas cartas', verb: 'Jugando a las cartas', icon: '🃏', target: 'object', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], duration: 40, effects: { fun: 0.5, social: 0.4 }, interruptible: true, baseScore: 2 },
+  { id: 'bbq', guestOk: true, label: 'Hacer una barbacoa (§12)', verb: 'Haciendo barbacoa', icon: '🍖', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], cost: 12, duration: 45, effects: { hunger: 2.2, fun: 0.3, social: 0.2 }, until: 'full', skill: { id: 'cocina', rate: 0.015 } },
+  { id: 'watch_fish', guestOk: true, label: 'Mirar los peces', verb: 'Mirando los peces', icon: '🐠', target: 'object', actors: ['person'], duration: 30, effects: { fun: 0.3, energy: 0.03 }, until: 'full', interruptible: true },
+  { id: 'warm_up', guestOk: true, label: 'Calentarse junto al fuego', verb: 'Junto a la chimenea', icon: '🔥', target: 'object', actors: ['person'], duration: 45, effects: { fun: 0.25, energy: 0.08, social: 0.05 }, until: 'full', interruptible: true, baseScore: 1 },
+  { id: 'karaoke', guestOk: true, label: 'Cantar en el karaoke', verb: 'Cantando', icon: '🎤', target: 'object', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], duration: 30, effects: { fun: 0.8, social: 0.15, energy: -0.05 }, interruptible: true, skill: { id: 'musica', rate: 0.015 } },
+  { id: 'soak', guestOk: true, label: 'Meterse en el jacuzzi', verb: 'En el jacuzzi', icon: '♨️', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], duration: 40, effects: { hygiene: 1.5, fun: 0.6, energy: 0.06, social: 0.1 }, until: 'full' },
+  { id: 'sunbathe', label: 'Tomar el sol', verb: 'Tomando el sol', icon: '😎', target: 'object', actors: ['person'], duration: 60, effects: { fun: 0.3, energy: 0.1 }, until: 'full', interruptible: true },
   // --- Biblioteca, gimnasio y mercadillo (ver systems/places.ts) ---
   { id: 'study', guestOk: true, label: 'Estudiar', verb: 'Estudiando', icon: '📚', target: 'object', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], duration: 60, effects: { fun: -0.02 }, skill: { id: 'logica', rate: 0.035 }, interruptible: true, baseScore: 2 },
   { id: 'homework_lib', guestOk: true, label: 'Hacer los deberes (en silencio)', verb: 'Haciendo los deberes', icon: '📝', target: 'object', actors: ['person'], actorStages: ['child', 'teen'], duration: 40, effects: { fun: -0.05 }, skill: { id: 'logica', rate: 0.02 }, baseScore: 6 },

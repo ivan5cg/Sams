@@ -64,6 +64,7 @@ export class GameMenu extends Part {
         case 'salseo': this.toggleMenu(false); this.hud.journal.showSalseo(); break;
         case 'feats': this.toggleMenu(false); this.hud.feats.open(); break;
         case 'album': this.toggleMenu(false); void this.hud.album.open(); break;
+        case 'catalog': this.toggleMenu(false); this.hud.catalog.open(); break;
         case 'photo': this.toggleMenu(false); setTimeout(() => void this.hud.album.snap(), 120); break;
         case 'tutorial': this.toggleMenu(false); this.hud.tutorial.showTutorial(true); break;
         case 'export': this.hud.cb.onExport(); break;

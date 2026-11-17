@@ -995,6 +995,121 @@ const ART: Record<string, Art> = {
     f.fillStyle(0x5a3825, 1);
     f.fillEllipse(cup.x, cup.y - 6, 6, 2);
   },
+  // --- Muebles del catálogo grande ---
+  single_bed: (g, f, X, Y, o) => {
+    const c = OBJECTS[o.def].color;
+    shadowUnder(g, X + 1, Y + 0.5, 60, 0.12);
+    prism(g, R(X + 0.04, Y + 0.2, 0.12, 0.6), 0, 26, WOOD_DARK);
+    prism(g, R(X + 0.06, Y + 0.22, 1.88, 0.56), 0, 8, WOOD);
+    prism(g, R(X + 0.1, Y + 0.25, 1.8, 0.5), 8, 13, WHITE);
+    prism(g, R(X + 0.22, Y + 0.32, 0.3, 0.36), 13, 17, 0xffffff);
+    prism(f, R(X + 0.66, Y + 0.24, 1.26, 0.52), 13, 16, c);
+  },
+  bunk_bed: (g, f, X, Y, o) => {
+    const c = OBJECTS[o.def].color;
+    shadowUnder(g, X + 1, Y + 0.5, 64, 0.14);
+    for (const [px, py] of [[0.06, 0.1], [1.94, 0.1], [0.06, 0.9], [1.94, 0.9]]) poleAt(g, X + px, Y + py, 0, 44, WOOD_DARK, 2.5);
+    prism(g, R(X + 0.06, Y + 0.1, 1.88, 0.8), 4, 9, WOOD);
+    prism(g, R(X + 0.1, Y + 0.14, 1.8, 0.72), 9, 13, WHITE);
+    prism(g, R(X + 0.06, Y + 0.1, 1.88, 0.8), 26, 30, WOOD);
+    prism(g, R(X + 0.1, Y + 0.14, 1.8, 0.72), 30, 34, WHITE);
+    prism(g, R(X + 0.7, Y + 0.12, 1.2, 0.76), 34, 36, shade(c, 1.15));
+    prism(f, R(X + 0.7, Y + 0.12, 1.2, 0.76), 13, 15, c);
+    // Escalerilla
+    for (let z = 10; z < 34; z += 6) flat(g, R(X + 1.7, Y + 0.86, 0.2, 0.06), z, WOOD_DARK);
+  },
+  wardrobe: (g, _f, X, Y, o) => {
+    const c = OBJECTS[o.def].color;
+    const r = R(X + 0.05, Y + 0.3, 1.9, 0.6);
+    shadowUnder(g, X + 1, Y + 0.6, 66, 0.14);
+    prism(g, r, 0, 48, c, { top: shade(c, 0.85) });
+    faceQuad(g, r, 'L', 0.495, 0.505, 2, 46, shade(c, 0.6));
+    for (const u of [0.45, 0.55]) faceQuad(g, r, 'L', u - 0.01, u + 0.01, 22, 28, 0xf2c14e);
+    faceQuad(g, r, 'L', 0.04, 0.46, 4, 44, shade(c, 1.08), 0.5);
+  },
+  dining_table: (g, _f, X, Y, o) => {
+    const c = OBJECTS[o.def].color;
+    shadowUnder(g, X + 1, Y + 0.5, 70, 0.12);
+    for (const [px, py] of [[0.15, 0.2], [1.85, 0.2], [0.15, 0.8], [1.85, 0.8]]) poleAt(g, X + px, Y + py, 0, 14, shade(c, 0.7), 2.5);
+    prism(g, R(X + 0.08, Y + 0.12, 1.84, 0.76), 14, 17, c);
+    flat(g, R(X + 0.5, Y + 0.3, 1, 0.4), 17.2, 0xf3ece0);
+    for (const px of [0.6, 1.0, 1.4]) {
+      const p = P(X + px, Y + 0.5, 17);
+      g.fillStyle(0xffffff, 1);
+      g.fillEllipse(p.x, p.y, 9, 4.5);
+    }
+  },
+  bbq: (g, f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 34, 0.16);
+    for (const [px, py] of [[0.25, 0.25], [0.75, 0.25], [0.5, 0.8]]) poleAt(g, X + px, Y + py, 0, 14, 0x555555, 2);
+    prism(g, R(X + 0.15, Y + 0.15, 0.7, 0.7), 14, 20, 0x2b2d35);
+    flat(g, R(X + 0.2, Y + 0.2, 0.6, 0.6), 20.2, 0x6b2b1a);
+    for (let i = 0; i < 4; i++) flat(f, R(X + 0.22, Y + 0.25 + i * 0.15, 0.56, 0.03), 21, 0xb8bec8);
+    const s = P(X + 0.45, Y + 0.5, 21);
+    f.fillStyle(0xb5462d, 1);
+    f.fillRoundedRect(s.x - 7, s.y - 2, 14, 4, 2);
+  },
+  aquarium: (g, f, X, Y) => {
+    const r = R(X + 0.1, Y + 0.25, 0.8, 0.5);
+    shadowUnder(g, X + 0.5, Y + 0.5, 36, 0.14);
+    prism(g, r, 0, 14, WOOD_DARK);
+    prism(f, r, 14, 34, 0x4aa3df, { alpha: 0.55 });
+    faceQuad(f, r, 'L', 0.05, 0.95, 15, 20, 0xd9c3a5, 0.9);
+    for (const [u, z, col] of [[0.3, 26, 0xf28c28], [0.65, 22, 0xffd23f], [0.5, 30, 0xe63946]] as const) {
+      const p = facePoint(r, 'L', u, z);
+      f.fillStyle(col, 1);
+      f.fillEllipse(p.x, p.y, 6, 3.5);
+    }
+  },
+  fireplace: (g, f, X, Y, o) => {
+    const c = OBJECTS[o.def].color;
+    const r = R(X + 0.1, Y + 0.45, 1.8, 0.45);
+    shadowUnder(g, X + 1, Y + 0.7, 60, 0.14);
+    prism(g, r, 0, 40, c, { top: 0xd9c3a5 });
+    faceQuad(g, r, 'L', 0.28, 0.72, 2, 24, 0x1d1b1a);
+    faceQuad(f, r, 'L', 0.36, 0.64, 3, 13, 0xf28c28, 0.95);
+    faceQuad(f, r, 'L', 0.42, 0.58, 6, 18, 0xffd23f, 0.85);
+    faceQuad(g, r, 'L', 0, 1, 40, 44, 0xe9e1d4);
+  },
+  jukebox: (g, _f, X, Y) => {
+    const r = R(X + 0.15, Y + 0.3, 0.7, 0.45);
+    shadowUnder(g, X + 0.5, Y + 0.5, 36, 0.16);
+    prism(g, r, 0, 34, 0xd62828, { top: 0xf2c14e });
+    faceQuad(g, r, 'L', 0.15, 0.85, 18, 30, 0xfff1c1);
+    faceQuad(g, r, 'L', 0.2, 0.8, 6, 14, 0x2b2d35);
+    for (const u of [0.2, 0.4, 0.6, 0.8]) faceQuad(g, r, 'L', u - 0.04, u + 0.04, 31, 34, [0x48cae4, 0x52b788, 0x9b5de5, 0xf28c28][Math.round(u * 5) % 4]);
+  },
+  karaoke: (g, _f, X, Y) => {
+    shadowUnder(g, X + 0.5, Y + 0.5, 30, 0.14);
+    prism(g, R(X + 0.2, Y + 0.35, 0.6, 0.35), 0, 16, 0x2b2d35);
+    const s = R(X + 0.2, Y + 0.45, 0.6, 0.08);
+    prism(g, s, 16, 30, 0x1f2229);
+    faceQuad(g, s, 'L', 0.06, 0.94, 18, 28, 0x9b5de5);
+    poleAt(g, X + 0.75, Y + 0.85, 0, 22, 0x888888, 1.5);
+    const m = P(X + 0.75, Y + 0.85, 22);
+    g.fillStyle(0x222222, 1);
+    g.fillCircle(m.x, m.y - 2, 3);
+  },
+  hot_tub: (g, f, X, Y) => {
+    const r = R(X + 0.1, Y + 0.1, 1.8, 1.8);
+    shadowUnder(g, X + 1, Y + 1, 90, 0.14);
+    prism(g, r, 0, 12, 0x8b5a2b, { top: 0xa0703f });
+    flat(g, R(X + 0.3, Y + 0.3, 1.4, 1.4), 12.2, 0x2a9d8f);
+    flat(f, R(X + 0.3, Y + 0.3, 1.4, 1.4), 10, 0x7fd4e8, 0.5);
+    for (const [bx, by] of [[0.6, 0.7], [1.2, 0.9], [0.9, 1.4], [1.4, 1.3]]) {
+      const p = P(X + bx, Y + by, 12.5);
+      f.fillStyle(0xffffff, 0.8);
+      f.fillCircle(p.x, p.y, 1.8);
+    }
+  },
+  lounger: (g, _f, X, Y, o) => {
+    const c = OBJECTS[o.def].color;
+    shadowUnder(g, X + 1, Y + 0.5, 56, 0.12);
+    for (const [px, py] of [[0.2, 0.3], [1.8, 0.3], [0.2, 0.7], [1.8, 0.7]]) poleAt(g, X + px, Y + py, 0, 6, 0xdddddd, 1.5);
+    prism(g, R(X + 0.6, Y + 0.25, 1.3, 0.5), 6, 8, c);
+    for (let i = 0; i < 4; i++) flat(g, R(X + 0.65 + i * 0.32, Y + 0.25, 0.16, 0.5), 8.1, 0xffffff);
+    prism(g, R(X + 0.15, Y + 0.25, 0.45, 0.5), 6, 18, shade(c, 0.9));
+  },
   // --- Biblioteca, gimnasio y mercadillo ---
   study_table: (g, _f, X, Y) => {
     shadowUnder(g, X + 0.5, Y + 0.5, 36, 0.14);

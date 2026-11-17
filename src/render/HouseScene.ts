@@ -186,6 +186,39 @@ function wallDeco(layout: string, x: number, y: number): { face: 'L' | 'R'; kind
 
 type AdvancedScene = { grade?: { saturate: (v: number, multiply?: boolean) => unknown; reset: () => unknown } };
 
+/** Recorta el margen transparente de un dibujo (con un mínimo, para que lo pequeño no salga enorme). */
+function trimImage(img: HTMLImageElement): string {
+  const c = document.createElement('canvas');
+  c.width = img.width;
+  c.height = img.height;
+  const ctx = c.getContext('2d');
+  if (!ctx) return img.src;
+  ctx.drawImage(img, 0, 0);
+  const { data } = ctx.getImageData(0, 0, c.width, c.height);
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) {
+    for (let x = 0; x < c.width; x++) {
+      if (data[(y * c.width + x) * 4 + 3] < 8) continue;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+  }
+  if (x1 < 0) return img.src;
+  const MIN = 90;
+  const pad = 6;
+  let w = x1 - x0 + 1 + pad * 2, h = y1 - y0 + 1 + pad * 2;
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  w = Math.max(w, MIN);
+  h = Math.max(h, MIN);
+  const out = document.createElement('canvas');
+  out.width = Math.round(w);
+  out.height = Math.round(h);
+  out.getContext('2d')?.drawImage(c, Math.round(cx - w / 2), Math.round(cy - h / 2), out.width, out.height, 0, 0, out.width, out.height);
+  return out.toDataURL('image/png');
+}
+
 export class HouseScene extends Phaser.Scene {
   private world!: World;
   private onTap!: (t: Target, tile: { x: number; y: number }) => void;
@@ -247,6 +280,45 @@ export class HouseScene extends Phaser.Scene {
   }
 
   /** Si el móvil pierde los gráficos (al volver a la app), se vuelve a dibujar todo. */
+  private thumbs = new Map<string, Promise<string>>();
+
+  /** Dibujo de un mueble suelto, como imagen («data:»), para el catálogo. Se guarda en caché. */
+  objectThumb(def: string): Promise<string> {
+    const hit = this.thumbs.get(def);
+    if (hit) return hit;
+    const d = OBJECTS[def];
+    const job = new Promise<string>((resolve, reject) => {
+      try {
+        const S = 2;
+        const pad = 6;
+        const zTop = Math.max(50, d.height + 24);
+        const W = Math.ceil(((d.w + d.h) * (TILE_W / 2) + pad * 2) * S);
+        const H = Math.ceil(((d.w + d.h) * (TILE_H / 2) + zTop + pad * 2) * S);
+        const g = this.make.graphics({}, false).setScale(S);
+        const f = this.make.graphics({}, false).setScale(S);
+        if (!drawObjectArt(g, f, { def, x: 0, y: 0 })) prism(g, { x: 0.1, y: 0.1, w: d.w - 0.2, h: d.h - 0.2 }, 0, d.height, d.color);
+        const rt = this.make.renderTexture({ width: W, height: H }, false);
+        const ox = (d.h * (TILE_W / 2) + pad) * S;
+        const oy = (zTop + pad) * S;
+        rt.draw(g, ox, oy);
+        rt.draw(f, ox, oy);
+        rt.snapshot((img) => {
+          rt.destroy();
+          g.destroy();
+          f.destroy();
+          const el = img as HTMLImageElement;
+          const done = () => resolve(trimImage(el));
+          if (el.complete && el.width) done();
+          else el.onload = done;
+        });
+      } catch (e) {
+        reject(e as Error);
+      }
+    });
+    this.thumbs.set(def, job);
+    return job;
+  }
+
   rebuildAfterContextLoss() {
     const lot = this.shownLot;
     this.shownLot = '';

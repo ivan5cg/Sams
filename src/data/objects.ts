@@ -36,6 +36,8 @@ export interface ObjectDef {
   breakable?: boolean;
   /** Se vende en tres calidades (básica, normal, de lujo). */
   tiers?: boolean;
+  /** Una línea para el catálogo. */
+  desc?: string;
 }
 
 /** Calidades de los muebles: precio, cuánto mejor funcionan, lo que se rompen. */
@@ -88,6 +90,19 @@ const D: ObjectDef[] = [
   { id: 'rug', name: 'Alfombra', icon: '', w: 1, h: 1, height: 0, color: 0xc0392b, shape: 'flat', capacity: 0, walkable: true, actions: [], price: 60, category: 'deco', decor: 1 },
   { id: 'slippers', name: 'Zapatillas', icon: '🩴', w: 1, h: 1, height: 0, color: 0x5577aa, shape: 'none', capacity: 1, walkable: true, small: true, actions: ['steal'], price: 10, category: 'deco' },
   { id: 'puddle', name: 'Charco', icon: '💧', w: 1, h: 1, height: 0, color: 0xe8d55a, shape: 'flat', capacity: 1, walkable: true, actions: ['clean'] },
+
+  // Muebles del catálogo grande
+  { id: 'single_bed', name: 'Cama individual', icon: '🛏️', w: 2, h: 1, height: 12, color: 0x52b788, capacity: 1, snap: true, actions: ['sleep', 'nap_bed'], price: 180, category: 'descanso', tiers: true, desc: 'Para el cuarto de los niños (o para el que ronca).' },
+  { id: 'bunk_bed', name: 'Litera', icon: '🪜', w: 2, h: 1, height: 40, color: 0x4f8fd9, capacity: 2, snap: true, actions: ['sleep'], price: 350, category: 'descanso', desc: 'Dos camas en el sitio de una. La pelea por la de arriba va incluida.' },
+  { id: 'wardrobe', name: 'Armario', icon: '🚪', w: 2, h: 1, height: 48, color: 0x9c6b3f, capacity: 1, actions: ['change_clothes'], price: 200, category: 'descanso', desc: 'Cambiarse de ropa sin gastar: ya tienes el armario lleno.' },
+  { id: 'dining_table', name: 'Mesa de comedor', icon: '🍽️', w: 2, h: 1, height: 16, color: 0xa0703f, capacity: 4, actions: ['sit', 'play_cards'], price: 220, category: 'cocina', tiers: true, desc: 'Para las comidas de los domingos y las partidas de cinquillo.' },
+  { id: 'bbq', name: 'Barbacoa', icon: '🍖', w: 1, h: 1, height: 22, color: 0x2b2d35, capacity: 2, actions: ['bbq'], price: 250, category: 'cocina', desc: 'Chorizos y panceta en el jardín. El cuñado se pone al mando.' },
+  { id: 'aquarium', name: 'Acuario', icon: '🐠', w: 1, h: 1, height: 30, color: 0x4aa3df, capacity: 2, actions: ['watch_fish'], price: 300, category: 'deco', decor: 2, desc: 'Peces de colores que relajan muchísimo. Al gato también.' },
+  { id: 'fireplace', name: 'Chimenea', icon: '🔥', w: 2, h: 1, height: 40, color: 0xb5651d, capacity: 3, actions: ['warm_up'], price: 600, category: 'deco', decor: 2, desc: 'Calorcito, mantita y castañas. En invierno, el mejor sitio de la casa.' },
+  { id: 'jukebox', name: 'Gramola', icon: '🎼', w: 1, h: 1, height: 40, color: 0xd62828, capacity: 3, actions: ['dance', 'listen_music', 'repair'], price: 700, category: 'ocio', breakable: true, decor: 1, desc: 'Música de toda la vida, con luces. Más de bar que de casa.' },
+  { id: 'karaoke', name: 'Karaoke', icon: '🎤', w: 1, h: 1, height: 30, color: 0x9b5de5, capacity: 2, actions: ['karaoke', 'repair'], price: 260, category: 'ocio', breakable: true, desc: 'Para cantar «Mediterráneo» a las tantas. Los vecinos, encantados.' },
+  { id: 'hot_tub', name: 'Jacuzzi', icon: '♨️', w: 2, h: 2, height: 12, color: 0x2a9d8f, capacity: 3, actions: ['soak', 'repair'], price: 2200, category: 'descanso', breakable: true, decor: 2, desc: 'Burbujas para tres. Un capricho de los que salen en las revistas.' },
+  { id: 'lounger', name: 'Tumbona', icon: '🏖️', w: 2, h: 1, height: 8, color: 0xf4a261, capacity: 1, snap: true, actions: ['sunbathe'], price: 90, category: 'deco', desc: 'Para tomar el sol en el jardín como si fuera Benidorm.' },
 
   // Habilidades
   { id: 'guitar', name: 'Guitarra', icon: '🎸', w: 1, h: 1, height: 6, color: 0x8b5a2b, shape: 'none', capacity: 1, actions: ['play_guitar'], price: 120, category: 'ocio' },
@@ -155,6 +170,48 @@ const D: ObjectDef[] = [
 ];
 
 export const OBJECTS: Record<string, ObjectDef> = Object.fromEntries(D.map((d) => [d.id, d]));
+
+/** Lo que dice el catálogo de los muebles de siempre (los nuevos lo llevan en su ficha). */
+const DESC: Record<string, string> = {
+  bed: 'Para dos (y el gato, que se cuela). Dormir bien sube la energía.',
+  sofa: 'El centro de la casa: tele, siesta y discusiones por el mando.',
+  armchair: 'El sillón del abuelo. Nadie más se sienta ahí.',
+  crib: 'Hace falta una por bebé. Con móvil de estrellitas.',
+  fridge: 'Comida de la despensa: cocinar, comer y picar. Sin nevera no se come en casa.',
+  toilet: 'Imprescindible. Si se rompe, prepara la fregona.',
+  shower: 'Cinco minutos y como nuevo. Bueno, quince.',
+  bathtub: 'Baño de espuma: higiene y un poco de diversión.',
+  tv: 'Para ver la tele desde el sofá o el sillón. Y el fútbol.',
+  computer: 'Buscar trabajo, pedir comida, hacer cursos, teletrabajar...',
+  bookshelf: 'Libros para leer: sube la diversión sin hacer ruido.',
+  stereo: 'Música para bailar o escuchar. Los vecinos, menos contentos.',
+  gamebox: 'Para dos jugadores. Diversión asegurada (y piques también).',
+  plant: 'Barata y alegra la casa. Y no hay que sacarla a pasear.',
+  lamp: 'Luz de lectura y ambiente acogedor.',
+  rug: 'Da calidez y se puede pisar. Se puede pisar, ¿eh?',
+  slippers: 'Las zapatillas de casa. El hurón las adora (para robarlas).',
+  guitar: 'Para aprender música. Al principio suena regular.',
+  easel: 'Pintar sube el arte. Lo que salga, ya se verá.',
+  treadmill: 'Correr sin salir de casa: forma física (y sudor).',
+  chess: 'Para dos: sube la lógica. El cuñado siempre gana (dice).',
+  mirror: 'Practicar discursos delante del espejo: sube el carisma.',
+  toybox: 'Juguetes para los peques: diversión y amigos.',
+  pilates_mat: 'Pilates en casa, sin cuota mensual.',
+  bowl: 'Comida para perros, gatos, hurones y capibaras. Hay que rellenarlo.',
+  dogbed: 'Una cama solo para el perro (aunque prefiera la tuya).',
+  ball: 'Una pelota para jugar con las mascotas.',
+  tree: 'Para el jardín. El perro sabe para qué sirve.',
+  litterbox: 'Para gatos y hurones. Hay que limpiarlo a menudo.',
+  scratcher: 'Para que el gato arañe esto y no el sofá. En teoría.',
+  cage: 'La casa de la cobaya: come, duerme y corre dentro. Hay que limpiarla.',
+  hammock: 'La cama favorita del hurón.',
+  pond: 'Un estanque en el jardín: a la capibara le encanta.',
+  strawbed: 'Lecho de paja para la capibara.',
+  bench: 'Un banco para el jardín. Para sentarse a ver la vida pasar.',
+  swings: 'Columpios para el jardín: los niños (y no tan niños) se divierten.',
+  flowers: 'Flores para el jardín: alegran la vista.',
+};
+for (const d of D) if (!d.desc && DESC[d.id]) d.desc = DESC[d.id];
 
 export const CATALOG = D.filter((d) => d.price !== undefined && d.category);
 
