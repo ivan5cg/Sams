@@ -221,6 +221,8 @@ export interface PlacedObject {
   q?: 1 | 2 | 3;
   /** Girado 90° (la huella pasa de w×h a h×w). Desde la versión 12. */
   rot?: 1;
+  /** Comprado de segunda mano en un mercadillo: se revende por menos. Desde la versión 27. */
+  used?: boolean;
 }
 
 export interface Household {
@@ -344,6 +346,8 @@ export interface WorldState {
   events?: { id: string; until: number; lotId?: string }[];
   /** Décimos de lotería de Navidad comprados este año (ids de quien los compró). */
   lottery?: string[];
+  /** Muebles de segunda mano vendidos hoy en los mercadillos (desde la versión 27). */
+  marketSold?: { day: number; ids: string[] };
   /** Fecha («AAAA-MM-DD») del día 1 de la partida: el calendario es el de verdad. Desde la versión 17. */
   calendarStart: string;
   /** Dilema del trabajo esperando respuesta del jugador. */

@@ -2,7 +2,7 @@ import { HOUSE_OBJECTS, START_OBJECTS } from '../data/lot';
 import { OBJECTS, sizeOf } from '../data/objects';
 import { PET_TRAITS } from '../data/pets';
 import { SAVE_VERSION } from '../sim/world';
-import { PLAYER_LOT, addAlcorcon, addGetafe, addPlaces, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
+import { PLAYER_LOT, addAlcorcon, addGetafe, addMarkets, addPlaces, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
 import { setRel } from '../sim/social';
 import type { PlacedObject, WorldState } from '../sim/types';
 import { validateState } from './validate';
@@ -61,6 +61,8 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
       setupFamilyLife(s, members, { jobs: !player });
     }
   },
+  // v26 → v27: mercadillos cada semana (El Rastro, Alcorcón y Getafe), muebles de segunda mano y un puesto para vender.
+  26: (s) => addMarkets(s),
   // v25 → v26: la economía del país (IPC, paro, Gobierno, bolsa) y las inversiones de cada familia.
   25: (s) => {
     s.economy = newEconomy(Math.floor(s.minutes / 1440) + 1);

@@ -32,7 +32,7 @@ cambió al hacerlas está en la columna «Notas».
 | 5.4 Sitios nuevos | ✅ | Biblioteca, gimnasio y mercadillo (`systems/places.ts`), con horarios, regateo y vecinos que van. SAVE_VERSION 14 (las tres parcelas) |
 | 5.5 Tercer barrio | ✅ | Getafe (MetroSur): Cerro de los Ángeles, club de pádel y tres casas. Barrios generalizados (`squareOf`, `stationOf`, mapa por distritos). SAVE_VERSION 15 |
 
-**Lo siguiente:** la fase 5 está completa, y también los encargos de después (ver «Encargos de la jefa de desarrollo»). La partida va por la **versión 22**: si algo nuevo cambia lo que se guarda, toca la 23 con su migración.
+**Lo siguiente:** la fase 5 está completa, y también los encargos de después (ver «Encargos de la jefa de desarrollo»). La partida va por la **versión 27** (mercadillos de cada semana: El Rastro, Alcorcón y Getafe, muebles de segunda mano y puesto para vender): si algo nuevo cambia lo que se guarda, toca la 28 con su migración.
 
 ---
 

@@ -196,6 +196,11 @@ export function rotateObject(w: World, id: string): boolean {
   return moveObject(w, id, o.x, o.y, o.rot ? 0 : 1);
 }
 
+/** Lo que se recupera vendiendo un mueble desde la obra (lo de segunda mano, la mitad). */
+export function sellRefund(w: World, o: PlacedObject): number {
+  return Math.floor(priced(w, priceOf(OBJECTS[o.def], o.q ?? 2)) * SELL_RATIO * (o.used ? 0.5 : 1));
+}
+
 export function sellObject(w: World, id: string): boolean {
   const o = w.object(id);
   if (!o || !canBuildHere(w)) return false;
@@ -205,7 +210,7 @@ export function sellObject(w: World, id: string): boolean {
     w.toast(why, '🚫');
     return false;
   }
-  const refund = Math.floor(priced(w, priceOf(d, o.q ?? 2)) * SELL_RATIO);
+  const refund = sellRefund(w, o);
   money(w, w.household, refund, 'ventas');
   pushUndo(w, { kind: 'sell', obj: { ...o }, refund, label: d.name });
   w.state.objects = w.state.objects.filter((x) => x !== o);

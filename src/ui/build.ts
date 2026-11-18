@@ -1,6 +1,6 @@
 // Modo construcción: catálogo, colocar, mover y vender muebles, y reformas.
 
-import { CATALOG, CATEGORIES, OBJECTS, QUALITY, SELL_RATIO, canRotate, priceOf, type CatalogCategory } from '../data/objects';
+import { CATALOG, CATEGORIES, OBJECTS, QUALITY, canRotate, priceOf, type CatalogCategory } from '../data/objects';
 import { FLOORS, PAINT_PRICE, WALL_COLORS } from '../data/paint';
 import { roomAt } from '../sim/rooms';
 import type { HouseScene } from '../render/HouseScene';
@@ -158,8 +158,8 @@ export class BuildMode extends Part {
     const d = OBJECTS[o.def];
     const why = w.cantTouch(o);
     const paid = this.world.priced(priceOf(d, o.q ?? 2));
-    const refund = d.price ? Math.floor(paid * SELL_RATIO) : 0;
-    const ql = d.tiers ? ` · ${QUALITY[o.q ?? 2].label}` : '';
+    const refund = d.price ? w.sellRefund(o) : 0;
+    const ql = `${d.tiers ? ` · ${QUALITY[o.q ?? 2].label}` : ''}${o.used ? ' · de segunda mano' : ''}`;
     $('#sheet').innerHTML = `<div class="sheet-card">
       <div class="sheet-head"><div><div class="sheet-title">${d.icon || '📦'} ${esc(d.name)}</div><div class="sheet-sub">${why ? esc(why) : d.price ? `Costó §${paid}${ql}` : 'No se puede vender'}</div></div>
       <button class="icon-btn" data-close>✕</button></div>

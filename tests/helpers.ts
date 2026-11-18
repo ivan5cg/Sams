@@ -53,6 +53,14 @@ export function saveAt(version: number): Raw {
     st.households = st.households.filter((h: Raw) => !ids(h.lotId));
     for (const k of Object.keys(st.rels ?? {})) if (k.split('|').some((id) => gone.has(id))) delete st.rels[k];
   };
+  // v27: mercadillos de Alcorcón y Getafe, el puesto propio y los muebles de segunda mano.
+  if (version <= 26) {
+    st.lots = st.lots.filter((l: Raw) => !['MA', 'MG'].includes(l.id));
+    st.objects = st.objects.filter((o: Raw) => !['MA', 'MG'].includes(o.lotId) && o.def !== 'stall_own');
+    for (const o of st.objects) delete o.used;
+    for (const l of st.lots) if (l.id === 'MK') l.name = 'Mercadillo del domingo';
+    delete st.marketSold;
+  }
   // v26: economía e inversiones.
   if (version <= 25) {
     delete st.economy;

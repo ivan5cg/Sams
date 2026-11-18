@@ -186,6 +186,11 @@ export function validateState(s: WorldState) {
     optStr(o.label, `etiqueta de ${o.id}`);
     if (o.q !== undefined && ![1, 2, 3].includes(o.q)) throw new Broken(`calidad de ${o.id}`);
     if (o.rot !== undefined && o.rot !== 1) throw new Broken(`giro de ${o.id}`);
+    if (o.used !== undefined && typeof o.used !== 'boolean') throw new Broken(`segunda mano de ${o.id}`);
+  }
+  if (s.marketSold !== undefined && s.marketSold !== null) {
+    num(s.marketSold.day, 'mercadillo');
+    for (const x of arr(s.marketSold.ids, 'mercadillo')) str(x, 'mercadillo');
   }
   for (const [k, rel] of Object.entries(s.rels ?? {})) {
     for (const x of k.split('|')) id(x, 'relación');

@@ -26,6 +26,9 @@ export const ALCORCON_HOMES = ['AL1', 'AL2', 'AL3'];
 export const LIBRARY_LOT = 'BI';
 export const GYM_LOT = 'GY';
 export const MARKET_LOT = 'MK';
+/** Los mercadillos de Alcorcón y Getafe (desde la versión 27; el de Madrid es El Rastro, `MARKET_LOT`). */
+export const ALCORCON_MARKET_LOT = 'MA';
+export const GETAFE_MARKET_LOT = 'MG';
 export const CERRO_LOT = 'GP';
 export const PADEL_LOT = 'PD';
 export const GETAFE_HOMES = ['GE1', 'GE2', 'GE3'];
@@ -174,12 +177,31 @@ export function addPlaces(state: WorldState) {
   const places = [
     { id: LIBRARY_LOT, name: 'Biblioteca municipal', kind: 'venue' as const, layout: 'library' as const, style: { wall: 0xeee6d6, floor: 0xa47551 }, objects: LIBRARY_OBJECTS },
     { id: GYM_LOT, name: 'Gimnasio Músculo Castizo', kind: 'venue' as const, layout: 'gym' as const, style: { wall: 0xdfe3e8, floor: 0x5c6470 }, objects: GYM_OBJECTS },
-    { id: MARKET_LOT, name: 'Mercadillo del domingo', kind: 'venue' as const, layout: 'market' as const, style: undefined, objects: MARKET_OBJECTS },
+    { id: MARKET_LOT, name: 'El Rastro', kind: 'venue' as const, layout: 'market' as const, style: undefined, objects: MARKET_OBJECTS },
   ];
   for (const p of places) {
     if (state.lots.some((l) => l.id === p.id)) continue;
     state.lots.push({ id: p.id, name: p.name, kind: p.kind, layout: p.layout, district: 'madrid', ...(p.style ? { style: p.style } : {}) });
     placeObjects(state, p.id, p.objects);
+  }
+}
+
+/** Los mercadillos de cada semana: El Rastro (el de Madrid, que ya estaba), el de Alcorcón y el de Getafe. */
+export function addMarkets(state: WorldState) {
+  const rastro = state.lots.find((l) => l.id === MARKET_LOT);
+  if (rastro) {
+    rastro.name = 'El Rastro';
+    // El puesto para vender lo vuestro (los mercadillos de antes no lo tenían).
+    if (!state.objects.some((o) => o.lotId === MARKET_LOT && o.def === 'stall_own')) placeObjects(state, MARKET_LOT, MARKET_OBJECTS.filter((o) => o.def === 'stall_own'));
+  }
+  const markets = [
+    { id: ALCORCON_MARKET_LOT, name: 'Mercadillo de Alcorcón', district: 'alcorcon' as const },
+    { id: GETAFE_MARKET_LOT, name: 'Mercadillo de Getafe', district: 'getafe' as const },
+  ];
+  for (const m of markets) {
+    if (state.lots.some((l) => l.id === m.id)) continue;
+    state.lots.push({ id: m.id, name: m.name, kind: 'venue', layout: 'market', district: m.district });
+    placeObjects(state, m.id, MARKET_OBJECTS);
   }
 }
 

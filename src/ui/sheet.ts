@@ -3,11 +3,12 @@
 import { DEGREES } from '../data/education';
 import { BOOK_TIERS, BOOKS, RECIPES } from '../data/skillTree';
 import { booksAt, bookReason, buyBookReason, recipeReason } from '../sim/systems/skillWorks';
+import { marketPrice, secondhandOffers, secondhandReason, stallGoods, stallPrice } from '../sim/systems/places';
 import { pricedLabel } from '../sim/systems/economy';
 import { SKILL_BY_ID } from '../data/skills';
 import { degreeReason, enrollReason, hasScholarship, startLevel } from '../sim/systems/education';
 import { CAREERS, JOB_CAREERS, scheduleText } from '../data/careers';
-import { OBJECTS, QUALITY } from '../data/objects';
+import { OBJECTS, QUALITY, priceOf } from '../data/objects';
 import { PET_TRAIT_BY_ID } from '../data/pets';
 import { SPECIES, lifeStage } from '../data/species';
 import { ROLE_LABEL } from '../data/street';
@@ -94,6 +95,18 @@ export class ActionSheet extends Part {
         this.hud.render();
         return;
       }
+      if (b.dataset.secondhand) {
+        this.world.command(this.world.activeAgent.id, 'buy_secondhand', this.sheetTarget, b.dataset.secondhand);
+        this.closeSheet();
+        this.hud.render();
+        return;
+      }
+      if (b.dataset.stallsell) {
+        this.world.command(this.world.activeAgent.id, 'sell_stall', this.sheetTarget, b.dataset.stallsell);
+        this.closeSheet();
+        this.hud.render();
+        return;
+      }
       if (b.dataset.adopt) {
         this.world.command(this.world.activeAgent.id, 'adopt', this.sheetTarget, b.dataset.adopt);
         this.closeSheet();
@@ -106,6 +119,8 @@ export class ActionSheet extends Part {
       if (action === 'enroll') return this.showDegrees();
       if ((action === 'cook' || action === 'bake') && !this.scheduling) return this.showRecipes(action);
       if (action === 'buy_book') return this.showBookShop();
+      if (action === 'buy_secondhand') return this.showSecondhand();
+      if (action === 'sell_stall') return this.showStallSale();
       if (action === 'invest') return this.hud.market.open(true);
       if (action === 'read_skill_book' && !this.scheduling) return this.showBooks();
       if (action && this.scheduling) return this.askTime(action);
@@ -249,6 +264,54 @@ export class ActionSheet extends Part {
         <button class="icon-btn" data-close>✕</button>
       </div>
       <div class="sheet-actions one-col">${items}</div>`;
+  }
+
+  /** Mercadillo: los muebles de segunda mano de hoy (a mitad de precio, y regateando, menos). */
+  private showSecondhand() {
+    const w = this.world;
+    const a = w.activeAgent;
+    const lotId = (this.sheetTarget?.kind === 'object' && w.object(this.sheetTarget.id)?.lotId) || a.lotId;
+    const items = secondhandOffers(w, lotId)
+      .map((x) => {
+        const d = OBJECTS[x.def];
+        const why = x.sold ? 'Vendido' : secondhandReason(w, a, x.id);
+        const price = marketPrice(a, 'buy_secondhand', x.price);
+        const fresh = w.priced(priceOf(d, x.q));
+        return `<button class="act" data-secondhand="${x.id}" ${why ? 'disabled' : ''}>
+          <span class="act-icon">${d.icon || '🪑'}</span>
+          <span class="act-label">${esc(d.name)}${d.tiers ? ` (${esc(QUALITY[x.q].label.toLowerCase())})` : ''} · §${price}<small class="info">Nuevo cuesta §${fresh}${why ? ` · ${esc(why)}` : ''}</small></span>
+        </button>`;
+      })
+      .join('');
+    $('#sheet').querySelector('.sheet-card')!.innerHTML = `
+      <div class="sheet-head">
+        <div><div class="sheet-title">🪑 Muebles de segunda mano</div><div class="sheet-sub">A mitad de precio (regateando, menos). Os lo llevan a casa, al primer hueco libre</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      <p class="sheet-note">Lo de segunda mano se revende por menos. Cada semana hay género nuevo.</p>
+      <div class="sheet-actions one-col">${items}</div>`;
+  }
+
+  /** Mercadillo: qué mueble de casa vender en el puesto (sale mejor que vendiéndolo desde la obra). */
+  private showStallSale() {
+    const w = this.world;
+    const a = w.activeAgent;
+    const items = stallGoods(w)
+      .sort((x, y) => stallPrice(w, a, y) - stallPrice(w, a, x))
+      .map((o) => {
+        const d = OBJECTS[o.def];
+        return `<button class="act" data-stallsell="${o.id}">
+          <span class="act-icon">${d.icon || '📦'}</span>
+          <span class="act-label">${esc(d.name)} · +§${stallPrice(w, a, o)}<small class="info">Desde la obra, §${w.sellRefund(o)}${o.used ? ' · de segunda mano' : ''}${o.broken ? ' · roto' : ''}</small></span>
+        </button>`;
+      })
+      .join('');
+    $('#sheet').querySelector('.sheet-card')!.innerHTML = `
+      <div class="sheet-head">
+        <div><div class="sheet-title">🏷️ ¿Qué vendemos?</div><div class="sheet-sub">${esc(a.name)} monta el puesto con lo que tengáis en casa. Con carisma se saca más</div></div>
+        <button class="icon-btn" data-close>✕</button>
+      </div>
+      <div class="sheet-actions one-col">${items || `<div class="empty">No tenéis nada en casa que se pueda vender.</div>`}</div>`;
   }
 
   /** Libros de habilidad por internet: dos tomos por habilidad. */

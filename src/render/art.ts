@@ -1207,6 +1207,7 @@ const ART: Record<string, Art> = {
   stall_fruit: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0x2e8b57, [0xf28c28, 0xd62828, 0x8ac926, 0xffd23f]),
   stall_clothes: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0x4f8fd9, [0xe0607e, 0x52b788, 0x9b5de5, 0xf4a261]),
   stall_junk: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0xc9a227, [0x8b5a2b, 0x6d6875, 0xc9a66b, 0x2a9d8f]),
+  stall_own: (g, f, X, Y, o) => stall(g, f, X, Y, o, 0xd9534f, [0xe9c46a, 0x8d6e63, 0xf4a261, 0x90caf9]),
   // --- Bar ---
   bar_counter: (g, f, X, Y) => {
     const r = R(X + 0.05, Y + 0.3, 2.9, 0.6);

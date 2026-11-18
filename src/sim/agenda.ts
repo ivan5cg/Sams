@@ -52,7 +52,10 @@ export function calendarEvents(g: GameDate): { id: string; minute: number; icon:
     out.push({ id: 'halloween', minute: -1, icon: '🎃', text: 'Halloween' });
     out.push({ id: 'truco', minute: HOLIDAY_HOURS.trucoDesde * 60, icon: '🍬', text: 'Truco o trato por las casas (que haya algo en la despensa)' });
   }
-  if (g.wd === 6) out.push({ id: 'mercadillo', minute: 9 * 60, icon: '🏺', text: 'Mercadillo del domingo (hasta las 14:30): barato, y regateando, más' });
+  // Los mercadillos de cada semana (de 9:00 a 14:30).
+  if (g.wd === 6) out.push({ id: 'mercadillo', minute: 9 * 60, icon: '🏺', text: 'El Rastro (hasta las 14:30): comprar barato, regatear y vender lo vuestro' });
+  if (g.wd === 5) out.push({ id: 'mercadillo_alcorcon', minute: 9 * 60, icon: '🏺', text: 'Mercadillo de Alcorcón (hasta las 14:30)' });
+  if (g.wd === 2) out.push({ id: 'mercadillo_getafe', minute: 9 * 60, icon: '🏺', text: 'Mercadillo de Getafe (hasta las 14:30)' });
   if (g.wd === 6) out.push({ id: 'derbi', minute: 19 * 60, icon: '⚽', text: 'Derbi Madrid–Atleti en el Bar Casa Paco' });
   return out;
 }
