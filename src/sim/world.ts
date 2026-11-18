@@ -12,7 +12,7 @@ import { SPECIES, lifeStage } from '../data/species';
 import { chooseAutonomous } from './ai';
 import { canAspire, suggestAspiration } from './aspirations';
 import { feel as feelEmotion, pruneEmotions } from './emotions';
-import { ACAI_LOTS, BAR_LOT, GYM_LOT, LIBRARY_LOT, MARKET_LOT, METRO_LOT, PARK_LOT, PLAYER_LOT, PLAZA_LOT, STUDIO_LOT, SUPER_LOT, CERRO_LOT, PADEL_LOT, addAlcorcon, addGetafe, addPlaces, stationOf, generateNeighborhood, makeAgent, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
+import { ACAI_LOTS, BAR_LOT, GYM_LOT, LIBRARY_LOT, METRO_LOT, PARK_LOT, PLAYER_LOT, PLAZA_LOT, STUDIO_LOT, SUPER_LOT, CERRO_LOT, PADEL_LOT, addAlcorcon, addGetafe, addMarkets, addPlaces, stationOf, generateNeighborhood, makeAgent, placeObjects, randomIndoorTile, setupFamilyLife } from './neighborhood';
 import { isWalkable, type Grid } from './pathfinding';
 import { isAdult, setRel } from './social';
 import { randomPetTrait, traitDecay, traitsOf } from './traits';
@@ -47,6 +47,7 @@ import { dateOfDay, todayISO, type GameDate } from './date';
 import { factsOf, type DayFacts } from './feasts';
 import { GARCIA, MAX_START_PEOPLE, STAGE_AGE, applyEdit, type FamilySpec, type PersonEdit } from './family';
 import * as Economy from './systems/economy';
+import { marketOf } from './systems/places';
 import { newEconomy } from './systems/economy';
 
 export { SAVE_VERSION, MINUTES_PER_DAY, MAX_MEMBERS, TRAVEL_MINUTES, RIDE_MINUTES, PANTRY_MAX } from './constants';
@@ -203,6 +204,7 @@ export class World {
     addAlcorcon(state);
     addPlaces(state);
     addGetafe(state);
+    addMarkets(state);
     return new World(state);
   }
 
@@ -548,6 +550,12 @@ export class World {
     // Paseos al parque (los de Alcorcón, a su plaza y a su bar; y a veces se cruzan en metro)
     if (h >= 9 && h <= 22) {
       for (const nh of neighbours) {
+        // El día de mercadillo, por la mañana, cada barrio va al suyo (El Rastro, Alcorcón o Getafe).
+        const market = marketOf(Travel.districtOf(this, nh.lotId));
+        if (!Shopping.closedReason(this, market) && Math.random() < 0.2) {
+          Travel.sendVisit(this, nh, market, false);
+          continue;
+        }
         // Los de Getafe, a su Cerro y a su pádel.
         if (Travel.districtOf(this, nh.lotId) === 'getafe') {
           if (h <= 20 && Math.random() < 0.1) Travel.sendVisit(this, nh, CERRO_LOT, false);
@@ -564,9 +572,7 @@ export class World {
           if (Math.random() < 0.02) Travel.sendVisit(this, nh, BAR_LOT, false);
           continue;
         }
-        // El domingo por la mañana, lo primero es el mercadillo (los demás días ni se mira: está cerrado).
-        if (!Shopping.closedReason(this, MARKET_LOT) && Math.random() < 0.2) Travel.sendVisit(this, nh, MARKET_LOT, false);
-        else if (Math.random() < 0.08) Travel.sendVisit(this, nh, PARK_LOT, false);
+        if (Math.random() < 0.08) Travel.sendVisit(this, nh, PARK_LOT, false);
         else if (Math.random() < 0.04) Travel.sendVisit(this, nh, STUDIO_LOT, false);
         else if (Math.random() < 0.05 && !Shopping.closedReason(this, SUPER_LOT)) Travel.sendVisit(this, nh, SUPER_LOT, false);
         else if (Math.random() < 0.05 && !Shopping.closedReason(this, ACAI_LOTS[0])) Travel.sendVisit(this, nh, ACAI_LOTS[Math.floor(Math.random() * ACAI_LOTS.length)], false);
@@ -878,6 +884,9 @@ export class World {
   }
   sellObject(id: string): boolean {
     return Build.sellObject(this, id);
+  }
+  sellRefund(o: PlacedObject): number {
+    return Build.sellRefund(this, o);
   }
 
   // Pets

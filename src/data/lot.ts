@@ -406,8 +406,9 @@ export const GYM_OBJECTS: ObjectPlacement[] = [
   { def: 'plant', x: 1, y: 6 },
 ];
 
-/** El mercadillo del domingo, en una explanada con puestos. */
+/** Un mercadillo (El Rastro y los de Alcorcón y Getafe), en una explanada con puestos. */
 export const MARKET_OBJECTS: ObjectPlacement[] = [
+  { def: 'stall_own', x: 7, y: 5 },
   { def: 'stall_fruit', x: 3, y: 3 },
   { def: 'stall_clothes', x: 7, y: 3 },
   { def: 'stall_junk', x: 11, y: 3 },

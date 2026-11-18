@@ -23,6 +23,7 @@ import { isPregnant } from './fertility';
 import { HATE } from './violence';
 import { moveOutReason } from './breakups';
 import { dailyReason, skillCheck, skillLocked } from './skillWorks';
+import { homemadeReason, secondhandOffers, stallGoods } from './places';
 
 /** Lo de las habilidades: el nivel (si no, ni aparece), lo de cada acción y el «una vez al día». */
 function skillGate(w: World, a: Agent, def: ActionDef, o?: PlacedObject): ActionOption | undefined {
@@ -129,6 +130,14 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (fiesta) return fiesta;
   if (actionId === 'buy_lottery') {
     const why = lotteryReason(w, a);
+    if (why) return { def, ok: false, reason: why };
+  }
+  // Mercadillos: comprar muebles de segunda mano y vender lo vuestro (solo la familia del jugador).
+  if (actionId === 'buy_secondhand' || actionId === 'sell_stall' || actionId === 'sell_homemade') {
+    if (!w.isPlayerMember(a)) return { def, ok: false, hidden: true };
+    if (actionId === 'buy_secondhand' && secondhandOffers(w, o.lotId).every((x) => x.sold)) return { def, ok: false, reason: 'Ya se lo han llevado todo: la semana que viene, más' };
+    if (actionId === 'sell_stall' && !stallGoods(w).length) return { def, ok: false, reason: 'No tenéis nada en casa que se pueda vender' };
+    const why = actionId === 'sell_homemade' ? homemadeReason(w, a) : undefined;
     if (why) return { def, ok: false, reason: why };
   }
   return { def, ok: true };

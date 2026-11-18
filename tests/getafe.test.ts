@@ -46,7 +46,7 @@ describe('Getafe, el tercer barrio', () => {
 
   it('las partidas de antes reciben Getafe con sus vecinos', () => {
     const old = migrate(saveAt(14));
-    expect(old.lots.filter((l) => l.district === 'getafe').length).toBe(5);
+    expect(old.lots.filter((l) => l.district === 'getafe').length).toBe(6); // Cerro, pádel, tres casas y (desde la v27) el mercadillo
     expect(old.households.filter((h) => h.lotId.startsWith('GE')).length).toBe(3);
     expect(problems(new World(old))).toEqual([]);
   });

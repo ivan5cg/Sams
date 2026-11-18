@@ -183,7 +183,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
   }
   if (task.actionId === 'book_trip') bookTrip(w, a);
   holidayTask(w, a, task.actionId);
-  placeTask(w, a, task.actionId);
+  placeTask(w, a, task.actionId, task.param);
   if (task.actionId === 'work_home' && a.job) {
     // Informes desde casa: suben el rendimiento (más con la habilidad de su carrera).
     const sk = CAREER_SKILL[a.job.career];
