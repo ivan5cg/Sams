@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { World } from '../src/sim/world';
 import { canMediate, canSnitch, mediate, snitch } from '../src/sim/systems/arcs';
-import { getRel, isAdult, partnerOf } from '../src/sim/social';
+import { getRel, isAdult, partnerOf, setRel } from '../src/sim/social';
 import type { Arc } from '../src/sim/types';
 
 /** Lleva el reloj hasta el siguiente paso del culebrón y deja pasar una hora. */
@@ -69,12 +69,22 @@ describe('culebrones del barrio', () => {
     const w = World.createNew();
     const toasts: string[] = [];
     w.onToast((t) => toasts.push(t.text));
+    // Dos solteros de casas distintas (en algún barrio generado todos los solteros viven juntos: entonces se busca otro).
     const a = single(w, [w.household.id]);
-    const b = w.state.agents.find((c) => c.kind === 'person' && !c.role && !w.isPlayerMember(c) && isAdult(c) && w.stageOf(c) !== 'elder' && !partnerOf(w.state, c.id) && c.householdId !== a.householdId && c.id !== a.id)!;
-    const arc = w.startArc('romance', [a.id, b.id])!;
+    let b: ReturnType<typeof single> | undefined = single(w, [w.household.id, a.householdId]);
+    for (const c of w.state.agents) {
+      if (b) break;
+      if (c.kind !== 'person' || c.role || w.isPlayerMember(c) || !isAdult(c) || w.stageOf(c) === 'elder' || c.householdId === a.householdId) continue;
+      // Un adulto de otra casa que se queda soltero (su pareja, si tenía, deja de serlo).
+      const pid = partnerOf(w.state, c.id);
+      if (pid) setRel(w.state, c.id, pid, { ...getRel(w.state, c.id, pid), status: undefined });
+      b = c;
+    }
+    expect(b).toBeDefined();
+    const arc = w.startArc('romance', [a.id, b!.id])!;
     for (let i = 0; i < 5 && !arc.end; i++) advance(w, arc);
     expect(arc.end?.how).toBe('boda');
-    expect(getRel(w.state, a.id, b.id).status).toBe('married');
+    expect(getRel(w.state, a.id, b!.id).status).toBe('married');
     expect(w.hasEvent('boda')).toBe(true);
     expect(toasts.some((t) => t.includes('Boda en el parque'))).toBe(true);
   });
