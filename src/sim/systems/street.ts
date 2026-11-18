@@ -27,6 +27,8 @@ import { countFeat } from './feats';
 /** La gente de la calle hace lo suyo: no tiene necesidades ni autonomía normal. */
 export function stepRole(w: World, a: Agent, dt: number) {
   for (const k of NEED_KEYS) a.needs[k] = 80;
+  // Fin de la visita (rider que ya ha entregado, militante que ya ha pedido el voto): a la calle.
+  if (a.visitUntil && w.state.minutes >= a.visitUntil && a.current?.param !== 'leave') w.leave(a);
   if (!a.current) {
     const next = a.queue.shift();
     if (next) beginTask(w, a, next);

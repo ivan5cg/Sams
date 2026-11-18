@@ -619,7 +619,8 @@ export class World {
     if (a.current && !ACTIONS[a.current.actionId].forced) a.current = null;
     a.path = [];
     a.queue = [];
-    a.hidden = false;
+    // La gente de la calle sale y se esconde según su horario (los riders, solo cuando hay pedido).
+    if (!a.role) a.hidden = false;
   }
 
   /** Simulación resumida de una hora: las necesidades se mantienen razonables. */

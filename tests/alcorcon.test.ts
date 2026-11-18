@@ -169,6 +169,26 @@ describe('Alcorcón, el metro, la calle, el salseo y las juergas', () => {
     expect(hasEmotion(lucia, 'glovo')).toBe(true);
   });
 
+  it('el rider de Glovo entrega y se va de casa', () => {
+    const w = World.createNew();
+    w.state.minutes = 13 * 60;
+    const pc = w.objectsIn('L0').find((o) => o.def === 'computer')!;
+    const rider = role(w, 'glovo');
+    rider.travel = undefined;
+    rider.hidden = true;
+    w.command('a1', 'order_glovo', { kind: 'object', id: pc.id });
+    w.tick(45);
+    expect(rider.deliverTo).toBeUndefined();
+    w.tick(30);
+    expect(rider.lotId).not.toBe('L0');
+    expect(rider.hidden).toBe(true);
+    // Y queda libre para el siguiente pedido.
+    w.tick(120);
+    w.command('a1', 'order_glovo', { kind: 'object', id: pc.id });
+    w.tick(10);
+    expect(w.state.agents.some((x) => x.role === 'glovo' && x.deliverTo === 'a1')).toBe(true);
+  });
+
   it('San Isidro el 15 de mayo, y campaña electoral antes de las elecciones del último domingo de mayo', () => {
     const w = World.createNew();
     goToDate(w, '2027-05-15');
