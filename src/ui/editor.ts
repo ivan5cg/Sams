@@ -80,6 +80,12 @@ export class PersonEditor extends Part {
     this.render();
   }
 
+  syncEditor() {
+    if (!this.isOpen) return;
+    const a = this.world.agent(this.agentId);
+    if (!a || !this.world.isPlayerMember(a)) this.close();
+  }
+
   close() {
     $('#editor').hidden = true;
     this.draft = null;

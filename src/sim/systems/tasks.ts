@@ -9,7 +9,7 @@ import { NEED_KEYS, type Agent, type Needs, type ScheduledOrder, type SpeciesId,
 import { clamp, objectCenter } from '../util';
 import type { Target, World } from '../world';
 import { costOf } from './calendar';
-import { checkObjectAction, checkSocialAction, speciesOk } from './checks';
+import { checkObjectAction, checkSelfAction, checkSocialAction, speciesOk } from './checks';
 import { setJob } from './jobs';
 import { bestPath, face, interactTiles, moveAlong } from './movement';
 import { startParty } from './party';
@@ -78,6 +78,11 @@ export function cancel(w: World, agentId: string, taskId: string) {
   }
 }
 
+const actionDuration = (w: World, a: Agent, actionId: string, duration: number) =>
+  actionId === 'repair'
+    ? duration * (skillLevel(w, a, 'manitas') >= 6 ? 0.5 : 1 - 0.05 * skillLevel(w, a, 'manitas'))
+    : duration;
+
 export function beginTask(w: World, a: Agent, task: Task): boolean {
   const def = ACTIONS[task.actionId];
   a.current = task;
@@ -93,9 +98,12 @@ export function beginTask(w: World, a: Agent, task: Task): boolean {
 
   if (def.target === 'self') {
     if (!speciesOk(w, a, def)) return fail('no puede hacer eso');
+    if (!def.forced && task.actionId !== 'idle' && task.actionId !== 'vomit') {
+      const check = checkSelfAction(w, a, task.actionId);
+      if (!check.ok) return fail(check.reason ?? 'no puede hacer eso');
+    }
     task.phase = 'acting';
-    // Quien es manitas arregla antes (con 6, en la mitad de tiempo).
-    task.remaining = task.actionId === 'repair' ? def.duration * (skillLevel(w, a, 'manitas') >= 6 ? 0.5 : 1 - 0.05 * skillLevel(w, a, 'manitas')) : def.duration;
+    task.remaining = actionDuration(w, a, task.actionId, def.duration);
     w.emit({ type: 'act', agentId: a.id, actionId: task.actionId });
     return true;
   }
@@ -155,6 +163,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
     }
     if (def.removes) w.state.objects = w.state.objects.filter((x) => x.id !== o.id);
     riskyTask(w, a, task.actionId, o.def);
+    if (!w.agent(a.id)) return;
     if (task.actionId === 'repair') {
       o.broken = false;
       if (w.isPlayerMember(a)) w.toast(`${a.name} ha arreglado: ${od.name.toLowerCase()}`, '🔧');
@@ -249,6 +258,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
   if (ACTIONS[task.actionId].target === 'agent' && task.actionId !== 'say_goodbye') {
     const t = w.agent(task.targetAgentId);
     if (t) socialOutcome(w, a, t, task.actionId);
+    if (!w.agent(a.id)) return;
   }
   if (task.actionId !== 'talk') {
     const t = w.agent(task.targetAgentId);
@@ -263,7 +273,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
       w.noVisitsUntil = w.state.minutes + 240;
     }
   }
-  endTask(w, a);
+  if (a.current === task) endTask(w, a);
   if (task.param === 'leave') goHome(w, a);
 }
 
@@ -298,7 +308,8 @@ export function runTask(w: World, a: Agent, task: Task, dt: number) {
       if (owner) owner.pantry = Math.max(0, (owner.pantry ?? 0) - 1);
     }
     task.phase = 'acting';
-    task.remaining = def.duration;
+    // Quien es manitas arregla antes (con 6, en la mitad de tiempo).
+    task.remaining = actionDuration(w, a, task.actionId, def.duration);
     w.emit({ type: 'act', agentId: a.id, actionId: task.actionId });
     face(w, a, objectCenter(o));
     return;

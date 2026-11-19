@@ -9,6 +9,7 @@ import { TRAIT_BY_ID } from '../data/traits';
 
 export class DilemmaPanel extends Part {
   speedBeforeDilemma = 1;
+  shownDilemmaId = '';
 
   /** Engancha los eventos de su parte de la interfaz. */
   bind() {
@@ -17,6 +18,7 @@ export class DilemmaPanel extends Part {
       if (!b?.dataset.dl) return;
       this.world.resolveDilemma(Number(b.dataset.dl));
       $('#dilemma').hidden = true;
+      this.shownDilemmaId = '';
       this.world.state.speed = this.speedBeforeDilemma;
       this.hud.render();
     });
@@ -29,12 +31,20 @@ export class DilemmaPanel extends Part {
     const box = $('#dilemma');
     if (!dl) {
       if (!box.hidden) box.hidden = true;
+      this.shownDilemmaId = '';
       return;
     }
-    if (!box.hidden || this.hud.talk.talking || w.ui.building) return;
     const d = DILEMMA_BY_ID[dl.id];
     const who = w.agent(dl.agentId);
-    if (!d || !who) return w.resolveDilemma(0);
+    if (!d || !who) {
+      w.resolveDilemma(0);
+      if (!box.hidden) box.hidden = true;
+      this.shownDilemmaId = '';
+      return;
+    }
+    const key = `${dl.agentId}:${dl.id}:${dl.until}`;
+    if ((!box.hidden && this.shownDilemmaId === key) || this.hud.talk.talking || w.ui.building) return;
+    this.shownDilemmaId = key;
     const c = who.job ? CAREERS[who.job.career] : undefined;
     this.speedBeforeDilemma = w.state.speed || 1;
     w.state.speed = 0;

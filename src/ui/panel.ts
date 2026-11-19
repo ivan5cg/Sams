@@ -10,6 +10,7 @@ import { Part } from './part';
 export class FamilyPanel extends Part {
   lastQueueHtml = '';
   lastPortraitsHtml = '';
+  lastWhoHtml = '';
   needsFor = '';
   lastWishHtml = '';
   lastEmoHtml = '';
@@ -75,7 +76,11 @@ export class FamilyPanel extends Part {
     // Cabecera del panel
     const md = mood(a);
     const stage = lifeStage(a.species, a.ageDays);
-    $('#who').innerHTML = `<b>${esc(a.name)}</b> <span class="muted">${esc(stage.label)} · ${a.ageDays} ${a.ageDays === 1 ? 'día' : 'días'}</span> <span title="${md.label}">${md.icon}</span>`;
+    const whoHtml = `<b>${esc(a.name)}</b> <span class="muted">${esc(stage.label)} · ${a.ageDays} ${a.ageDays === 1 ? 'día' : 'días'}</span> <span title="${md.label}">${md.icon}</span>`;
+    if (whoHtml !== this.lastWhoHtml) {
+      $('#who').innerHTML = whoHtml;
+      this.lastWhoHtml = whoHtml;
+    }
 
     // Cola de acciones
     const tasks = [a.current, ...a.queue].filter((t) => t && t.actionId !== 'idle');

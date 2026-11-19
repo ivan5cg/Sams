@@ -3,7 +3,7 @@
 import { DEGREES, SCHOLARSHIP_GRADE, schoolName } from '../data/education';
 import { longDate } from '../sim/date';
 import { ILLNESSES } from '../data/illnesses';
-import { CYCLE_DAYS, PHASE_INFO, cycleDay, isPregnant, phase } from '../sim/systems/fertility';
+import { CYCLE_DAYS, PHASE_INFO, cycleDay, isPregnant, phase, phaseOf } from '../sim/systems/fertility';
 import { MONEY_CATEGORIES } from '../data/economy';
 import { BAR_MENUS, BAR_STAFF, CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
 import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
@@ -90,6 +90,11 @@ export class ProfilePanel extends Part {
     this.renderProfile();
   }
 
+  syncProfile() {
+    if ($('#profile').hidden) return;
+    if (this.subjectId && !this.world.agent(this.subjectId)) this.closeProfile();
+  }
+
   closeProfile() {
     $('#profile').hidden = true;
   }
@@ -121,7 +126,7 @@ export class ProfilePanel extends Part {
       if (a.degrees?.length) jobHtml += `<div class="muted small">🎓 Títulos: ${a.degrees.map((d) => `${DEGREES[d]?.icon ?? ''} ${esc(DEGREES[d]?.label ?? d)}`).join(', ')}</div>`;
     }
     const h = w.householdOf(a);
-    if (h?.expecting && h.expecting.parents.includes(a.id)) {
+    if (h?.expecting && h.expecting.known !== false && h.expecting.parents.includes(a.id)) {
       const due = h.expecting.due;
       const day = Math.floor(due / 1440) + 1;
       jobHtml += `<div class="prof-sec"><div class="prof-h">🍼 Bebé en camino</div><div class="muted small">Llegará el ${WEEKDAY_LONG[w.dateOf(day).wd]}, ${longDate(w.dateOf(day))}.</div></div>`;
@@ -316,12 +321,14 @@ export class ProfilePanel extends Part {
   private cycleHtml(a: Agent, mine: boolean): string {
     const w = this.world;
     if (!mine || a.kind !== 'person') return '';
-    if (isPregnant(w, a)) {
+    const knownPregnant = isPregnant(w, a) && w.householdOf(a)?.expecting?.known !== false;
+    if (knownPregnant) {
       const due = w.householdOf(a)?.expecting?.due ?? 0;
       const days = Math.max(0, Math.ceil((due - w.state.minutes) / 1440));
       return `<div class="muted small cycle-line">🤰 Embarazada: el bebé llega ${days <= 1 ? 'mañana o pasado' : `en unos ${days} días`}. Hace falta una cuna libre.</div>`;
     }
-    const p = phase(w, a);
+    const st = w.stageOf(a);
+    const p = phase(w, a) ?? (a.sex === 'f' && (st === 'teen' || st === 'young' || st === 'adult') ? phaseOf(cycleDay(w, a)) : null);
     if (!p) return '';
     const day = cycleDay(w, a) + 1;
     const next = CYCLE_DAYS - day + 1;

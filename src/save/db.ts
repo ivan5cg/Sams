@@ -29,40 +29,61 @@ function pack(state: WorldState): Saved {
 }
 
 /** Copia síncrona (para `pagehide`). */
-export function saveGameSync(state: WorldState) {
+export function saveGameSync(state: WorldState): boolean {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(pack(state)));
+    return true;
   } catch {
-    /* almacenamiento lleno o bloqueado */
+    return false;
   }
 }
 
-export async function saveGame(state: WorldState): Promise<void> {
+export async function saveGame(state: WorldState): Promise<boolean> {
   const data = pack(state);
   try {
     const db = await openDb();
-    await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(STORE, 'readwrite');
-      tx.objectStore(STORE).put(data, SLOT);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-    db.close();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(data, SLOT);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    } finally {
+      db.close();
+    }
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+    } catch {
+      /* IndexedDB ya guardó; la copia de respaldo puede fallar por cuota */
+    }
+    return true;
   } catch {
-    saveGameSync(state);
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
 async function readIdb(): Promise<Saved | null> {
   try {
     const db = await openDb();
-    const v = await new Promise<unknown>((resolve, reject) => {
-      const req = db.transaction(STORE, 'readonly').objectStore(STORE).get(SLOT);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-    db.close();
-    return (v as Saved) ?? null;
+    try {
+      const v = await new Promise<unknown>((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readonly');
+        const req = tx.objectStore(STORE).get(SLOT);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+        tx.onabort = () => reject(tx.error);
+      });
+      return (v as Saved) ?? null;
+    } finally {
+      db.close();
+    }
   } catch {
     return null;
   }
@@ -94,13 +115,17 @@ export async function loadGame(): Promise<WorldState | null> {
 export async function deleteGame(): Promise<void> {
   try {
     const db = await openDb();
-    await new Promise<void>((resolve) => {
-      const tx = db.transaction(STORE, 'readwrite');
-      tx.objectStore(STORE).delete(SLOT);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
-    });
-    db.close();
+    try {
+      await new Promise<void>((resolve) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).delete(SLOT);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+        tx.onabort = () => resolve();
+      });
+    } finally {
+      db.close();
+    }
   } catch {
     /* nada */
   }

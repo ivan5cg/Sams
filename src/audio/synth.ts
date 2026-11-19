@@ -52,9 +52,11 @@ export function tone(v: Voice, f: number, peak: number, o: ToneOpts = {}) {
   osc.type = o.type ?? 'sine';
   osc.frequency.setValueAtTime(f, t);
   if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + a + hold + r * 0.6);
+  let lfo: OscillatorNode | undefined;
+  let depth: GainNode | undefined;
   if (o.vibrato) {
-    const lfo = ctx.createOscillator();
-    const depth = ctx.createGain();
+    lfo = ctx.createOscillator();
+    depth = ctx.createGain();
     lfo.frequency.value = o.vibrato.rate;
     depth.gain.value = o.vibrato.depth;
     lfo.connect(depth).connect(osc.frequency);
@@ -64,14 +66,22 @@ export function tone(v: Voice, f: number, peak: number, o: ToneOpts = {}) {
   const g = ctx.createGain();
   envelope(g, t, peak * v.gain, a, hold, r);
   let node: AudioNode = osc;
+  let fl: BiquadFilterNode | undefined;
   if (o.filter) {
-    const fl = ctx.createBiquadFilter();
+    fl = ctx.createBiquadFilter();
     fl.type = o.filter.type;
     fl.frequency.value = o.filter.f;
     fl.Q.value = o.filter.q ?? 1;
     node = node.connect(fl);
   }
   node.connect(g).connect(v.out);
+  osc.onended = () => {
+    g.disconnect();
+    fl?.disconnect();
+    depth?.disconnect();
+    osc.disconnect();
+    lfo?.disconnect();
+  };
   osc.start(t);
   osc.stop(t + a + hold + r + 0.05);
 }
@@ -101,6 +111,11 @@ export function noise(v: Voice, peak: number, o: NoiseOpts = {}) {
   const g = ctx.createGain();
   envelope(g, t, peak * v.gain, a, hold, r);
   src.connect(fl).connect(g).connect(v.out);
+  src.onended = () => {
+    g.disconnect();
+    fl.disconnect();
+    src.disconnect();
+  };
   const off = Math.random() * 1.5;
   src.start(t, off);
   src.stop(t + a + hold + r + 0.05);
@@ -128,7 +143,10 @@ export function pluck(v: Voice, f: number, peak: number, dur = 1.2) {
       prev = val;
       d[i] = val;
     }
-    if (pluckCache.size > 80) pluckCache.clear();
+    if (pluckCache.size >= 80) {
+      const oldest = pluckCache.keys().next().value;
+      if (oldest !== undefined) pluckCache.delete(oldest);
+    }
     pluckCache.set(key, buf);
   }
   const src = ctx.createBufferSource();
@@ -136,6 +154,10 @@ export function pluck(v: Voice, f: number, peak: number, dur = 1.2) {
   const g = ctx.createGain();
   g.gain.value = peak * v.gain;
   src.connect(g).connect(v.out);
+  src.onended = () => {
+    g.disconnect();
+    src.disconnect();
+  };
   src.start(t);
 }
 

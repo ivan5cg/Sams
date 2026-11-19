@@ -36,7 +36,9 @@ export function bookTrip(w: World, a: Agent): boolean {
 
 /** ¿Quién se va? Las personas y las mascotas que pueden viajar (las de jaula se quedan: las cuida la vecina). */
 function travellers(w: World): Agent[] {
-  return w.members.filter((m) => !m.home && !m.hidden);
+  return w.members.filter(
+    (m) => !m.home && !m.hidden && m.travel?.reason !== 'jail' && Number.isFinite(m.travel?.arrive ?? 0),
+  );
 }
 
 /** Cada hora: salir el sábado y volver el domingo. */
@@ -49,7 +51,8 @@ export function tripsHour(w: World) {
     h.trip = undefined;
     return;
   }
-  const gone = travellers(w).filter((m) => !(m.travel?.reason === 'trip'));
+  const alreadyStarted = w.members.some((m) => m.travel?.reason === 'trip');
+  const gone = travellers(w).filter((m) => m.travel?.reason !== 'trip');
   if (!gone.length) return;
   for (const m of gone) {
     endTask(w, m);
@@ -58,8 +61,10 @@ export function tripsHour(w: World) {
     m.visitUntil = undefined;
     m.travel = { from: m.lotId, to: h.lotId, arrive: trip.end, reason: 'trip' };
   }
-  w.toast(`¡Nos vamos a ${trip.dest}! Hasta el domingo por la noche`, '🧳');
-  w.addNews(`la ${h.name} se ha ido el fin de semana a ${trip.dest}`, []);
+  if (!alreadyStarted) {
+    w.toast(`¡Nos vamos a ${trip.dest}! Hasta el domingo por la noche`, '🧳');
+    w.addNews(`la ${h.name} se ha ido el fin de semana a ${trip.dest}`, []);
+  }
 }
 
 /** Al volver del viaje: descansados, contentos y con algo que contar. */

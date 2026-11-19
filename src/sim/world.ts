@@ -213,13 +213,36 @@ export class World {
   // Consultas
   // ---------------------------------------------------------------------------
 
+  private hhCache?: { ref: Household[]; len: number; first?: Household; last?: Household; map: Map<string, Household> };
+  private lotCache?: { ref: Lot[]; len: number; first?: Lot; last?: Lot; map: Map<string, Lot> };
+  private agentCache?: { ref: Agent[]; len: number; first?: Agent; last?: Agent; map: Map<string, Agent> };
+  private objCache?: {
+    ref: PlacedObject[];
+    len: number;
+    first?: PlacedObject;
+    last?: PlacedObject;
+    byId: Map<string, PlacedObject>;
+    byLot: Map<string, PlacedObject[]>;
+  };
+
+  private householdById(id: string): Household | undefined {
+    const list = this.state.households;
+    let c = this.hhCache;
+    if (!c || c.ref !== list || c.len !== list.length || c.first !== list[0] || c.last !== list[list.length - 1]) {
+      const map = new Map<string, Household>();
+      for (const h of list) map.set(h.id, h);
+      this.hhCache = c = { ref: list, len: list.length, first: list[0], last: list[list.length - 1], map };
+    }
+    return c.map.get(id);
+  }
+
   get household(): Household {
-    return this.state.households.find((h) => h.id === this.state.playerHouseholdId)!;
+    return this.householdById(this.state.playerHouseholdId)!;
   }
 
   /** La familia de un agente. */
   householdOf(a: Agent): Household | undefined {
-    return this.state.households.find((h) => h.id === a.householdId);
+    return this.householdById(a.householdId);
   }
 
   /** La familia del jugador (personas y mascotas). */
@@ -229,12 +252,13 @@ export class World {
 
   /** El personaje que controla el jugador. */
   get activeAgent(): Agent {
-    return this.agent(this.state.activeAgentId) ?? this.members[0];
+    return this.agent(this.state.activeAgentId) ?? this.members[0] ?? this.state.agents.find((a) => a.kind === 'person') ?? this.state.agents[0];
   }
 
   /** Parcela que se está viendo: donde está (o de donde sale) el personaje activo. */
   get viewLotId(): string {
     const a = this.activeAgent;
+    if (!a) return this.household.lotId;
     return a.travel ? a.travel.from : a.lotId;
   }
 
@@ -290,7 +314,14 @@ export class World {
   }
 
   lotById(id: string): Lot {
-    return this.state.lots.find((l) => l.id === id)!;
+    const list = this.state.lots;
+    let c = this.lotCache;
+    if (!c || c.ref !== list || c.len !== list.length || c.first !== list[0] || c.last !== list[list.length - 1]) {
+      const map = new Map<string, Lot>();
+      for (const l of list) map.set(l.id, l);
+      this.lotCache = c = { ref: list, len: list.length, first: list[0], last: list[list.length - 1], map };
+    }
+    return c.map.get(id)!;
   }
 
   layoutOf(lotId: string): LotLayout {
@@ -311,11 +342,40 @@ export class World {
   }
 
   agent(id: string | undefined): Agent | undefined {
-    return this.state.agents.find((a) => a.id === id);
+    if (!id) return undefined;
+    const list = this.state.agents;
+    let c = this.agentCache;
+    if (!c || c.ref !== list || c.len !== list.length || c.first !== list[0] || c.last !== list[list.length - 1]) {
+      const map = new Map<string, Agent>();
+      for (const a of list) map.set(a.id, a);
+      this.agentCache = c = { ref: list, len: list.length, first: list[0], last: list[list.length - 1], map };
+    }
+    return c.map.get(id);
+  }
+
+  private ensureObjects() {
+    const list = this.state.objects;
+    let c = this.objCache;
+    if (!c || c.ref !== list || c.len !== list.length || c.first !== list[0] || c.last !== list[list.length - 1]) {
+      const byId = new Map<string, PlacedObject>();
+      const byLot = new Map<string, PlacedObject[]>();
+      for (const o of list) {
+        byId.set(o.id, o);
+        let bucket = byLot.get(o.lotId);
+        if (!bucket) {
+          bucket = [];
+          byLot.set(o.lotId, bucket);
+        }
+        bucket.push(o);
+      }
+      this.objCache = c = { ref: list, len: list.length, first: list[0], last: list[list.length - 1], byId, byLot };
+    }
+    return c;
   }
 
   object(id: string | undefined): PlacedObject | undefined {
-    return this.state.objects.find((o) => o.id === id);
+    if (!id) return undefined;
+    return this.ensureObjects().byId.get(id);
   }
 
   objDef(o: PlacedObject): ObjectDef {
@@ -323,7 +383,7 @@ export class World {
   }
 
   objectsIn(lotId: string): PlacedObject[] {
-    return this.state.objects.filter((o) => o.lotId === lotId);
+    return this.ensureObjects().byLot.get(lotId) ?? [];
   }
 
   /** Quién está ahora mismo en una parcela (sin contar a quien va de camino). */
@@ -542,7 +602,11 @@ export class World {
     const neighbours = this.state.households.filter((x) => x.id !== this.household.id);
     // Visitas a la familia del jugador
     const someoneHome = this.members.some((m) => m.lotId === this.household.lotId && !m.travel && m.kind === 'person');
-    const visitorsNow = this.state.agents.some((a) => a.lotId === this.household.lotId && a.householdId !== this.household.id && (a.visitUntil || a.travel));
+    const visitorsNow = this.state.agents.some(
+      (a) =>
+        a.householdId !== this.household.id &&
+        ((a.lotId === this.household.lotId && !!a.visitUntil) || a.travel?.to === this.household.lotId || a.via === this.household.lotId),
+    );
     if (h >= 10 && h <= 19 && someoneHome && !visitorsNow && this.state.minutes >= this.noVisitsUntil && Math.random() < 0.12) {
       const nh = neighbours[Math.floor(Math.random() * neighbours.length)];
       if (nh) Travel.sendVisit(this, nh, this.household.lotId, true);
@@ -801,6 +865,8 @@ export class World {
 
   /** Recalcula qué casillas se pueden pisar en todas las parcelas. */
   rebuildGrid() {
+    this.objCache = undefined;
+    this.lotCache = undefined;
     for (const lot of this.state.lots) {
       const { w, h, tiles } = this.layoutFor(lot);
       const grid = Array.from({ length: h }, (_, y) => Array.from({ length: w }, (_, x) => tiles[y][x] !== 'wall'));

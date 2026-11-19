@@ -8,7 +8,7 @@
 import { addSecret } from '../gossip';
 import { addRentalFlat } from '../neighborhood';
 import { getRel, isAdult, partnerOf, relKey, setRel } from '../social';
-import type { Agent, Rel } from '../types';
+import type { Agent, Household, Rel } from '../types';
 import type { World } from '../world';
 import { cantMoveOut } from './lifecycle';
 import { money } from './money';
@@ -49,11 +49,17 @@ export function moveOut(w: World, a: Agent): string | undefined {
   const old = w.householdOf(a)!;
   const mine = old.id === w.household.id;
   const lotId = addRentalFlat(w.state, districtOf(w, old.lotId), a.name);
+  w.rebuildGrid();
   const share = Math.max(0, Math.round(old.funds * 0.3));
   money(w, old, -share, 'ventas');
   const hid = `h${w.state.nextId++}`;
   w.state.lots.find((l) => l.id === lotId)!.householdId = hid;
-  w.state.households.push({ id: hid, name: `${a.name} (piso)`, funds: share + 300, memberIds: [a.id], lotId, pantry: 10, ledger: [] });
+  const next: Household = { id: hid, name: `${a.name} (piso)`, funds: share + 300, memberIds: [a.id], lotId, pantry: 10, ledger: [] };
+  if (old.expecting?.mother === a.id) {
+    next.expecting = old.expecting;
+    old.expecting = undefined;
+  }
+  w.state.households.push(next);
   old.memberIds = old.memberIds.filter((id) => id !== a.id);
   a.householdId = hid;
   a.visitUntil = undefined;

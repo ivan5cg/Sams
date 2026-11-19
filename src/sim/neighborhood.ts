@@ -93,6 +93,7 @@ export function makeAgent(p: { id: string; name: string; species: SpeciesId; age
 
 export function placeObjects(state: WorldState, lotId: string, placements: ObjectPlacement[]) {
   for (const o of placements) {
+    if (state.objects.some((x) => x.lotId === lotId && x.def === o.def && x.x === o.x && x.y === o.y)) continue;
     const d = OBJECTS[o.def];
     state.objects.push({
       id: `o${state.nextId++}`,
@@ -370,6 +371,10 @@ export function setupFamilyLife(state: WorldState, members: Agent[], opts: { job
     setRel(state, a.id, b.id, { r: 0, ...rel });
   };
   if (adults.length >= 2) set(adults[0], adults[1], { f: Math.round(rand(55, 85)), r: Math.round(rand(60, 90)), status: Math.random() < 0.6 ? 'married' : 'partner' });
+  if (adults.length) {
+    const parentIds = adults.slice(0, 2).map((p) => p.id);
+    for (const k of young) if (!k.parents?.length) k.parents = [...parentIds];
+  }
   for (const k of young) for (const p of adults) set(k, p, { f: Math.round(rand(40, 80)), kin: true });
   for (let i = 0; i < young.length; i++) for (let j = i + 1; j < young.length; j++) set(young[i], young[j], { f: Math.round(rand(10, 60)), kin: true });
   for (const pet of members.filter((m) => m.kind === 'pet')) for (const p of people) set(pet, p, { f: Math.round(rand(35, 70)) });

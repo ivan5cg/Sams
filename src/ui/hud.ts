@@ -76,10 +76,18 @@ export class Hud {
   }
 
   setWorld(world: World) {
+    if (this.world.ui.building) this.build.exitBuild();
+    if (this.talk.talking) this.talk.closeTalk(false);
+    this.sheet.closeSheet();
+    this.profile.closeProfile();
+    this.editor.close();
+    for (const sel of ['#dilemma', '#map', '#agenda', '#feats', '#bills', '#catalog', '#market', '#log']) {
+      $(sel).hidden = true;
+    }
+    this.dilemma.shownDilemmaId = '';
     this.world = world;
     this.panel.needsFor = '';
-    this.panel.lastQueueHtml = this.panel.lastPortraitsHtml = '';
-    this.sheet.closeSheet();
+    this.panel.lastWhoHtml = this.panel.lastQueueHtml = this.panel.lastPortraitsHtml = this.panel.lastWishHtml = this.panel.lastEmoHtml = '';
     this.render();
   }
 
@@ -178,11 +186,17 @@ export class Hud {
     const ev = w.activeEvents().filter((e) => !e.lotId || e.lotId === w.viewLotId)[0];
     // La hora, lo primero (si no cabe todo, se recorta la fecha).
     const clockHtml = `${(ev && EVENTS[ev.id]?.icon) || w.seasonDef.icon} ${w.clock} <small>${shortDate(w.date)}</small>`;
-    if ($('#clock').innerHTML !== clockHtml) $('#clock').innerHTML = clockHtml;
-    $('#clock').title = `${WEEKDAY_LONG[w.weekday]}, ${longDate(w.date)} de ${w.date.y} · ${w.seasonDef.label}${w.activeEvents().length ? ` · ${w.activeEvents().map((e) => EVENTS[e.id]?.label).join(', ')}` : ''}`;
-    $('#funds').textContent = `§ ${w.household.funds.toLocaleString('es-ES')}`;
-    $('#funds').classList.toggle('neg', w.household.funds < 0);
-    $('#family').textContent = `📍 ${this.placeName(w.viewLotId)} · ${w.household.name}`;
+    const clockEl = $('#clock');
+    if (clockEl.innerHTML !== clockHtml) clockEl.innerHTML = clockHtml;
+    const clockTitle = `${WEEKDAY_LONG[w.weekday]}, ${longDate(w.date)} de ${w.date.y} · ${w.seasonDef.label}${w.activeEvents().length ? ` · ${w.activeEvents().map((e) => EVENTS[e.id]?.label).join(', ')}` : ''}`;
+    if (clockEl.title !== clockTitle) clockEl.title = clockTitle;
+    const fundsText = `§ ${w.household.funds.toLocaleString('es-ES')}`;
+    const fundsEl = $('#funds');
+    if (fundsEl.textContent !== fundsText) fundsEl.textContent = fundsText;
+    fundsEl.classList.toggle('neg', w.household.funds < 0);
+    const familyText = `📍 ${this.placeName(w.viewLotId)} · ${w.household.name}`;
+    const familyEl = $('#family');
+    if (familyEl.textContent !== familyText) familyEl.textContent = familyText;
     for (const b of $('#speed').querySelectorAll<HTMLButtonElement>('button')) {
       b.classList.toggle('on', Number(b.dataset.speed) === w.state.speed);
     }
@@ -192,6 +206,9 @@ export class Hud {
     $('#recenter').hidden = !scene?.camFree || w.ui.building;
     this.guide.sync();
 
+    this.sheet.syncSheet();
+    this.profile.syncProfile();
+    this.editor.syncEditor();
     this.talk.syncTalk();
     this.dilemma.syncDilemma();
 

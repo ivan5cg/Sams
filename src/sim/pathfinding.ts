@@ -16,6 +16,47 @@ export function isWalkable(grid: Grid, x: number, y: number): boolean {
   return inBounds(grid, x, y) && grid[y][x];
 }
 
+interface OpenNode {
+  k: number;
+  f: number;
+  seq: number;
+}
+
+const less = (a: OpenNode, b: OpenNode) => a.f < b.f || (a.f === b.f && a.seq < b.seq);
+
+function heapPush(heap: OpenNode[], node: OpenNode) {
+  heap.push(node);
+  let i = heap.length - 1;
+  while (i > 0) {
+    const p = (i - 1) >> 1;
+    if (!less(node, heap[p])) break;
+    heap[i] = heap[p];
+    i = p;
+  }
+  heap[i] = node;
+}
+
+function heapPop(heap: OpenNode[]): OpenNode {
+  const top = heap[0];
+  const last = heap.pop()!;
+  if (heap.length > 0) {
+    let i = 0;
+    const n = heap.length;
+    while (true) {
+      let best = i;
+      const l = (i << 1) + 1;
+      const r = l + 1;
+      if (l < n && less(heap[l], last)) best = l;
+      if (r < n && less(heap[r], best === i ? last : heap[l])) best = r;
+      if (best === i) break;
+      heap[i] = heap[best];
+      i = best;
+    }
+    heap[i] = last;
+  }
+  return top;
+}
+
 /**
  * A* en cuadrícula con 8 direcciones (sin cortar esquinas).
  * Devuelve las casillas a recorrer sin incluir la de inicio, o null si no hay camino.
@@ -30,7 +71,8 @@ export function findPath(grid: Grid, from: Vec, to: Vec): Vec[] | null {
   const key = (x: number, y: number) => y * w + x;
   const g = new Map<number, number>();
   const came = new Map<number, number>();
-  const open: { k: number; f: number }[] = [];
+  const open: OpenNode[] = [];
+  let seq = 0;
   const h = (x: number, y: number) => {
     const dx = Math.abs(x - tx), dy = Math.abs(y - ty);
     return Math.max(dx, dy) + (Math.SQRT2 - 1) * Math.min(dx, dy);
@@ -38,14 +80,11 @@ export function findPath(grid: Grid, from: Vec, to: Vec): Vec[] | null {
 
   const start = key(sx, sy);
   g.set(start, 0);
-  open.push({ k: start, f: h(sx, sy) });
+  heapPush(open, { k: start, f: h(sx, sy), seq: seq++ });
   const closed = new Set<number>();
 
   while (open.length) {
-    // La parcela es pequeña: buscar el mínimo de forma lineal es suficiente.
-    let bi = 0;
-    for (let i = 1; i < open.length; i++) if (open[i].f < open[bi].f) bi = i;
-    const { k } = open.splice(bi, 1)[0];
+    const { k } = heapPop(open);
     if (closed.has(k)) continue;
     closed.add(k);
     const cx = k % w, cy = Math.floor(k / w);
@@ -69,7 +108,7 @@ export function findPath(grid: Grid, from: Vec, to: Vec): Vec[] | null {
       if (ng < (g.get(nk) ?? Infinity)) {
         g.set(nk, ng);
         came.set(nk, k);
-        open.push({ k: nk, f: ng + h(nx, ny) });
+        heapPush(open, { k: nk, f: ng + h(nx, ny), seq: seq++ });
       }
     }
   }

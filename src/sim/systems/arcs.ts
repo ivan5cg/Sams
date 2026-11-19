@@ -13,6 +13,7 @@ import { startEvent } from './calendar';
 import { catchAffair } from './gossip';
 import { moveToHousehold } from './lifecycle';
 import { districtOf, startTravel } from './travel';
+import { onBreakUp } from './breakups';
 import { skillLevel } from './skills';
 
 export const ARC_INFO: Record<Arc['kind'], { title: string; icon: string; steps: string[] }> = {
@@ -52,7 +53,12 @@ export function startArc(w: World, kind: Arc['kind'], who?: string[]): Arc | nul
   if (!ids) {
     const people = cast(w);
     if (kind === 'lio') {
-      const x = pick(people.filter((p) => partnerOf(w.state, p.id) && !w.isPlayerMember(w.agent(partnerOf(w.state, p.id))!)));
+      const x = pick(
+        people.filter((p) => {
+          const pid = partnerOf(w.state, p.id);
+          return pid && !w.isPlayerMember(w.agent(pid)!) && !arcOf(w, pid);
+        }),
+      );
       const p = x && w.agent(partnerOf(w.state, x.id));
       const y = x && p && pick(people.filter((c) => c !== x && c !== p && c.householdId !== x.householdId && canRomance(w.state, x, c) && !getRel(w.state, x.id, c.id).kin));
       if (!x || !p || !y) return null;
@@ -165,6 +171,8 @@ function runStep(w: World, arc: Arc) {
           w.addNews(`${x.name} ha hecho las maletas y se ha ido a vivir con ${y.name}`, [x.id, y.id]);
           finish(w, arc, 'mudanza');
         } else {
+          const rel = w.state.rels[relKey(x.id, partner.id)];
+          if (rel && x.householdId === partner.householdId) onBreakUp(w, x, partner, rel);
           w.addNews(`${x.name} duerme en el sofá de un amigo desde lo de ${y.name}`, [x.id]);
           finish(w, arc, 'cada uno por su lado');
         }

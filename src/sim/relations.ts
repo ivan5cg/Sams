@@ -23,7 +23,7 @@ export const COUPLE = { crisis: 35, breakup: 15 };
 const tag = (id: string, icon: string, label: string): RelTag => ({ id, icon, label });
 
 function kinTag(a: Agent, b: Agent): RelTag {
-  if (b.parents?.includes(a.id)) return tag('hijo', '👶', a.sex === 'm' ? 'Su hijo' : b.sex === 'f' ? 'Su hija' : 'Su hijo/a');
+  if (b.parents?.includes(a.id)) return tag('hijo', '👶', b.sex === 'm' ? 'Su hijo' : b.sex === 'f' ? 'Su hija' : 'Su hijo/a');
   if (a.parents?.includes(b.id)) return tag('padre', '🧓', b.sex === 'f' ? 'Su madre' : 'Su padre');
   if (a.parents?.some((p) => b.parents?.includes(p))) return tag('hermano', '👫', b.sex === 'f' ? 'Su hermana' : 'Su hermano');
   return tag('familia', '🏠', 'Familia');

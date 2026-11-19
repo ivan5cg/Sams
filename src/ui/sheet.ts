@@ -431,6 +431,12 @@ export class ActionSheet extends Part {
       <div class="sheet-actions">${items}</div>`;
   }
 
+  syncSheet() {
+    if ($('#sheet').hidden || !this.sheetTarget) return;
+    if (this.sheetTarget.kind === 'agent' && !this.world.agent(this.sheetTarget.id)) this.closeSheet();
+    else if (this.sheetTarget.kind === 'object' && !this.world.object(this.sheetTarget.id)) this.closeSheet();
+  }
+
   closeSheet() {
     this.scheduling = false;
     $('#sheet').hidden = true;

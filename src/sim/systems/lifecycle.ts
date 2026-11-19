@@ -20,6 +20,7 @@ import type { World } from '../world';
 import { money } from './money';
 import { districtOf, freeSpotNear, startTravel } from './travel';
 import { countFeat } from './feats';
+import { endTask } from './tasks';
 
 /** Si alguien no puede dejar su casa (p. ej. no dejaría solos a sus hijos), el motivo. */
 export function cantMoveOut(w: World, t: Agent): string | undefined {
@@ -38,6 +39,10 @@ export function moveToHousehold(w: World, a: Agent, to: Household) {
   a.householdId = to.id;
   to.memberIds.push(a.id);
   a.visitUntil = undefined;
+  if (old.expecting?.mother === a.id && !to.expecting) {
+    to.expecting = old.expecting;
+    old.expecting = undefined;
+  }
   if (a.lotId !== to.lotId && !a.travel) startTravel(w, a, to.lotId);
   if (!old.memberIds.some((id) => w.agent(id)?.kind === 'person')) replaceFamily(w, old, []);
 }
@@ -52,6 +57,10 @@ export function moveIn(w: World, t: Agent) {
   mine.memberIds.push(t.id);
   t.visitUntil = undefined;
   t.abstract = false;
+  if (old.expecting?.mother === t.id && !mine.expecting) {
+    mine.expecting = old.expecting;
+    old.expecting = undefined;
+  }
   // Su nueva familia
   for (const m of w.members) if (m.id !== t.id && m.kind === 'person' && !getRel(w.state, m.id, t.id).f) changeRel(w.state, m.id, t.id, 30);
   w.toast(`¡${t.name} se viene a vivir con la ${mine.name}!`, '🏡');
@@ -148,9 +157,14 @@ export function onStageChange(w: World, a: Agent, after: string) {
       a.traitPick = true;
       w.toast(`${a.name} ya es adulto/a: en su perfil puedes elegir uno de sus rasgos`, '🧬');
     }
-  } else if (after === 'elder' && a.job && a.job.career !== 'school') {
-    a.job = undefined;
-    if (mine) w.toast(`${a.name} se jubila. ¡A disfrutar! (pensión de §30 al día)`, '🏖️');
+  } else if (after === 'elder') {
+    if (a.study) a.study = undefined;
+    if (a.job?.career === 'uni') {
+      a.job = undefined;
+    } else if (a.job && a.job.career !== 'school') {
+      a.job = undefined;
+      if (mine) w.toast(`${a.name} se jubila. ¡A disfrutar! (pensión de §30 al día)`, '🏖️');
+    }
   }
 }
 
@@ -207,14 +221,48 @@ export function die(w: World, a: Agent, cause: DeathCause, detail = '') {
   }
   if (cause === 'old' && a.kind === 'person') w.addNews(`ha fallecido ${a.name}, de la ${h?.name ?? 'vecindad'}. Que en paz descanse`, [a.id]);
   else if (REAL_DEATHS.has(cause) && a.kind === 'person') w.addNews(texts[cause].toLowerCase().replace(/\. descanse en paz$/, ''), [a.id]);
-  const lastPerson = !!h && a.kind === 'person' && !h.memberIds.some((id) => id !== a.id && w.agent(id)?.kind === 'person');
+  const lastPerson =
+    !!h &&
+    a.kind === 'person' &&
+    !h.memberIds.some((id) => {
+      if (id === a.id) return false;
+      const m = w.agent(id);
+      return m?.kind === 'person' && w.stageOf(m) !== 'baby';
+    });
   if (lastPerson && h) inherit(w, h, a);
 
   // Fuera del mundo
+  endTask(w, a);
+  for (const o of w.state.agents) {
+    if (o !== a && (o.current?.passiveOf === a.id || o.current?.targetAgentId === a.id)) endTask(w, o);
+  }
+  if (w.state.dilemma?.agentId === a.id) w.state.dilemma = undefined;
+  if (w.state.schedule?.length) {
+    w.state.schedule = w.state.schedule.filter((s) => s.agentId !== a.id && !(s.target.kind === 'agent' && s.target.id === a.id));
+  }
   w.state.agents = w.state.agents.filter((x) => x !== a);
   if (h) h.memberIds = h.memberIds.filter((id) => id !== a.id);
   for (const k of Object.keys(w.state.rels)) if (k.split('|').includes(a.id)) delete w.state.rels[k];
-  for (const x of w.state.households) if (x.expecting?.parents.includes(a.id)) x.expecting.parents = x.expecting.parents.filter((id) => id !== a.id);
+  for (const x of w.state.households) {
+    if (!x.expecting) continue;
+    if (x.expecting.mother === a.id) {
+      x.expecting = undefined;
+    } else if (x.expecting.parents.includes(a.id)) {
+      x.expecting.parents = x.expecting.parents.filter((id) => id !== a.id);
+      if (!x.expecting.parents.length && !x.expecting.mother) x.expecting = undefined;
+    }
+  }
+  if (lastPerson && h) {
+    const orphanBabies = h.memberIds
+      .map((id) => w.agent(id))
+      .filter((m): m is Agent => !!m && m.kind === 'person' && w.stageOf(m) === 'baby');
+    for (const b of orphanBabies) {
+      endTask(w, b);
+      w.state.agents = w.state.agents.filter((x) => x !== b);
+      h.memberIds = h.memberIds.filter((id) => id !== b.id);
+      for (const k of Object.keys(w.state.rels)) if (k.split('|').includes(b.id)) delete w.state.rels[k];
+    }
+  }
   if (w.state.activeAgentId === a.id) {
     const next = w.members.find((m) => m.kind === 'person') ?? w.members[0];
     if (next) w.state.activeAgentId = next.id;

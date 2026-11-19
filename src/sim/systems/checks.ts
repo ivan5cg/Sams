@@ -84,7 +84,7 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   }
   const resident = w.residentOf(o.id);
   if (resident && def.actors.includes('pet') && resident !== a) return { def, ok: false, reason: `Es la casa de ${resident.name}` };
-  if (w.usersOf(o.id, a).length >= od.capacity) return { def, ok: false, reason: 'Ocupado' };
+  if (w.usersOf(o.id, a).length >= (actionId === 'repair' ? Math.max(1, od.capacity) : od.capacity)) return { def, ok: false, reason: 'Ocupado' };
   if (def.consumes && !o.stock) return { def, ok: false, reason: 'Está vacío' };
   if (def.refill && (o.stock ?? 0) >= (od.maxStock ?? 0)) return { def, ok: false, reason: 'Ya está lleno' };
   if (def.dirties && od.maxDirt && (o.dirt ?? 0) >= od.maxDirt) return { def, ok: false, reason: 'Está demasiado sucio' };

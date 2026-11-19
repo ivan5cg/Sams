@@ -24,7 +24,17 @@ export class AudioEngine {
   private lastPlayed = new Map<SoundId, number>();
 
   constructor() {
-    const unlock = () => this.unlock();
+    const unlock = (e: Event) => {
+      if (e instanceof KeyboardEvent) {
+        const el = e.target as HTMLElement | null;
+        if (e.isComposing || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
+      }
+      this.unlock();
+      if (this.running) {
+        for (const ev of ['pointerdown', 'touchend', 'keydown']) window.removeEventListener(ev, unlock, { capture: true });
+      }
+    };
     for (const ev of ['pointerdown', 'touchend', 'keydown']) window.addEventListener(ev, unlock, { capture: true, passive: true });
     document.addEventListener('visibilitychange', () => this.syncRunning());
   }

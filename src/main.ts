@@ -22,8 +22,8 @@ async function boot() {
 
   const hud = new Hud(world, {
     onSave: async () => {
-      await saveGame(world.state);
-      hud.toast('Partida guardada', '💾');
+      const ok = await saveGame(world.state);
+      hud.toast(ok ? 'Partida guardada' : 'No se pudo guardar la partida (almacenamiento lleno)', ok ? '💾' : '⚠️');
     },
     onExport: () => {
       const blob = new Blob([serialize(world.state)], { type: 'application/json' });
@@ -61,7 +61,11 @@ async function boot() {
   const bindToasts = (w: World) => {
     w.onToast((t) => hud.notify(t));
     w.onEvent((e) => {
-      if (e.type === 'moment' && e.lotId === w.viewLotId && !document.hidden) setTimeout(() => void hud.album.snap(e.text, true), 400);
+      if (e.type === 'moment' && e.lotId === w.viewLotId && !document.hidden) {
+        setTimeout(() => {
+          if (w === world && !document.hidden) void hud.album.snap(e.text, true);
+        }, 400);
+      }
     });
   };
   bindToasts(world);

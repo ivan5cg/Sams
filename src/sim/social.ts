@@ -207,7 +207,7 @@ export function grudgeOf(rel: Rel, aId: string, tId: string, today: number): str
   const mem = rel.mem ?? [];
   for (let i = mem.length - 1; i >= 0; i--) {
     const m = mem[i];
-    if (m.k === 'perdon' && m.by === tId) return undefined;
+    if (m.k === 'perdon') return undefined;
     if (MEMORY_TEXT[m.k]?.bad && (m.by === tId || m.k === 'pelea') && today - m.d <= 10) return m.k;
   }
   void aId;

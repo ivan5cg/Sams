@@ -123,6 +123,7 @@ interface ObjectView {
   front: Phaser.GameObjects.Graphics;
   icon?: Phaser.GameObjects.Image;
   badge?: Phaser.GameObjects.Text;
+  badgeKey?: string;
   glow?: Phaser.GameObjects.Graphics;
   /** Brillo de pantalla que parpadea cuando se usa. */
   screen?: Phaser.GameObjects.Graphics;
@@ -262,6 +263,10 @@ export class HouseScene extends Phaser.Scene {
   setWorld(world: World) {
     this.world = world;
     this.shownLot = '';
+    this.nextFx.clear();
+    this.nextTalk.clear();
+    this.convo.clear();
+    this.pendingSpeech = [];
   }
 
   /** Efectos que solo existen en modo avanzado (WebGL): resplandor de luces, viñeta y color. */
@@ -418,6 +423,8 @@ export class HouseScene extends Phaser.Scene {
     this.eventDeco = [];
     this.eventKey = '';
     this.fx?.clearAll();
+    this.nextFx.clear();
+    this.nextTalk.clear();
     this.convo.clear();
     this.pendingSpeech = [];
     this.shownLot = lotId;
@@ -649,8 +656,15 @@ export class HouseScene extends Phaser.Scene {
         const empty = d.maxStock !== undefined && !o.stock;
         const dirty = d.maxDirt !== undefined && (o.dirt ?? 0) >= Math.ceil(d.maxDirt / 2);
         const broken = !!o.broken;
-        v.badge.setVisible(empty || dirty || broken).setText(broken ? '🔧 Roto' : dirty ? (empty ? 'Sucio y vacío' : '¡Sucio!') : '¡Vacío!');
-        v.badge.setBackgroundColor(broken ? '#5b6475' : dirty ? '#7a5230' : '#c0392b');
+        const bKey = broken ? 'broken' : dirty ? (empty ? 'dirty_empty' : 'dirty') : empty ? 'empty' : '';
+        if (v.badgeKey !== bKey) {
+          v.badgeKey = bKey;
+          v.badge.setVisible(!!bKey);
+          if (bKey) {
+            v.badge.setText(broken ? '🔧 Roto' : dirty ? (empty ? 'Sucio y vacío' : '¡Sucio!') : '¡Vacío!');
+            v.badge.setBackgroundColor(broken ? '#5b6475' : dirty ? '#7a5230' : '#c0392b');
+          }
+        }
       }
     }
     for (const [id, v] of this.objectViews) {
@@ -666,7 +680,8 @@ export class HouseScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   private agentKey(a: Agent) {
-    return `${lifeStage(a.species, a.ageDays).id}:${a.color}:${this.accessoryOf(a)}:${a.name}:${JSON.stringify(a.look ?? {})}`;
+    const lk = a.look;
+    return `${lifeStage(a.species, a.ageDays).id}:${a.color}:${this.accessoryOf(a)}:${a.name}:${lk?.skin ?? ''},${lk?.hair ?? ''},${lk?.hairStyle ?? ''},${lk?.pants ?? ''},${lk?.extra ?? ''}`;
   }
 
   /** Lo que lleva encima: lo de su oficio, o lo de la fiesta (gorra de chulapo, disfraz, corona...). */
@@ -863,6 +878,9 @@ export class HouseScene extends Phaser.Scene {
       if (!seen.has(id)) {
         v.root.destroy();
         this.agentViews.delete(id);
+        this.nextFx.delete(id);
+        this.nextTalk.delete(id);
+        this.convo.delete(id);
       }
     }
     this.drainSpeech(time);

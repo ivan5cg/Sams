@@ -42,10 +42,19 @@ function makeLayer(def: LayerDef) {
         depth.gain.value = def.bed.gain * def.bed.wobble;
         lfo.connect(depth).connect(bg.gain);
         lfo.start();
-        stoppers.push(() => lfo.stop());
+        stoppers.push(() => {
+          lfo.stop();
+          lfo.disconnect();
+          depth.disconnect();
+        });
       }
       src.start();
-      stoppers.push(() => src.stop());
+      stoppers.push(() => {
+        src.stop();
+        src.disconnect();
+        fl.disconnect();
+        bg.disconnect();
+      });
     }
     // Sonidos sueltos: se programan con un poco de antelación.
     const next = (def.events ?? []).map((e) => ctx.currentTime + rnd(e.every[0], e.every[1]) * 0.5);

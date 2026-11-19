@@ -3,7 +3,7 @@ import { OBJECTS, sizeOf } from '../data/objects';
 import { PET_TRAITS } from '../data/pets';
 import { SAVE_VERSION } from '../sim/world';
 import { PLAYER_LOT, addAlcorcon, addGetafe, addMarkets, addPlaces, addShops, addStudio, generateNeighborhood, giveSkills, setupFamilyLife } from '../sim/neighborhood';
-import { setRel } from '../sim/social';
+import { getRel, isAdult, setRel } from '../sim/social';
 import type { PlacedObject, WorldState } from '../sim/types';
 import { validateState } from './validate';
 import { sexOfName } from '../data/names';
@@ -152,6 +152,34 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
   },
 };
 
+function syncNextId(s: WorldState) {
+  let max = typeof s.nextId === 'number' && Number.isFinite(s.nextId) ? s.nextId : 100;
+  const see = (id: string | undefined) => {
+    if (typeof id !== 'string') return;
+    const m = /(\d+)$/.exec(id);
+    if (m) {
+      const n = Number(m[1]);
+      if (Number.isFinite(n) && n >= max) max = n + 1;
+    }
+  };
+  for (const l of s.lots ?? []) see(l?.id);
+  for (const h of s.households ?? []) {
+    see(h?.id);
+    for (const d of h?.bills?.debts ?? []) see(d?.id);
+  }
+  for (const a of s.agents ?? []) {
+    see(a?.id);
+    see(a?.current?.id);
+    for (const t of a?.queue ?? []) see(t?.id);
+    for (const w of a?.wishes ?? []) see(w?.id);
+  }
+  for (const o of s.objects ?? []) see(o?.id);
+  for (const sec of s.secrets ?? []) see(sec?.id);
+  for (const c of s.arcs ?? []) see(c?.id);
+  for (const o of s.schedule ?? []) see(o?.id);
+  s.nextId = max;
+}
+
 /**
  * Convierte una partida guardada de cualquier versión anterior a la actual.
  * Cada vez que cambie el formato: subir SAVE_VERSION y añadir un paso en MIGRATIONS.
@@ -165,9 +193,27 @@ export function migrate(data: unknown): WorldState {
     throw new Error('Esta partida es de una versión más nueva del juego');
   }
   const s = d as WorldState;
+  syncNextId(s);
   while (s.version < SAVE_VERSION) {
     MIGRATIONS[s.version]?.(s);
     s.version++;
+  }
+  syncNextId(s);
+  for (const a of s.agents) {
+    if (a?.travel && a.travel.arrive === null) a.travel.arrive = Number.POSITIVE_INFINITY;
+  }
+  for (const h of s.households) {
+    const members = Array.isArray(h.memberIds) ? h.memberIds.map((id) => s.agents.find((a) => a.id === id)!).filter(Boolean) : [];
+    const adults = members.filter((m) => m.kind === 'person' && isAdult(m));
+    const young = members.filter((m) => m.kind === 'person' && !isAdult(m));
+    if (adults.length) {
+      for (const k of young) {
+        if (!k.parents?.length) {
+          const kinAdults = adults.filter((p) => getRel(s, k.id, p.id).kin);
+          if (kinAdults.length) k.parents = kinAdults.slice(0, 2).map((p) => p.id);
+        }
+      }
+    }
   }
   validateState(s);
   return s;

@@ -36,8 +36,11 @@ export class TalkPanel extends Part {
       w.state.speed = 0;
       this.renderTalk();
       $('#talk').hidden = false;
-    } else if (this.talking && (!active || active.id !== this.talking.taskId)) {
-      this.closeTalk();
+    } else if (this.talking) {
+      const partner = w.agent(this.talking.tId);
+      if (!active || active.id !== this.talking.taskId || a.id !== this.talking.aId || !partner || partner.travel || partner.lotId !== a.lotId) {
+        this.closeTalk();
+      }
     }
   }
 
@@ -81,7 +84,8 @@ export class TalkPanel extends Part {
     const w = this.world;
     const tk = this.talking;
     if (!tk) return;
-    const a = w.agent(tk.aId)!, t = w.agent(tk.tId)!;
+    const a = w.agent(tk.aId), t = w.agent(tk.tId);
+    if (!a || !t) return this.closeTalk();
     const rel = getRel(w.state, a.id, t.id);
     const pct = Math.round((rel.f + 100) / 2);
     const known = knownText(a, t);

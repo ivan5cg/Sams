@@ -5,6 +5,8 @@ import { bestSecretFor, inventGossip, spreadGossip } from '../gossip';
 import { changeRel, getRel, relKey } from '../social';
 import type { Agent } from '../types';
 import type { World } from '../world';
+import { arcOf } from './arcs';
+import { onBreakUp } from './breakups';
 import { remember } from './social';
 
 /** La familia del jugador se entera de un secreto. */
@@ -115,6 +117,7 @@ export function catchAffair(w: World, cheater: Agent, lover: Agent, betrayed: Ag
       r.status = undefined;
       if (cheater.householdId === betrayed.householdId) r.ex = true;
       remember(w, cheater, betrayed, married ? 'divorcio' : 'ruptura');
+      if (!arcOf(w, cheater.id)) onBreakUp(w, cheater, betrayed, r);
       w.feel(cheater, 'corazon_roto', betrayed.name);
       if (loud) w.toast(`${betrayed.name} ${married ? 'pide el divorcio a' : 'deja a'} ${cheater.name}`, '💔');
     }

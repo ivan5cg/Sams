@@ -2,6 +2,7 @@ import { fresh, vary } from './phrases';
 // Conversaciones interactivas: el jugador elige de qué hablar y el otro reacciona según sus gustos.
 
 import { INTERESTS, INTEREST_LABEL, TOPICS, TOPIC_BY_ID, type Interest, type TopicDef } from '../data/dialogue';
+import { attend } from './relations';
 import { acceptChance, canRomance, changeRel, getRel } from './social';
 import { hasTrait, traitsOf } from './traits';
 import type { Agent } from './types';
@@ -125,6 +126,7 @@ export function converse(world: World, a: Agent, t: Agent, topicId: string): Con
   const df = outcome === 'good' ? 6 + interestBonus : outcome === 'meh' ? 1 : -4;
   const dr = topic.id === 'coquetear' ? (outcome === 'good' ? 8 : outcome === 'bad' ? -4 : 1) : topic.id === 'cumplido' && outcome === 'good' && canRomance(world.state, a, t) ? 1 : 0;
   changeRel(world.state, a.id, t.id, df, dr);
+  if (outcome !== 'bad') attend(world, a, t);
   const social = outcome === 'good' ? 10 : outcome === 'meh' ? 3 : -3;
   a.needs.social = clamp(a.needs.social + social);
   t.needs.social = clamp(t.needs.social + Math.max(2, social));
