@@ -4,7 +4,7 @@
 import { CAREERS } from '../../data/careers';
 import { isOutdoor } from '../../data/lot';
 import { SPECIES } from '../../data/species';
-import { ACCORDION_LINES, ALCOHOL, CAMPAIGN_LINES, CHISMOSA_LINES, GASSY, GLOVO_LINES, RAP_INTRO, RAP_OUTRO, RAP_VERSES, VENDOR_LINES } from '../../data/street';
+import { ACCORDION_LINES, ALCOHOL, BOSS_LINES, CAMPAIGN_LINES, MATE_LINES, CHISMOSA_LINES, GASSY, GLOVO_LINES, RAP_INTRO, RAP_OUTRO, RAP_VERSES, VENDOR_LINES } from '../../data/street';
 import { PANTRY_MAX, TRAVEL_MINUTES } from '../constants';
 import { hasEmotion } from '../emotions';
 import { bestSecretFor } from '../gossip';
@@ -97,6 +97,19 @@ export function roleIdle(w: World, a: Agent) {
     case 'glovo':
       say(GLOVO_LINES, 0.3);
       return idle(3, 5);
+    case 'jefe':
+    case 'colega': {
+      // En la oficina: a su mesa, al café o a dar una vuelta (y a comentar la jugada).
+      say(a.role === 'jefe' ? BOSS_LINES : MATE_LINES, 0.25);
+      const seats = w.objectsIn(a.lotId).filter((o) => ['desk', 'computer', 'dining_table', 'cafe_table', 'bar_counter'].includes(o.def) && w.usersOf(o.id).length < Math.max(1, w.objDef(o).capacity));
+      if (seats.length && Math.random() < 0.5) {
+        const o = seats[Math.floor(Math.random() * seats.length)];
+        const spot = w.interactTiles(o).find((t) => isWalkable(w.gridOf(a.lotId), t.x, t.y));
+        if (spot && beginTask(w, a, { id: w.newId('t'), actionId: 'move', byPlayer: false, phase: 'walking', remaining: 0, dest: spot })) return;
+      }
+      if (Math.random() < 0.3 && wander()) return;
+      return idle(8, 20);
+    }
   }
   idle(5, 10);
 }

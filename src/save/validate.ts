@@ -4,6 +4,7 @@
 
 import { isISODate } from '../sim/date';
 import { ILLNESSES } from '../data/illnesses';
+import { PET_ILLNESSES } from '../data/pets';
 import { DEGREES } from '../data/education';
 import { SKILL_BY_ID } from '../data/skills';
 import { BOOKS } from '../data/skillTree';
@@ -124,7 +125,7 @@ export function validateState(s: WorldState) {
     if (h.bills) {
       for (const d of arr(h.bills.debts, `recibos de ${h.id}`) as NonNullable<typeof h.bills>['debts']) {
         id(d.id, `recibo de ${h.id}`);
-        if (!['alquiler', 'luz', 'agua', 'autonomos'].includes(d.kind)) throw new Broken(`recibo de ${h.id}`);
+        if (!['alquiler', 'luz', 'agua', 'autonomos', 'veterinario'].includes(d.kind)) throw new Broken(`recibo de ${h.id}`);
         num(d.amount, `recibo de ${h.id}`);
         num(d.due, `recibo de ${h.id}`);
       }
@@ -183,7 +184,7 @@ export function validateState(s: WorldState) {
       id(a.travel.from, `viaje de ${a.id}`);
       id(a.travel.to, `viaje de ${a.id}`);
       if (typeof a.travel.arrive !== 'number' || Number.isNaN(a.travel.arrive)) throw new Broken(`viaje de ${a.id}`);
-      if (a.travel.reason !== undefined && !['work', 'school', 'trip', 'jail'].includes(a.travel.reason)) throw new Broken(`viaje de ${a.id}`);
+      if (a.travel.reason !== undefined && !['work', 'school', 'trip', 'jail', 'part', 'event'].includes(a.travel.reason)) throw new Broken(`viaje de ${a.id}`);
       optNum(a.travel.mood, `viaje de ${a.id}`);
     }
     optId(a.via, `metro de ${a.id}`);
@@ -229,7 +230,7 @@ export function validateState(s: WorldState) {
       optId(a.longing.rival, `ex de ${a.id}`);
     }
     if (a.illness) {
-      if (!ILLNESSES[a.illness.id]) throw new Broken(`enfermedad de ${a.id}`);
+      if (!ILLNESSES[a.illness.id] && !PET_ILLNESSES[a.illness.id]) throw new Broken(`enfermedad de ${a.id}`);
       num(a.illness.since, `enfermedad de ${a.id}`);
       num(a.illness.until, `enfermedad de ${a.id}`);
       optNum(a.illness.medicated, `enfermedad de ${a.id}`);
@@ -251,6 +252,15 @@ export function validateState(s: WorldState) {
       optNum(a.job.dayOff, `trabajo de ${a.id}`);
       optNum(a.job.badDays, `trabajo de ${a.id}`);
       optNum(a.job.homeDay, `trabajo de ${a.id}`);
+    }
+    if (a.side) {
+      if (!CAREERS[a.side.career]?.partTime) throw new Broken(`trabajo de medio tiempo de ${a.id}`);
+      num(a.side.level, `trabajo de medio tiempo de ${a.id}`);
+      num(a.side.perf, `trabajo de medio tiempo de ${a.id}`);
+    }
+    if (a.shift) {
+      id(a.shift.lot, `jornada de ${a.id}`);
+      num(a.shift.end, `jornada de ${a.id}`);
     }
     if (a.job?.bar) {
       if (!['barata', 'normal', 'cara'].includes(a.job.bar.menu)) throw new Broken(`bar de ${a.id}`);

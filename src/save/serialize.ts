@@ -137,6 +137,11 @@ const MIGRATIONS: Record<number, (s: WorldState) => void> = {
   },
   // v5 → v6: modo construcción (sin cambios de formato: solo campos nuevos opcionales).
   5: () => {},
+  // v27 → v28: trabajos de medio tiempo, tareas, bajas y vida en la empresa. Los centros de trabajo se crean
+  // la primera vez que hacen falta; aquí, solo los de quien ya trabaja en la familia del jugador.
+  27: (s) => {
+    s.corp = s.corp ?? { companies: {} };
+  },
   // v4 → v5: ciclo de vida. Cada casa recibe sus cunas.
   4: (s) => {
     s.aging = s.aging ?? 'normal';

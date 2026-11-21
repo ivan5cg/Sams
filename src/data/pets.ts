@@ -32,3 +32,44 @@ export const TRICKS: Partial<Record<SpeciesId, string[]>> = {
   ferret: ['Venir cuando le llaman', 'Dar vueltas', 'Hacerse el muerto', 'Saltar', 'La danza de guerra a la orden'],
   capybara: ['Venir cuando le llaman', 'Sentarse', 'Llevar una mandarina en la cabeza', 'Saludar', 'Meditar en el estanque'],
 };
+
+// -----------------------------------------------------------------------------
+// Salud de las mascotas (versión 28): enfermedades, el veterinario y lo que cuesta.
+// -----------------------------------------------------------------------------
+
+export interface PetIllnessDef {
+  id: string;
+  label: string;
+  icon: string;
+  /** Solo la cogen estas especies (si no, todas). */
+  species?: SpeciesId[];
+  /** Lo que cobra el veterinario por el tratamiento (antes de la inflación). */
+  cost: number;
+  /** Días que dura (tratada, la mitad). Las graves no se curan solas. */
+  days: number;
+  /** Se cura sola sin tratar (las leves). */
+  mild?: boolean;
+  /** Probabilidad diaria de morir sin tratar (con tratamiento, mucho menos). */
+  deadly: number;
+  /** Cómo se nota: necesidades que bajan más rápido. */
+  decay: Partial<Record<NeedKey, number>>;
+  /** Lo que dice el veterinario. */
+  vet: string;
+}
+
+export const PET_ILLNESSES: Record<string, PetIllnessDef> = {
+  otitis: { id: 'otitis', label: 'Otitis', icon: '👂', species: ['dog', 'cat'], cost: 90, days: 4, mild: true, deadly: 0, decay: { fun: 1.3 }, vet: 'Unas gotitas dos veces al día y listo' },
+  pulgas: { id: 'pulgas', label: 'Pulgas y parásitos', icon: '🐜', cost: 60, days: 5, mild: true, deadly: 0, decay: { hygiene: 1.8, fun: 1.2 }, vet: 'Pipeta, collar antiparasitario y a lavar toda la casa' },
+  gastro_pet: { id: 'gastro_pet', label: 'Gastroenteritis', icon: '🤢', cost: 180, days: 3, deadly: 0.04, decay: { hunger: 1.6, bladder: 2, energy: 1.3 }, vet: 'Dieta blanda, suero y nada de sobras de la mesa' },
+  calcetin: { id: 'calcetin', label: 'Se ha tragado un calcetín', icon: '🧦', species: ['dog', 'ferret'], cost: 1400, days: 3, deadly: 0.25, decay: { hunger: 1.4, energy: 1.6, fun: 1.5 }, vet: 'Hay que operar ya. Cirugía de urgencia, con anestesia y todo' },
+  moquillo: { id: 'moquillo', label: 'Moquillo', icon: '🤧', species: ['dog', 'ferret'], cost: 650, days: 6, deadly: 0.12, decay: { energy: 1.8, hunger: 1.2 }, vet: 'Es grave. Antibióticos, suero y muchos mimos' },
+  rinones: { id: 'rinones', label: 'Insuficiencia renal', icon: '🫘', species: ['cat'], cost: 900, days: 7, deadly: 0.08, decay: { bladder: 1.8, energy: 1.4, hunger: 1.3 }, vet: 'Pienso renal de por vida, análisis y una medicación carísima' },
+  dientes: { id: 'dientes', label: 'Dientes demasiado largos', icon: '🦷', species: ['guineapig', 'capybara'], cost: 160, days: 4, deadly: 0.05, decay: { hunger: 1.8 }, vet: 'Hay que limarle los dientes con sedación' },
+  golpe_calor: { id: 'golpe_calor', label: 'Golpe de calor', icon: '🥵', cost: 250, days: 2, deadly: 0.1, decay: { energy: 2, hunger: 1.2 }, vet: 'Suero, sombra y agua fresquita. Ha ido por poco' },
+  desnutricion: { id: 'desnutricion', label: 'Desnutrición por descuido', icon: '🦴', cost: 320, days: 5, deadly: 0.15, decay: { hunger: 1.8, energy: 1.5, social: 1.3 }, vet: 'Este animal está muy mal cuidado. Vitaminas, dieta y vigilancia. Si vuelve a pasar, aviso a la protectora' },
+};
+
+/** Probabilidad diaria de ponerse mala (con descuidos y de mayor, más; con la revisión del veterinario, menos). */
+export const PET_SICK_CHANCE = 0.012;
+/** Horas mal cuidada a partir de las que cae la desnutrición. */
+export const NEGLECT_HOURS = 18;

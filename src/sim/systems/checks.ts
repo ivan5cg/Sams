@@ -14,6 +14,9 @@ import { cantMoveOut, freeBed, freeCrib } from './lifecycle';
 import { nearHammock } from './pets';
 import { closedReason, pantryOwner } from './shopping';
 import { skillLevel } from './skills';
+import { WORK_ROLES, checkWorkTask, isWorkLot, jobsOf, taskOptions, workLotId } from './work';
+import { EMOTIONS } from '../../data/emotions';
+import { moodScore } from '../util';
 import { grudge } from './social';
 import { canMediate, canSnitch } from './arcs';
 import { tripReason } from './trips';
@@ -44,6 +47,7 @@ export function speciesOk(w: World, a: Agent, def: ActionDef) {
 }
 
 export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId: string): ActionOption {
+  if (actionId.startsWith('wt_')) return checkWorkTask(w, a, o, actionId);
   const def = ACTIONS[actionId];
   const od = w.objDef(o);
   if (!speciesOk(w, a, def)) return { def, ok: false, reason: `${a.name} no puede hacer esto` };
@@ -91,7 +95,7 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   if (def.cleans && !o.dirt) return { def, ok: false, reason: 'Ya está limpio' };
   if (actionId === 'steal' && nearHammock(w, o)) return { def, ok: false, reason: 'Ya está escondido' };
   if (actionId === 'adopt' && w.members.length >= MAX_MEMBERS) return { def, ok: false, reason: 'La casa está llena' };
-  if (actionId === 'find_job' && !isAdult(a)) return { def, ok: false, reason: 'Primero, el colegio' };
+  if (actionId === 'find_job' && !isAdult(a) && w.stageOf(a) !== 'teen') return { def, ok: false, reason: 'Primero, el colegio' };
   if (actionId === 'find_job' && a.done?.find_job === w.day) return { def, ok: false, reason: 'Hoy ya ha echado currículums: mañana más' };
   const funds = w.householdOf(a)?.funds ?? 0;
   if (def.cost && funds < costOf(w, actionId, a)) return { def, ok: false, reason: 'No hay dinero' };
@@ -142,6 +146,9 @@ export function checkObjectAction(w: World, a: Agent, o: PlacedObject, actionId:
   }
   return { def, ok: true };
 }
+
+/** Lo que se puede hacer con el jefe y los compañeros de trabajo (además de lo suyo). */
+const WORK_SOCIAL = new Set(['chat', 'talk', 'joke', 'gossip_with', 'hug', 'flirt', 'kiss', 'insult', 'argue', 'apologize', 'ask_affair', 'end_affair', 'high_five', 'invite_coffee', 'ask_advice', 'cheer_up', 'confide', 'give_gift']);
 
 export function checkSocialAction(w: World, a: Agent, t: Agent, actionId: string): ActionOption {
   const def = ACTIONS[actionId];
@@ -204,7 +211,22 @@ export function checkSocialAction(w: World, a: Agent, t: Agent, actionId: string
   const relX = getRel(w.state, a.id, t.id);
   // Gente de la calle: solo lo suyo (y charlar).
   if (def.targetRoles && !def.targetRoles.includes(t.role ?? '')) return { def, ok: false };
-  if (t.role && !def.targetRoles && !['chat', 'talk', 'joke', 'gossip_with', 'hug'].includes(actionId)) return { def, ok: false };
+  if (t.role && !def.targetRoles && !['chat', 'talk', 'joke', 'gossip_with', 'hug'].includes(actionId) && !(WORK_ROLES.has(t.role) && WORK_SOCIAL.has(actionId))) return { def, ok: false };
+  // Con el jefe y los compañeros: solo si trabaja allí.
+  if (def.targetRoles?.some((r) => WORK_ROLES.has(r))) {
+    const here = jobsOf(a).some((j) => t.post === workLotId(j.job.career));
+    if (!here) return { def, ok: false };
+  }
+  if (actionId === 'cheer_up' && moodScore(t) >= 45 && !(t.emotions ?? []).some((e) => (EMOTIONS[e.id]?.value ?? 0) < 0)) return { def, ok: false };
+  if (actionId === 'confide' && relX.f < 30) return { def, ok: false, reason: 'Aún no hay tanta confianza' };
+  if (actionId === 'tickle' && relX.f < 20 && !relX.kin) return { def, ok: false };
+  if (actionId === 'vet' || actionId === 'vet_checkup') {
+    if (t.householdId !== a.householdId || !w.isPlayerMember(a)) return { def, ok: false };
+    if (actionId === 'vet' && !t.illness) return { def, ok: false };
+    if (actionId === 'vet' && t.illness?.treated) return { def, ok: false, reason: 'Ya está en tratamiento' };
+    if (actionId === 'vet_checkup' && t.illness) return { def, ok: false };
+    if (actionId === 'vet_checkup' && t.vetCheck !== undefined && w.day - t.vetCheck < 10) return { def, ok: false, reason: 'Ya le han hecho la revisión hace poco' };
+  }
   if (a.role && !['chat', 'joke'].includes(actionId)) return { def, ok: false };
   if (actionId === 'ask_affair') {
     if (relX.status || relX.affair || relX.kin || !canRomance(w.state, a, t)) return { def, ok: false };
@@ -254,6 +276,9 @@ export function checkSelfAction(w: World, a: Agent, actionId: string): ActionOpt
   return { def, ok: true };
 }
 
+/** Lo que se puede hacer con los muebles de un centro de trabajo (además de las tareas). */
+const WORK_LOT_ACTIONS = new Set(['toilet', 'wash_up', 'snack', 'eat', 'sit', 'repair', 'cana', 'vermut', 'chupito', 'calamares', 'bravas', 'tortilla', 'dance', 'listen_music', 'karaoke', 'play_cards']);
+
 /** Opciones para el menú de acciones del agente activo sobre un objetivo. */
 export function optionsFor(w: World, agentId: string, target: Target): ActionOption[] {
   const a = w.agent(agentId);
@@ -261,6 +286,11 @@ export function optionsFor(w: World, agentId: string, target: Target): ActionOpt
   if (target.kind === 'object') {
     const o = w.object(target.id);
     if (!o) return [];
+    // En el trabajo, solo las tareas del día y lo básico (el baño, picar algo, sentarse).
+    if (isWorkLot(w, o.lotId)) {
+      const basic = w.objDef(o).actions.filter((id) => WORK_LOT_ACTIONS.has(id)).map((id) => checkObjectAction(w, a, o, id));
+      return [...taskOptions(w, a, o), ...basic].filter((op) => !op.hidden);
+    }
     return w.objDef(o)
       .actions.filter((id) => speciesOk(w, a, ACTIONS[id]) && (id !== 'repair' || o.broken))
       .map((id) => checkObjectAction(w, a, o, id))

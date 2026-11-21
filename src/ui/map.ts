@@ -89,7 +89,8 @@ export class NeighbourhoodMap extends Part {
     const dist = (id: string) => w.districtOf(id);
     const homeD = dist(w.household.lotId);
     const section = (d: string) => [
-      ...w.state.lots.filter((l) => dist(l.id) === d && l.kind !== 'home').map((l) => l.id),
+      // Los centros de trabajo no salen: se va con quien trabaja allí (perfil → Acompañar al trabajo).
+      ...w.state.lots.filter((l) => dist(l.id) === d && l.kind !== 'home' && l.kind !== 'work').map((l) => l.id),
       ...w.state.lots.filter((l) => dist(l.id) === d && l.kind === 'home' && l.id !== w.household.lotId).map((l) => l.id),
     ];
     const others = ['madrid', 'alcorcon', 'getafe'].filter((d) => d !== homeD && section(d).length);

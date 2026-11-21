@@ -1,4 +1,5 @@
 import type { AgentKind, Needs, SpeciesId } from '../sim/types';
+import { WORK_TASKS } from './work';
 
 export type ActionTarget = 'object' | 'agent' | 'self' | 'tile';
 
@@ -297,6 +298,17 @@ const A: ActionDef[] = [
   { id: 'say_goodbye', label: 'Despedirse', verb: 'Despidiéndose', icon: '👋', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 3, effects: { social: 0.5 }, partnerEffects: { social: 0.5 }, playerOnly: true },
   { id: 'give_gift', label: 'Hacer un regalo (§40)', verb: 'Dando un regalo', icon: '🎁', target: 'agent', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], targetKinds: ['person'], cost: 40, duration: 5, effects: { social: 1, fun: 0.5 }, partnerEffects: { social: 1.5, fun: 2 }, playerOnly: true },
   { id: 'hug', label: 'Abrazar', verb: 'Abrazando', icon: '🤗', target: 'agent', actors: ['person'], targetKinds: ['person'], duration: 4, effects: { social: 2 }, partnerEffects: { social: 2 } },
+  // Más cosas que hacer con la gente (versión 28).
+  { id: 'high_five', label: 'Chocar los cinco', verb: 'Chocando los cinco', icon: '✋', target: 'agent', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], targetKinds: ['person'], duration: 2, effects: { social: 2, fun: 2 }, partnerEffects: { social: 2, fun: 2 } },
+  { id: 'invite_coffee', label: 'Invitar a un café (§3)', verb: 'Tomando un café', icon: '☕', target: 'agent', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], targetKinds: ['person'], cost: 3, duration: 20, effects: { social: 0.9, fun: 0.2, energy: 0.3 }, partnerEffects: { social: 0.9, fun: 0.2, energy: 0.3 }, playerOnly: true },
+  { id: 'ask_advice', label: 'Pedir consejo', verb: 'Pidiendo consejo', icon: '🧭', target: 'agent', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], targetKinds: ['person'], duration: 15, effects: { social: 0.6, fun: 0.1 }, partnerEffects: { social: 0.6 }, playerOnly: true },
+  { id: 'cheer_up', label: 'Animar', verb: 'Animando', icon: '🌈', target: 'agent', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], targetKinds: ['person'], duration: 10, effects: { social: 0.6 }, partnerEffects: { social: 1, fun: 1.5 } },
+  { id: 'tickle', label: 'Hacer cosquillas', verb: 'Haciendo cosquillas', icon: '🤭', target: 'agent', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], targetKinds: ['person'], targetStages: ['child', 'teen', 'young', 'adult', 'elder'], duration: 3, effects: { fun: 2 }, partnerEffects: { fun: 3, social: 1 } },
+  { id: 'confide', label: 'Hacerle una confidencia', verb: 'Contándole algo en secreto', icon: '🤐', target: 'agent', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], targetKinds: ['person'], duration: 15, effects: { social: 1, fun: 0.2 }, partnerEffects: { social: 1 }, playerOnly: true },
+  // Con el jefe y los compañeros de trabajo.
+  { id: 'suck_up', label: 'Hacerle la pelota', verb: 'Haciendo la pelota', icon: '🫡', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['jefe'], duration: 8, effects: { social: 0.4 }, partnerEffects: { social: 0.5 }, playerOnly: true, daily: true },
+  { id: 'ask_promotion', label: 'Pedir un ascenso', verb: 'Pidiendo un ascenso', icon: '📈', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['jefe'], duration: 15, effects: {}, playerOnly: true, daily: true },
+  { id: 'complain_boss', label: 'Ponerle verde al jefe', verb: 'Criticando al jefe', icon: '🤬', target: 'agent', actors: ['person'], targetKinds: ['person'], targetRoles: ['colega'], duration: 10, effects: { social: 0.8, fun: 0.6 }, partnerEffects: { social: 0.8, fun: 0.6 } },
 
   // --- Social: persona → mascota ---
   { id: 'pet_animal', label: 'Acariciar', verb: 'Acariciando', icon: '🤚', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 8, effects: { social: 0.4, fun: 0.1 }, partnerEffects: { social: 1.6 } },
@@ -306,6 +318,14 @@ const A: ActionDef[] = [
   { id: 'walk_dog', label: 'Sacar a pasear', verb: 'De paseo', icon: '🦮', target: 'agent', actors: ['person'], targetKinds: ['pet'], targetSpecies: ['dog'], duration: 45, effects: { fun: 0.3, social: 0.2, energy: -0.1 }, partnerEffects: { fun: 0.8, bladder: 4, social: 0.5, energy: -0.15 }, offLot: true },
   { id: 'bathe_pet', label: 'Bañar', verb: 'Bañando', icon: '🫧', target: 'agent', actors: ['person'], targetKinds: ['pet'], targetSpecies: ['dog', 'cat', 'ferret'], duration: 15, effects: { hygiene: -0.3 }, partnerEffects: { hygiene: 6, fun: -0.2 } },
   { id: 'brush_capy', label: 'Cepillar', verb: 'Cepillando', icon: '🪮', target: 'agent', actors: ['person'], targetKinds: ['pet'], targetSpecies: ['capybara'], duration: 15, effects: { fun: 0.3, social: 0.3 }, partnerEffects: { hygiene: 3, social: 1 } },
+  // Más cosas con las mascotas (versión 28).
+  { id: 'give_treat', label: 'Darle una chuche (§3)', verb: 'Dando una chuche', icon: '🦴', target: 'agent', actors: ['person'], targetKinds: ['pet'], cost: 3, duration: 3, effects: { fun: 0.6 }, partnerEffects: { hunger: 4, fun: 2, social: 1 }, playerOnly: true },
+  { id: 'cuddle_pet', label: 'Achuchar', verb: 'Achuchando', icon: '🫂', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 6, effects: { social: 0.6, fun: 0.4 }, partnerEffects: { social: 2.5, fun: 0.5 } },
+  { id: 'brush_pet', label: 'Cepillarle el pelo', verb: 'Cepillando', icon: '🪮', target: 'agent', actors: ['person'], targetKinds: ['pet'], targetSpecies: ['dog', 'cat', 'ferret', 'guineapig'], duration: 10, effects: { fun: 0.3 }, partnerEffects: { hygiene: 3, social: 1 } },
+  { id: 'photo_pet', label: 'Hacerle fotos', verb: 'Haciendo fotos', icon: '📸', target: 'agent', actors: ['person'], actorStages: ['child', 'teen', 'young', 'adult', 'elder'], targetKinds: ['pet'], duration: 5, effects: { fun: 1.5 }, partnerEffects: { social: 0.5 } },
+  { id: 'baby_talk', label: 'Hablarle con voz de bebé', verb: 'Hablando con voz de bebé', icon: '🍼', target: 'agent', actors: ['person'], targetKinds: ['pet'], duration: 5, effects: { fun: 0.8, social: 0.4 }, partnerEffects: { social: 1.8 } },
+  { id: 'vet', label: 'Llevar al veterinario', verb: 'En el veterinario', icon: '🏥', target: 'agent', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], targetKinds: ['pet'], duration: 40, effects: {}, partnerEffects: {}, playerOnly: true },
+  { id: 'vet_checkup', label: 'Revisión en el veterinario (§60)', verb: 'En la revisión', icon: '🩺', target: 'agent', actors: ['person'], actorStages: ['teen', 'young', 'adult', 'elder'], targetKinds: ['pet'], cost: 60, duration: 30, effects: {}, partnerEffects: {}, playerOnly: true },
 
   // --- Social: mascota → persona ---
   { id: 'beg_affection', label: 'Pedir mimos', verb: 'Pidiendo mimos', icon: '🥺', target: 'agent', actors: ['pet'], species: PETS_FREE, targetKinds: ['person'], duration: 8, effects: { social: 1.6 }, partnerEffects: { social: 0.3, fun: 0.2 } },
@@ -331,6 +351,11 @@ const A: ActionDef[] = [
   { id: 'idle', label: 'Esperar', verb: 'Pensando', icon: '💭', target: 'self', actors: ['person', 'pet'], duration: 15, effects: {}, interruptible: true, playerOnly: true },
   { id: 'pass_out', label: 'Desmayarse', verb: 'Agotado en el suelo', icon: '😵', target: 'self', actors: ['person', 'pet'], duration: 300, effects: { energy: 0.5 }, until: { energy: 40 }, forced: true, playerOnly: true },
 ];
+
+// Las tareas del trabajo (una acción por tarea, en los muebles del centro de trabajo).
+for (const t of Object.values(WORK_TASKS)) {
+  A.push({ id: `wt_${t.id}`, label: t.label, verb: t.verb, icon: t.icon, target: 'object', actors: ['person'], duration: t.minutes, effects: { fun: -0.03, energy: -0.02 }, playerOnly: true, guestOk: true });
+}
 
 export const ACTIONS: Record<string, ActionDef> = Object.fromEntries(A.map((a) => [a.id, a]));
 

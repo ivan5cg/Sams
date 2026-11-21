@@ -89,6 +89,7 @@ export function arrive(w: World, a: Agent) {
   a.travel = undefined;
   if (reason === 'trip') backFromTrip(w, a);
   else if (reason === 'jail') backFromJail(w, a);
+  else if (reason === 'event') w.feel(a, 'evento_empresa');
   else if (reason) finishShift(w, a, reason, mood ?? 50);
   a.lotId = to;
   w.emit({ type: 'door', lotId: to });

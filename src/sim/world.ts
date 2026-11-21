@@ -29,6 +29,7 @@ import * as Shopping from './systems/shopping';
 import * as Build from './systems/build';
 import * as Pets from './systems/pets';
 import * as Jobs from './systems/jobs';
+import * as Work from './systems/work';
 import * as Calendar from './systems/calendar';
 import * as Lifecycle from './systems/lifecycle';
 import * as Travel from './systems/travel';
@@ -105,6 +106,10 @@ export class World {
   blackoutChance = 0.04;
   /** Probabilidad de dilema por jornada (los tests la cambian). */
   dilemmaChance = 0.35;
+  /** Multiplica lo que pasa en las empresas: eventos, drama, fusiones... (los tests la ponen a 0). */
+  corpChance = 1;
+  /** Despedir a alguien de uno de sus trabajos (lo usan los sistemas de la vida en la empresa). */
+  fireFor = (a: Agent, which: 'job' | 'side', why: string, pay = 0) => Jobs.fire(this, a, why, which, pay);
 
   // Estado interno de los sistemas (no se guarda en la partida)
   /** Rejilla de casillas transitables de cada parcela (se recalcula al construir). */
@@ -522,6 +527,50 @@ export class World {
     if (this.household.memberIds.includes(id)) this.state.activeAgentId = id;
   }
 
+  /** Acompañar a alguien al trabajo (ahora, si ya está en su jornada, o en la próxima). */
+  escort(a: Agent, which: 'job' | 'side' = 'job'): string {
+    return Work.escort(this, a, which);
+  }
+
+  escortReason(a: Agent, which: 'job' | 'side' = 'job'): string | undefined {
+    return Work.escortReason(this, a, which);
+  }
+
+  /** Respuesta a la invitación a un evento de empresa. */
+  answerInvite(choice: 'solo' | 'contigo' | 'no') {
+    Work.answerInvite(this, choice, this.fireFor);
+  }
+
+  /** Ponerle nombre al bebé recién nacido. */
+  nameBaby(name: string): string | undefined {
+    return Work.nameBaby(this, name);
+  }
+
+  /** Preguntas al jugador que nadie ha contestado: se quedan con la opción por defecto. */
+  expirePrompt() {
+    const p = this.state.prompt;
+    if (!p || this.state.minutes < p.until) return;
+    if (p.kind === 'event') this.answerInvite('no');
+    else this.state.prompt = undefined;
+  }
+
+  /**
+   * El tiempo vuela cuando no hay nadie con quien jugar: si todos (los que no son bebés) están trabajando o en clase,
+   * muy rápido hasta que vuelva alguien; si los que quedan están durmiendo, rápido hasta que se despierte alguien.
+   */
+  autoSpeed(): { mult: number; why: 'trabajo' | 'sueño' } | null {
+    if (this.state.prompt || this.state.dilemma || this.state.familyGone || this.ui.building) return null;
+    const people = this.members.filter((m) => m.kind === 'person' && this.stageOf(m) !== 'baby');
+    if (!people.length) return null;
+    let away = 0;
+    for (const m of people) {
+      const r = m.travel?.reason;
+      if (r === 'work' || r === 'school' || r === 'part') away++;
+      else if (!(!m.travel && m.current?.phase === 'acting' && ['sleep', 'nap_bed', 'pass_out'].includes(m.current.actionId))) return null;
+    }
+    return away === people.length ? { mult: 60, why: 'trabajo' } : { mult: 25, why: 'sueño' };
+  }
+
   /** Envejecimiento: sin envejecer, normal o rápido. */
   setAging(mode: 'off' | 'normal' | 'fast') {
     this.state.aging = mode;
@@ -544,7 +593,11 @@ export class World {
   step(dt: number) {
     const before = this.state.minutes;
     this.state.minutes += dt;
-    if (Math.floor(this.state.minutes / MINUTES_PER_DAY) !== Math.floor(before / MINUTES_PER_DAY)) Calendar.newDay(this);
+    if (Math.floor(this.state.minutes / MINUTES_PER_DAY) !== Math.floor(before / MINUTES_PER_DAY)) {
+      Calendar.newDay(this);
+      Work.corpDaily(this, this.fireFor);
+      Pets.petHealthDay(this);
+    }
     const newHour = Math.floor(this.state.minutes / 60) !== Math.floor(before / 60);
 
     // Llegadas
@@ -565,6 +618,8 @@ export class World {
     Lifecycle.births(this);
     Shopping.checkDelivery(this);
     for (const a of this.state.agents) if (!a.travel) Jobs.checkShift(this, a);
+    Work.shiftTick(this, (a, reason, mood, visible) => Jobs.finishShift(this, a, reason, mood, visible));
+    this.expirePrompt();
 
     const detailed = this.detailedLots();
     for (const a of this.state.agents) {
@@ -584,6 +639,8 @@ export class World {
   /** Cada hora: fiestas, eventos, la calle, el cuerpo, metas, tiendas, y vecinos que salen o vienen de visita. */
   hourly() {
     for (const a of this.state.agents) pruneEmotions(a, this.state.minutes);
+    Work.eventHour(this);
+    Pets.petCareHour(this);
     Party.partyHour(this);
     Calendar.eventsHour(this);
     Illness.hourlyContagion(this);
@@ -751,7 +808,10 @@ export class World {
       } else {
         const isActive = this.isActive(a);
         const urgent = Math.min(...NEED_KEYS.map((k) => a.needs[k])) < 20;
-        if (!isActive || urgent) {
+        // En el trabajo, si no le manda el jugador, se pone con las tareas que quedan.
+        const work = !isActive && !urgent && a.shift ? Work.nextAutoTask(this, a) : undefined;
+        if (work) Tasks.beginTask(this, a, { id: this.newId('t'), byPlayer: false, phase: 'walking', remaining: 0, ...work });
+        else if (!isActive || urgent) {
           const choice = chooseAutonomous(this, a, isActive);
           if (choice) Tasks.beginTask(this, a, { id: this.newId('t'), byPlayer: false, phase: 'walking', remaining: 0, ...choice });
           else if (!isActive) this.idle(a);
@@ -847,7 +907,8 @@ export class World {
     const limit = baby ? 360 : MINUTES_PER_DAY;
     if (a.starving === dt && this.isPlayerMember(a)) this.toast(`¡${a.name} está muriéndose de hambre!`, '🆘', a.id);
     if (a.starving < limit) return false;
-    Lifecycle.die(this, a, baby ? 'social' : a.kind === 'pet' ? 'runaway' : 'hunger');
+    // Una mascota muerta de hambre a veces se escapa en busca de comida... y a veces no lo cuenta.
+    Lifecycle.die(this, a, baby ? 'social' : a.kind === 'pet' ? (Math.random() < 0.4 ? 'runaway' : 'hunger') : 'hunger');
     return true;
   }
 
@@ -985,10 +1046,10 @@ export class World {
   resolveDilemma(index: number) {
     return Jobs.resolveDilemma(this, index);
   }
-  quitJob(a: Agent) {
-    return Jobs.quitJob(this, a);
+  quitJob(a: Agent, which: 'job' | 'side' = 'job') {
+    return Jobs.quitJob(this, a, which);
   }
-  finishShift(a: Agent, reason: 'work' | 'school', mood: number) {
+  finishShift(a: Agent, reason: 'work' | 'school' | 'part', mood: number) {
     return Jobs.finishShift(this, a, reason, mood);
   }
 

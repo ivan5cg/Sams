@@ -178,6 +178,34 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
 - **Negocio propio** (bar de tapas, §2.500 para montarlo): las ganancias cambian cada día (a veces no entra ni el
   tato) y cada lunes toca pagar la **cuota de autónomos**.
 
+## La vida en el trabajo
+
+- **Trabajar y estudiar a la vez**: hay trabajos de **medio tiempo** (dependiente/a de tarde, reparto a domicilio,
+  camarero/a de fin de semana, teleoperador/a, clases particulares) que se compaginan con el colegio, el instituto o
+  la universidad. Los adolescentes ya pueden coger la mayoría. Si un trabajo de jornada completa choca de horario con
+  el de medio tiempo, se deja el de medio tiempo.
+- **Tareas de cada jornada**: cada profesión tiene las suyas (en banca: sacar informes, revisar operaciones, cuadrar
+  la caja, firmar una hipoteca...; en el hospital, pasar consulta y la ronda de planta...). Si va solo, las hace (o
+  no) según su ánimo y lo que sabe; si no las hace, baja el rendimiento.
+- **Acompañarle al trabajo** (perfil → 🏢 Acompañar al trabajo): vas con él o ella a su centro de trabajo, con su
+  jefe y sus compañeros, y haces tú las tareas tocando los muebles que toca (el ordenador, la mesa de reuniones, la
+  camilla...). Si se va antes de su hora, al jefe no le hace ninguna gracia.
+- **Jefe y compañeros**: se puede charlar, ligar, pedir consejo o invitar a un café; y con el jefe, **hacerle la
+  pelota** o **pedir un ascenso** (sale si rinde y le cae bien). Ponerle verde delante de quien no debes... llega.
+- **Ascensos** al llegar al 100 % de rendimiento... salvo que se lo lleve **el enchufado** (el sobrino del jefe) o que
+  el jefe no le trague.
+- **Bajas**: por **maternidad y paternidad** al nacer un bebé (cobrando entero) y por **enfermedad** con el parte del
+  médico (cobrando el 75 %).
+- **Amonestaciones y despidos**: faltar sin avisar o no hacer su trabajo da una amonestación; a la tercera, a la
+  calle (se olvida una cada semana sin incidentes).
+- **Vida corporativa**: afterworks, comidas de empresa y la **cena de Navidad** (en diciembre). Puede ir por su cuenta
+  (y volver con salseo), no ir... o **ir con él/ella** y jugarlo en el restaurante con todo el equipo. Emborracharse,
+  insultar al jefe o liarse con alguien delante de todos puede costar el puesto. Y hay drama, líos en la oficina,
+  enchufes y **fusiones**: si compran la empresa, hay ERE (con indemnización).
+- **El tiempo vuela**: si todos los de casa están trabajando o en clase, el tiempo pasa muy rápido hasta que vuelva
+  alguien; si todos duermen, pasa rápido hasta que se despierte alguien.
+- Al nacer un bebé, **se le pone nombre**.
+
 ## Estaciones y eventos (con el calendario de verdad)
 
 - **La partida empieza en la fecha de hoy y cada día de juego es un día del calendario.** Arriba se ve la hora y
@@ -278,6 +306,12 @@ Además de vuestra casa hay **9 familias vecinas** en Madrid (generadas al azar,
   cómo son, comida, dinero, su meta de vida, lo que se le da bien, sus hijos, refranes y lo que le gusta al otro.
   Duran de 2 a 4 frases y la respuesta depende de cómo es y cómo está quien contesta (el gruñón pasa, el cuñado
   añade lo suyo, la cotilla pide más). Y cada frase se recuerda para no volver a oírla en mucho tiempo.
+- **Conversaciones que siguen el hilo**: después de cada respuesta salen preguntas para continuar (↪): «¿Y eso?
+  ¡Cuéntame!», «¿Y qué tal con tu jefe?», «¿Me pasas la receta?», «¡Otro, otro!»... y si metes la pata, «Perdona,
+  no quería molestarte». Preguntar por el **trabajo**, la **familia** o los **planes**, o **recordar algo que
+  vivisteis**, se responde con lo que le pasa de verdad (su puesto y su empresa, su pareja y sus hijos, su mascota...).
+- **Más interacciones**: chocar los cinco, invitar a un café, pedir consejo (según cómo es quien lo da), animar a
+  quien está de bajón, hacer cosquillas y hacer una confidencia (ojo si se la cuentas a una cotilla).
 
 - Los personajes **hablan**: en las interacciones salen bocadillos con frases (charlas, chistes, coqueteos,
   discusiones...), las mascotas hacen sus ruidos ("¡Guau!", "Miau", "¡Uic, uic!", "¡Dook, dook!") y, cuando algo
@@ -590,6 +624,15 @@ en número y un ⚠ cuando están bajas, no solo el color; las emociones llevan 
 - En ☰ → **🔊 Sonido**: quitarlo del todo o ajustar efectos, ambiente y música. Con la pantalla apagada se para.
 
 ## Mascotas
+
+- **Salud**: se ponen malas (otitis, pulgas, gastroenteritis, moquillo, se tragan un calcetín, golpes de calor,
+  dientes largos en las cobayas...) y más si están **descuidadas** (con hambre, sucias o solas mucho tiempo, que
+  acaba en desnutrición). Las graves, sin tratar, **pueden morir**.
+- **Veterinario** (tocar a la mascota → Llevar al veterinario): cura, pero las facturas son caras (una operación de
+  urgencia pasa de §1.400). Si no hay dinero, se paga lo que hay y el resto queda **a deber** con la clínica. La
+  **revisión** (§60) hace que se pongan malas mucho menos durante diez días.
+- Más cosas que hacer con ellas: darles una chuche, achucharlas, cepillarles el pelo, hacerles fotos y hablarles con
+  voz de bebé.
 
 Se adoptan en la protectora desde el **ordenador** de casa (máximo 8 miembros en la familia).
 

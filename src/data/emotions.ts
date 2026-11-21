@@ -108,6 +108,16 @@ const E: EmotionDef[] = [
   { id: 'cuota', label: 'Ha pagado la cuota de autónomos', icon: '🧾', value: -6, hours: 12, thoughts: ['Trabajo para pagar la cuota'] },
   { id: 'mal_dia_curro', label: 'Mal día en el trabajo', icon: '😒', value: -8, hours: 6, likes: { watch_tv: 1.4, nap_sofa: 1.3 } },
   { id: 'resaca', label: 'Resaca', icon: '🤕', value: -6, hours: 8, likes: { nap_sofa: 1.8, sleep: 1.3, dance: 0.3 }, thoughts: ['No vuelvo a beber', 'Que no me hablen alto'] },
+  // --- La vida en el trabajo y las mascotas (versión 28) ---
+  { id: 'amonestado', label: 'Le han dado un toque en el trabajo', icon: '📝', value: -8, hours: 24, thoughts: ['Como me dé otro, me echan', 'Mañana llego puntual, lo juro'] },
+  { id: 'enchufado', label: 'El ascenso se lo ha llevado el enchufado', icon: '🔌', value: -12, hours: 36, thoughts: ['Qué asco de empresa', 'Si es que hay que ser sobrino de alguien'] },
+  { id: 'tareas_hechas', label: 'Lo ha bordado en el trabajo', icon: '✅', value: 8, hours: 8, thoughts: ['Hoy no se me ha escapado ni una'] },
+  { id: 'evento_empresa', label: 'Se lo ha pasado bien con los compañeros', icon: '🍻', value: 10, hours: 12, thoughts: ['Al final mis compañeros son majos'] },
+  { id: 'de_baja', label: 'De baja: a cuidarse', icon: '🩹', value: 3, hours: 24, thoughts: ['Hoy toca sofá y caldito'] },
+  { id: 'rumor_ere', label: 'Rumores de ERE en la empresa', icon: '😰', value: -10, hours: 48, thoughts: ['¿Me tocará a mí?', 'Dicen que van a echar a la mitad'] },
+  { id: 'mascota_mala', label: 'Su mascota está malita', icon: '🤒', value: -8, hours: 24, thoughts: ['Pobrecito... a ver qué dice el veterinario'] },
+  { id: 'factura_vet', label: 'La factura del veterinario', icon: '💸', value: -8, hours: 24, thoughts: ['¿Cuánto? ¿Pero esto qué es, un hospital privado?'] },
+  { id: 'mimado', label: 'Ha mimado a su mascota', icon: '🐾', value: 5, hours: 3 },
 ];
 
 export const EMOTIONS: Record<string, EmotionDef> = Object.fromEntries(E.map((e) => [e.id, e]));

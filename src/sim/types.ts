@@ -55,9 +55,13 @@ export interface Agent {
   /** Parcela en la que está. */
   lotId: string;
   /** De camino a otra parcela (o en el trabajo / el colegio, que no se ven). */
-  travel?: { from: string; to: string; arrive: number; reason?: 'work' | 'school' | 'trip' | 'jail'; mood?: number };
+  travel?: { from: string; to: string; arrive: number; reason?: 'work' | 'school' | 'trip' | 'jail' | 'part' | 'event'; mood?: number };
   /** Trabajo o colegio. */
   job?: Job;
+  /** Trabajo a medio tiempo (se compagina con los estudios). Desde la versión 28. */
+  side?: Job;
+  /** En su centro de trabajo, a la vista (porque le has acompañado): hasta cuándo y qué jornada es. */
+  shift?: { lot: string; end: number; reason: 'work' | 'part'; mood: number };
   /** Minutos seguidos con el hambre a cero. */
   starving?: number;
   /** Habilidades (0 a 10, con decimales). */
@@ -129,6 +133,9 @@ export interface Agent {
   petTrait?: string;
   training?: number;
   tricks?: string[];
+  /** Mascotas: horas seguidas mal cuidadas (hambre, suciedad, sola) y día de la última revisión del veterinario. */
+  neglect?: number;
+  vetCheck?: number;
 }
 
 export interface Wish {
@@ -163,7 +170,41 @@ export interface Job {
   homeDay?: number;
   /** El negocio propio: cómo se lleva el bar (desde la versión 12). */
   bar?: BarPlan;
+  /** Tareas de la jornada (desde la versión 28): qué día y cuáles están hechas. */
+  tasks?: { day: number; list: { id: string; done: boolean }[] };
+  /** Amonestaciones (con tres, a la calle) y el día de la última. */
+  strikes?: number;
+  strikeDay?: number;
+  /** De baja (maternidad, paternidad o enfermedad) hasta ese día, incluido. */
+  leave?: { kind: 'maternidad' | 'paternidad' | 'enfermedad'; until: number };
+  /** Día en que el jugador le acompaña al trabajo. */
+  escort?: number;
+  /** Día en que empezó en esta empresa. */
+  since?: number;
 }
+
+/** Lo que pasa en las empresas donde trabaja la familia (desde la versión 28). */
+export interface CorpState {
+  companies: Record<string, {
+    /** Nombre (cambia si la compran). */
+    name: string;
+    /** Fusión anunciada: con quién y el día del ERE. */
+    merger?: { buyer: string; day: number };
+    /** El enchufado (id). */
+    nephew?: string;
+    /** Último día de cada tipo de evento. */
+    last?: Record<string, number>;
+    /** Año de la última cena de Navidad. */
+    xmas?: number;
+  }>;
+  /** Evento de empresa en marcha al que ha ido la familia (se juega). */
+  event?: { kind: 'afterwork' | 'comida' | 'navidad'; career: string; lot: string; until: number; guest: string; improper?: boolean };
+}
+
+/** Algo que se le pregunta al jugador (con el tiempo parado en la interfaz). */
+export type Prompt =
+  | { kind: 'naming'; agentId: string; until: number }
+  | { kind: 'event'; event: 'afterwork' | 'comida' | 'navidad'; agentId: string; career: string; until: number };
 
 /** Decisiones del bar de tapas (se cambian una vez por semana). */
 export interface BarPlan {
@@ -262,7 +303,7 @@ export interface Household {
   };
 }
 
-export type BillKind = 'alquiler' | 'luz' | 'agua' | 'autonomos';
+export type BillKind = 'alquiler' | 'luz' | 'agua' | 'autonomos' | 'veterinario';
 
 /** Un recibo sin pagar. */
 export interface Debt {
@@ -284,8 +325,10 @@ export interface Lot {
   id: string;
   name: string;
   /** home = casa de una familia; park/venue = sitios públicos (parque, estudio de pilates). */
-  kind: 'home' | 'park' | 'venue';
-  layout: 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market' | 'padel';
+  kind: 'home' | 'park' | 'venue' | 'work';
+  layout: 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market' | 'padel' | 'office';
+  /** Centro de trabajo de esa profesión (desde la versión 28; 'evento' = el restaurante de las cenas de empresa). */
+  work?: string;
   /** Barrio: Madrid (por defecto), Alcorcón o el propio metro. */
   district?: 'madrid' | 'alcorcon' | 'getafe' | 'metro';
   householdId?: string;
@@ -362,6 +405,10 @@ export interface WorldState {
   arcs?: Arc[];
   /** La economía del país y la bolsa (desde la versión 26). */
   economy?: EconomyState;
+  /** Las empresas y sus eventos (desde la versión 28). */
+  corp?: CorpState;
+  /** Pregunta pendiente al jugador: el nombre del bebé, si va a la cena de empresa... */
+  prompt?: Prompt;
   objects: PlacedObject[];
 }
 

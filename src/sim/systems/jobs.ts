@@ -2,14 +2,14 @@
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
 import { coworkerDay } from '../relations';
-import { BAR_MENUS, BAR_STAFF, CAREERS, gradeLabel, workDays } from '../../data/careers';
+import { BAR_MENUS, BAR_STAFF, CAREERS, gradeLabel, scheduleText, workDays, type Career } from '../../data/careers';
 import { DILEMMAS, DILEMMA_BY_ID, type DilemmaOption } from '../../data/dilemmas';
 import { hasTrait } from '../traits';
 import { CAREER_SKILL, MAX_SKILL } from '../../data/skills';
 import { MINUTES_PER_DAY } from '../constants';
 import { degreeReason, schoolDay, startLevel } from './education';
 import { isAdult } from '../social';
-import type { Agent, BarPlan } from '../types';
+import type { Agent, BarPlan, Job } from '../types';
 import { clamp, moodScore, rand } from '../util';
 import type { World } from '../world';
 import { money } from './money';
@@ -17,16 +17,44 @@ import { incomeTax } from '../../data/economy';
 import { skillLevel } from './skills';
 import { startTravel } from './travel';
 import { priced, taxMult, wage } from './economy';
+import { afterShift, assignTasks, companyName, ensureWorkplace, hasWorkplace, leaveDay, promotionVerdict, settleTasks, startVisibleShift, strike } from './work';
+
+/** ¿Se pisan los horarios de dos trabajos? */
+function clash(a: Career, b: Career): boolean {
+  return a.days.some((d) => b.days.includes(d)) && a.start < b.end && b.start < a.end;
+}
 
 export function setJob(w: World, a: Agent, careerId: string) {
   const c = CAREERS[careerId];
-  if (!c || c.school || !isAdult(a)) return;
+  if (!c || c.school) return;
+  const teen = w.stageOf(a) === 'teen';
+  if (!isAdult(a) && !(teen && c.teens)) {
+    if (w.isPlayerMember(a) && teen) w.toast(`${a.name} aún va al instituto: puede buscar algo de medio tiempo`, '🎒');
+    return;
+  }
   const needs = degreeReason(a, careerId);
   if (needs) {
     if (w.isPlayerMember(a)) w.toast(`${a.name} no puede trabajar de ${c.name.toLowerCase()}: ${needs.toLowerCase()}`, '🎓');
     return;
   }
+  const mine = w.isPlayerMember(a);
+  if (c.partTime) {
+    // Medio tiempo: se compagina con los estudios (si tenía un trabajo de jornada completa que choca, lo deja).
+    const full = a.job && !CAREERS[a.job.career]?.school ? CAREERS[a.job.career] : undefined;
+    if (full && clash(full, c)) {
+      a.job = undefined;
+      if (mine) w.toast(`${a.name} deja el trabajo de ${full.name.toLowerCase()}: el horario no cuadra`, '📦');
+    }
+    a.side = { career: careerId, level: 1, perf: 0, since: w.day };
+    if (mine) ensureWorkplace(w, careerId);
+    if (mine) w.toast(`¡${a.name} tiene un trabajo de medio tiempo! ${c.levels[0].title}: §${wage(w, c.levels[0].pay)} por jornada (${scheduleText(c)})${a.study || a.job?.career === 'school' ? '. Se compagina con los estudios' : ''}`, c.icon);
+    return;
+  }
   if (a.study) a.study = undefined;
+  if (a.side && clash(CAREERS[a.side.career], c)) {
+    if (mine) w.toast(`${a.name} deja el trabajo de ${CAREERS[a.side.career].name.toLowerCase()}: el horario no cuadra`, '📦');
+    a.side = undefined;
+  }
   const h = w.householdOf(a);
   if (c.startup) {
     if (!h || h.funds < priced(w, c.startup)) {
@@ -34,24 +62,31 @@ export function setJob(w: World, a: Agent, careerId: string) {
       return;
     }
     money(w, h, -priced(w, c.startup), 'negocio');
-    a.job = { career: careerId, level: 1, perf: 0 };
+    a.job = { career: careerId, level: 1, perf: 0, since: w.day };
     w.feel(a, 'jefe_propio');
     w.toast(`¡${a.name} monta su propio negocio: ${c.levels[0].title}! (−§${priced(w, c.startup)}). Ojo: cada lunes, cuota de autónomos`, c.icon);
     w.addNews(`${a.name} ha abierto un bar en el barrio. Dicen que las bravas pican de verdad`, [a.id]);
     return;
   }
   const lvl = startLevel(a, careerId);
-  a.job = { career: careerId, level: lvl, perf: 0 };
-  w.toast(`¡${a.name} tiene trabajo! ${c.levels[lvl - 1].title} (§${wage(w, c.levels[lvl - 1].pay)} por jornada)${lvl > 1 ? ', gracias a su carrera' : ''}`, c.icon);
+  a.job = { career: careerId, level: lvl, perf: 0, since: w.day };
+  if (mine) ensureWorkplace(w, careerId);
+  w.toast(`¡${a.name} tiene trabajo! ${c.levels[lvl - 1].title} (§${wage(w, c.levels[lvl - 1].pay)} por jornada)${lvl > 1 ? ', gracias a su carrera' : ''}${mine && hasWorkplace(careerId) ? ` en ${companyName(w, careerId)}` : ''}`, c.icon);
 }
 
-/** Despido: tres jornadas seguidas rindiendo fatal. */
-export function fire(w: World, a: Agent) {
-  const c = a.job && CAREERS[a.job.career];
-  a.job = undefined;
+/** Despido (por faltas, por no hacer su trabajo, por un ERE, por portarse mal...). `pay`: la indemnización. */
+export function fire(w: World, a: Agent, why = '', which: 'job' | 'side' = 'job', pay = 0) {
+  const job = which === 'side' ? a.side : a.job;
+  const c = job && CAREERS[job.career];
+  if (which === 'side') a.side = undefined;
+  else a.job = undefined;
+  if (a.shift && (a.shift.reason === 'part') === (which === 'side')) a.shift = undefined;
   w.feel(a, 'despedido');
-  if (w.isPlayerMember(a)) w.toast(c?.business ? `El negocio de ${a.name} ha tenido que cerrar` : `¡Han despedido a ${a.name}! Toca buscar otro trabajo`, '📦');
-  w.addNews(c?.business ? `ha cerrado el bar de ${a.name}` : `han despedido a ${a.name}`, [a.id]);
+  if (pay > 0) money(w, w.householdOf(a), pay, 'indemnizacion');
+  if (w.isPlayerMember(a)) {
+    w.toast(c?.business ? `El negocio de ${a.name} ha tenido que cerrar` : `¡Han despedido a ${a.name}${why ? ` por ${why}` : ''}!${pay > 0 ? ` Indemnización: §${pay}.` : ''} Toca buscar otro trabajo`, '📦', a.id);
+  }
+  w.addNews(c?.business ? `ha cerrado el bar de ${a.name}` : `han despedido a ${a.name}${why ? ` por ${why}` : ''}`, [a.id]);
 }
 
 /** A veces, al empezar la jornada, surge algo que hay que decidir. */
@@ -100,25 +135,40 @@ export function resolveDilemma(w: World, index: number) {
   w.toast(res.text.replace('{name}', a.name), opt.icon);
 }
 
-export function quitJob(w: World, a: Agent) {
+export function quitJob(w: World, a: Agent, which: 'job' | 'side' = 'job') {
+  if (which === 'side') {
+    if (!a.side) return;
+    a.side = undefined;
+    if (a.shift?.reason === 'part') a.shift = undefined;
+    w.toast(`${a.name} ha dejado el trabajo de medio tiempo`, '📦');
+    return;
+  }
   if (!a.job || CAREERS[a.job.career].school) return;
   a.job = undefined;
+  if (a.shift?.reason === 'work') a.shift = undefined;
   w.toast(`${a.name} ha dejado el trabajo`, '📦');
 }
 
-/** A su hora, cada uno se va al trabajo o al colegio (y vuelve a casa al salir). */
+/** A su hora, cada uno se va al trabajo o al colegio (y vuelve a casa al salir). También el de medio tiempo. */
 export function checkShift(w: World, a: Agent) {
-  const job = a.job;
-  if (!job || job.lastShiftDay === w.day) return;
+  if (a.role) return;
+  if (a.job) checkOne(w, a, a.job, 'job');
+  if (a.side && !a.travel && !a.shift) checkOne(w, a, a.side, 'side');
+}
+
+function checkOne(w: World, a: Agent, job: Job, which: 'job' | 'side') {
+  if (job.lastShiftDay === w.day) return;
   const c = CAREERS[job.career];
   if (!c || !workDays(job).includes(w.weekday)) return;
   const m = w.state.minutes % MINUTES_PER_DAY;
   const start = c.start * 60, end = c.end * 60;
   const mine = w.isPlayerMember(a);
+  const what = c.school ? 'a clase' : which === 'side' ? 'a su trabajo de medio tiempo' : 'a trabajar';
   if (mine && m >= start - 60 && m < start) {
-    w.toastOnce(`${a.id}:shift`, `${a.name} entra ${c.school ? 'a clase' : 'a trabajar'} a las ${c.start}:00`, c.icon, 600);
+    w.toastOnce(`${a.id}:shift:${which}`, `${a.name} entra ${what} a las ${c.start}:00${job.escort === w.day ? ' (vas con él/ella)' : ''}`, c.icon, 600);
   }
   if (m < start || m >= end) return;
+  if (leaveDay(w, a, job, c)) return;
   if (job.dayOff === w.day) {
     job.lastShiftDay = w.day;
     job.perf = Math.max(0, job.perf - 2);
@@ -130,51 +180,69 @@ export function checkShift(w: World, a: Agent) {
     job.lastShiftDay = w.day;
     return;
   }
-  const busy = a.travel || a.hidden || a.current?.actionId === 'pass_out';
+  const busy = a.travel || a.hidden || a.shift || a.current?.actionId === 'pass_out';
   if (busy) {
     if (m >= start + 60) {
       // Una hora tarde: ya no va.
       job.lastShiftDay = w.day;
       job.perf = Math.max(0, job.perf - 15);
-      if (mine) w.toast(`${a.name} ha faltado ${c.school ? 'a clase' : 'al trabajo'}`, '😬');
-      if (!c.school) {
-        job.badDays = (job.badDays ?? 0) + 1;
-        if (job.badDays >= 3 && job.perf <= 10) fire(w, a);
+      if (c.school) {
+        if (mine) w.toast(`${a.name} ha faltado a clase`, '😬');
+        return;
       }
+      if (mine) w.toast(`${a.name} ha faltado ${what} sin avisar`, '😬', a.id);
+      job.badDays = (job.badDays ?? 0) + 1;
+      if (mine) strike(w, a, job, 'faltar sin avisar', (why) => fire(w, a, why, which));
+      else if (job.badDays >= 3 && job.perf <= 10) fire(w, a, 'faltar', which);
     }
     return;
   }
   job.lastShiftDay = w.day;
+  if (!c.school) assignTasks(w, a, job);
+  const reason = c.school ? 'school' : which === 'side' ? 'part' : 'work';
   const home = w.householdOf(a)?.lotId ?? a.lotId;
   const dayStart = Math.floor(w.state.minutes / MINUTES_PER_DAY) * MINUTES_PER_DAY;
+  if (mine && a.illness && !a.illness.treated && !c.school) w.toast(`${a.name} va ${what} con ${a.illness.id === 'resfriado' ? 'un resfriado' : 'fiebre'}. Con el parte del médico podría coger la baja`, '🤧', a.id);
+  if (mine && reason !== 'school' && job.escort === w.day && startVisibleShift(w, a, job, reason, dayStart + end)) {
+    maybeDilemma(w, a);
+    return;
+  }
   startTravel(w, a, home, true);
-  a.travel = { ...a.travel!, to: home, arrive: dayStart + end, reason: c.school ? 'school' : 'work', mood: moodScore(a) };
+  a.travel = { ...a.travel!, to: home, arrive: dayStart + end, reason, mood: moodScore(a) };
   a.visitUntil = undefined;
-  if (mine) w.toast(`${a.name} se va ${c.school ? 'al colegio' : 'a trabajar'}`, c.icon);
-  maybeDilemma(w, a);
+  if (mine) w.toast(`${a.name} se va ${c.school ? 'al colegio' : which === 'side' ? `a su trabajo de tarde (${c.name.toLowerCase()})` : 'a trabajar'}`, c.icon);
+  if (which === 'job') maybeDilemma(w, a);
 }
 
-/** Al volver: cansancio, sueldo y rendimiento (ascensos o notas). */
-export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood: number) {
-  const job = a.job;
+/** Al volver: cansancio, sueldo, tareas y rendimiento (ascensos o notas). `visible`: ha trabajado a la vista. */
+export function finishShift(w: World, a: Agent, reason: 'work' | 'school' | 'part', mood: number, visible = false) {
+  const job = reason === 'part' ? a.side : a.job;
   if (!job) return;
   const c = CAREERS[job.career];
-  a.needs.hunger = clamp(a.needs.hunger - 30);
-  a.needs.energy = clamp(a.needs.energy - (reason === 'school' ? 20 : 30));
-  a.needs.fun = clamp(a.needs.fun - 20);
-  a.needs.hygiene = clamp(a.needs.hygiene - 15);
-  a.needs.social = clamp(a.needs.social + 15);
-  a.needs.bladder = 80;
+  if (!visible) {
+    // Si se le ha acompañado, ya ha comido, ha ido al baño... a la vista. Si no, se resume.
+    a.needs.hunger = clamp(a.needs.hunger - (reason === 'part' ? 15 : 30));
+    a.needs.energy = clamp(a.needs.energy - (reason === 'school' ? 20 : reason === 'part' ? 15 : 30));
+    a.needs.fun = clamp(a.needs.fun - (reason === 'part' ? 10 : 20));
+    a.needs.hygiene = clamp(a.needs.hygiene - 15);
+    a.needs.social = clamp(a.needs.social + 15);
+    a.needs.bladder = 80;
+  }
   const mine = w.isPlayerMember(a);
   const before = job.perf;
   const skillBonus = CAREER_SKILL[job.career] ? skillLevel(w, a, CAREER_SKILL[job.career]) * 0.6 : 0;
-  job.perf = Math.max(0, Math.min(100, job.perf + (mood - 45) / 4 + rand(-3, 5) + skillBonus));
+  // Ir malo a trabajar se nota.
+  const sick = a.illness && !c.school ? -4 : 0;
+  job.perf = Math.max(0, Math.min(100, job.perf + (mood - 45) / 4 + rand(-3, 5) + skillBonus + sick));
   if (reason === 'school') {
     if (mine && gradeLabel(before) !== gradeLabel(job.perf)) w.toast(`Notas de ${a.name}: ${gradeLabel(job.perf)}`, '📚');
     schoolDay(w, a);
     return;
   }
-  if (w.state.dilemma?.agentId === a.id) resolveDilemma(w, 99);
+  // Las tareas del día (solo la familia del jugador las tiene).
+  const tasks = settleTasks(w, a, job, visible, mood);
+  job.perf = Math.max(0, Math.min(100, job.perf + tasks.delta));
+  if (reason === 'work' && w.state.dilemma?.agentId === a.id) resolveDilemma(w, 99);
   coworkerDay(w, a);
   let pay = wage(w, c.levels[job.level - 1].pay);
   if (c.business) {
@@ -197,12 +265,17 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
   const delta = job.perf - before;
   if (delta >= 12) w.feel(a, 'buen_dia_curro');
   else if (delta <= -3) w.feel(a, 'mal_dia_curro');
+  const which = reason === 'part' ? 'side' : 'job';
   job.badDays = job.perf <= 8 ? (job.badDays ?? 0) + 1 : 0;
   if (job.badDays >= 3) {
-    fire(w, a);
+    fire(w, a, 'su bajo rendimiento', which);
     return;
   }
-  if (job.perf >= 100 && job.level < c.levels.length) {
+  // No hacer casi nada de lo que toca, con el rendimiento por los suelos: amonestación.
+  if (mine && tasks.total && tasks.done / tasks.total < 0.34 && job.perf < 30) {
+    if (strike(w, a, job, 'no hacer su trabajo', (why) => fire(w, a, why, which))) return;
+  }
+  if (job.perf >= 100 && job.level < c.levels.length && promotionVerdict(w, a, job) === 'ok') {
     job.level++;
     job.perf = 10;
     const lvl = c.levels[job.level - 1];
@@ -211,8 +284,9 @@ export function finishShift(w: World, a: Agent, reason: 'work' | 'school', mood:
     if (mine) w.toast(`¡Ascenso! ${a.name} ahora es ${lvl.title} (§${wage(w, lvl.pay)} por jornada)`, '🎉');
   } else if (mine) {
     if (c.business && pay < 0) w.toast(`Hoy en el bar de ${a.name} no ha entrado ni el tato: −§${-pay} de gastos`, '🦗');
-    else w.toast(`${a.name} vuelve del ${c.business ? 'bar' : 'trabajo'}: +§${pay - tax}${tax ? ` (Hacienda se queda §${tax})` : ''}`, '💰');
+    else w.toast(`${a.name} vuelve del ${c.business ? 'bar' : 'trabajo'}: +§${pay - tax}${tax ? ` (Hacienda se queda §${tax})` : ''}${tasks.total ? ` · tareas: ${tasks.done}/${tasks.total}` : ''}`, '💰');
   }
+  afterShift(w, a, job);
 }
 
 /** Cambiar cómo se lleva el bar (una vez por semana). Devuelve el motivo si no se puede. */

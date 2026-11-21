@@ -25,6 +25,10 @@ export interface Career {
   /** Hace falta esta carrera universitaria (ver data/education.ts). */
   degree?: string;
   startup?: number;
+  /** Trabajo a medio tiempo: se puede compaginar con el colegio, el instituto o la universidad. */
+  partTime?: boolean;
+  /** Desde adolescente (los de medio tiempo); si no, solo adultos. */
+  teens?: boolean;
 }
 
 const WEEKDAYS = [0, 1, 2, 3, 4];
@@ -236,6 +240,80 @@ export const CAREERS: Record<string, Career> = {
       { title: 'Inspector/a de educación', pay: 270 },
     ],
   },
+  // Trabajos a medio tiempo: por la tarde o el fin de semana, para compaginar con los estudios.
+  dependiente: {
+    id: 'dependiente',
+    name: 'Dependiente/a de tienda',
+    icon: '🛍️',
+    start: 17,
+    end: 21,
+    days: WEEKDAYS,
+    partTime: true,
+    teens: true,
+    levels: [
+      { title: 'Dependiente/a de tarde', pay: 35 },
+      { title: 'Encargado/a de tarde', pay: 50 },
+      { title: 'Encargado/a de tienda', pay: 70 },
+    ],
+  },
+  reparto: {
+    id: 'reparto',
+    name: 'Reparto a domicilio',
+    icon: '🛵',
+    start: 19,
+    end: 23,
+    days: [3, 4, 5, 6],
+    partTime: true,
+    teens: true,
+    levels: [
+      { title: 'Rider en bici', pay: 30 },
+      { title: 'Rider con moto', pay: 45 },
+      { title: 'Jefe/a de flota', pay: 65 },
+    ],
+  },
+  camarero: {
+    id: 'camarero',
+    name: 'Camarero/a de fin de semana',
+    icon: '🍽️',
+    start: 11,
+    end: 19,
+    days: [5, 6],
+    partTime: true,
+    teens: true,
+    levels: [
+      { title: 'Camarero/a de refuerzo', pay: 50 },
+      { title: 'Camarero/a de barra', pay: 65 },
+      { title: 'Jefe/a de sala', pay: 85 },
+    ],
+  },
+  teleoperador: {
+    id: 'teleoperador',
+    name: 'Teleoperador/a',
+    icon: '📞',
+    start: 15,
+    end: 19,
+    days: WEEKDAYS,
+    partTime: true,
+    levels: [
+      { title: 'Teleoperador/a', pay: 40 },
+      { title: 'Teleoperador/a sénior', pay: 55 },
+      { title: 'Coordinador/a de turno', pay: 75 },
+    ],
+  },
+  clases: {
+    id: 'clases',
+    name: 'Clases particulares',
+    icon: '✏️',
+    start: 17,
+    end: 20,
+    days: [0, 1, 2, 3],
+    partTime: true,
+    teens: true,
+    levels: [
+      { title: 'Profe de repaso', pay: 30 },
+      { title: 'Profe particular con lista de espera', pay: 50 },
+    ],
+  },
   school: {
     id: 'school',
     name: 'Colegio',
@@ -258,14 +336,17 @@ export const CAREERS: Record<string, Career> = {
   },
 };
 
-export const JOB_CAREERS = Object.values(CAREERS).filter((c) => !c.school);
+/** Trabajos de jornada completa (se busca en el ordenador). */
+export const JOB_CAREERS = Object.values(CAREERS).filter((c) => !c.school && !c.partTime);
+/** Trabajos a medio tiempo (compatibles con estudiar). */
+export const PART_CAREERS = Object.values(CAREERS).filter((c) => c.partTime);
 
 export const WEEKDAY_NAMES = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 export const WEEKDAY_LONG = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 
 export function scheduleText(c: Career): string {
   const d = c.days;
-  const days = d.length === 5 && d[0] === 0 ? 'de lunes a viernes' : `de ${WEEKDAY_LONG[d[0]]} a ${WEEKDAY_LONG[d[d.length - 1]]}`;
+  const days = d.length === 5 && d[0] === 0 ? 'de lunes a viernes' : d.length === 2 ? `${WEEKDAY_LONG[d[0]]} y ${WEEKDAY_LONG[d[1]]}` : `de ${WEEKDAY_LONG[d[0]]} a ${WEEKDAY_LONG[d[d.length - 1]]}`;
   return `${days}, de ${c.start}:00 a ${c.end}:00`;
 }
 
