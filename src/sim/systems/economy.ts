@@ -187,7 +187,7 @@ export function hiringFailChance(w: World): number {
 function jobsDay(w: World) {
   const u = econ(w).unemployment;
   const layoff = Math.max(0, u - 12) / 100 / 20;
-  const jobs = Object.values(CAREERS).filter((c) => !c.school && !c.business && !c.degree);
+  const jobs = Object.values(CAREERS).filter((c) => !c.school && !c.business && !c.degree && !c.partTime);
   for (const a of w.state.agents) {
     if (a.kind !== 'person' || a.role || !isAdult(a) || w.stageOf(a) === 'elder') continue;
     const c = a.job && CAREERS[a.job.career];

@@ -4,7 +4,7 @@
 
 export type TileType = 'wall' | 'wood' | 'tile' | 'grass' | 'door' | 'path';
 
-export type LayoutId = 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market' | 'padel';
+export type LayoutId = 'house' | 'park' | 'studio' | 'super' | 'acai' | 'metro' | 'plaza' | 'bar' | 'library' | 'gym' | 'market' | 'padel' | 'office';
 
 const HOUSE_MAP = [
   'WWWWWWWWWWWggg',
@@ -167,6 +167,21 @@ const PADEL_MAP = [
   'ggggggpppggggg',
 ];
 
+/** Un centro de trabajo: el despacho del jefe arriba a la izquierda, la planta abierta y un aseo. */
+const OFFICE_MAP = [
+  'WWWWWWWWWWWWWW',
+  'W.....W......W',
+  'W.....W......W',
+  'W.....d......W',
+  'WWWWWWW......W',
+  'W............W',
+  'W............W',
+  'Wt...........W',
+  'Wt...........W',
+  'WWWWWWdWWWWWWW',
+  'pppppppppppppp',
+];
+
 const CHAR: Record<string, TileType> = { W: 'wall', '.': 'wood', t: 'tile', g: 'grass', d: 'door', p: 'path' };
 
 export interface LotLayout {
@@ -200,6 +215,7 @@ export const LAYOUTS: Record<LayoutId, LotLayout> = {
   gym: parseLot(BAR_MAP, { x: 5, y: 8 }),
   market: parseLot(PLAZA_MAP, { x: 8, y: 11 }),
   padel: parseLot(PADEL_MAP, { x: 7, y: 9 }),
+  office: parseLot(OFFICE_MAP, { x: 6, y: 10 }),
 };
 
 /** Cambia algunas casillas de un plano: [x, y, carácter]. */

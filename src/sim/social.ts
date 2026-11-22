@@ -116,6 +116,21 @@ export const REL_EFFECTS: Record<string, [number, number]> = {
   sniff: [2, 0],
   cuddle_capy: [4, 0],
   chase: [1, 0],
+  high_five: [3, 0],
+  invite_coffee: [6, 0],
+  ask_advice: [5, 0],
+  cheer_up: [7, 0],
+  tickle: [4, 0],
+  confide: [9, 0],
+  suck_up: [5, 0],
+  complain_boss: [6, 0],
+  give_treat: [5, 0],
+  cuddle_pet: [5, 0],
+  brush_pet: [3, 0],
+  photo_pet: [1, 0],
+  baby_talk: [3, 0],
+  vet: [2, 0],
+  vet_checkup: [2, 0],
 };
 
 /** Acciones de romance. */

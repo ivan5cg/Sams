@@ -1,6 +1,6 @@
 // Conversación interactiva: elegir de qué hablar en cada turno.
 
-import { converse, knownText, topicsFor } from '../sim/conversation';
+import { converse, knownText, topicsFor, type LastTurn } from '../sim/conversation';
 import { getRel } from '../sim/social';
 import { mainTag } from '../sim/relations';
 import { hasTrait, traitsOf } from '../sim/traits';
@@ -9,7 +9,7 @@ import { $, esc } from './dom';
 import { Part } from './part';
 
 export class TalkPanel extends Part {
-  talking: { aId: string; tId: string; taskId: string; turn: number; log: { who: string; text: string; mood?: string }[]; speed: number } | null = null;
+  talking: { aId: string; tId: string; taskId: string; turn: number; log: { who: string; text: string; mood?: string }[]; speed: number; last?: LastTurn; used: string[] } | null = null;
 
   /** Engancha los eventos de su parte de la interfaz. */
   bind() {
@@ -30,7 +30,7 @@ export class TalkPanel extends Part {
     if (active && !this.talking) {
       const t = w.agent(active.targetAgentId);
       if (!t) return;
-      this.talking = { aId: a.id, tId: t.id, taskId: active.id, turn: 0, log: [{ who: t.name, text: this.greeting(t) }], speed: w.state.speed || 1 };
+      this.talking = { aId: a.id, tId: t.id, taskId: active.id, turn: 0, log: [{ who: t.name, text: this.greeting(t) }], speed: w.state.speed || 1, used: [] };
       w.say(t.id, this.talking.log[0].text);
       // Se pausa mientras se elige qué decir.
       w.state.speed = 0;
@@ -67,6 +67,9 @@ export class TalkPanel extends Part {
     const res = converse(w, a, t, topicId);
     w.onTalkTurn(a, t, res, tk.turn === 0);
     tk.turn++;
+    // Para seguir el hilo: el tema que se ha tocado (los de seguimiento no se repiten).
+    tk.last = { topic: topicId, outcome: res.outcome };
+    if (topicId.startsWith('f_') || ['trabajo', 'familia', 'recuerdo', 'planes'].includes(topicId)) tk.used.push(topicId);
     const mood = res.outcome === 'good' ? '😊' : res.outcome === 'bad' ? '😬' : '😐';
     tk.log.push({ who: a.name, text: res.say }, { who: t.name, text: res.reply, mood });
     if (res.learned) {
@@ -93,8 +96,8 @@ export class TalkPanel extends Part {
       .slice(-6)
       .map((l) => `<div class="talk-line ${l.who === a.name ? 'me' : 'them'}"><b>${esc(l.who)}</b> ${esc(l.text)} ${l.mood ?? ''}</div>`)
       .join('');
-    const topics = topicsFor(w, a, t, tk.turn)
-      .map((tp) => `<button class="act" data-topic="${tp.id}"><span class="act-icon">${tp.icon}</span><span class="act-label">${esc(tp.label)}</span></button>`)
+    const topics = topicsFor(w, a, t, tk.turn, tk.last, tk.used)
+      .map((tp) => `<button class="act${tp.followUp ? ' gifted' : ''}" data-topic="${tp.id}"><span class="act-icon">${tp.icon}</span><span class="act-label">${tp.followUp ? '↪ ' : ''}${esc(tp.label)}</span></button>`)
       .join('');
     $('#talk').innerHTML = `<div class="talk-card">
       <div class="sheet-head">

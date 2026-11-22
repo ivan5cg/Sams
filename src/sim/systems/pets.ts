@@ -3,9 +3,9 @@
 
 import { ACTIONS } from '../../data/actions';
 import { isOutdoor } from '../../data/lot';
-import { PET_TRAIT_BY_ID, TRICKS } from '../../data/pets';
+import { NEGLECT_HOURS, PET_ILLNESSES, PET_SICK_CHANCE, PET_TRAIT_BY_ID, TRICKS } from '../../data/pets';
 import { SPECIES } from '../../data/species';
-import { MAX_MEMBERS } from '../constants';
+import { MAX_MEMBERS, MINUTES_PER_DAY } from '../constants';
 import { makeAgent, randomIndoorTile } from '../neighborhood';
 import { isWalkable } from '../pathfinding';
 import { getRel, setRel } from '../social';
@@ -15,6 +15,8 @@ import type { World } from '../world';
 import { money } from './money';
 import { beginTask, endTask } from './tasks';
 import { countFeat } from './feats';
+import { priced } from './economy';
+import { die } from './lifecycle';
 
 export function canAdopt(w: World, species: SpeciesId): { ok: boolean; reason?: string } {
   const sp = SPECIES[species];
@@ -195,4 +197,119 @@ export function callForAttention(w: World, pet: Agent) {
   }
   endTask(w, best.p);
   beginTask(w, best.p, { id: w.newId('t'), actionId: care, byPlayer: false, phase: 'walking', remaining: 0, targetAgentId: pet.id });
+}
+
+// -----------------------------------------------------------------------------
+// Salud de las mascotas: descuidos, enfermedades, el veterinario y sus facturas.
+// -----------------------------------------------------------------------------
+
+/** Cada hora: si está mal cuidada (con hambre, sucia o muy sola), se va notando. */
+export function petCareHour(w: World) {
+  for (const p of w.state.agents) {
+    if (p.kind !== 'pet' || p.travel) continue;
+    const bad = p.needs.hunger < 15 || p.needs.hygiene < 10 || p.needs.social < 8;
+    p.neglect = bad ? (p.neglect ?? 0) + 1 : Math.max(0, (p.neglect ?? 0) - 0.5);
+    if (bad && w.isPlayerMember(p) && (p.neglect ?? 0) >= 6) {
+      w.toastOnce(`${p.id}:neglect`, `${p.name} está muy descuidado/a: ${p.needs.hunger < 15 ? 'tiene hambre' : p.needs.hygiene < 10 ? 'está sucísimo/a' : 'se siente abandonado/a'}. Si sigue así, enfermará`, '⚠️', 360, p.id);
+    }
+  }
+}
+
+/** Cada mañana: quién se pone malo, quién se cura y quién no lo supera. */
+export function petHealthDay(w: World) {
+  for (const p of [...w.state.agents]) {
+    if (p.kind !== 'pet' || p.travel?.reason === 'trip') continue;
+    const mine = w.isPlayerMember(p);
+    const ill = p.illness && PET_ILLNESSES[p.illness.id];
+    if (p.illness && ill) {
+      // Los vecinos llevan a sus mascotas al veterinario enseguida (y se curan).
+      if (!mine) p.illness.treated = true;
+      // En casa, si no lo haces tú, a veces se encarga otro de la familia (si hay dinero).
+      if (mine && !p.illness.treated && ill.deadly && w.state.minutes - p.illness.since >= MINUTES_PER_DAY) {
+        const carer = w.members.find((m) => m.kind === 'person' && !w.isActive(m) && !m.travel && m.lotId === p.lotId && ['young', 'adult', 'elder'].includes(w.stageOf(m)));
+        if (carer && w.household.funds >= vetCost(w, p) && Math.random() < 0.5) {
+          vetVisit(w, carer, p, `${carer.name} lleva a ${p.name} al veterinario, que no tenía buena cara. `);
+        }
+      }
+      // Los dos primeros días no es tan grave: hay tiempo para llevarle al veterinario.
+      const early = w.state.minutes - p.illness.since < 2 * MINUTES_PER_DAY;
+      const risk = early || !mine ? 0 : ill.deadly * (p.illness.treated ? 0.12 : 1) * (w.stageOf(p) === 'elder' ? 1.5 : 1);
+      if (risk && Math.random() < risk) {
+        if (mine) for (const m of w.members) if (m.kind === 'person') w.feel(m, 'luto', p.name);
+        die(w, p, 'illness', ill.label.toLowerCase());
+        continue;
+      }
+      if (w.state.minutes >= p.illness.until && (p.illness.treated || ill.mild)) {
+        p.illness = undefined;
+        if (mine) w.toast(`${p.name} ya está bien de la ${ill.label.toLowerCase()}. ¡Vuelve a ser el de siempre!`, '💪', p.id);
+      } else if (w.state.minutes >= p.illness.until && mine) {
+        w.toast(`${p.name} sigue malito/a (${ill.label.toLowerCase()}). Esto no se cura solo: hay que llevarle al veterinario`, '🏥', p.id);
+      }
+      continue;
+    }
+    p.illness = undefined;
+    // Desnutrición por descuido.
+    if ((p.neglect ?? 0) >= NEGLECT_HOURS) {
+      catchPetIllness(w, p, 'desnutricion');
+      continue;
+    }
+    const sp = SPECIES[p.species];
+    const old = w.stageOf(p) === sp.stages[sp.stages.length - 1].id;
+    const checked = p.vetCheck !== undefined && w.day - p.vetCheck < 10;
+    const chance = PET_SICK_CHANCE * (1 + (p.neglect ?? 0) / 6) * (old ? 2 : 1) * (checked ? 0.35 : 1) * (p.needs.hygiene < 20 ? 1.6 : 1);
+    if (Math.random() >= chance) continue;
+    const pool = Object.values(PET_ILLNESSES).filter((x) => x.id !== 'desnutricion' && (!x.species || x.species.includes(p.species)) && (x.id !== 'golpe_calor' || w.heatNow || w.season === 1));
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    if (pick) catchPetIllness(w, p, pick.id);
+  }
+}
+
+/** Una mascota se pone mala. */
+export function catchPetIllness(w: World, p: Agent, id: string): boolean {
+  const def = PET_ILLNESSES[id];
+  if (!def || p.kind !== 'pet' || p.illness) return false;
+  p.illness = { id, since: w.state.minutes, until: w.state.minutes + def.days * MINUTES_PER_DAY };
+  if (w.isPlayerMember(p)) {
+    for (const m of w.members) if (m.kind === 'person' && getRel(w.state, m.id, p.id).f >= 30) w.feel(m, 'mascota_mala', p.name);
+    w.toast(`${p.name} se ha puesto malo/a: ${def.label.toLowerCase()}. ${def.deadly ? 'Hay que llevarle al veterinario, que esto puede acabar mal' : 'Mejor que le vea el veterinario'}`, def.icon, p.id);
+  }
+  return true;
+}
+
+/** Lo que cuesta el tratamiento de lo que tiene. */
+export function vetCost(w: World, p: Agent): number {
+  const def = p.illness && PET_ILLNESSES[p.illness.id];
+  return def ? priced(w, def.cost) : 0;
+}
+
+/**
+ * Veterinario: se trata la enfermedad y se paga la factura. Si no hay dinero, se paga lo que hay y el resto
+ * queda como deuda con la clínica (los recibos pendientes la van cobrando).
+ */
+export function vetVisit(w: World, person: Agent, p: Agent, intro = '') {
+  const def = p.illness && PET_ILLNESSES[p.illness.id];
+  const h = w.householdOf(person);
+  if (!def || !p.illness || !h) return;
+  const cost = vetCost(w, p);
+  p.illness.treated = true;
+  p.illness.until = w.state.minutes + Math.max(0.5, def.days / 2) * MINUTES_PER_DAY;
+  p.neglect = 0;
+  const paid = Math.max(0, Math.min(h.funds, cost));
+  money(w, h, -paid, 'veterinario');
+  const owed = cost - paid;
+  if (owed > 0) {
+    h.bills = h.bills ?? { debts: [] };
+    h.bills.debts.push({ id: w.newId('r'), kind: 'veterinario', amount: owed, due: w.day });
+  }
+  w.feel(person, 'factura_vet');
+  if (w.isPlayerMember(person)) {
+    w.toast(`${intro}Veterinario: «${def.vet}». Factura: §${cost.toLocaleString('es-ES')}${owed > 0 ? `. No llega: quedan §${owed.toLocaleString('es-ES')} pendientes con la clínica` : ''}`, '🏥', p.id);
+  }
+}
+
+/** Revisión del veterinario (vacunas, desparasitar): durante diez días se pone mala mucho menos. */
+export function vetCheckup(w: World, person: Agent, p: Agent) {
+  p.vetCheck = w.day;
+  p.neglect = 0;
+  if (w.isPlayerMember(person)) w.toast(`${p.name} ha pasado la revisión: vacunas al día y desparasitado/a. «Está hecho/a un toro»`, '🩺', p.id);
 }

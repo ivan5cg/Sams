@@ -21,6 +21,8 @@ export const BILL_INFO: Record<BillKind, { icon: string; label: string; day: num
   autonomos: { icon: '🧾', label: 'Cuota de autónomos', day: 1 },
   luz: { icon: '💡', label: 'Luz', day: 5 },
   agua: { icon: '🚿', label: 'Agua', day: 5 },
+  // La factura del veterinario que no se pudo pagar (no llega sola cada mes: se apunta al tratar a la mascota).
+  veterinario: { icon: '🏥', label: 'Veterinario', day: 0 },
 };
 export const BILL_KINDS = Object.keys(BILL_INFO) as BillKind[];
 
@@ -57,6 +59,8 @@ export function billAmount(w: World, h: Household, kind: BillKind): number {
     }
     case 'agua':
       return priced(w, Math.round((base * 0.4 + (b.perPerson - 12) * people + b.perPet * pets) * MONTH));
+    case 'veterinario':
+      return 0;
   }
 }
 
@@ -189,7 +193,7 @@ export function payDebt(w: World, id: string, auto = false): string | undefined 
   if (!debt) return 'Ese recibo ya está pagado';
   const fee = reconnectFee(w, debt.kind);
   if (h.funds < debt.amount + fee) return 'No hay dinero suficiente';
-  money(w, h, -(debt.amount + fee), debt.kind === 'alquiler' ? 'alquiler' : debt.kind === 'autonomos' ? 'autonomos' : 'facturas');
+  money(w, h, -(debt.amount + fee), debt.kind === 'alquiler' ? 'alquiler' : debt.kind === 'autonomos' ? 'autonomos' : debt.kind === 'veterinario' ? 'veterinario' : 'facturas');
   s.debts = s.debts.filter((x) => x !== debt);
   w.toast(`${auto ? 'El banco ha cobrado por fin' : 'Pagado'} el recibo de ${BILL_INFO[debt.kind].label.toLowerCase()}: −§${debt.amount}${fee ? ` (+§${fee} de reenganche)` : ''}`, '✅');
   // Si ya no se debe nada de un servicio cortado, vuelve.

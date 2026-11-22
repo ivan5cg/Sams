@@ -37,6 +37,13 @@ export function contextPairs(world: World, a: Agent, t: Agent): [string, string]
     pairs.push(['¿Sigues buscando curro?', 'Sí, a ver si sale algo, que la cosa está muy mala']);
   }
   if (world.stageOf(t) === 'elder') pairs.push(['¿Qué tal la jubilación?', 'De maravilla: obras, petanca y siesta']);
+  // La vida en el trabajo: medio tiempo, bajas, toques del jefe.
+  if (t.side && (t.study || t.job?.career === 'school')) pairs.push(['¿Qué tal compaginar los estudios y el trabajo?', 'Agotador, pero así me pago mis cosas']);
+  else if (t.side) pairs.push([`¿Sigues de ${CAREERS[t.side.career]?.name.toLowerCase() ?? 'medio tiempo'}?`, 'Sí, por las tardes. Algo es algo']);
+  if (t.job?.leave) pairs.push(['¿Qué tal la baja?', t.job.leave.kind === 'enfermedad' ? 'Mejorando, poco a poco. Caldito y sofá' : 'Durmiendo poco, pero muy feliz con el bebé']);
+  if (t.job?.strikes) pairs.push(['¿Todo bien en el curro?', 'Me han dado un toque. Ando con pies de plomo']);
+  const sickPet = world.state.agents.find((x) => x.kind === 'pet' && x.householdId === t.householdId && x.illness);
+  if (sickPet) pairs.push([`¿Qué tal está ${sickPet.name}?`, sickPet.illness?.treated ? 'Mejor, con lo que le ha dado el veterinario. Pero vaya factura...' : 'Malito... tengo que llevarle al veterinario']);
 
   const pet = world.state.agents.find((x) => x.kind === 'pet' && x.householdId === a.householdId);
   if (pet) pairs.push([`¿Sabes lo que ha hecho ${pet.name} hoy?`, '¡Cuenta, cuenta!']);

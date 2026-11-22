@@ -7,7 +7,7 @@ import { marketPrice, secondhandOffers, secondhandReason, stallGoods, stallPrice
 import { pricedLabel } from '../sim/systems/economy';
 import { SKILL_BY_ID } from '../data/skills';
 import { degreeReason, enrollReason, hasScholarship, startLevel } from '../sim/systems/education';
-import { CAREERS, JOB_CAREERS, scheduleText } from '../data/careers';
+import { CAREERS, JOB_CAREERS, PART_CAREERS, scheduleText } from '../data/careers';
 import { OBJECTS, QUALITY, priceOf } from '../data/objects';
 import { PET_TRAIT_BY_ID } from '../data/pets';
 import { SPECIES, lifeStage } from '../data/species';
@@ -363,25 +363,33 @@ export class ActionSheet extends Part {
       <div class="sheet-actions one-col">${items || '<p class="muted small">No hay libros de habilidad. Se compran en el ordenador.</p>'}</div>`;
   }
 
-  /** Buscar trabajo: elegir carrera. */
+  /** Buscar trabajo: elegir carrera (de jornada completa o de medio tiempo, compatible con estudiar). */
   showJobs() {
-    const a = this.world.activeAgent;
-    const items = JOB_CAREERS.map((c) => {
-      const current = a.job?.career === c.id;
-      const needs = degreeReason(a, c.id);
-      const lvl = startLevel(a, c.id);
+    const w = this.world;
+    const a = w.activeAgent;
+    const teen = w.stageOf(a) === 'teen';
+    const studying = !!a.study || a.job?.career === 'school' || a.job?.career === 'uni';
+    const card = (c: (typeof JOB_CAREERS)[number]) => {
+      const current = a.job?.career === c.id || a.side?.career === c.id;
+      const needs = degreeReason(a, c.id) ?? (teen && !c.teens ? 'Desde los 18' : undefined);
+      const lvl = c.partTime ? 1 : startLevel(a, c.id);
       return `<button class="act" data-career="${c.id}" ${current || needs ? 'disabled' : ''}>
         <span class="act-icon">${c.icon}</span>
-        <span class="act-label">${esc(c.name)} · ${esc(c.levels[lvl - 1].title)}<small class="info">${needs ? `${esc(needs)} · ` : c.degree ? '🎓 Con tu título · ' : lvl > 1 ? '🎓 Empiezas más arriba por tu carrera · ' : ''}${c.business ? `Montarlo: §${this.world.priced(c.startup ?? 0).toLocaleString('es-ES')} · ganancias variables · cuota §${this.world.priced(90)}/semana` : `§${this.world.wage(c.levels[lvl - 1].pay)}/jornada`} · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
+        <span class="act-label">${esc(c.name)} · ${esc(c.levels[lvl - 1].title)}<small class="info">${needs ? `${esc(needs)} · ` : c.degree ? '🎓 Con tu título · ' : lvl > 1 ? '🎓 Empiezas más arriba por tu carrera · ' : ''}${c.business ? `Montarlo: §${w.priced(c.startup ?? 0).toLocaleString('es-ES')} · ganancias variables · cuota §${w.priced(90)}/semana` : `§${w.wage(c.levels[lvl - 1].pay)}/jornada`} · ${esc(scheduleText(c))}${current ? ' · (ya trabaja aquí)' : ''}</small></span>
       </button>`;
-    }).join('');
+    };
+    const full = teen ? '' : JOB_CAREERS.map(card).join('');
+    const part = PART_CAREERS.map(card).join('');
+    const now = [a.job && !CAREERS[a.job.career].school ? CAREERS[a.job.career].levels[a.job.level - 1].title : '', a.side ? `${CAREERS[a.side.career].levels[a.side.level - 1].title} (medio tiempo)` : ''].filter(Boolean);
     $('#sheet').querySelector('.sheet-card')!.innerHTML = `
       <div class="sheet-head">
-        <div><div class="sheet-title">📰 Ofertas de trabajo</div><div class="sheet-sub">${a.job && !CAREERS[a.job.career].school ? `Ahora: ${esc(CAREERS[a.job.career].levels[a.job.level - 1].title)} (si cambias, empiezas desde abajo)` : `${esc(a.name)} no tiene trabajo`}</div></div>
+        <div><div class="sheet-title">📰 Ofertas de trabajo</div><div class="sheet-sub">${now.length ? `Ahora: ${esc(now.join(' + '))}${a.job && !CAREERS[a.job.career].school ? ' (si cambias, empiezas desde abajo)' : ''}` : `${esc(a.name)} no tiene trabajo`}</div></div>
         <button class="icon-btn" data-close>✕</button>
       </div>
-      <p class="sheet-note">Se va solo a su hora y vuelve al salir. Si va de buen humor, rinde más y asciende antes.</p>
-      <div class="sheet-actions one-col">${items}</div>`;
+      <p class="sheet-note">Se va solo a su hora y vuelve al salir. Cada jornada tiene sus tareas: si le acompañas (perfil → Acompañar al trabajo) las haces tú en la oficina.${studying ? ' Mientras estudia, solo puede coger uno de medio tiempo (si coge uno completo, deja la carrera).' : ''}</p>
+      ${full ? `<div class="sheet-who">💼 Jornada completa</div><div class="sheet-actions one-col">${full}</div>` : ''}
+      <div class="sheet-who">🕐 Medio tiempo (se compagina con los estudios)</div>
+      <div class="sheet-actions one-col">${part}</div>`;
   }
 
   /** Universidad: elegir carrera (con beca, gratis). */
@@ -403,7 +411,7 @@ export class ActionSheet extends Part {
         <div><div class="sheet-title">🎓 Universidad</div><div class="sheet-sub">${beca ? `${esc(a.name)} tiene beca por sus notas del instituto` : 'Clase de lunes a viernes, de 9:00 a 14:00 (sin sueldo)'}</div></div>
         <button class="icon-btn" data-close>✕</button>
       </div>
-      <p class="sheet-note">Con buenas notas se acaba antes. Estudiar en casa o en la biblioteca sube las notas. Si trabaja, lo deja para estudiar.</p>
+      <p class="sheet-note">Con buenas notas se acaba antes. Estudiar en casa o en la biblioteca sube las notas. Si trabaja a jornada completa, lo deja para estudiar; un trabajo de medio tiempo se puede compaginar.</p>
       <div class="sheet-actions one-col">${items}</div>`;
   }
 

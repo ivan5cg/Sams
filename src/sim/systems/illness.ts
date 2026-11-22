@@ -5,6 +5,7 @@
 // Funciones que reciben el mundo (`w`) y operan sobre `w.state`; World las expone como fachada.
 
 import { CATCH_CHANCE, HEART_ATTACK, ILLNESSES } from '../../data/illnesses';
+import { PET_ILLNESSES } from '../../data/pets';
 import { ELECTRIC } from '../../data/seasons';
 import { MINUTES_PER_DAY } from '../constants';
 import { hasEmotion } from '../emotions';
@@ -14,10 +15,11 @@ import type { World } from '../world';
 import { die } from './lifecycle';
 import { skillLevel } from './skills';
 import { poisonDeath } from './violence';
+import { startSickLeave } from './work';
 
 /** Cuánto más rápido baja una necesidad por estar malo. */
 export function illnessDecay(a: Agent, k: NeedKey): number {
-  const ill = a.illness && ILLNESSES[a.illness.id];
+  const ill = a.illness && (ILLNESSES[a.illness.id] ?? PET_ILLNESSES[a.illness.id]);
   return ill?.decay[k] ?? 1;
 }
 
@@ -61,6 +63,8 @@ export function seeDoctor(w: World, a: Agent): string | undefined {
   ill.treated = true;
   ill.until = w.state.minutes + Math.max(0.5, (ill.until - w.state.minutes) / MINUTES_PER_DAY / 2) * MINUTES_PER_DAY;
   if (w.isPlayerMember(a)) w.toast(`La médica le ha mandado reposo y medicinas a ${a.name}: la ${def.label.toLowerCase()} se cura antes`, '🩺', a.id);
+  // Con el parte del médico, baja en el trabajo.
+  startSickLeave(w, a);
   return undefined;
 }
 

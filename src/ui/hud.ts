@@ -17,6 +17,7 @@ import { NeighbourhoodMap } from './map';
 import { ActionSheet } from './sheet';
 import { ProfilePanel } from './profile';
 import { DilemmaPanel } from './dilemma';
+import { PromptPanel } from './prompt';
 import { FamilyPanel } from './panel';
 import { GameMenu } from './menu';
 import { Guide } from './guide';
@@ -48,6 +49,7 @@ export class Hud {
   readonly sheet = new ActionSheet(this);
   readonly profile = new ProfilePanel(this);
   readonly dilemma = new DilemmaPanel(this);
+  readonly prompt = new PromptPanel(this);
   readonly panel = new FamilyPanel(this);
   readonly menu = new GameMenu(this);
   readonly guide = new Guide(this);
@@ -81,10 +83,11 @@ export class Hud {
     this.sheet.closeSheet();
     this.profile.closeProfile();
     this.editor.close();
-    for (const sel of ['#dilemma', '#map', '#agenda', '#feats', '#bills', '#catalog', '#market', '#log']) {
+    for (const sel of ['#dilemma', '#prompt', '#map', '#agenda', '#feats', '#bills', '#catalog', '#market', '#log']) {
       $(sel).hidden = true;
     }
     this.dilemma.shownDilemmaId = '';
+    this.prompt.shownKey = '';
     this.world = world;
     this.panel.needsFor = '';
     this.panel.lastWhoHtml = this.panel.lastQueueHtml = this.panel.lastPortraitsHtml = this.panel.lastWishHtml = this.panel.lastEmoHtml = '';
@@ -106,6 +109,7 @@ export class Hud {
     this.sheet.bind();
     this.profile.bind();
     this.dilemma.bind();
+    this.prompt.bind();
     this.panel.bind();
     this.menu.bind();
     this.guide.bind();
@@ -211,6 +215,13 @@ export class Hud {
     this.editor.syncEditor();
     this.talk.syncTalk();
     this.dilemma.syncDilemma();
+    this.prompt.sync();
+    // El tiempo vuela cuando todos trabajan o duermen.
+    const auto = w.state.speed > 0 ? w.autoSpeed() : null;
+    const ffText = auto ? (auto.why === 'trabajo' ? '⏩ Todos fuera: el tiempo vuela' : '⏩ Todos durmiendo: tiempo rápido') : '';
+    const ff = $('#fastfwd');
+    if (ff.textContent !== ffText) ff.textContent = ffText;
+    ff.hidden = !auto;
 
   }
 }

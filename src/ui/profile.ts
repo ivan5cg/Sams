@@ -6,7 +6,10 @@ import { ILLNESSES } from '../data/illnesses';
 import { CYCLE_DAYS, PHASE_INFO, cycleDay, isPregnant, phase, phaseOf } from '../sim/systems/fertility';
 import { MONEY_CATEGORIES } from '../data/economy';
 import { BAR_MENUS, BAR_STAFF, CAREERS, WEEKDAY_LONG, gradeLabel, scheduleText } from '../data/careers';
-import { PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
+import { LEAVE_LABEL, STRIKES_TO_FIRE, WORK_TASKS } from '../data/work';
+import { bossOf, companyName, hasWorkplace } from '../sim/systems/work';
+import { getRel } from '../sim/social';
+import { PET_ILLNESSES, PET_TRAIT_BY_ID, TRICKS } from '../data/pets';
 import { MAX_SKILL, SKILLS } from '../data/skills';
 import { unlocksOf } from '../data/skillTree';
 import { SPECIES, lifeStage } from '../data/species';
@@ -43,6 +46,17 @@ export class ProfilePanel extends Part {
       if (b.dataset.quit !== undefined && confirm('¿Seguro que quieres dejar el trabajo?')) {
         this.world.quitJob(this.subject());
         this.renderProfile();
+      }
+      if (b.dataset.quitside !== undefined && confirm('¿Seguro que quieres dejar el trabajo de medio tiempo?')) {
+        this.world.quitJob(this.subject(), 'side');
+        this.renderProfile();
+      }
+      if (b.dataset.escort) {
+        const msg = this.world.escort(this.subject(), b.dataset.escort as 'job' | 'side');
+        this.hud.toast(msg, '🏢');
+        this.closeProfile();
+        this.hud.render();
+        return;
       }
       const a = this.subject();
       if (b.dataset.barmenu || b.dataset.barstaff || b.dataset.barsunday) {
@@ -118,10 +132,24 @@ export class ProfilePanel extends Part {
           <div class="perf"><span class="small">${perfLabel}</span><div class="bar"><div class="fill" style="width:${Math.round(a.job.perf)}%;background:#4f8fd9"></div></div></div>
           ${c.business && mine ? this.barHtml(a) : ''}
           ${c.remote && mine ? '<div class="muted small">🧑‍💻 Se puede teletrabajar: toca el ordenador de casa y elige «Teletrabajar».</div>' : ''}
+          ${c.school || !mine ? '' : this.workLifeHtml(a, a.job, 'job')}
           ${c.school || !mine ? '' : '<button class="map-btn ghost small-btn" data-quit>Dejar el trabajo</button>'}
         </div>`;
       } else if (isAdult(a)) {
         jobHtml = `<div class="prof-sec"><div class="prof-h">💼 Sin trabajo</div><div class="muted small">Busca trabajo en el ordenador de casa${w.stageOf(a) !== 'elder' ? ', o matricúlate en la universidad' : ''}.${a.lastGrade !== undefined && a.lastGrade >= SCHOLARSHIP_GRADE ? ' ¡Tiene beca por sus notas!' : ''}</div></div>`;
+      }
+      if (a.side) {
+        const c = CAREERS[a.side.career];
+        const lvl = c.levels[a.side.level - 1];
+        jobHtml += `<div class="prof-sec">
+          <div class="prof-h">${c.icon} ${esc(lvl.title)} <span class="muted small">· medio tiempo</span></div>
+          <div class="muted small">${esc(c.name)} · nivel ${a.side.level}/${c.levels.length} · §${w.wage(lvl.pay)} por jornada · ${esc(scheduleText(c))}</div>
+          <div class="perf"><span class="small">Rendimiento (al 100%, ascenso)</span><div class="bar"><div class="fill" style="width:${Math.round(a.side.perf)}%;background:#8a6fd9"></div></div></div>
+          ${mine ? this.workLifeHtml(a, a.side, 'side') : ''}
+          ${mine ? '<button class="map-btn ghost small-btn" data-quitside>Dejar el trabajo de medio tiempo</button>' : ''}
+        </div>`;
+      } else if (mine && (a.study || a.job?.career === 'school') && ['teen', 'young', 'adult'].includes(w.stageOf(a))) {
+        jobHtml += `<div class="muted small">🕐 Se puede compaginar con un trabajo de medio tiempo (ordenador → Buscar trabajo): tardes o fines de semana.</div>`;
       }
       if (a.degrees?.length) jobHtml += `<div class="muted small">🎓 Títulos: ${a.degrees.map((d) => `${DEGREES[d]?.icon ?? ''} ${esc(DEGREES[d]?.label ?? d)}`).join(', ')}</div>`;
     }
@@ -307,9 +335,40 @@ export class ProfilePanel extends Part {
       .join('')}</div>`;
   }
 
+  /** La vida en el trabajo: baja, amonestaciones, empresa, tareas de hoy y el botón de acompañarle. */
+  private workLifeHtml(a: Agent, job: NonNullable<Agent['job']>, which: 'job' | 'side'): string {
+    const w = this.world;
+    const c = CAREERS[job.career];
+    if (!c || c.business) return '';
+    const parts: string[] = [];
+    if (hasWorkplace(job.career)) {
+      const boss = bossOf(w, job.career);
+      const rel = boss ? getRel(w.state, a.id, boss.id).f : 0;
+      parts.push(`<div class="muted small">🏢 ${esc(companyName(w, job.career))}${boss ? ` · jefe/a: ${esc(boss.name)} (${rel >= 30 ? 'le cae genial' : rel <= -20 ? 'no le traga' : 'normal'})` : ''}</div>`);
+    }
+    if (job.leave) parts.push(`<div class="small">🩹 De ${esc(LEAVE_LABEL[job.leave.kind])} hasta el día ${job.leave.until} (cobra la prestación)</div>`);
+    if (job.strikes) parts.push(`<div class="small" style="color:#ff9b8a">📝 Amonestaciones: ${job.strikes}/${STRIKES_TO_FIRE}. A la tercera, despido (se olvida una cada semana sin incidentes)</div>`);
+    const co = w.state.corp?.companies[job.career];
+    if (co?.merger) parts.push(`<div class="small" style="color:#ffb35c">🏢 ${esc(co.merger.buyer)} va a comprar la empresa: ERE el día ${co.merger.day}. ¡A rendir!</div>`);
+    const tasks = job.tasks?.day === w.day ? job.tasks.list : [];
+    if (tasks.length) parts.push(`<div class="small">📋 Tareas de hoy: ${tasks.map((t) => `${t.done ? '✅' : '⬜'} ${esc(WORK_TASKS[t.id]?.label ?? t.id)}`).join(' · ')}</div>`);
+    const why = w.escortReason(a, which);
+    if (!why) {
+      const now = a.travel?.reason === (which === 'side' ? 'part' : 'work');
+      parts.push(`<button class="map-btn small-btn" data-escort="${which}">🏢 ${now ? `Ir con ${esc(a.name)} al trabajo ahora` : job.escort ? `Irás con ${esc(a.name)} en su próxima jornada ✓` : `Acompañar a ${esc(a.name)} al trabajo`}</button>`);
+      parts.push('<div class="muted small">Si le acompañas, haces tú sus tareas en la oficina, con sus compañeros y su jefe. Si no, las hace (o no) según cómo vaya de ánimo.</div>');
+    } else if (a.shift) parts.push(`<div class="small">📍 Está en ${esc(companyName(w, job.career))} hasta las ${Math.floor((a.shift.end % 1440) / 60)}:00</div>`);
+    return parts.join('');
+  }
+
   /** Si está malo/a: qué tiene, cuánto le queda y si está tratado. */
   private illnessHtml(a: Agent): string {
     const ill = a.illness;
+    const pet = ill && PET_ILLNESSES[ill.id];
+    if (ill && pet) {
+      const cost = this.world.priced(pet.cost);
+      return `<div class="bill-alert"><div>${pet.icon} <b>${esc(pet.label)}</b>${ill.treated ? ' · en tratamiento 🏥' : ` · <b>¡al veterinario!</b> (tócale y «Llevar al veterinario»: unos §${cost.toLocaleString('es-ES')})`}</div><div class="muted small">${pet.deadly ? 'Sin tratar puede morir.' : 'Es leve, pero lo pasa mal.'}${pet.mild ? '' : ' No se cura sola.'}</div></div>`;
+    }
     const def = ill && ILLNESSES[ill.id];
     if (!ill || !def) return '';
     const days = Math.max(1, Math.ceil((ill.until - this.world.state.minutes) / 1440));

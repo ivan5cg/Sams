@@ -55,4 +55,9 @@ export const CAREER_SKILL: Record<string, string> = {
   docencia: 'docencia',
   banca: 'inversion',
   bolsa: 'inversion',
+  dependiente: 'carisma',
+  reparto: 'forma',
+  camarero: 'carisma',
+  teleoperador: 'carisma',
+  clases: 'logica',
 };

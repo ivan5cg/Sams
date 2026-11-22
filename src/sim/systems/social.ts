@@ -27,6 +27,9 @@ import { attend } from '../relations';
 import { fight, poison } from './violence';
 import { onBreakUp } from './breakups';
 import { costOf } from './calendar';
+import { WORK_ROLES, conduct, workOutcome } from './work';
+import { vetCheckup, vetVisit } from './pets';
+import { EMOTIONS } from '../../data/emotions';
 
 export function canEngage(_w: World, actor: Agent, actorTask: Task, t: Agent): boolean {
   if (t.hidden || t.travel || t.lotId !== actor.lotId) return false;
@@ -331,6 +334,72 @@ export function socialOutcome(w: World, a: Agent, t: Agent, actionId: string) {
     w.addNews(divorce ? `${a.name} y ${t.name} se han divorciado` : `${a.name} y ${t.name} lo han dejado`, [a.id, t.id]);
   }
   if (actionId === 'insult' && (rel?.f ?? 0) <= -50) w.addNews(`${a.name} y ${t.name} no se pueden ni ver`, [a.id, t.id]);
+  if (t.post && WORK_ROLES.has(t.role ?? '')) workOutcome(w, a, t, actionId);
+  conduct(w, a, t, actionId);
+  moreOutcomes(w, a, t, actionId, loud);
+}
+
+/** Consejos según cómo es quien los da. */
+const ADVICE: Record<string, string[]> = {
+  default: ['Tú haz lo que te diga el corazón', 'Duerme y mañana lo ves todo más claro', 'Lo que no te mata te hace más fuerte', 'Si no lo intentas, nunca lo sabrás'],
+  cunado: ['Lo que tienes que hacer es comprarte un piso. Y luego ya hablamos', 'Mira, yo eso lo arreglaba en dos tardes', 'Hazme caso, que yo de esto sé un rato'],
+  grunon: ['¿Consejo? No te fíes de nadie', 'Pues no sé qué esperabas, la verdad'],
+  optimista: ['¡Todo va a salir genial, ya verás!', 'Mira el lado bueno: ¡podría ser peor!'],
+  romantico: ['Díselo. La vida es muy corta para callarse', 'Al final, lo único que importa es el amor'],
+  friki: ['Según mis cálculos, tienes un 73 % de posibilidades. Adelante', 'Haz una lista de pros y contras. En Excel'],
+};
+/** Confidencias (lo que uno le cuenta a otro en secreto). */
+const CONFIDENCES = ['le tiene manía a su jefe', 'está pensando en dejarlo todo e irse al pueblo', 'lleva meses sin pisar el gimnasio que paga', 'no soporta la tortilla de su suegra', 'tiene un crush con alguien del barrio', 'llora con los anuncios de Navidad', 'se ha comprado unas zapatillas carísimas a escondidas'];
+
+/** Lo que pasa con las interacciones nuevas (consejos, ánimos, confidencias, veterinario...). */
+function moreOutcomes(w: World, a: Agent, t: Agent, actionId: string, loud: boolean) {
+  switch (actionId) {
+    case 'ask_advice': {
+      const trait = (t.traits ?? []).find((x) => ADVICE[x]);
+      const list = ADVICE[trait ?? 'default'];
+      w.say(t.id, list[Math.floor(Math.random() * list.length)]);
+      if (Math.random() < 0.4) w.feel(a, 'inspirado');
+      break;
+    }
+    case 'cheer_up': {
+      const bad = (t.emotions ?? []).filter((e) => (EMOTIONS[e.id]?.value ?? 0) < 0 && e.id !== 'luto');
+      if (bad.length) t.emotions = (t.emotions ?? []).filter((e) => e !== bad[0]);
+      w.feel(t, 'abrazo', a.name);
+      w.say(t.id, ['Gracias, de verdad. Lo necesitaba', 'Ay, qué bien me hace hablar contigo', 'Tienes razón, mañana será otro día'][Math.floor(Math.random() * 3)]);
+      break;
+    }
+    case 'high_five':
+    case 'tickle':
+      w.feel(a, 'risas');
+      w.feel(t, 'risas');
+      break;
+    case 'confide': {
+      const what = CONFIDENCES[Math.floor(Math.random() * CONFIDENCES.length)];
+      w.say(t.id, 'Tranquilo/a, de aquí no sale');
+      // Si se lo cuentas a una cotilla... de aquí sale, y rápido.
+      addSecret(w.state, { kind: 'confidencia', text: `${a.name} ${what}`, about: [a.id], known: [t.id], juicy: hasTrait(t, 'cotilla') ? 2 : 1, day: w.day });
+      if (loud && hasTrait(t, 'cotilla')) w.toast(`${a.name} le ha contado a ${t.name} que ${what}. Ojo: ${t.name} es cotilla...`, '🤐', a.id);
+      break;
+    }
+    case 'invite_coffee':
+      w.say(t.id, ['¡Uno con leche, gracias!', 'Un cortado, que si no no soy persona', 'La próxima invito yo'][Math.floor(Math.random() * 3)]);
+      break;
+    case 'give_treat':
+    case 'cuddle_pet':
+    case 'baby_talk':
+      w.feel(a, 'mimado', t.name);
+      break;
+    case 'photo_pet':
+      w.feel(a, 'selfie');
+      if (loud && Math.random() < 0.3) w.toast(`La foto de ${t.name} en Instagram ya tiene 200 likes`, '📸', a.id);
+      break;
+    case 'vet':
+      vetVisit(w, a, t);
+      break;
+    case 'vet_checkup':
+      vetCheckup(w, a, t);
+      break;
+  }
 }
 
 /** Coquetear delante de la pareja tiene consecuencias. */

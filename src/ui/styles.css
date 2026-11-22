@@ -1302,7 +1302,8 @@ body.building #hud-bottom {
 .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
 /* --- Dilemas --- */
-#dilemma {
+#dilemma,
+#prompt {
   position: fixed;
   inset: 0;
   z-index: 60;
@@ -1312,7 +1313,37 @@ body.building #hud-bottom {
   padding: 16px;
   background: rgba(10, 12, 20, 0.55);
 }
-#dilemma[hidden] { display: none; }
+#dilemma[hidden],
+#prompt[hidden] { display: none; }
+.name-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #3a4060;
+  background: #171a28;
+  color: #fff;
+  font-size: 16px;
+}
+#fastfwd {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(35, 39, 58, 0.92);
+  color: #ffd76a;
+  font-size: 13px;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#fastfwd[hidden] { display: none; }
 .dilemma-card {
   max-width: 420px;
   width: 100%;
@@ -1741,6 +1772,7 @@ html.big-text #log,
 html.big-text #menu,
 html.big-text #talk,
 html.big-text #dilemma,
+html.big-text #prompt,
 html.big-text #toasts,
 html.big-text #guide,
 html.big-text #panel,

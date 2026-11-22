@@ -1057,7 +1057,10 @@ export class HouseScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     const dt = Math.min(delta, 100) / 1000;
-    const speed = SPEEDS[this.world.state.speed] ?? 1;
+    const base = SPEEDS[this.world.state.speed] ?? 1;
+    // Si todos están trabajando (o durmiendo), el tiempo vuela hasta que haya alguien con quien jugar.
+    const auto = base > 0 ? this.world.autoSpeed() : null;
+    const speed = auto ? Math.max(base, auto.mult) : base;
     const t0 = DEBUG ? performance.now() : 0;
     if (speed > 0) this.world.tick(dt * speed);
     const t1 = DEBUG ? performance.now() : 0;

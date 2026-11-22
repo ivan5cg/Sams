@@ -170,6 +170,8 @@ export interface TopicDef {
   good: string[];
   meh: string[];
   bad: string[];
+  /** Pregunta de seguimiento: solo sale justo después de su tema. */
+  followUp?: boolean;
 }
 
 export const TOPICS: TopicDef[] = [
@@ -190,7 +192,53 @@ export const TOPICS: TopicDef[] = [
   { id: 'parque', label: 'Proponer ir juntos al parque', icon: '🌳', say: ['¿Te vienes a dar una vuelta por el parque?'], good: ['¡Venga, vamos, que hace un día estupendo!'], meh: ['Hoy no puedo, otro día'], bad: ['No me apetece nada'] },
 ];
 
-export const TOPIC_BY_ID: Record<string, TopicDef> = Object.fromEntries(TOPICS.map((t) => [t.id, t]));
+// Temas que dependen de la vida del otro (las respuestas se arman con lo que le pasa de verdad).
+TOPICS.push(
+  { id: 'trabajo', label: 'Preguntar por el trabajo o los estudios', icon: '💼', say: ['¿Qué tal el trabajo?', '¿Cómo te va en el curro?', '¿Y qué tal lo tuyo, el trabajo?'], good: ['Pues bien, no me quejo'], meh: ['Ahí vamos'], bad: ['No me hables del trabajo, que me pongo malo/a'] },
+  { id: 'familia', label: 'Preguntar por su familia', icon: '👨‍👩‍👧', say: ['¿Y qué tal los tuyos?', '¿Cómo está la familia?'], good: ['Todos bien, gracias'], meh: ['Bueno, como siempre'], bad: ['Mejor no preguntes'] },
+  { id: 'planes', label: 'Preguntar por sus planes', icon: '🗓️', say: ['¿Qué planes tienes para estos días?', '¿Haces algo el finde?'], good: ['¡Muchos! Ya te contaré'], meh: ['Nada especial, sofá y manta'], bad: ['¿Y a ti qué te importa?'] },
+  { id: 'recuerdo', label: 'Recordar algo que vivisteis juntos', icon: '📼', say: ['¿Te acuerdas de aquello?'], good: ['¡Cómo olvidarlo!'], meh: ['Uf, ni me acordaba'], bad: ['Prefiero no acordarme de eso'] },
+);
+
+/** Preguntas para seguir el hilo de la conversación según el tema anterior (y cómo fue). */
+export const FOLLOW_UPS: Record<string, { good?: TopicDef[]; bad?: TopicDef[]; any?: TopicDef[] }> = {
+  dia: {
+    good: [{ id: 'f_dia_eso', label: '¿Y eso? ¡Cuéntame!', icon: '👂', followUp: true, say: ['¡Qué bien! ¿Y eso?', '¡Cuenta, cuenta! ¿Qué ha pasado?'], good: ['Pues nada, que la vida me sonríe. Y a ti, ¿qué tal?', 'Que he dormido diez horas. ¡Diez! Soy otra persona'], meh: ['Nada en especial, la verdad'], bad: ['Bah, cosas mías'] }],
+    bad: [{ id: 'f_dia_ayuda', label: 'Ofrecerle ayuda', icon: '🤝', followUp: true, say: ['Vaya... si necesitas algo, aquí me tienes', '¿Quieres que hablemos de ello?'], good: ['Gracias, de verdad. Eso vale mucho', 'Igual te tomo la palabra. Gracias'], meh: ['Ya se me pasará, gracias'], bad: ['No necesito la ayuda de nadie'] }],
+  },
+  trabajo: {
+    any: [
+      { id: 'f_trabajo_jefe', label: '¿Y qué tal con tu jefe?', icon: '👔', followUp: true, say: ['¿Y qué tal te llevas con tu jefe?', '¿Y el jefe qué tal?'], good: ['Bien'], meh: ['Normal'], bad: ['Ni me lo nombres'] },
+      { id: 'f_trabajo_futuro', label: '¿Y qué planes tienes?', icon: '🚀', followUp: true, say: ['¿Y te ves ahí mucho tiempo?', '¿Y qué quieres hacer en el futuro?'], good: ['Ya veremos'], meh: ['Ni idea'], bad: ['Déjame, que bastante tengo con lo de hoy'] },
+    ],
+  },
+  familia: {
+    good: [{ id: 'f_familia_comida', label: 'Proponer una comida todos juntos', icon: '🥘', followUp: true, say: ['¡Tenemos que hacer una comida todos juntos!', 'Un domingo de estos, paella en casa y que vengan todos'], good: ['¡Sí! Yo llevo la tortilla', '¡Hecho! Y el vino lo pongo yo'], meh: ['Ya, ya... a ver si cuadramos agendas'], bad: ['Uf, con mi familia mejor por separado'] }],
+  },
+  planes: {
+    good: [{ id: 'f_planes_juntos', label: '¿Y si quedamos?', icon: '📍', followUp: true, say: ['Oye, ¿y si quedamos y lo hacemos juntos?', '¿Me apunto?'], good: ['¡Claro! Cuanto más seamos, mejor', '¡Venga! Te escribo por WhatsApp'], meh: ['Bueno, ya vemos...'], bad: ['Mejor otro día, ¿vale?'] }],
+  },
+  mascotas: { good: [{ id: 'f_mascotas', label: '¿Y tú cuál tendrías?', icon: '🐶', followUp: true, say: ['¿Y tú qué animal tendrías?', '¿Cuál es tu raza favorita?'], good: ['¡Un perro salchicha! Son lo más', 'Una capibara, que son pura paz'], meh: ['Uno que no suelte pelo, si existe'], bad: ['Ninguno. Ya tengo bastante con mi familia'] }] },
+  deporte: { good: [{ id: 'f_deporte', label: '¿Quién gana la liga?', icon: '🏆', followUp: true, say: ['¿Y quién crees que gana la liga?', '¿Vemos juntos el próximo partido?'], good: ['¡El nuestro, por supuesto! Este año sí', '¡Hecho! Pongo yo las pipas'], meh: ['Cualquiera menos el Barça'], bad: ['Me da exactamente igual'] }] },
+  musica: { good: [{ id: 'f_musica', label: '¿Tu grupo favorito?', icon: '🎶', followUp: true, say: ['¿Y cuál es tu grupo favorito?', '¿Qué estás escuchando últimamente?'], good: ['¡Estopa! Y no hay más que hablar', 'Rosalía. Me la sé entera'], meh: ['Lo que pongan en la radio'], bad: ['Silencio. Me gusta el silencio'] }] },
+  arte: { good: [{ id: 'f_arte', label: '¿Vamos a un museo?', icon: '🖼️', followUp: true, say: ['¿Nos vamos un domingo al Reina Sofía?', '¿Cuál es tu cuadro favorito?'], good: ['¡Me encantaría! El Guernica en persona impresiona', 'El Jardín de las Delicias. Cada vez descubro algo nuevo'], meh: ['Si es gratis, vale'], bad: ['Paso, que me duelen los pies'] }] },
+  cocina: { good: [{ id: 'f_cocina', label: '¿Me pasas la receta?', icon: '📝', followUp: true, say: ['¿Me pasas la receta?', '¿Y cuál es tu ingrediente secreto?'], good: ['Claro, pero el ingrediente secreto no te lo digo', '¡Cariño! El ingrediente secreto es el cariño'], meh: ['Uy, yo cocino a ojo'], bad: ['Las recetas de mi abuela no salen de casa'] }] },
+  ciencia: { good: [{ id: 'f_ciencia', label: '¡Otro dato!', icon: '🧠', followUp: true, say: ['¿Sabes más? Cuéntame otro', 'Pues yo sé uno: las vacas tienen mejores amigas'], good: ['¡Las nutrias se dan la mano para dormir!', '¡Qué fuerte! Eso no lo sabía'], meh: ['Ya, ya...'], bad: ['Vale, ya basta de datos'] }] },
+  cotilleos: { good: [{ id: 'f_cotilleos', label: '¿Y quién lo sabe?', icon: '👀', followUp: true, say: ['¿Y quién más lo sabe?', '¿Y tú cómo te has enterado?'], good: ['Me lo contó Doña Puri. Esa mujer lo sabe todo', 'Yo no digo nada, pero medio barrio'], meh: ['Ni idea, se dice por ahí'], bad: ['Oye, no me metas en líos'] }] },
+  viajes: { good: [{ id: 'f_viajes', label: '¿Tu mejor viaje?', icon: '✈️', followUp: true, say: ['¿Y cuál ha sido tu mejor viaje?', '¿Y si hacemos un viaje juntos?'], good: ['Uno a Cádiz con los amigos. Inolvidable', '¡Venga! Yo me encargo de las tortillas'], meh: ['El del pueblo, todos los veranos'], bad: ['Yo de casa no me muevo'] }] },
+  chiste: { good: [{ id: 'f_chiste', label: '¡Otro, otro!', icon: '🤣', followUp: true, say: ['¿Qué le dice una iguana a su hermana gemela? Iguanita', '¿Qué hace una abeja en el gimnasio? ¡Zum-ba!', 'Van dos y se cae el del medio'], good: ['¡Jajaja! ¡Para, para, que me meo!', 'Jajaja, eres lo peor. Otro'], meh: ['Ese es peor que el anterior'], bad: ['Vale, ya está bien de chistes'] }] },
+  precios: { good: [{ id: 'f_precios', label: 'Compartir un truco para ahorrar', icon: '🪙', followUp: true, say: ['Yo ahora compro la marca blanca y ni se nota', 'El truco es ir al Mercadona con la lista y sin hambre'], good: ['¡Gran consejo! Me lo apunto', 'Eso hago yo, y lo del tupper al trabajo'], meh: ['Ya, pero aun así...'], bad: ['Yo no pienso renunciar a mi marca de siempre'] }] },
+  quejarse: { good: [{ id: 'f_quejarse', label: 'Dar las gracias', icon: '🙏', followUp: true, say: ['Gracias por escucharme. Me hacía falta', 'Ya me siento mejor, de verdad'], good: ['Para eso están los amigos', 'Cuando quieras. Y el próximo café lo pagas tú'], meh: ['Nada, hombre'], bad: ['Ya, bueno...'] }] },
+  coquetear: { good: [{ id: 'f_coquetear', label: 'Proponer una cita', icon: '🌹', followUp: true, say: ['¿Y si quedamos un día tú y yo, a solas?', '¿Te apetece cenar conmigo el sábado?'], good: ['Me encantaría...', 'Pensaba que nunca me lo ibas a pedir'], meh: ['Déjame pensarlo, ¿vale?'], bad: ['Uy, no, no... mejor no'] }] },
+  recuerdo: { good: [{ id: 'f_recuerdo', label: 'Hay que repetirlo', icon: '🔁', followUp: true, say: ['¡Hay que repetirlo!', 'Qué tiempos... ¿Lo repetimos?'], good: ['¡Cuando quieras!', 'Venga, este finde mismo'], meh: ['Bueno, igual algún día'], bad: ['Una vez fue suficiente'] }] },
+};
+
+/** Para arreglarlo cuando algo ha salido mal. */
+export const APOLOGY_TOPIC: TopicDef = { id: 'f_perdon', label: 'Perdona, no quería molestarte', icon: '🙇', followUp: true, say: ['Perdona, no quería molestarte', 'Uy, lo siento, no era mi intención'], good: ['Nada, hombre, no pasa nada', 'Tranquilo/a, ya está olvidado'], meh: ['Ya... bueno'], bad: ['Pues lo has hecho'] };
+
+export const TOPIC_BY_ID: Record<string, TopicDef> = Object.fromEntries(
+  [...TOPICS, APOLOGY_TOPIC, ...Object.values(FOLLOW_UPS).flatMap((f) => [...(f.good ?? []), ...(f.bad ?? []), ...(f.any ?? [])])].map((t) => [t.id, t]),
+);
 
 /** Reacciones a las noticias del barrio. */
 export const NEWS_REPLIES = ['¡No me digas!', '¡Qué fuerte!', 'Eso ya lo sabe todo el barrio', 'Lo sabía, se veía venir', 'Calla, calla, que me da algo'];

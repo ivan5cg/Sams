@@ -1,6 +1,6 @@
 // Gente de la calle (metro, plaza, bar...) y lo que dicen. Humor de barrio, sin meterse con nadie por su origen.
 
-export type Role = 'vendedor' | 'rapero' | 'musico' | 'chismosa' | 'militante' | 'glovo';
+export type Role = 'vendedor' | 'rapero' | 'musico' | 'chismosa' | 'militante' | 'glovo' | 'jefe' | 'colega';
 
 export interface RoleNpc {
   role: Role;
@@ -33,7 +33,30 @@ export const ROLE_LABEL: Record<Role, string> = {
   chismosa: 'Vecina cotilla',
   militante: 'Militante del POC',
   glovo: 'Repartidor de Glovo',
+  jefe: 'Jefe/a',
+  colega: 'Compañero/a de trabajo',
 };
+
+/** Lo que se oye en la oficina. */
+export const BOSS_LINES = [
+  '¿Cómo vamos con lo mío?',
+  'Esto lo quiero para ayer',
+  'Somos una gran familia',
+  'A ver, una cosita rápida...',
+  'Hay que darlo todo, chicos',
+  'Mi puerta siempre está abierta',
+  'Reunión en cinco minutos',
+];
+export const MATE_LINES = [
+  '¿Un cafelito?',
+  'Qué ganas de que sea viernes',
+  '¿Te has enterado de lo de contabilidad?',
+  'El jefe hoy viene de malas',
+  'Otra reunión que podía haber sido un correo',
+  '¿Quién se ha comido mi yogur?',
+  'Esto no me lo pagan',
+  '¿Hacemos un afterwork el jueves?',
+];
 
 export const VENDOR_LINES = [
   '¡Chupachups, chicles, kleenex, a un euro!',

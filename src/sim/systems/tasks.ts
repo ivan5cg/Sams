@@ -8,6 +8,7 @@ import { findPath } from '../pathfinding';
 import { NEED_KEYS, type Agent, type Needs, type ScheduledOrder, type SpeciesId, type Task } from '../types';
 import { clamp, objectCenter } from '../util';
 import type { Target, World } from '../world';
+import { workTaskDone } from './work';
 import { costOf } from './calendar';
 import { checkObjectAction, checkSelfAction, checkSocialAction, speciesOk } from './checks';
 import { setJob } from './jobs';
@@ -238,6 +239,7 @@ export function completeTask(w: World, a: Agent, task: Task) {
     w.toast(`${a.name} ha comprado un décimo. ¡Que toque!`, '🎫');
   }
   w.bump(a, task.actionId);
+  if (task.actionId.startsWith('wt_')) workTaskDone(w, a, task.actionId.slice(3));
   taskFeelings(w, a, task, o);
   skillPayoff(w, a, task.actionId);
   skillTask(w, a, task, o);

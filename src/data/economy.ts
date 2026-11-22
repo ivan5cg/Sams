@@ -50,6 +50,8 @@ export const MONEY_CATEGORIES: Record<string, { icon: string; label: string }> =
   sueldo: { icon: '💼', label: 'Sueldos' },
   negocio: { icon: '🍺', label: 'Negocio' },
   pension: { icon: '👴', label: 'Pensiones' },
+  prestacion: { icon: '🩹', label: 'Bajas (prestaciones)' },
+  indemnizacion: { icon: '📦', label: 'Indemnizaciones' },
   deseos: { icon: '⭐', label: 'Deseos' },
   metas: { icon: '🏆', label: 'Metas de vida' },
   ventas: { icon: '🏷️', label: 'Ventas' },
@@ -68,6 +70,7 @@ export const MONEY_CATEGORIES: Record<string, { icon: string; label: string }> =
   muebles: { icon: '🛋️', label: 'Muebles' },
   reformas: { icon: '🏗️', label: 'Reformas' },
   mascotas: { icon: '🐾', label: 'Mascotas' },
+  veterinario: { icon: '🏥', label: 'Veterinario' },
   regalos: { icon: '🎁', label: 'Regalos' },
   ropa: { icon: '👕', label: 'Ropa' },
   cursos: { icon: '🎓', label: 'Cursos' },
@@ -81,6 +84,9 @@ export const MONEY_CATEGORIES: Record<string, { icon: string; label: string }> =
 
 /** En qué categoría cae lo que se paga al hacer una acción (si no está, «ocio»). */
 export const SPEND_CATEGORY: Record<string, string> = {
+  vet_checkup: 'veterinario',
+  give_treat: 'mascotas',
+  invite_coffee: 'ocio',
   shop_small: 'compra',
   shop_big: 'compra',
   order_groceries: 'compra',

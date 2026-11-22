@@ -20,6 +20,7 @@ import type { World } from '../world';
 import { money } from './money';
 import { districtOf, freeSpotNear, startTravel } from './travel';
 import { countFeat } from './feats';
+import { birthLeave } from './work';
 import { endTask } from './tasks';
 
 /** Si alguien no puede dejar su casa (p. ej. no dejaría solos a sus hijos), el motivo. */
@@ -109,7 +110,8 @@ export function births(w: World) {
       continue;
     }
     const parents = h.expecting.parents.map((id) => w.agent(id)).filter((x): x is Agent => !!x);
-    afterBirth(w, h.expecting.mother ? w.agent(h.expecting.mother) : undefined);
+    const mother = h.expecting.mother ? w.agent(h.expecting.mother) : undefined;
+    afterBirth(w, mother);
     h.expecting = undefined;
     const { name, color } = newbornLooks(w.state);
     const baby = makeAgent({ id: w.newId('a'), name, species: 'human', ageDays: 0, color, householdId: h.id, lotId: h.lotId, x: crib.x, y: crib.y });
@@ -129,6 +131,9 @@ export function births(w: World) {
       if (m.kind === 'person') w.feel(m, 'bebe', name);
       else setRel(w.state, m.id, baby.id, { f: 30, r: 0 });
     }
+    // Bajas por maternidad y paternidad; y en la familia del jugador, se le pone nombre.
+    birthLeave(w, parents, mother);
+    if (mine && !w.state.prompt) w.state.prompt = { kind: 'naming', agentId: baby.id, until: w.state.minutes + 120 };
     if (mine) w.emit({ type: 'moment', text: `¡Ha nacido ${name}!`, lotId: h.lotId });
     if (mine) w.toast(`¡Ha nacido ${name}! Bienvenido/a al mundo${parents.length ? `, bebé de ${parents.map((p) => p.name).join(' y ')}` : ''}`, '👶');
     w.addNews(`ha nacido ${name}, el bebé de la ${h.name}`, [baby.id, ...parents.map((p) => p.id)]);
